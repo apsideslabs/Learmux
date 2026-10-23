@@ -4,6 +4,7 @@ import { challenges, categories, totalPoints } from '../lib/challenges';
 
 const cats = categories();
 const commandCount = 50;
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 ---
 
 <BaseLayout
@@ -78,8 +79,8 @@ npm run preview  # preview the production build</code></pre>
     </p>
 
     <div class="hero-actions">
-      <a class="btn btn--primary" href="/challenges/">Start a challenge →</a>
-      <a class="btn btn--ghost" href="/learn/">Browse tutorials</a>
+      <a class="btn btn--primary" href={`${base}challenges/`}>Start a challenge →</a>
+      <a class="btn btn--ghost" href={`${base}learn/`}>Browse tutorials</a>
     </div>
   </div>
 </BaseLayout>
