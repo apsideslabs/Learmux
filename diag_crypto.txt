@@ -1,0 +1,2 @@
+import { createHash } from 'node:crypto';
+const b = Buffer.from(s, 'utf8').toString('base64');
