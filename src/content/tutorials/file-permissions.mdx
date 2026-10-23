@@ -1,0 +1,66 @@
+---
+title: File permissions
+description: Read the permissions column, understand octal modes, and change them with chmod.
+order: 5
+level: Intermediate
+tags: [permissions, chmod, security]
+updated: "2026-01"
+---
+
+## Reading the permissions column
+
+`ls -l` prints a ten-character code at the start of each line:
+
+```
+-rwxr-xr--  1 u0_a0 u0_a0  512 Jan  1 00:00 deploy.sh
+```
+
+Break it into one type character plus three groups of three:
+
+- character 1 — the type: `-` file, `d` directory, `l` symlink
+- characters 2–4 — **user** (the owner)
+- characters 5–7 — **group**
+- characters 8–10 — **others** (everyone else)
+
+Each group is `r` (read), `w` (write), `x` (execute), with `-` where a permission is missing. So
+`rwxr-xr--` means the owner can do everything, the group can read and execute, and everyone else can
+only read.
+
+## Octal (numeric) modes
+
+Each permission has a value: **r = 4, w = 2, x = 1**. Add them per group:
+
+| Symbolic | Octal | Meaning |
+| --- | --- | --- |
+| rw-r--r-- | 644 | owner writes, others read (typical file) |
+| rwxr-xr-x | 755 | owner writes, others read/execute (typical directory or script) |
+| rw------- | 600 | private to the owner |
+| rw-rw-rw- | 666 | anyone can write — a red flag |
+
+A file that is world-writable (666) can be modified by any user or process on the system. That is
+exactly the kind of misconfiguration an attacker looks for.
+
+## Changing permissions with chmod
+
+```bash
+chmod 644 notes.txt     # set an exact mode
+chmod 600 id_rsa        # lock a key down to the owner
+chmod +x deploy.sh      # make a script executable
+chmod -R 755 public/    # apply recursively
+```
+
+`chmod +x` is the one you will type most: a script is not runnable until it has the execute bit.
+
+## Ownership
+
+```bash
+ls -l                  # owner and group are columns 3 and 4
+chown user file        # change the owner (needs privilege in real life)
+```
+
+## Practise
+
+- [World-Writable](/challenges/world-writable/) — spot the file that is too permissive.
+
+> Security habit: run `ls -l` on anything you download before you execute it, and be suspicious of
+> files that are writable by everyone.
