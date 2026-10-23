@@ -14,12 +14,13 @@ const { title, description, level, tags, updated } = entry.data;
 const ordered = (await getCollection('tutorials')).sort((a, b) => a.data.order - b.data.order);
 const pos = ordered.findIndex((t) => t.id === entry.id);
 const next = ordered[pos + 1];
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 ---
 
 <BaseLayout title={title} description={description}>
   <div class="wrap">
     <nav class="crumbs" aria-label="Breadcrumb">
-      <a href="/learn/">Learn</a> / <span>{entry.id}</span>
+      <a href={`${base}learn/`}>Learn</a> / <span>{entry.id}</span>
     </nav>
 
     <article class="prose">
@@ -37,8 +38,8 @@ const next = ordered[pos + 1];
     </article>
 
     <div class="section-head">
-      <a class="btn btn--ghost" href="/learn/">← All tutorials</a>
-      {next && <a class="btn btn--primary" href={`/learn/${next.id}/`}>Next: {next.data.title} →</a>}
+      <a class="btn btn--ghost" href={`${base}learn/`}>← All tutorials</a>
+      {next && <a class="btn btn--primary" href={`${base}learn/${next.id}/`}>Next: {next.data.title} →</a>}
     </div>
   </div>
 </BaseLayout>
