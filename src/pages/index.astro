@@ -1,0 +1,124 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ChallengeCard from '../components/ChallengeCard.astro';
+import { challenges, allMeta, categories, totalPoints } from '../lib/challenges';
+
+const cats = categories();
+const featuredSlugs = ['first-steps', 'logs-never-lie', 'pipe-dreams', 'final-boss'];
+const featured = featuredSlugs
+  .map((s) => allMeta().find((c) => c.slug === s))
+  .filter((c): c is NonNullable<typeof c> => Boolean(c));
+
+const features = [
+  {
+    icon: '$_',
+    title: 'An interactive CTF terminal',
+    body: 'Every challenge drops you into a real, playable shell. Type commands, chain them with pipes, and capture the flag right in the browser.',
+  },
+  {
+    icon: '{ }',
+    title: 'TypeScript engine, predictable state',
+    body: 'An explicit command parser, a virtual filesystem and a deterministic shell. Same input, same output — always. No flaky sandboxes.',
+  },
+  {
+    icon: 'MD',
+    title: 'Tutorials in Markdown/MDX',
+    body: 'Lessons are plain content files. Add a file, it appears in the index, the sitemap and the router — no wiring required.',
+  },
+  {
+    icon: '[ ]',
+    title: 'Challenges as JSON data',
+    body: 'The whole game is declared in one JSON file: filesystems, flags, hints. Swap it for a database later without touching the engine.',
+  },
+];
+
+const steps = [
+  { n: '01', t: 'Pick a challenge', d: 'Browse by difficulty and category, from reading your first file to chaining grep, cut and base64.' },
+  { n: '02', t: 'Open the sandbox', d: 'A Termux-like shell boots in your browser with the challenge filesystem already in place.' },
+  { n: '03', t: 'Hunt the flag', d: 'Explore, grep, decode and pipe your way to a TERMUX{...} flag. Stuck? Reveal a hint.' },
+  { n: '04', t: 'Track progress', d: 'Captured flags are remembered locally, so your score survives a refresh.' },
+];
+---
+
+<BaseLayout>
+  <section class="wrap hero">
+    <span class="eyebrow">Termux · Linux · Capture the flag</span>
+    <h1>Learn Termux and the command line by breaking in.</h1>
+    <p class="lead">
+      Learmux is a hands-on playground for Android's Termux environment and the Linux command line.
+      Read a short tutorial, then prove it in an interactive terminal where the flag is always one
+      clever command away.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn--primary" href="/challenges/">Start a challenge →</a>
+      <a class="btn btn--ghost" href="/learn/">Read the tutorials</a>
+    </div>
+
+    <div class="stats" style="margin-top:2rem">
+      <div class="stat"><span class="n">{challenges.length}</span><span class="l">challenges</span></div>
+      <div class="stat"><span class="n">{totalPoints}</span><span class="l">points to collect</span></div>
+      <div class="stat"><span class="n">{cats.length}</span><span class="l">categories</span></div>
+      <div class="stat"><span class="n">0</span><span class="l">installs needed</span></div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>Why Learmux</h2>
+        <p>A learning platform built the way a small tool should be: fast, explainable, and entirely yours.</p>
+      </div>
+    </div>
+    <div class="grid cols-2">
+      {features.map((f) => (
+        <article class="card feature">
+          <div class="ic">{f.icon}</div>
+          <h3>{f.title}</h3>
+          <p class="muted mb-0">{f.body}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>How it works</h2>
+        <p>From zero to your first captured flag in about a minute.</p>
+      </div>
+    </div>
+    <div class="grid cols-4">
+      {steps.map((s) => (
+        <article class="card">
+          <span class="pill pill--points mono">{s.n}</span>
+          <h3 style="margin-top:0.7rem">{s.t}</h3>
+          <p class="muted mb-0">{s.d}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>Featured challenges</h2>
+        <p>A taste of the difficulty curve, from your very first <code>ls</code> to the final boss.</p>
+      </div>
+      <a class="btn btn--ghost" href="/challenges/">See all {challenges.length}</a>
+    </div>
+    <div class="grid cols-2">
+      {featured.map((c) => <ChallengeCard challenge={c} />)}
+    </div>
+  </section>
+
+  <section class="wrap" style="margin-top:2.5rem">
+    <div class="card" style="text-align:center;padding:2rem">
+      <h2 style="margin-bottom:0.4rem">Ready to capture your first flag?</h2>
+      <p class="muted">No account, no install. Just a browser and a terminal that listens.</p>
+      <div class="hero-actions" style="justify-content:center">
+        <a class="btn btn--primary" href="/challenges/first-steps/">Play “Hello, Termux” →</a>
+        <a class="btn btn--ghost" href="/learn/getting-started/">Install Termux for real</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
