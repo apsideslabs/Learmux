@@ -1,1 +1,0 @@
-    wget: "Connecting to challenge.local...\nHTTP request sent, awaiting response... 200 OK\nTERMUX{fetched_from_web}\n",

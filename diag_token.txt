@@ -1,1 +1,0 @@
-1420 pts/0 00:00:00 /usr/bin/backup --token TERMUX{process_hunt}

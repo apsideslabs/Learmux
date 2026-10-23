@@ -1,2 +1,0 @@
-root:x:0:0:root:/root:/bin/bash
-termux:x:10000:10000:TERMUX{u}:/home:/bin/bash

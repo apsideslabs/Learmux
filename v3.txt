@@ -1,1 +1,0 @@
-curl challenge.local/flag

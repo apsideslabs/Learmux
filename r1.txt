@@ -1,1 +1,0 @@
-    '```\ncurl http://challenge.local/flag\n```',

@@ -1,3 +1,0 @@
-flags: TERMUX{one} TERMUX{two}
-blob: VEVSTVVYe2ZpbmFsX2Jvc3N9
-nmap sudo curl base64 sha256
