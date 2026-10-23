@@ -1,0 +1,15 @@
+});
+
+// 13 ─────────────────────────────────────────────────────────────────────────
+add({
+  id: 'c13',
+  slug: 'process-hunt',
+  title: 'Process Hunt',
+  category: 'Processes',
+  difficulty: 'Medium',
+  points: 20,
+  summary: 'A careless admin left a secret in a running command line.',
+  objective: 'List running processes and find the flag in a command argument.',
+  briefing:
+    'On real systems, `ps` shows the full command line of every process — including secrets people pass as ' +
+    'arguments by mistake. Run `ps` here and read carefully.',
