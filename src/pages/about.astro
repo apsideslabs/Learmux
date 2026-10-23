@@ -1,0 +1,85 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { challenges, categories, totalPoints } from '../lib/challenges';
+
+const cats = categories();
+const commandCount = 50;
+---
+
+<BaseLayout
+  title="About"
+  description="What Learmux is, how it is built (Astro + TypeScript + MDX + JSON), and how to run and deploy it."
+>
+  <div class="wrap prose">
+    <h1>About Learmux</h1>
+    <p>
+      Learmux is a small, self-contained learning platform for <strong>Termux</strong> — the terminal
+      emulator and Linux environment for Android — and for the Linux command line more broadly. It pairs
+      short written tutorials with an interactive capture-the-flag terminal, so you can read about
+      <code>grep</code> and then immediately use it to pull a flag out of a noisy log.
+    </p>
+
+    <h2>How it is built</h2>
+    <p>Every layer was chosen to keep the project explainable and cheap to run:</p>
+    <ul>
+      <li><strong>Astro</strong> renders the site statically: pages, tutorials, navigation, SEO and the sitemap. No server to maintain.</li>
+      <li><strong>TypeScript</strong> powers the CTF engine — an explicit command parser, a virtual filesystem, and a deterministic shell that tracks flags, hints and progress.</li>
+      <li><strong>Custom CSS</strong> (no framework) gives the mobile-first interface and the terminal its own look, including on-screen-keyboard handling.</li>
+      <li><strong>Markdown / MDX</strong> holds the tutorials, so lessons are just content files.</li>
+      <li><strong>JSON</strong> holds the {challenges.length} challenge definitions — filesystems, flags and hints — with no database required for the prototype.</li>
+    </ul>
+
+    <h2>By the numbers</h2>
+    <div class="stats">
+      <div class="stat"><span class="n">{challenges.length}</span><span class="l">challenges</span></div>
+      <div class="stat"><span class="n">{totalPoints}</span><span class="l">points</span></div>
+      <div class="stat"><span class="n">{cats.length}</span><span class="l">categories</span></div>
+      <div class="stat"><span class="n">{commandCount}+</span><span class="l">shell commands</span></div>
+    </div>
+
+    <h2>How the sandbox works</h2>
+    <p>
+      There is no real operating system behind the terminal. A challenge seeds a virtual filesystem, and
+      your keystrokes are parsed by an explicit tokeniser and pipeline executor. That means the state is
+      completely predictable: the same command always produces the same result, and resetting a challenge
+      simply restores the seed. Commands that would touch a network or the device — <code>nmap</code>,
+      <code>curl</code>, <code>pkg</code>, <code>ps</code> — return authored output defined per challenge,
+      so nothing depends on the host.
+    </p>
+    <blockquote>
+      Note: this is a learning prototype. Flags live in the client-side JSON, so a determined player could
+      read them ahead of time. That is fine for teaching — the next step would be moving challenge
+      definitions and flag checks behind an API.
+    </blockquote>
+
+    <h2>Roadmap</h2>
+    <ul>
+      <li>Accounts and a server-side leaderboard (swap the JSON store for a database).</li>
+      <li>Authoring UI so non-developers can add challenges.</li>
+      <li>More categories: scripting, process inspection, file forensics, package management.</li>
+      <li>Optional real sandboxing (WASM shell) for advanced challenges.</li>
+    </ul>
+
+    <h2>Run it locally</h2>
+    <pre><code>npm install
+npm run dev      # http://localhost:4321
+npm run build    # static output in dist/
+npm run preview  # preview the production build</code></pre>
+    <p>
+      To regenerate the challenge JSON from the authoring script:
+      <code>node scripts/generate-challenges.mjs</code>.
+    </p>
+
+    <h2>Deploy</h2>
+    <p>
+      The build output is fully static, which makes Cloudflare Pages a natural host: connect the
+      repository, set the build command to <code>npm run build</code> and the output directory to
+      <code>dist</code>. Any static host works the same way.
+    </p>
+
+    <div class="hero-actions">
+      <a class="btn btn--primary" href="/challenges/">Start a challenge →</a>
+      <a class="btn btn--ghost" href="/learn/">Browse tutorials</a>
+    </div>
+  </div>
+</BaseLayout>
