@@ -9,6 +9,8 @@ shell with its own filesystem, and hunt for a `TERMUX{...}` flag.
 
 There is no backend. The whole thing builds to static files you can host anywhere.
 
+**Live site:** https://apsideslabs.github.io/Learmux/
+
 ---
 
 ## Features
@@ -35,7 +37,7 @@ There is no backend. The whole thing builds to static files you can host anywher
 | Styling | **Custom CSS** | Total control over the look and the mobile terminal |
 | Lessons | **Markdown / MDX** | Easy to write and maintain |
 | Challenges | **JSON** | Data-driven; swappable for a database later |
-| Hosting | **Cloudflare Pages** | Free, fast, static — the output is just files |
+| Hosting | **GitHub Pages** | Free, static, deployed from GitHub Actions |
 
 ## Project structure
 
@@ -134,17 +136,22 @@ The smoke test bundles the engine with esbuild and checks that **every challenge
 its documented commands, plus shell features (pipes, redirection, history), a known SHA-256 vector,
 and the `submit` command.
 
-## Deployment (Cloudflare Pages)
+## Deployment
 
-The build output is fully static.
+The site is a static build, and it is currently deployed to **GitHub Pages** at
+<https://apsideslabs.github.io/Learmux/>.
 
-1. Push this repository to GitHub.
-2. In Cloudflare Pages, create a project and connect the repo.
-3. Set **Build command** to `npm run build` and **Build output directory** to `dist`.
-4. Deploy. Update `site` in `astro.config.mjs` to your `*.pages.dev` (or custom) domain so the
-   canonical URLs and sitemap are correct.
+Deployment is automated by `.github/workflows/deploy.yml`: on every push to `main` it installs
+dependencies, runs `npm run build`, uploads `dist/` as a Pages artifact, and publishes it. Pages is
+configured with `build_type: workflow`.
 
-Any static host (Netlify, GitHub Pages, S3, nginx) works the same way.
+Because the site is served from the `/Learmux/` subpath, `astro.config.mjs` sets `site` and `base`,
+and root-absolute links in Markdown/MDX are rewritten with a small remark plugin. If you fork this
+under a different name, update `site` and `base` there.
+
+Any other static host works too — build with `npm run build` and serve `dist/`. For Cloudflare
+Pages, set the build command to `npm run build` and the output directory to `dist` (and remove the
+`base` from `astro.config.mjs`, or set it to your project's path).
 
 ## Notes & limitations
 
