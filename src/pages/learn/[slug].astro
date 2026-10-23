@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const tutorials = await getCollection('tutorials');
+  return tutorials.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const { title, description, level, tags, updated } = entry.data;
+
+const ordered = (await getCollection('tutorials')).sort((a, b) => a.data.order - b.data.order);
+const pos = ordered.findIndex((t) => t.id === entry.id);
+const next = ordered[pos + 1];
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href="/learn/">Learn</a> / <span>{entry.id}</span>
+    </nav>
+
+    <article class="prose">
+      <header style="margin-bottom:1.5rem">
+        <div class="challenge-head">
+          <span class="pill pill--easy">{level}</span>
+          {tags.map((tag) => <span class="pill">{tag}</span>)}
+          {updated && <span class="pill">updated {updated}</span>}
+        </div>
+        <h1 style="margin-bottom:0.4rem">{title}</h1>
+        <p class="muted" style="font-size:1.05rem">{description}</p>
+      </header>
+
+      <Content />
+    </article>
+
+    <div class="section-head">
+      <a class="btn btn--ghost" href="/learn/">← All tutorials</a>
+      {next && <a class="btn btn--primary" href={`/learn/${next.id}/`}>Next: {next.data.title} →</a>}
+    </div>
+  </div>
+</BaseLayout>
