@@ -1,0 +1,100 @@
+---
+import '../styles/global.css';
+import '../styles/terminal.css';
+import { challenges } from '../lib/challenges';
+
+interface Props {
+  title?: string;
+  description?: string;
+  noindex?: boolean;
+}
+
+const {
+  title = 'Learmux — learn Termux, the command line and cybersecurity',
+  description = 'Learmux is a hands-on learning platform for Termux and the Linux command line, with bite-sized tutorials and an interactive capture-the-flag terminal you can play in the browser.',
+  noindex = false,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const fullTitle = title.includes('Learmux') ? title : `${title} · Learmux`;
+const totalChallenges = challenges.length;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#0b1220" />
+    <meta name="color-scheme" content="dark" />
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Learmux" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+  </head>
+  <body data-total-challenges={totalChallenges}>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="/" aria-label="Learmux home">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <rect x="2" y="8" width="60" height="48" rx="10" fill="#0b1220" stroke="#3ddc97" stroke-width="3"></rect>
+            <path d="M14 26l8 6-8 6" fill="none" stroke="#3ddc97" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>
+            <line x1="28" y1="40" x2="46" y2="40" stroke="#7ee0ff" stroke-width="5" stroke-linecap="round"></line>
+          </svg>
+          <span>Lear<span class="brand-x">mux</span></span>
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="/learn/" aria-current={Astro.url.pathname.startsWith('/learn') ? 'page' : undefined}>Learn</a>
+          <a href="/challenges/" aria-current={Astro.url.pathname.startsWith('/challenges') ? 'page' : undefined}>Challenges</a>
+          <a href="/about/" aria-current={Astro.url.pathname.startsWith('/about') ? 'page' : undefined}>About</a>
+          <span class="progress-chip" data-progress-chip data-total={totalChallenges}>0 / {totalChallenges}</span>
+        </nav>
+      </div>
+    </header>
+
+    <main class="site-main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>Learmux — built with Astro, TypeScript and a lot of <span class="mono">ls -la</span>.</span>
+        <span>
+          <a href="/challenges/">Challenges</a> ·
+          <a href="/learn/">Tutorials</a> ·
+          <a href="/about/">About</a>
+        </span>
+      </div>
+    </footer>
+
+    <script>
+      import { solvedSlugs } from '../lib/progress';
+
+      function refresh() {
+        const solved = new Set(solvedSlugs());
+        document.querySelectorAll('[data-challenge-slug]').forEach((elm) => {
+          const slug = elm.getAttribute('data-challenge-slug');
+          elm.classList.toggle('is-solved', slug ? solved.has(slug) : false);
+        });
+        const chip = document.querySelector('[data-progress-chip]');
+        if (chip) chip.textContent = `${solved.size} / ${chip.getAttribute('data-total')}`;
+      }
+
+      refresh();
+      document.addEventListener('DOMContentLoaded', refresh);
+      window.addEventListener('Learmux:progress', refresh);
+    </script>
+  </body>
+</html>
