@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ChallengeCard from '../../components/ChallengeCard.astro';
+import { allMeta, categories, totalPoints } from '../../lib/challenges';
+
+const list = allMeta();
+const cats = categories();
+const byDifficulty = ['Easy', 'Medium', 'Hard'] as const;
+const groups = byDifficulty
+  .map((d) => ({ difficulty: d, items: list.filter((c) => c.difficulty === d) }))
+  .filter((g) => g.items.length);
+---
+
+<BaseLayout
+  title="Challenges"
+  description={`${list.length} interactive Termux and Linux command-line challenges — capture the flag in your browser. ${totalPoints} points across ${cats.length} categories.`}
+>
+  <div class="wrap">
+    <div class="section-head" style="margin-top:0.5rem">
+      <div>
+        <h1>Challenges</h1>
+        <p>{list.length} puzzles, {totalPoints} points. Each one boots a sandbox with its own filesystem and a flag to find.</p>
+      </div>
+    </div>
+
+    <div class="challenge-head" style="margin-bottom:1.5rem">
+      {cats.map((c) => <span class="pill">{c.name} · {c.count}</span>)}
+    </div>
+
+    {groups.map((group) => (
+      <section>
+        <div class="section-head">
+          <div>
+            <h2>{group.difficulty}</h2>
+            <p>{group.items.length} challenges · {group.items.reduce((s, c) => s + c.points, 0)} points</p>
+          </div>
+        </div>
+        <div class="grid cols-3">
+          {group.items.map((c) => <ChallengeCard challenge={c} />)}
+        </div>
+      </section>
+    ))}
+  </div>
+</BaseLayout>
