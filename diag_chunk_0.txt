@@ -1,0 +1,73 @@
+/**
+ * Authoring script for Learmux challenge definitions.
+ *
+ * Run `node scripts/generate-challenges.mjs` to (re)build
+ * src/data/challenges.json. Writing the challenges in code lets us compute
+ * real SHA-256 digests, base64, rot13 and reversals so the data stays correct
+ * and self-consistent. The JSON it emits is the runtime source of truth.
+ */
+
+import { createHash } from 'node:crypto';
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const OUT = resolve(__dirname, '../src/data/challenges.json');
+
+const HOME = '/data/data/com.termux/files/home';
+const PREFIX = '/data/data/com.termux/files/usr';
+const USER = 'u0_a0';
+const HOST = 'localhost';
+
+// ── fs builders ─────────────────────────────────────────────────────────────
+const d = (children, mode = '755', owner = USER) => ({ type: 'dir', children, mode, owner });
+const f = (content, mode = '644', owner = USER) => ({ type: 'file', content, mode, owner });
+
+/** Wrap home-directory contents inside the standard Termux path tree. */
+function termuxRoot(homeChildren, extraRoot = {}) {
+  return d({
+    data: d({
+      data: d({
+        'com.termux': d({
+          files: d({
+            home: d(homeChildren),
+            usr: d({ bin: d({}), etc: d({}), tmp: d({}) }),
+          }),
+        }),
+      }),
+    }),
+    ...extraRoot,
+  });
+}
+
+// ── crypto / encoding helpers ───────────────────────────────────────────────
+const sha256 = (s) => createHash('sha256').update(s, 'utf8').digest('hex');
+const b64 = (s) => Buffer.from(s, 'utf8').toString('base64');
+const rot13 = (s) =>
+  s.replace(/[a-zA-Z]/g, (c) => {
+    const base = c <= 'Z' ? 65 : 97;
+    return String.fromCharCode(((c.charCodeAt(0) - base + 13) % 26) + base);
+  });
+const rev = (s) => [...s].reverse().join('');
+
+// ── challenge definitions ───────────────────────────────────────────────────
+const challenges = [];
+const add = (c) =>
+  challenges.push({
+    user: USER,
+    host: HOST,
+    cwd: HOME,
+    ...c,
+  });
+
+// 01 ─────────────────────────────────────────────────────────────────────────
+add({
+  id: 'c01',
+  slug: 'first-steps',
+  title: 'Hello, Termux',
+  category: 'Filesystem',
+  difficulty: 'Easy',
+  points: 10,
+  summary: 'Look around a fresh Termux home directory and read your first flag.',
+  objective: 'Read the file in your home directory to capture the flag.',
