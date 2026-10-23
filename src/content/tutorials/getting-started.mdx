@@ -1,0 +1,64 @@
+---
+title: Getting started with Termux
+description: Install Termux on Android and run your first Linux commands — pwd, ls, cd and whoami.
+order: 1
+level: Beginner
+tags: [termux, basics, setup]
+updated: "2026-01"
+---
+
+## What is Termux?
+
+Termux is a terminal emulator and Linux environment for Android. It gives you a real shell, a
+package manager and thousands of command-line tools — all without root, all in your pocket. If you
+have ever wanted to learn the command line but did not have a Linux machine handy, Termux is the
+shortest path.
+
+Install it from **F-Droid** (recommended, always current) or Google Play. When you open it you land
+in a shell prompt that looks something like this:
+
+```
+~ $
+```
+
+The `~` is your **home directory**, and `$` means you are a normal user (a `#` would mean root).
+
+## Your first four commands
+
+```bash
+pwd      # print working directory — where am I?
+ls       # list what is here
+cd       # change directory
+whoami   # who am I logged in as?
+```
+
+`pwd` prints the absolute path of your current directory. On Termux that is usually
+`/data/data/com.termux/files/home`. `ls` shows the files in it. Try them now:
+
+```bash
+pwd
+ls -la
+whoami
+```
+
+`ls -la` is worth learning early: `-l` is *long* format (permissions, owner, size, date) and `-a`
+shows *all* files, including hidden ones whose names start with a dot.
+
+## Getting help without leaving the terminal
+
+Every well-behaved command ships a manual:
+
+```bash
+man ls
+```
+
+Press `q` to quit the manual. If `man` is not installed yet, `ls --help` usually works too. In the
+Learmux sandbox, `help` lists every command and `man <command>` shows a short summary.
+
+## Where to go next
+
+- Try the challenge [Hello, Termux](/challenges/first-steps/) to capture your first flag.
+- Then [Hidden in Plain Sight](/challenges/hidden-in-plain-sight/) to practise `ls -a`.
+- Continue to [Navigating the filesystem](/learn/navigating-the-filesystem/).
+
+> Tip: everything you learn here works identically on a Linux server, a Mac and Termux itself.
