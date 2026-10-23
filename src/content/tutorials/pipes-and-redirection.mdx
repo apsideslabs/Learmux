@@ -1,0 +1,81 @@
+---
+title: Pipes and redirection
+description: Connect commands together with the pipe, save output with redirection, and slice text with cut, sort and sed.
+order: 4
+level: Intermediate
+tags: [pipes, cut, sed, redirection]
+updated: "2026-01"
+---
+
+## The pipe: small tools, composed
+
+Each command-line tool does one thing well. The pipe, `|`, is how you combine them: the output of
+the command on the left becomes the input of the command on the right.
+
+```bash
+cat users.txt | grep admin
+ls -l | wc -l
+cat access.log | grep " 500 " | head -n 5
+```
+
+You can chain as many as you like. Read it left to right as a sentence: "take the file, keep the
+admin lines, show the first field."
+
+## Redirection: where does output go?
+
+By default output goes to your screen. You can send it to a file instead:
+
+```bash
+echo "hello" > greeting.txt    # create or overwrite
+echo "world" >> greeting.txt   # append
+ls -l > listing.txt            # save a listing
+```
+
+- `>` overwrites the file (be careful — it does not ask).
+- `>>` appends.
+
+There is also `2>` for error output. `command 2>/dev/null` throws errors away — handy when you are
+searching `/` as a normal user.
+
+## Slicing text with cut
+
+`cut` pulls out columns. Most log and config formats are separated by a delimiter (a colon, a space,
+a comma):
+
+```bash
+cut -d: -f1 users.txt     # field 1, split on ":"
+cut -d: -f3 users.txt     # field 3
+cut -d: -f1,7 users.txt   # fields 1 and 7
+```
+
+A passwd-style line like `admin:x:1000:1000:Admin:/home/admin:/bin/bash` is colon-separated, so
+`-f3` is the UID and `-f7` is the login shell.
+
+## Sorting and deduplicating
+
+```bash
+sort names.txt           # alphabetical
+sort -n numbers.txt      # numeric
+sort -u names.txt        # sorted and unique
+sort names.txt | uniq -c # count occurrences of adjacent duplicates
+```
+
+## Search and replace with sed
+
+```bash
+sed 's/old/new/' file.txt      # replace first match per line
+sed 's/old/new/g' file.txt     # replace all matches
+```
+
+## Putting it together
+
+This is the shape of a real one-liner — find a line, take a field, decode it:
+
+```bash
+grep flag_blob capture.log | cut -d" " -f4 | base64 -d
+```
+
+## Practise
+
+- [Pipe Dreams](/challenges/pipe-dreams/) — chain `cat`, `grep` and `cut`.
+- [The Final Boss](/challenges/final-boss/) — grep, cut and base64 in one pipeline.
