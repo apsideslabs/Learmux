@@ -16,6 +16,7 @@ const prev = challenges[idx - 1];
 const next = challenges[idx + 1];
 const diffClass = { Easy: 'pill--easy', Medium: 'pill--medium', Hard: 'pill--hard' }[challenge.difficulty];
 const briefingHtml = renderMarkdown(challenge.briefing);
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 ---
 
 <BaseLayout
@@ -24,7 +25,7 @@ const briefingHtml = renderMarkdown(challenge.briefing);
 >
   <div class="wrap">
     <nav class="crumbs" aria-label="Breadcrumb">
-      <a href="/challenges/">Challenges</a> / <span>{challenge.slug}</span>
+      <a href={`${base}challenges/`}>Challenges</a> / <span>{challenge.slug}</span>
     </nav>
 
     <div class="challenge-detail" data-challenge-slug={challenge.slug}>
@@ -71,10 +72,10 @@ const briefingHtml = renderMarkdown(challenge.briefing);
           <h3>Navigate</h3>
           <div style="display:flex;flex-direction:column;gap:0.5rem">
             {prev
-              ? <a class="btn btn--ghost" href={`/challenges/${prev.slug}/`}>← {prev.title}</a>
+              ? <a class="btn btn--ghost" href={`${base}challenges/${prev.slug}/`}>← {prev.title}</a>
               : <span class="muted">You are at the first challenge.</span>}
             {next
-              ? <a class="btn btn--ghost" href={`/challenges/${next.slug}/`}>{next.title} →</a>
+              ? <a class="btn btn--ghost" href={`${base}challenges/${next.slug}/`}>{next.title} →</a>
               : <span class="muted">That was the last one — nice work.</span>}
           </div>
         </div>
