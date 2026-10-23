@@ -1,0 +1,152 @@
+/* ==========================================================================
+   Learmux — terminal component
+   Custom CSS for the interactive CTF terminal. Mobile-first: the layout
+   accounts for the on-screen keyboard via the --lx-kb custom property that the
+   terminal script sets from window.visualViewport.
+   ========================================================================== */
+
+.lx-term {
+  --lx-kb: 0px;
+  --lx-screen-bg: #070c17;
+  --lx-gutter: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  background: var(--lx-screen-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  /* keep a stable height so the page doesn't jump when output grows */
+  height: min(62vh, 520px);
+}
+
+/* ── title bar ──────────────────────────────────────────────────────────── */
+.lx-term__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.8rem;
+  background: linear-gradient(180deg, #16233f, #111c33);
+  border-bottom: 1px solid var(--border-soft);
+}
+.lx-term__dots { display: inline-flex; gap: 0.38rem; }
+.lx-term__dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: #3a4a68;
+}
+.lx-term__dot:nth-child(1) { background: #ff6b6b; }
+.lx-term__dot:nth-child(2) { background: #ffcf6b; }
+.lx-term__dot:nth-child(3) { background: #3ddc97; }
+.lx-term__title {
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lx-term__actions { margin-left: auto; display: inline-flex; gap: 0.35rem; }
+.lx-term__btn {
+  font: inherit;
+  font-size: 0.72rem;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 0.22rem 0.55rem;
+  cursor: pointer;
+}
+.lx-term__btn:hover { color: var(--text); background: var(--surface-2); }
+
+/* ── screen ─────────────────────────────────────────────────────────────── */
+.lx-term__screen {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--lx-gutter);
+  padding-bottom: calc(var(--lx-gutter) + var(--lx-kb));
+  color: #cfe3d8;
+  cursor: text;
+  scrollbar-width: thin;
+  scrollbar-color: #2b3d5e transparent;
+}
+.lx-term__screen::-webkit-scrollbar { width: 9px; }
+.lx-term__screen::-webkit-scrollbar-thumb {
+  background: #2b3d5e;
+  border-radius: 9px;
+}
+
+.lx-term__output { white-space: pre-wrap; word-break: break-word; }
+.lx-term__line { min-height: 1.35em; }
+.lx-term__line--echo { color: var(--text); }
+.lx-term__line--echo .lx-term__cmd { color: #eaf3ff; }
+.lx-term__muted { color: var(--faint); }
+.lx-term__err { color: var(--danger); }
+.lx-term__banner {
+  color: var(--accent);
+  border-left: 3px solid var(--accent);
+  padding-left: 0.6rem;
+  margin: 0.3rem 0;
+  background: rgba(61, 220, 151, 0.06);
+}
+
+/* ── prompt + input ─────────────────────────────────────────────────────── */
+.lx-term__prompt { color: var(--accent); white-space: pre; }
+.lx-term__inputline {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+}
+.lx-term__input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #eaf3ff;
+  font: inherit;
+  /* 16px keeps iOS from zooming when the field is focused */
+  font-size: 16px;
+  caret-color: var(--accent);
+  padding: 0;
+}
+@media (min-width: 640px) {
+  .lx-term__input { font-size: 0.9rem; }
+}
+.lx-term__input::selection { background: rgba(61, 220, 151, 0.35); }
+
+/* ── footer ─────────────────────────────────────────────────────────────── */
+.lx-term__footer {
+  border-top: 1px solid var(--border-soft);
+  background: #0a1120;
+}
+.lx-term__hintbar {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.74rem;
+  color: var(--faint);
+}
+.lx-term__hintbar button {
+  font: inherit;
+  font-size: 0.72rem;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+}
+.lx-term__hintbar button:hover { color: var(--accent); border-color: rgba(61, 220, 151, 0.4); }
+
+/* ── mobile ─────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .lx-term { height: min(72vh, 460px); border-radius: 12px; }
+  .lx-term__bar { padding: 0.5rem 0.6rem; }
+  .lx-term__screen { padding: 0.75rem; padding-bottom: calc(0.75rem + var(--lx-kb)); }
+}
