@@ -1,0 +1,70 @@
+---
+title: Networking basics from the shell
+description: Inspect interfaces, scan ports, fetch URLs and connect over SSH — all from Termux.
+order: 8
+level: Intermediate
+tags: [networking, nmap, curl, ssh]
+updated: "2026-01"
+---
+
+## Your own address
+
+```bash
+ifconfig            # interface details (or: ip addr)
+ping 8.8.8.8        # is the internet reachable?
+```
+
+`ifconfig` shows each interface, its IP address and its MAC address. `ping` sends a tiny packet and
+waits for a reply — the simplest possible reachability test.
+
+## Scanning ports with nmap
+
+Every networked service listens on a port. `nmap` finds the open ones and, with service detection,
+reads the banner each service announces:
+
+```bash
+nmap 127.0.0.1
+nmap -sV 127.0.0.1
+nmap -p 22,80,443 192.168.1.1
+```
+
+Banners are an information leak: they frequently reveal software names and versions. Reading them is
+reconnaissance.
+
+> Only ever scan machines you own or have explicit permission to test. Scanning other people's
+> systems is illegal in most jurisdictions.
+
+## Fetching from the web
+
+```bash
+curl http://challenge.local/flag       # print a response body
+curl -I http://example.com             # headers only
+curl -o file.zip http://example.com/f.zip   # save to a file
+wget http://example.com/file.zip       # download a file
+```
+
+`curl` is the workhorse for talking to APIs and inspecting responses; `wget` is for saving files.
+
+## Connecting over SSH
+
+Termux can be both an SSH client and a server:
+
+```bash
+pkg install openssh
+ssh user@host                          # connect to another machine
+sshd                                   # start an SSH server on the phone
+```
+
+The first time you connect you will be asked to verify the host key fingerprint — that is normal and
+important; it is how you know you are talking to the right machine.
+
+## Seeing connections
+
+```bash
+netstat                # active connections and listening ports
+```
+
+## Practise
+
+- [Network Recon](/challenges/network-recon/) — scan a host and read a banner.
+- [Fetch the Flag](/challenges/fetch-the-flag/) — pull a flag down with curl.
