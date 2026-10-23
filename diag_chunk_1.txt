@@ -1,0 +1,73 @@
+  briefing:
+    'You are dropped into the Termux home directory. Two commands do most of the work here:\n\n' +
+    '- `ls` lists what is in the current directory.\n' +
+    '- `cat <file>` prints a file to the screen.\n\n' +
+    'List the directory, find the interesting file, and read it.',
+  flag: 'TERMUX{hello_world}',
+  hints: ['Run `ls` on its own.', 'Then run `cat welcome.txt`.'],
+  starters: ['ls', 'cat welcome.txt'],
+  fs: termuxRoot({
+    'welcome.txt': f('Welcome to Learmux!\nYour first flag is: TERMUX{hello_world}\n'),
+    'readme.md': f('# Termux\nA terminal emulator and Linux environment for Android.\n'),
+  }),
+});
+
+// 02 ─────────────────────────────────────────────────────────────────────────
+add({
+  id: 'c02',
+  slug: 'hidden-in-plain-sight',
+  title: 'Hidden in Plain Sight',
+  category: 'Filesystem',
+  difficulty: 'Easy',
+  points: 10,
+  summary: 'Unix hides files whose names start with a dot. Find one.',
+  objective: 'Find and read the hidden file in your home directory.',
+  briefing:
+    'On Unix-like systems a leading dot marks a file as hidden — `ls` will not show it by default. ' +
+    'Use `ls -a` to list *all* entries, then `cat` the one that looks suspicious.',
+  flag: 'TERMUX{hidden_in_plain_sight}',
+  hints: ['`ls` skips dotfiles.', '`ls -a` shows them, including `.secret`'],
+  starters: ['ls -a', 'cat .secret'],
+  fs: termuxRoot({
+    '.secret': f('You found me. TERMUX{hidden_in_plain_sight}\n'),
+    'notes.txt': f('Remember to check for dotfiles next time.\n'),
+    '.bashrc': f('# ~/.bashrc\nexport PS1="\\w $ "\n'),
+  }),
+});
+
+// 03 ─────────────────────────────────────────────────────────────────────────
+add({
+  id: 'c03',
+  slug: 'follow-the-trail',
+  title: 'Follow the Trail',
+  category: 'Filesystem',
+  difficulty: 'Easy',
+  points: 15,
+  summary: 'A flag is buried deep in a directory tree. Hunt it down.',
+  objective: 'Locate the file named flag.txt anywhere under your home directory and read it.',
+  briefing:
+    'The flag is several directories deep. Instead of `cd`-ing one level at a time, let `find` do the walking:\n\n' +
+    '```\nfind . -name flag.txt\n```\n\n' +
+    'Then `cat` the path it prints.',
+  flag: 'TERMUX{follow_the_trail}',
+  hints: ['`find . -name flag.txt` searches everything below you.', '`cd` and `ls` work too if you prefer.'],
+  starters: ['find . -name flag.txt', 'cat projects/android/scripts/backup/flag.txt'],
+  fs: termuxRoot({
+    projects: d({
+      android: d({
+        scripts: d({
+          backup: d({
+            'flag.txt': f('TERMUX{follow_the_trail}\n'),
+            'notes.md': f('Backups run nightly at 02:00.\n'),
+          }),
+        }),
+      }),
+      web: d({ 'index.html': f('<h1>hi</h1>\n') }),
+    }),
+    'todo.md': f('- [x] set up termux\n- [ ] find the flag\n'),
+  }),
+});
+
+// 04 ─────────────────────────────────────────────────────────────────────────
+add({
+  id: 'c04',
