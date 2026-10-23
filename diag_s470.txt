@@ -1,0 +1,15 @@
+      '22/tcp   open  ssh     OpenSSH 9.6 (protocol 2.0)\n' +
+      '1337/tcp open  waste   Learmux flag service — banner: TERMUX{network_recon}\n' +
+      '8022/tcp open  ssh     OpenSSH 9.6 (Termux dropbear)\n' +
+      'Nmap done: 1 IP address (1 host up) scanned in 1.42 seconds\n',
+  },
+  fs: termuxRoot({}),
+});
+
+// 17 ─────────────────────────────────────────────────────────────────────────
+add({
+  id: 'c17',
+  slug: 'fetch-the-flag',
+  title: 'Fetch the Flag',
+  category: 'Networking',
+  difficulty: 'Medium',
