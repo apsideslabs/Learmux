@@ -18,6 +18,7 @@ const {
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const fullTitle = title.includes('Learmux') ? title : `${title} · Learmux`;
 const totalChallenges = challenges.length;
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 ---
 
 <!doctype html>
@@ -25,7 +26,7 @@ const totalChallenges = challenges.length;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content="#0b1220" />
     <meta name="color-scheme" content="dark" />
@@ -47,7 +48,7 @@ const totalChallenges = challenges.length;
   <body data-total-challenges={totalChallenges}>
     <header class="site-header">
       <div class="wrap">
-        <a class="brand" href="/" aria-label="Learmux home">
+        <a class="brand" href={base} aria-label="Learmux home">
           <svg viewBox="0 0 64 64" aria-hidden="true">
             <rect x="2" y="8" width="60" height="48" rx="10" fill="#0b1220" stroke="#3ddc97" stroke-width="3"></rect>
             <path d="M14 26l8 6-8 6" fill="none" stroke="#3ddc97" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -56,9 +57,9 @@ const totalChallenges = challenges.length;
           <span>Lear<span class="brand-x">mux</span></span>
         </a>
         <nav class="nav" aria-label="Primary">
-          <a href="/learn/" aria-current={Astro.url.pathname.startsWith('/learn') ? 'page' : undefined}>Learn</a>
-          <a href="/challenges/" aria-current={Astro.url.pathname.startsWith('/challenges') ? 'page' : undefined}>Challenges</a>
-          <a href="/about/" aria-current={Astro.url.pathname.startsWith('/about') ? 'page' : undefined}>About</a>
+          <a href={`${base}learn/`} aria-current={Astro.url.pathname.includes('/learn') ? 'page' : undefined}>Learn</a>
+          <a href={`${base}challenges/`} aria-current={Astro.url.pathname.includes('/challenges') ? 'page' : undefined}>Challenges</a>
+          <a href={`${base}about/`} aria-current={Astro.url.pathname.includes('/about') ? 'page' : undefined}>About</a>
           <span class="progress-chip" data-progress-chip data-total={totalChallenges}>0 / {totalChallenges}</span>
         </nav>
       </div>
@@ -72,9 +73,9 @@ const totalChallenges = challenges.length;
       <div class="wrap">
         <span>Learmux — built with Astro, TypeScript and a lot of <span class="mono">ls -la</span>.</span>
         <span>
-          <a href="/challenges/">Challenges</a> ·
-          <a href="/learn/">Tutorials</a> ·
-          <a href="/about/">About</a>
+          <a href={`${base}challenges/`}>Challenges</a> ·
+          <a href={`${base}learn/`}>Tutorials</a> ·
+          <a href={`${base}about/`}>About</a>
         </span>
       </div>
     </footer>
