@@ -1,0 +1,76 @@
+---
+title: Encoding, hex and hashes
+description: Base64, ROT13, hex dumps, strings and SHA-256 — recognise and reverse common encodings.
+order: 7
+level: Intermediate
+tags: [encoding, base64, hashing, forensics]
+updated: "2026-01"
+---
+
+## Encoding is not encryption
+
+Encodings like Base64 and ROT13 change how data *looks*, not who can read it. Anyone can reverse
+them — which is why recognising them is a core skill for CTFs and for everyday debugging.
+
+## Base64
+
+Base64 turns arbitrary bytes into a safe alphabet of `A–Z a–z 0–9 + /`. You can spot it by the
+trailing `=` padding and the fact it uses no spaces:
+
+```bash
+echo -n "hello" | base64        # aGVsbG8=
+echo "aGVsbG8=" | base64 -d     # hello
+base64 -d encoded.txt           # decode a whole file
+```
+
+## ROT13 and Caesar ciphers
+
+ROT13 rotates each letter 13 places and is its own inverse. In the Learmux sandbox there is a helper:
+
+```bash
+rot13 cipher.txt
+```
+
+Apply it twice and you are back where you started.
+
+## Hex dumps
+
+`xxd` and `hexdump -C` show raw bytes as hexadecimal with a printable column on the right:
+
+```bash
+xxd data.bin
+hexdump -C data.bin
+```
+
+The right-hand ASCII column is where hidden text often shows up — even when the file "looks like
+gibberish" in the hex.
+
+## Extracting printable strings
+
+`strings` pulls runs of printable characters out of any file, which is the first move on an unknown
+binary blob:
+
+```bash
+strings firmware.bin
+strings firmware.bin | grep -i flag
+```
+
+## Hashes
+
+A hash is a fixed-length fingerprint of a file's contents. Change one byte and the hash changes
+completely. Hashes verify integrity; they are not reversible.
+
+```bash
+sha256sum backup_a.txt backup_b.txt
+```
+
+If `checksum.txt` records the digest of the genuine file, you can tell the real backup from a
+tampered copy by comparing the digests.
+
+## Practise
+
+- [Decode Me](/challenges/decode-me/) — Base64.
+- [ROT13 Is Weak](/challenges/rot13-is-weak/) — a Caesar shift.
+- [Hex on the Wire](/challenges/hex-on-the-wire/) — read a hex dump.
+- [Integrity Matters](/challenges/integrity-matters/) — spot the tampered file.
+- [Buried Strings](/challenges/buried-strings/) — pull text out of a blob.
