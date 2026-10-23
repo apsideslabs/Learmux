@@ -1,0 +1,11 @@
+
+// 18 ─────────────────────────────────────────────────────────────────────────
+add({
+  id: 'c18',
+  slug: 'buried-strings',
+  title: 'Buried Strings',
+  category: 'Forensics',
+  difficulty: 'Medium',
+  points: 25,
+  summary: 'Extract readable text from a messy binary blob.',
+  objective: 'Use strings on firmware.bin to reveal the embedded flag.',
