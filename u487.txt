@@ -1,0 +1,1 @@
+  summary: 'Pull a flag down from a web endpoint.',
