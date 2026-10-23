@@ -1,0 +1,109 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Terminal from '../../components/Terminal.astro';
+import { challenges } from '../../lib/challenges';
+import { renderMarkdown } from '../../lib/md';
+
+export async function getStaticPaths() {
+  return challenges.map((challenge, idx) => ({
+    params: { slug: challenge.slug },
+    props: { challenge, idx },
+  }));
+}
+
+const { challenge, idx } = Astro.props;
+const prev = challenges[idx - 1];
+const next = challenges[idx + 1];
+const diffClass = { Easy: 'pill--easy', Medium: 'pill--medium', Hard: 'pill--hard' }[challenge.difficulty];
+const briefingHtml = renderMarkdown(challenge.briefing);
+---
+
+<BaseLayout
+  title={challenge.title}
+  description={`${challenge.objective} — a ${challenge.difficulty.toLowerCase()} ${challenge.category} challenge worth ${challenge.points} points.`}
+>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href="/challenges/">Challenges</a> / <span>{challenge.slug}</span>
+    </nav>
+
+    <div class="challenge-detail" data-challenge-slug={challenge.slug}>
+      <div class="challenge-detail__main">
+        <div class="challenge-head">
+          <span class={`pill ${diffClass}`}>{challenge.difficulty}</span>
+          <span class="pill pill--points">{challenge.points} pts</span>
+          <span class="pill">{challenge.category}</span>
+          <span class="pill pill--solved" data-solved-only>✔ solved</span>
+        </div>
+        <h1 style="margin-bottom:0.5rem">{challenge.title}</h1>
+        <p class="muted" style="font-size:1.05rem;max-width:65ch">{challenge.summary}</p>
+
+        <Terminal challenge={challenge} />
+
+        <div class="brief prose" style="max-width:none">
+          <h2 style="margin-top:0;font-size:1.15rem">Briefing</h2>
+          <Fragment set:html={briefingHtml} />
+          <p class="objective"><strong>Objective:</strong> {challenge.objective}</p>
+        </div>
+      </div>
+
+      <aside class="challenge-detail__aside">
+        <div class="card">
+          <h3>Hints</h3>
+          <p class="muted">Try it yourself first — then peek.</p>
+          <details class="hints">
+            <summary>Reveal {challenge.hints.length} hint{challenge.hints.length === 1 ? '' : 's'}</summary>
+            <ol>
+              {challenge.hints.map((h) => <li>{h}</li>)}
+            </ol>
+          </details>
+        </div>
+
+        <div class="card">
+          <h3>Quick commands</h3>
+          <p class="muted mb-0">Click a starter to drop it into the terminal, then press Enter.</p>
+          <ul class="mono" style="margin:0.6rem 0 0;padding-left:1.1rem;color:var(--accent);font-size:0.85rem">
+            {(challenge.starters ?? []).map((s) => <li>{s}</li>)}
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Navigate</h3>
+          <div style="display:flex;flex-direction:column;gap:0.5rem">
+            {prev
+              ? <a class="btn btn--ghost" href={`/challenges/${prev.slug}/`}>← {prev.title}</a>
+              : <span class="muted">You are at the first challenge.</span>}
+            {next
+              ? <a class="btn btn--ghost" href={`/challenges/${next.slug}/`}>{next.title} →</a>
+              : <span class="muted">That was the last one — nice work.</span>}
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .challenge-detail {
+    display: grid;
+    gap: 1.4rem;
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+  .challenge-detail__main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    min-width: 0;
+  }
+  .challenge-detail__aside {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  @media (min-width: 960px) {
+    .challenge-detail {
+      grid-template-columns: minmax(0, 1fr) 320px;
+    }
+  }
+</style>
