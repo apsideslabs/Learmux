@@ -38,6 +38,7 @@ const steps = [
   { n: '03', t: 'Hunt the flag', d: 'Explore, grep, decode and pipe your way to a TERMUX{...} flag. Stuck? Reveal a hint.' },
   { n: '04', t: 'Track progress', d: 'Captured flags are remembered locally, so your score survives a refresh.' },
 ];
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 ---
 
 <BaseLayout>
@@ -50,8 +51,8 @@ const steps = [
       clever command away.
     </p>
     <div class="hero-actions">
-      <a class="btn btn--primary" href="/challenges/">Start a challenge →</a>
-      <a class="btn btn--ghost" href="/learn/">Read the tutorials</a>
+      <a class="btn btn--primary" href={`${base}challenges/`}>Start a challenge →</a>
+      <a class="btn btn--ghost" href={`${base}learn/`}>Read the tutorials</a>
     </div>
 
     <div class="stats" style="margin-top:2rem">
@@ -104,7 +105,7 @@ const steps = [
         <h2>Featured challenges</h2>
         <p>A taste of the difficulty curve, from your very first <code>ls</code> to the final boss.</p>
       </div>
-      <a class="btn btn--ghost" href="/challenges/">See all {challenges.length}</a>
+      <a class="btn btn--ghost" href={`${base}challenges/`}>See all {challenges.length}</a>
     </div>
     <div class="grid cols-2">
       {featured.map((c) => <ChallengeCard challenge={c} />)}
@@ -116,8 +117,8 @@ const steps = [
       <h2 style="margin-bottom:0.4rem">Ready to capture your first flag?</h2>
       <p class="muted">No account, no install. Just a browser and a terminal that listens.</p>
       <div class="hero-actions" style="justify-content:center">
-        <a class="btn btn--primary" href="/challenges/first-steps/">Play “Hello, Termux” →</a>
-        <a class="btn btn--ghost" href="/learn/getting-started/">Install Termux for real</a>
+        <a class="btn btn--primary" href={`${base}challenges/first-steps/`}>Play “Hello, Termux” →</a>
+        <a class="btn btn--ghost" href={`${base}learn/getting-started/`}>Install Termux for real</a>
       </div>
     </div>
   </section>
