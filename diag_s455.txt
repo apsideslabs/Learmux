@@ -1,0 +1,15 @@
+  difficulty: 'Medium',
+  points: 20,
+  summary: 'Scan a host and read a service banner that leaks a flag.',
+  objective: 'Run an nmap scan against 127.0.0.1 and read the service banner.',
+  briefing:
+    '`nmap` maps open ports and, with service detection, reads the banner each service returns. ' +
+    'Banners are a classic information leak.\n\n```\nnmap -sV 127.0.0.1\n```',
+  flag: 'TERMUX{network_recon}',
+  hints: ['`nmap 127.0.0.1`', 'Look at the banner for port 1337.'],
+  starters: ['nmap 127.0.0.1'],
+  overrides: {
+    nmap:
+      'Starting Nmap 7.94 ( https://nmap.org )\n' +
+      'Nmap scan report for localhost (127.0.0.1)\n' +
+      'PORT     STATE SERVICE VERSION\n' +
