@@ -1,0 +1,1 @@
+    '`curl <url>` prints the body of an HTTP response to the terminal. Fetch the challenge endpoint:\n\n' +
