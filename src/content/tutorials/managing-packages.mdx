@@ -1,0 +1,67 @@
+---
+title: Managing packages in Termux
+description: Install tools with pkg and apt, keep them updated, and inspect what is installed.
+order: 6
+level: Beginner
+tags: [termux, pkg, apt]
+updated: "2026-01"
+---
+
+## pkg is your app store
+
+Termux ships a package manager, `pkg`, which wraps the Debian-style `apt` underneath. Before you
+install anything, refresh the index:
+
+```bash
+pkg update
+pkg upgrade
+```
+
+Then install what you need:
+
+```bash
+pkg install git
+pkg install python
+pkg install nmap openssh
+```
+
+You can install several packages in one line. Remove them with `pkg uninstall <name>`.
+
+## Inspecting what is installed
+
+```bash
+pkg list-installed        # everything currently installed
+pkg show nmap             # details about a package
+pkg search scanner        # search the index
+```
+
+Listing installed packages is a genuine security habit: unexpected packages are a common sign of a
+compromised or misconfigured environment. Read the list, and know why each one is there.
+
+## Where things live
+
+Termux keeps its files under a single prefix rather than scattered across the system:
+
+- `$PREFIX/bin` — executables
+- `$PREFIX/etc` — configuration
+- `$PREFIX/var` — variable data, including package metadata
+
+`echo $PREFIX` prints the root (usually `/data/data/com.termux/files/usr`). Because everything lives
+under one prefix, you can back up or move your whole Termux install easily.
+
+## The storage bridge
+
+By default Termux cannot see your phone's shared storage. Grant it access with:
+
+```bash
+termux-setup-storage
+```
+
+That creates `~/storage` symlinks into `~/storage/shared` (your Downloads, DCIM, and so on), so you
+can `cp` files in and out.
+
+## Practise
+
+- [Package Cache](/challenges/package-cache/) — a suspicious package is installed; find it.
+
+> Tip: `pkg install root-repo x11-repo` unlocks extra repositories with even more packages.
