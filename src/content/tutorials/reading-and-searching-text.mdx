@@ -1,0 +1,65 @@
+---
+title: Reading and searching text
+description: cat, head, tail, wc and grep — read files and find the one line that matters.
+order: 3
+level: Beginner
+tags: [text, grep, logs]
+updated: "2026-01"
+---
+
+## Reading a file
+
+```bash
+cat notes.txt        # print the whole file
+cat -n notes.txt     # ...with line numbers
+head -n 20 access.log # the first 20 lines
+tail -n 20 access.log # the last 20 lines
+less access.log      # scroll through it (q to quit)
+```
+
+`head` and `tail` are your friends on big files — you rarely need all of a 50 MB log. `tail -f`
+follows a file as it grows, which is how you watch a live log.
+
+## Counting
+
+```bash
+wc -l access.log     # how many lines?
+wc -w notes.txt      # how many words?
+wc -c notes.txt      # how many bytes?
+```
+
+## Searching with grep
+
+`grep` prints the lines that match a pattern. It is the single most useful tool for digging through
+text:
+
+```bash
+grep error access.log          # lines containing "error"
+grep -i error access.log       # ignore case: matches Error, ERROR, error
+grep -n error access.log       # show line numbers
+grep -c error access.log       # just count the matches
+grep -v error access.log       # invert: lines that do NOT match
+grep -r "TODO" .               # search recursively through a directory
+```
+
+Patterns are regular expressions, so you can be precise:
+
+```bash
+grep "^2026-01-01" access.log   # lines starting with a date
+grep "GET /flag" access.log     # a specific request
+```
+
+## A realistic workflow
+
+You have a noisy web log and a hunch. Rather than reading it, ask questions:
+
+```bash
+wc -l access.log
+grep -c " 500 " access.log
+grep " 500 " access.log | head
+```
+
+## Practise
+
+- [Logs Never Lie](/challenges/logs-never-lie/) — grep a flag out of an access log.
+- [Case Insensitive](/challenges/case-insensitive/) — why `-i` matters.
