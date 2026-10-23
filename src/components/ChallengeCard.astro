@@ -7,11 +7,12 @@ interface Props {
 
 const { challenge } = Astro.props;
 const diffClass = { Easy: 'pill--easy', Medium: 'pill--medium', Hard: 'pill--hard' }[challenge.difficulty];
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 ---
 
 <a
   class="card card--link"
-  href={`/challenges/${challenge.slug}/`}
+  href={`${base}challenges/${challenge.slug}/`}
   data-challenge-slug={challenge.slug}
   aria-label={`${challenge.title} — ${challenge.difficulty} challenge`}
 >
