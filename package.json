@@ -1,0 +1,23 @@
+{
+  "name": "learmux",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Learmux — a Termux & cybersecurity learning platform with an interactive TypeScript CTF terminal.",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "generate": "node scripts/generate-challenges.mjs",
+    "test": "node scripts/run-tests.mjs"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4",
+    "@astrojs/sitemap": "^3",
+    "astro": "^5"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.0"
+  }
+}
