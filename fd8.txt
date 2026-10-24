@@ -1,0 +1,35 @@
+    glyph: 'magnifier',
+    commands: [
+      {
+        args: 'config',
+        what: 'search the hierarchy for any path whose name contains the pattern, with case-insensitivity applied when the pattern is all lowercase',
+      },
+      {
+        args: '-e md',
+        what: 'restrict matches to a single extension, here Markdown documents',
+      },
+      {
+        args: '-t d',
+        what: 'return directories only, filtering out ordinary entries',
+      },
+      {
+        args: '-H',
+        what: 'include hidden items and folders that are normally skipped',
+      },
+      {
+        args: '-x rm',
+        what: 'run a command once per match, passing each path as an argument',
+      },
+      {
+        args: '-s',
+        what: 'force case-sensitive matching even when the pattern is lowercase',
+      },
+    ],
+    example: {
+      args: '-e md',
+      out: ['README.md', 'docs/install.md', 'docs/usage.md'].join('\n'),
+    },
+  },
+  {
+    slug: 'tree',
+    name: 'tree',
