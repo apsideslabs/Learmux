@@ -13,7 +13,7 @@ tags: [http, api, json]
 
 import Callout from '../../components/Callout.astro';
 
-When you open a page or call an API, your phone sends an HTTP request and a server sends back a response. curl lets you do the same thing from the shell, one request at a time, and see the raw reply. In this lesson you will read a response, learn what the status code means, send your own headers and body, and pull apart a JSON answer.
+When you open a page or call an API, your phone sends an HTTP request. A server sends back a response. curl lets you do the same thing from the shell. You send one request at a time, and see the raw reply. In this lesson you will read a response, and learn what the status code means. You will send your own headers and body, and pull apart a JSON answer.
 
 ## What you'll be able to do
 
@@ -38,11 +38,11 @@ content-length: 45
 {"id": 42, "name": "ada", "created": true}
 ```
 
-The first line is the status line, reading HTTP/2 and then the code 200. The lines after it are the response headers. After one blank line comes the body, which here is a short JSON object.
+The first line is the status line. It reads HTTP/2, then the code 200. The lines after it are the response headers. After one blank line comes the body, here a short JSON object.
 
 ## Step 2: What the status code means
 
-The number on the status line is the status code, and it tells you what the server did with your request.
+The number on the status line is the status code. It tells you what the server did with your request.
 
 | Code | Meaning |
 | --- | --- |
@@ -51,13 +51,13 @@ The number on the status line is the status code, and it tells you what the serv
 | 404 | Not found. The address is valid but nothing is there. |
 | 500 | Server error. The server failed while handling the request. |
 
-Codes also fall into classes. A 2xx means success, a 3xx means the resource moved and the client should follow, a 4xx means the request had a problem, and a 5xx means the server did. The exact number matters, because a 301 tells you to update a saved address while a 302 is only temporary.
+Codes also fall into classes. A 2xx means success. A 3xx means the resource moved and the client should follow. A 4xx means the request had a problem, and a 5xx means the server did. The exact number matters. A 301 tells you to update a saved address, while a 302 is only temporary.
 
-The code is the fastest way to tell success from failure. A 200 is a result, a 4xx is your side, and a 5xx is theirs.
+The code is the fastest way to tell success from failure. A 200 is a result. A 4xx is your side, and a 5xx is theirs.
 
 ## Step 3: Send headers and a body
 
-Requests carry headers of their own, and you add your own with -H. To send data with the request you use -d, which switches it to a POST. The -d value is sent as form data by default, so the server reads it as a set of fields.
+Requests carry headers of their own, and you add your own with -H. To send data with the request you use -d, which switches it to a POST. The -d value is sent as form data by default. The server reads it as a set of fields.
 
 These are the request headers you will meet most often:
 
@@ -68,7 +68,7 @@ These are the request headers you will meet most often:
 | User-Agent | Which client is making the request |
 | Authorization | Credentials for a protected resource |
 
-This request sends an Accept header and a form field, and writes the reply body to a file with -o:
+This request sends an Accept header and a form field. It writes the reply body to a file with -o:
 
 ```text
 $ curl -i -H "Accept: application/json" https://example.com/api/people
@@ -79,7 +79,7 @@ location: /api/people/42
 content-length: 45
 ```
 
-The -o option sent the body to people.json, so only the headers printed here. The server answered with a 201, which means a new record was created.
+The -o option sent the body to people.json, so only the headers printed here. The server answered with a 201. That means a new record was created.
 
 ## Step 4: Read the JSON reply
 
@@ -104,7 +104,7 @@ $ python -m json.tool people.json
 }
 ```
 
-Now the shape is clear: three keys and their values. JSON has a small set of value types, namely text in double quotes, numbers, the words true and false, arrays in square brackets, and objects. When the text is not valid JSON the tool stops and names the line where it failed, which usually means you saved an error page instead of the data.
+Now the shape is clear: three keys and their values. JSON has a small set of value types. There is text in double quotes, numbers, the words true and false, arrays in square brackets, and objects. When the text is not valid JSON, the tool stops and names the line where it failed. That usually means you saved an error page instead of the data.
 
 <Callout type="tip" title="Keep keys out of your history">
 Always use HTTPS so the request and the reply are encrypted in transit. Never paste a real API key into a command you share, and remember that shells save commands to a history file on disk. Read a key from a file or an environment variable instead of typing it on the line.
