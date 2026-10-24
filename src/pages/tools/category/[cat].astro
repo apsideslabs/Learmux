@@ -1,0 +1,87 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Icon from '../../../components/Icon.astro';
+import '../../../styles/tools.css';
+import { toolCategories, toolsByCategory } from '../../../data/tools';
+
+export function getStaticPaths() {
+  return toolsByCategory().map((g) => ({ params: { cat: g.category.id }, props: { group: g } }));
+}
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const { group } = Astro.props;
+const { category, items } = group;
+
+const idx = toolCategories.findIndex((c) => c.id === category.id);
+const prev = toolCategories[idx - 1];
+const next = toolCategories[idx + 1];
+const prevCount = prev ? items.length && undefined : undefined;
+const countFor = (id: string) => toolsByCategory().find((g) => g.category.id === id)?.items.length ?? 0;
+---
+
+<BaseLayout title={category.name} description={category.blurb}>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span>
+      <a href={`${base}tools/`}>Tools</a><span class="sep">›</span>
+      <span>{category.name}</span>
+    </nav>
+
+    <header class="tools-head">
+      <p class="eyebrow">Tools · category {idx + 1} of {toolCategories.length}</p>
+      <h1>{category.name}</h1>
+      <p class="lede">{category.blurb}</p>
+      <p class="tools-head__meta">{items.length} tools in this category</p>
+    </header>
+
+    <div class="tool-grid" style="margin-bottom:2rem">
+      {items.map((t) => (
+        <a class="tool-card" href={`${base}tools/${t.slug}/`}>
+          <span class="tool-logo">
+            <img src={`${base}logos/${t.slug}.svg`} width="26" height="26" alt="" loading="lazy" />
+          </span>
+          <span class="tool-card__body">
+            <span class="tool-card__name">{t.name}</span>
+            <span class="tool-card__tagline">{t.tagline}</span>
+            <span class="tool-card__meta">{t.developer}</span>
+          </span>
+          <span class="tool-card__count" title={`${t.commands.length} commands`}>{t.commands.length}</span>
+        </a>
+      ))}
+    </div>
+
+    <div class="section-label"><span>Other categories</span></div>
+    <div class="cat-nav" style="margin-top:1rem">
+      {toolCategories.filter((c) => c.id !== category.id).map((c) => (
+        <a class="cat-card" href={`${base}tools/category/${c.id}/`}>
+          <span class="cat-card__icon"><Icon name="grid" size={17} /></span>
+          <span class="cat-card__body">
+            <span class="cat-card__name">{c.name}</span>
+            <span class="cat-card__blurb">{c.blurb}</span>
+          </span>
+          <span class="cat-card__count">{countFor(c.id)}</span>
+        </a>
+      ))}
+    </div>
+
+    <nav class="cat-pager" aria-label="Category navigation">
+      {prev
+        ? <a href={`${base}tools/category/${prev.id}/`}>
+            <span class="cat-pager__dir">Previous category</span>
+            <span class="cat-pager__name">← {prev.name}</span>
+          </a>
+        : <span></span>}
+      {next
+        ? <a href={`${base}tools/category/${next.id}/`}>
+            <span class="cat-pager__dir">Next category</span>
+            <span class="cat-pager__name">{next.name} →</span>
+          </a>
+        : <span></span>}
+    </nav>
+
+    <div class="actions" style="margin-top:2rem">
+      <a class="btn btn--outline" href={`${base}tools/`}>All tools</a>
+      <a class="btn btn--green" href={`${base}challenges/`}>Practise with the CTF</a>
+    </div>
+  </div>
+</BaseLayout>
