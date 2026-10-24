@@ -1,0 +1,51 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import { categoryGroups } from '../../lib/tutorials';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const groups = await categoryGroups();
+
+const intros: Record<string, string> = {
+  Termux: 'Setting up Termux and getting comfortable in its shell.',
+  Filesystem: 'Moving around the filesystem and finding what you need.',
+  Text: 'Reading files and pulling out the one line that matters.',
+  Pipes: 'Composing small tools into pipelines, and sending output where you want it.',
+  Permissions: 'Reading and changing file permissions.',
+  Packages: 'Installing and inspecting software with the Termux package manager.',
+  Encoding: 'Base64, ROT13, hex dumps, strings and hashes.',
+  Networking: 'Interfaces, port scanning, HTTP and SSH from the shell.',
+};
+---
+
+<BaseLayout
+  title="Categories"
+  description="Browse Learmux tutorials by topic: Termux, the filesystem, text processing, pipes, permissions, packages, encoding and networking."
+>
+  <div class="wrap">
+    <header class="section">
+      <h1>Categories</h1>
+      <p class="lede">Every lesson, grouped by the part of the shell it covers.</p>
+    </header>
+
+    <div class="rows">
+      {groups.map((g) => (
+        <a class="row" href={`${base}category/${g.slug}/`}>
+          <span>
+            <span class="row__title">{g.name}</span>
+            <span class="row__meta">{intros[g.name] ?? `Lessons filed under ${g.name}.`}</span>
+          </span>
+          <span class="row__side">
+            <span class="chip">{g.items.length} {g.items.length === 1 ? 'lesson' : 'lessons'}</span>
+            <Icon name="chevron" size={15} />
+          </span>
+        </a>
+      ))}
+    </div>
+
+    <div class="actions" style="margin-top:2rem">
+      <a class="btn btn--outline" href={`${base}learn/`}>All lessons</a>
+      <a class="btn btn--green" href={`${base}challenges/`}>Play the CTF</a>
+    </div>
+  </div>
+</BaseLayout>
