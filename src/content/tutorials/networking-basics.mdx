@@ -1,11 +1,17 @@
 ---
-title: Networking basics from the shell
-description: Inspect interfaces, scan ports, fetch URLs and connect over SSH — all from Termux.
+title: "Networking basics from the shell"
+description: "Inspect interfaces, scan ports, fetch URLs and connect over SSH — all from Termux."
+excerpt: "Inspect interfaces, scan ports, fetch URLs and connect over SSH — all from Termux."
+category: "Networking"
+author: "The Study Cipher"
+date: "2026-02-09"
 order: 8
 level: Intermediate
 tags: [networking, nmap, curl, ssh]
 updated: "2026-01"
 ---
+
+import Callout from '../../components/Callout.astro';
 
 ## Your own address
 
@@ -31,8 +37,10 @@ nmap -p 22,80,443 192.168.1.1
 Banners are an information leak: they frequently reveal software names and versions. Reading them is
 reconnaissance.
 
-> Only ever scan machines you own or have explicit permission to test. Scanning other people's
-> systems is illegal in most jurisdictions.
+<Callout type="warning" title="Authorised testing only">
+Only ever scan machines you own or have explicit permission to test. Scanning other people's systems
+is illegal in most jurisdictions.
+</Callout>
 
 ## Fetching from the web
 
