@@ -105,6 +105,9 @@ npm run dev              # http://localhost:4321
 npm run build            # static output in dist/
 npm run preview          # preview the production build
 npm test                 # check every challenge is solvable
+npm run validate         # check challenges, tools and lessons
+npm run validate:links   # check internal links (needs a build first)
+npm run test:validator   # check the validator still catches faults
 npm run generate         # rebuild src/data/challenges.json
 npm run generate:thumbs  # redraw the SVG thumbnails
 ```
@@ -142,14 +145,18 @@ was used. That is the difference between an explicit rule and "the output contai
 
 ## Authoring
 
-Edit `scripts/generate-challenges.mjs`, then `npm run generate`. New challenges appear in the index,
-the routes and the progress totals automatically. Lessons are just MDX files in
-`src/content/tutorials/` with `category`, `author`, `date` and `excerpt` frontmatter.
+The challenge format is specified in [`docs/challenge-format.md`](docs/challenge-format.md), and
+`npm run validate` enforces every rule in it. Edit `scripts/generate-challenges.mjs`, then
+`npm run generate`. New challenges appear in the index, the routes and the progress totals
+automatically. Lessons are MDX files in `src/content/tutorials/`; the frontmatter schema is in
+`src/content.config.ts`, and `track` must match an id in `src/lib/curriculum.ts`.
 
 ## Deployment
 
 Deployed to **GitHub Pages** by `.github/workflows/deploy.yml`: on every push to `main` it installs
-dependencies, builds, and publishes `dist/`. Because the site is served from `/Learmux/`,
+dependencies, validates the content, runs the engine tests, builds, checks internal links, tests the
+validator itself, and only then publishes `dist/`. A content error stops the deploy rather than
+shipping a broken page. Because the site is served from `/Learmux/`,
 `astro.config.mjs` sets `site` and `base`, and root-absolute links in Markdown are rewritten by a
 small remark plugin.
 
