@@ -1,0 +1,152 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import '../../styles/tools.css';
+import { tools, toolCategories, toolsByCategory } from '../../data/tools';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const groups = toolsByCategory();
+---
+
+<BaseLayout
+  title="Tools"
+  description={`A directory of ${tools.length} command-line tools that run under Termux, grouped by what they do, with the commands you actually use.`}
+>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span><span>Tools</span>
+    </nav>
+
+    <header class="tools-head">
+      <p class="eyebrow">Reference</p>
+      <h1>Tools</h1>
+      <p class="lede">
+        {tools.length} command-line tools that run under Termux, grouped by what they do. Each one has a
+        short explanation, who builds it, and the handful of commands worth memorising.
+      </p>
+      <p class="tools-head__meta">
+        {tools.length} tools · {groups.length} categories · every one installable with <code>pkg</code>
+      </p>
+    </header>
+
+    <!-- filter bar: search plus one chip per category -->
+    <div class="tool-filters">
+      <div class="tool-search">
+        <Icon name="search" size={17} />
+        <input
+          type="search"
+          id="tool-q"
+          placeholder="Search tools…"
+          aria-label="Search tools"
+          autocomplete="off"
+        />
+      </div>
+      <div class="chips" role="group" aria-label="Filter by category">
+        <button class="chip chip--btn is-active" data-cat="all">All {tools.length}</button>
+        {groups.map((g) => (
+          <button class="chip chip--btn" data-cat={g.category.id}>
+            {g.category.name} {g.items.length}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <p class="tool-count" id="tool-count" aria-live="polite"></p>
+
+    <div id="tool-groups">
+      {groups.map((g) => (
+        <section class="tool-group" data-group={g.category.id}>
+          <div class="tool-group__head">
+            <h2>{g.category.name}</h2>
+            <span class="tool-group__count">{g.items.length}</span>
+          </div>
+          <p class="tool-group__blurb">{g.category.blurb}</p>
+
+          <div class="tool-grid">
+            {g.items.map((t) => (
+              <a
+                class="tool-card"
+                href={`${base}tools/${t.slug}/`}
+                data-tool
+                data-cat={t.category}
+                data-search={`${t.name} ${t.developer} ${t.tagline} ${t.category}`.toLowerCase()}
+              >
+                <span class="tool-logo">
+                  <img src={`${base}logos/${t.slug}.svg`} width="26" height="26" alt="" loading="lazy" />
+                </span>
+                <span class="tool-card__body">
+                  <span class="tool-card__name">{t.name}</span>
+                  <span class="tool-card__tagline">{t.tagline}</span>
+                  <span class="tool-card__meta">{t.developer}</span>
+                </span>
+                <span class="tool-card__count">{t.commands.length}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+
+    <p class="tool-empty" id="tool-empty" hidden>No tool matches that. Try a different word or clear the filter.</p>
+
+    <section class="ctf-panel" style="margin-top:2.4rem">
+      <h2>Put them to work</h2>
+      <p>
+        Reading about a tool is not the same as using one. The challenges run these commands against a
+        sandbox filesystem, and every one has a flag to find.
+      </p>
+      <a class="btn btn--green" href={`${base}challenges/`}>Play the CTF</a>
+    </section>
+  </div>
+
+  <script>
+    const q = document.getElementById('tool-q') as HTMLInputElement | null;
+    const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip--btn'));
+    const groups = Array.from(document.querySelectorAll<HTMLElement>('.tool-group'));
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-tool]'));
+    const count = document.getElementById('tool-count');
+    const empty = document.getElementById('tool-empty');
+    let activeCat = 'all';
+
+    function apply() {
+      const term = (q?.value ?? '').trim().toLowerCase();
+      let shown = 0;
+
+      for (const card of cards) {
+        const matchesCat = activeCat === 'all' || card.dataset.cat === activeCat;
+        const matchesText = !term || (card.dataset.search ?? '').includes(term);
+        const visible = matchesCat && matchesText;
+        card.hidden = !visible;
+        if (visible) shown++;
+      }
+
+      for (const group of groups) {
+        const anyVisible = Array.from(group.querySelectorAll<HTMLElement>('[data-tool]')).some((c) => !c.hidden);
+        group.hidden = !anyVisible;
+      }
+
+      if (count) count.textContent = shown === cards.length ? `${shown} tools` : `${shown} of ${cards.length} tools`;
+      if (empty) empty.hidden = shown !== 0;
+    }
+
+    for (const chip of chips) {
+      chip.addEventListener('click', () => {
+        activeCat = chip.dataset.cat ?? 'all';
+        for (const c of chips) c.classList.toggle('is-active', c === chip);
+        apply();
+      });
+    }
+    q?.addEventListener('input', apply);
+
+    // deep link: /tools/?cat=security
+    const wanted = new URLSearchParams(location.search).get('cat');
+    if (wanted) {
+      const chip = chips.find((c) => c.dataset.cat === wanted);
+      if (chip) {
+        activeCat = wanted;
+        for (const c of chips) c.classList.toggle('is-active', c === chip);
+      }
+    }
+    apply();
+  </script>
+</BaseLayout>
