@@ -13,7 +13,7 @@ tags: [packages, pkg]
 
 import Callout from '../../components/Callout.astro';
 
-Termux does not ship every tool you will want. It gives you a package manager called `pkg`, and through it you install the compilers, network tools and editors you need. This lesson shows you how to refresh the package list, search for software, install and remove it, and where all of it lands on the disk.
+Termux does not ship every tool you will want. It gives you a package manager called `pkg`. Through it you install the compilers, network tools and editors you need. This lesson shows how to refresh the package list and search for software. It also shows how to install and remove it, and where all of it lands on the disk.
 
 ## What you'll be able to do
 
@@ -57,7 +57,7 @@ Calculating upgrade... Done
 0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
 ```
 
-If packages were out of date, the last line would instead list how many are being upgraded. On a fresh install this often reports that nothing needs changing.
+If packages were out of date, the last line would instead list how many are being upgraded. On a fresh install it often reports that nothing needs changing.
 
 <Callout type="tip" title="Update, then upgrade">
 Run `pkg update` before `pkg upgrade`. The update refreshes the list and the upgrade uses that list to decide what to install.
@@ -65,7 +65,7 @@ Run `pkg update` before `pkg upgrade`. The update refreshes the list and the upg
 
 ## Step 3: Search for a package
 
-If you are not sure of a package's exact name, search for it. `pkg search` matches the text against package names and their descriptions.
+If you are not sure of a package's exact name, search for it. `pkg search` matches your text against package names and their descriptions.
 
 ```bash
 pkg search python
@@ -81,7 +81,7 @@ python-pip/stable 24.2 all
   Python package manager
 ```
 
-Each hit shows the package name, its version and architecture, then a short description on the following line.
+Each hit shows the package name, its version and architecture, then a short description on the next line.
 
 ## Step 4: Install a package
 
@@ -119,7 +119,7 @@ git version 2.45.2
 
 ## Step 5: Install several packages at once
 
-You can pass more than one name to a single `pkg install` call. This is faster than running the command repeatedly, because the list is read once.
+You can pass more than one name to a single `pkg install` call. This is faster than running the command over and over, because the list is read once.
 
 ```bash
 pkg install curl wget tree
@@ -159,7 +159,7 @@ Every so often, list your installed packages and read the names. A tool you did 
 
 ## Step 7: Remove a package
 
-When you are done with a tool, remove it with `pkg uninstall`. This leaves your own files alone and only removes the package.
+When you are done with a tool, remove it with `pkg uninstall`. Your own files are left alone. Only the package is removed.
 
 ```bash
 pkg uninstall wget
@@ -220,13 +220,13 @@ Anything under `$PREFIX/etc` is a configuration file. Back up a file before you 
 
 ## Step 9: Share your phone's storage
 
-Termux cannot read your photos and downloads by default, because Android keeps app storage separate. The `termux-setup-storage` command asks Android for permission and creates links to the shared areas.
+Termux cannot read your photos and downloads by default. Android keeps app storage separate. The `termux-setup-storage` command asks Android for permission and creates links to the shared areas.
 
 ```bash
 termux-setup-storage
 ```
 
-Android shows a permission dialog. After you allow it, a `storage` folder appears in your home directory.
+Android shows a permission dialog. Allow it, and a `storage` folder appears in your home directory.
 
 ```bash
 ls ~/storage
@@ -246,7 +246,7 @@ readlink ~/storage/shared
 /storage/emulated/0
 ```
 
-So `~/storage/shared` is the same place as your phone's internal storage, and `~/storage/downloads` is your Downloads folder.
+So `~/storage/shared` is the same place as your phone's internal storage. `~/storage/downloads` is your Downloads folder.
 
 ## Quick reference
 
