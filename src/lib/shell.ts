@@ -270,7 +270,7 @@ export class Shell {
     if (name === 'hint') {
       if (!this.hints.length) return { stdout: 'There are no hints for this challenge.' };
       if (this.hintIndex >= this.hints.length) {
-        return { stdout: 'That was the last hint — you have them all.' };
+        return { stdout: 'That was the last hint. You have them all.' };
       }
       const h = this.hints[this.hintIndex++];
       return { stdout: `Hint ${this.hintIndex}/${this.hints.length}: ${h}` };
