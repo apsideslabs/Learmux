@@ -1,0 +1,2 @@
+| `dig NAME MX` | Asks for the mail servers of a domain |
+| `dig NAME TXT` | Asks for the text records |
