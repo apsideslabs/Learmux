@@ -1,0 +1,2 @@
+    logo: 'python',
+    install: 'pkg install python',
