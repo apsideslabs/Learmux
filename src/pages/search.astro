@@ -3,6 +3,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import PostRow from '../components/PostRow.astro';
 import Icon from '../components/Icon.astro';
 import { allTutorials } from '../lib/tutorials';
+import { tools } from '../data/tools';
+import '../styles/tools.css';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const tutorials = await allTutorials();
@@ -10,19 +12,19 @@ const tutorials = await allTutorials();
 
 <BaseLayout
   title="Search"
-  description="Search the Learmux tutorials by title, topic or tag."
+  description="Search the Learmux lessons and the tool directory."
   noindex
 >
   <div class="wrap">
     <header class="section">
       <h1>Search</h1>
-      <p class="lede">Find a lesson by title, category or tag.</p>
+      <p class="lede">Find a lesson or a tool by name, topic or tag.</p>
     </header>
 
     <div class="search-box" style="max-width:560px">
       <Icon name="search" size={18} />
-      <label class="visually-hidden" for="q">Search tutorials</label>
-      <input id="q" type="search" placeholder="e.g. grep, permissions, base64" autocomplete="off" />
+      <label class="visually-hidden" for="q">Search lessons and tools</label>
+      <input id="q" type="search" placeholder="e.g. grep, permissions, nmap" autocomplete="off" />
     </div>
 
     <p class="muted" data-count style="margin-top:0.9rem;font-size:0.88rem"></p>
@@ -38,7 +40,30 @@ const tutorials = await allTutorials();
       ))}
     </div>
 
-    <p class="muted" data-empty hidden style="padding:2rem 0">No lessons matched that search.</p>
+    <div data-tools-block>
+    <div class="section-label" style="margin-top:2rem"><span>Tools</span></div>
+    <div class="tool-grid" data-results>
+      {tools.map((t) => (
+        <div
+          data-item
+          data-text={`${t.name} ${t.category} ${t.tagline} ${t.developer} ${t.license ?? ''}`.toLowerCase()}
+        >
+          <a class="tool-card" href={`${base}tools/${t.slug}/`}>
+            <span class="tool-logo">
+              <img src={`${base}logos/${t.slug}.svg`} width="26" height="26" alt="" loading="lazy" />
+            </span>
+            <span class="tool-card__body">
+              <span class="tool-card__name">{t.name}</span>
+              <span class="tool-card__tagline">{t.tagline}</span>
+              <span class="tool-card__meta">{t.developer}</span>
+            </span>
+          </a>
+        </div>
+      ))}
+    </div>
+    </div>
+
+    <p class="muted" data-empty hidden style="padding:2rem 0">Nothing matched that search.</p>
   </div>
 
   <script>
@@ -58,7 +83,18 @@ const tutorials = await allTutorials();
           el.hidden = !match;
           if (match) shown++;
         }
-        if (count) count.textContent = q === '' ? `${items.length} lessons` : `${shown} of ${items.length} lessons`;
+        // hide a section heading when everything under it is filtered out
+        for (const grid of document.querySelectorAll<HTMLElement>('[data-results]')) {
+          const any = Array.from(grid.querySelectorAll<HTMLElement>('[data-item]')).some((el) => !el.hidden);
+          grid.hidden = !any;
+        }
+        // and the "Tools" heading that belongs to the tools grid
+        const toolsBlock = document.querySelector<HTMLElement>('[data-tools-block]');
+        if (toolsBlock) {
+          const anyTool = Array.from(toolsBlock.querySelectorAll<HTMLElement>('[data-item]')).some((el) => !el.hidden);
+          toolsBlock.hidden = !anyTool;
+        }
+        if (count) count.textContent = q === '' ? `${items.length} items` : `${shown} of ${items.length} items`;
         if (empty) empty.hidden = shown !== 0;
       };
 
