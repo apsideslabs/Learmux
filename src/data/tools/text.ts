@@ -5,9 +5,9 @@ export const textTools: Tool[] = [
     slug: 'grep',
     name: 'grep',
     category: 'text',
-    tagline: 'Search text line by line and print the matches',
+    tagline: 'Search text line by line, printing every match',
     about:
-      'The classic pattern matcher that reads lines and prints those containing a match, with regular-expression support. It recurses, counts, inverts and colourises, and is the backbone of countless pipelines. Reach for it whenever you need to pull matching lines out of text or command output.',
+      'The classic pattern matcher. It reads lines, prints those containing a match, and understands regular expressions. It also recurses, counts, inverts and colourises, and it is the backbone of countless pipelines.',
     developer: 'GNU Project',
     url: 'https://www.gnu.org/software/grep/',
     bin: 'grep',
@@ -16,27 +16,27 @@ export const textTools: Tool[] = [
     commands: [
       {
         args: '-i error app.log',
-        what: 'print every line of a log containing the word, ignoring upper and lower case',
+        what: 'Print every log line containing the word, ignoring case.',
       },
       {
         args: '-rn "TODO" src/',
-        what: 'walk a directory and show matching lines prefixed with their path and line number',
+        what: 'Walk a directory and show matching lines with path and line number.',
       },
       {
         args: '-c "GET" access.log',
-        what: 'count matching lines and print only the total instead of the lines',
+        what: 'Count matching lines and print only the total.',
       },
       {
         args: '-v "^#" config.ini',
-        what: 'invert the match so everything that does not begin with a comment marker is shown',
+        what: 'Invert the match. Everything not starting with a comment marker is shown.',
       },
       {
         args: '-E "warn|error" app.log',
-        what: 'use extended regular expressions so alternation works without escaping',
+        what: 'Use extended regular expressions, so alternation works without escaping.',
       },
       {
         args: '-A2 -B2 "panic" app.log',
-        what: 'include two lines of context before and after each match',
+        what: 'Include two lines of context before and after each match.',
       },
     ],
     example: {
@@ -52,9 +52,9 @@ export const textTools: Tool[] = [
     slug: 'ripgrep',
     name: 'ripgrep',
     category: 'text',
-    tagline: 'A very fast recursive search that respects ignore rules',
+    tagline: 'A very fast recursive search that honours ignore rules',
     about:
-      'A modern search tool that skips hidden entries and anything listed in ignore files by default, making it ideal inside code repositories. It is multi-threaded, colourises output and understands many archive and encoding cases. Use it in place of the older recursive search when speed and sensible defaults matter.',
+      'A modern search tool that skips hidden entries and anything in ignore files by default. It is multi-threaded, colourises output, and handles many archive and encoding cases. Use it in place of the older recursive search when speed and good defaults matter.',
     developer: 'Andrew Gallant',
     url: 'https://github.com/BurntSushi/ripgrep',
     bin: 'rg',
@@ -63,27 +63,27 @@ export const textTools: Tool[] = [
     commands: [
       {
         args: 'TODO src/',
-        what: 'search a directory hierarchy for the pattern and print each hit with its path and line number',
+        what: 'Search a directory tree for the pattern. Each hit shows its path and line number.',
       },
       {
         args: '-i timeout',
-        what: 'match case-insensitively wherever the search goes',
+        what: 'Match case-insensitively wherever the search goes.',
       },
       {
         args: '-t js',
-        what: 'limit the search to a single language type',
+        what: 'Limit the search to one language type.',
       },
       {
         args: '-l "import React"',
-        what: 'list only the names of paths that contain a match, not the matching lines',
+        what: 'List only the paths that contain a match, not the lines.',
       },
       {
         args: '-w error',
-        what: 'match whole words only, so substrings inside longer words are ignored',
+        what: 'Match whole words only. Substrings inside longer words are ignored.',
       },
       {
         args: '-uu',
-        what: 'include hidden entries and ignored paths in the search',
+        what: 'Include hidden entries and ignored paths in the search.',
       },
     ],
     example: {
@@ -99,9 +99,9 @@ export const textTools: Tool[] = [
     slug: 'sed',
     name: 'sed',
     category: 'text',
-    tagline: 'Edit a stream of text with find-and-replace rules',
+    tagline: 'Rewrite a stream of text with find-and-replace rules',
     about:
-      'A non-interactive stream editor that applies a script of substitutions, deletions and insertions to text as it flows past. It is the standard way to rewrite one pattern across many lines or paths without opening an editor. Use it for quick in-place edits in scripts.',
+      'A non-interactive stream editor. It applies substitutions, deletions and insertions to text as it flows past. That makes it the standard way to rewrite one pattern across many lines or files without opening an editor.',
     developer: 'GNU Project',
     url: 'https://www.gnu.org/software/sed/',
     bin: 'sed',
@@ -110,27 +110,27 @@ export const textTools: Tool[] = [
     commands: [
       {
         args: 's/http/https/g config.txt',
-        what: 'replace every occurrence of a pattern on each line with another value',
+        what: 'Replace every occurrence of a pattern on each line with another value.',
       },
       {
         args: '-i "s/localhost/127.0.0.1/g" app.conf',
-        what: 'rewrite matches directly in the given path instead of printing to the screen',
+        what: 'Rewrite matches directly in the given path, not on screen.',
       },
       {
         args: '-n "5,10p" notes.txt',
-        what: 'suppress the default output and print only lines five through ten',
+        what: 'Suppress the default output and print only lines five through ten.',
       },
       {
         args: '/^$/d app.log',
-        what: 'delete every blank line from the stream',
+        what: 'Delete every blank line from the stream.',
       },
       {
         args: 's/^[ \t]*// data.txt',
-        what: 'strip leading spaces and tabs from the beginning of each line',
+        what: 'Strip leading spaces and tabs from the start of each line.',
       },
       {
         args: '-n "/ERROR/=" app.log',
-        what: 'print only the line numbers of lines matching a pattern',
+        what: 'Print only the line numbers of lines matching a pattern.',
       },
     ],
     example: {
@@ -146,9 +146,9 @@ export const textTools: Tool[] = [
     slug: 'gawk',
     name: 'GNU Awk',
     category: 'text',
-    tagline: 'Process and summarise column-based text with a small language',
+    tagline: 'Process and total column-based text with a small language',
     about:
-      'A full implementation of the awk programming language, built for records and fields. It splits each line into columns, applies patterns and actions, and can total, reformat or filter data on the fly. Reach for it when the simpler column tools are not expressive enough for a report.',
+      'A full implementation of the awk programming language, built for records and fields. Each line is split into columns, and patterns plus actions do the rest. Reach for it when the simpler column tools cannot express what you need.',
     developer: 'GNU Project',
     url: 'https://www.gnu.org/software/gawk/',
     bin: 'awk',
@@ -157,27 +157,27 @@ export const textTools: Tool[] = [
     commands: [
       {
         args: '{print $1, $3} data.txt',
-        what: 'split each line on whitespace and print the first and third columns',
+        what: 'Split each line on whitespace and print the first and third columns.',
       },
       {
         args: '-F: {print $1} users.txt',
-        what: 'set the field separator to a colon and print only the first column',
+        what: 'Set the field separator to a colon and print only the first column.',
       },
       {
         args: '{sum += $2} END {print sum} sales.txt',
-        what: 'accumulate a running total across every row and print it once at the end',
+        what: 'Add up a running total across every row, printed once at the end.',
       },
       {
         args: '$3 > 100 {print $0} report.txt',
-        what: 'print whole lines only where the third column exceeds a threshold',
+        what: 'Print whole lines only where the third column exceeds a threshold.',
       },
       {
         args: 'NR==1 || $2 != prev {print} {prev=$2} log.txt',
-        what: 'print the header and any row whose second column differs from the previous one',
+        what: 'Print the header and any row whose second column differs from the one before.',
       },
       {
         args: '{count[$1]++} END {for (k in count) print k, count[k]} log.txt',
-        what: 'count how many times each value in the first column appears',
+        what: 'Count how many times each value in the first column appears.',
       },
     ],
     example: {
@@ -189,9 +189,9 @@ export const textTools: Tool[] = [
     slug: 'cut',
     name: 'cut',
     category: 'text',
-    tagline: 'Pull selected columns or character ranges out of lines',
+    tagline: 'Pull chosen columns or character ranges out of lines',
     about:
-      'A small filter that keeps only the fields, bytes or characters you name and drops the rest. It works on a fixed delimiter or on character positions, so it suits simple, regular data. Use it when a table needs narrowing before the next stage of a pipeline.',
+      'A small filter. It keeps only the fields, bytes or characters you name and drops the rest. It works on a fixed delimiter or on character positions, which suits simple, regular data.',
     developer: 'GNU Project',
     url: 'https://www.gnu.org/software/coreutils/',
     bin: 'cut',
@@ -200,27 +200,27 @@ export const textTools: Tool[] = [
     commands: [
       {
         args: '-d: -f1 users.txt',
-        what: 'split each line on a colon and keep only the first field',
+        what: 'Split each line on a colon and keep only the first field.',
       },
       {
         args: '-d, -f2,4 data.csv',
-        what: 'keep the second and fourth comma-separated columns and drop the rest',
+        what: 'Keep the second and fourth comma-separated columns. The rest are dropped.',
       },
       {
         args: '-c1-10 notes.txt',
-        what: 'keep only the first ten characters of every line',
+        what: 'Keep only the first ten characters of every line.',
       },
       {
         args: '-f3 --complement report.txt',
-        what: 'print everything except the third field',
+        what: 'Print everything except the third field.',
       },
       {
         args: '-s -d: -f1 users.txt',
-        what: 'skip lines that contain no delimiter at all, avoiding stray output',
+        what: 'Skip lines with no delimiter at all. That avoids stray output.',
       },
       {
         args: '--output-delimiter=" " -d: -f1,7 users.txt',
-        what: 'rejoin the kept fields with a different separator',
+        what: 'Rejoin the kept fields with a different separator.',
       },
     ],
     example: {
@@ -232,9 +232,9 @@ export const textTools: Tool[] = [
     slug: 'sort',
     name: 'sort',
     category: 'text',
-    tagline: 'Order lines alphabetically, numerically or by a key',
+    tagline: 'Order lines alphabetically, numerically, or by a key',
     about:
-      'Rearranges the lines of its input according to the comparison you choose, and can remove duplicates or merge already-ordered streams. Key selection lets you order by a particular column while keeping whole lines intact. It underpins most report pipelines that need tidy output.',
+      'Rearranges input lines according to the comparison you choose. It can also remove duplicates or merge already-ordered streams. Key selection orders by a particular column while whole lines stay intact.',
     developer: 'GNU Project',
     url: 'https://www.gnu.org/software/coreutils/',
     bin: 'sort',
@@ -243,27 +243,27 @@ export const textTools: Tool[] = [
     commands: [
       {
         args: 'names.txt',
-        what: 'arrange lines in ascending alphabetical order',
+        what: 'Arrange lines in ascending alphabetical order.',
       },
       {
         args: '-n scores.txt',
-        what: 'compare as numbers so 10 comes after 9 rather than after 1',
+        what: 'Compare as numbers, so 10 comes after 9 and not after 1.',
       },
       {
         args: '-r scores.txt',
-        what: 'reverse the order so the largest values appear first',
+        what: 'Reverse the order, largest values first.',
       },
       {
         args: '-k2 -n data.txt',
-        what: 'order rows by the second column treated as a number',
+        what: 'Order rows by the second column, treated as a number.',
       },
       {
         args: '-u emails.txt',
-        what: 'collapse duplicate adjacent lines so each value appears once',
+        what: 'Collapse duplicate adjacent lines, so each value appears once.',
       },
       {
         args: '-h sizes.txt',
-        what: 'compare human-readable sizes such as 4K and 2M by their real magnitude',
+        what: 'Compare human-readable sizes such as 4K and 2M by real magnitude.',
       },
     ],
     example: {
@@ -275,9 +275,9 @@ export const textTools: Tool[] = [
     slug: 'uniq',
     name: 'uniq',
     category: 'text',
-    tagline: 'Collapse or count repeated adjacent lines',
+    tagline: 'Collapse or count repeated lines that sit together',
     about:
-      'Removes consecutive duplicate lines, or reports how many times each run repeats. It only sees neighbours, so its input is usually piped through the ordering command first. Handy for frequency counts and for cleaning logs.',
+      'Removes consecutive duplicate lines, or reports how many times each run repeats. It only sees neighbours, so feed it ordered input. Handy for frequency counts and for cleaning logs.',
     developer: 'GNU Project',
     url: 'https://www.gnu.org/software/coreutils/',
     bin: 'uniq',
@@ -286,27 +286,27 @@ export const textTools: Tool[] = [
     commands: [
       {
         args: 'ips.txt',
-        what: 'drop consecutive duplicate lines, keeping one copy of each run',
+        what: 'Drop consecutive duplicate lines, keeping one copy of each run.',
       },
       {
         args: '-c ips.txt',
-        what: 'prefix each distinct line with the number of times it appeared in a row',
+        what: 'Prefix each distinct line with how many times it appeared in a row.',
       },
       {
         args: '-d ips.txt',
-        what: 'print only the lines that were repeated',
+        what: 'Print only the lines that were repeated.',
       },
       {
         args: '-u ips.txt',
-        what: 'print only the lines that appeared exactly once',
+        what: 'Print only the lines that appeared exactly once.',
       },
       {
         args: '-i names.txt',
-        what: 'treat lines that differ only in case as duplicates',
+        what: 'Treat lines that differ only in case as duplicates.',
       },
       {
         args: '-f1 log.txt',
-        what: 'skip the first field when deciding whether two lines match',
+        what: 'Skip the first field when deciding whether two lines match.',
       },
     ],
     example: {
@@ -322,9 +322,9 @@ export const textTools: Tool[] = [
     slug: 'tr',
     name: 'tr',
     category: 'text',
-    tagline: 'Translate or delete individual characters in a stream',
+    tagline: 'Translate or delete single characters in a stream',
     about:
-      'A tiny filter that maps one set of characters to another, or deletes them outright. It works character by character rather than on words or lines, which makes it perfect for case changes and cleanup. Commonly used to normalise whitespace before further processing.',
+      'A tiny filter that maps one set of characters to another, or deletes them. It works character by character, not on words or lines. That suits case changes and cleanup, and normalising whitespace before further processing.',
     developer: 'GNU Project',
     url: 'https://www.gnu.org/software/coreutils/',
     bin: 'tr',
@@ -333,27 +333,27 @@ export const textTools: Tool[] = [
     commands: [
       {
         args: 'a-z A-Z',
-        what: 'map every lowercase letter to its uppercase counterpart',
+        what: 'Map every lowercase letter to its uppercase counterpart.',
       },
       {
         args: '-d "0-9"',
-        what: 'delete all digits from the input',
+        what: 'Delete all digits from the input.',
       },
       {
         args: '-s " "',
-        what: 'squeeze runs of spaces down to a single space',
+        what: 'Squeeze runs of spaces down to a single space.',
       },
       {
         args: '-c "a-zA-Z0-9" " "',
-        what: 'replace every character that is not a letter or digit with a space',
+        what: 'Replace every character that is not a letter or digit with a space.',
       },
       {
         args: '-d "[:punct:]"',
-        what: 'delete all punctuation characters from the input',
+        what: 'Delete all punctuation characters from the input.',
       },
       {
         args: 'A-Z N-ZA-M',
-        what: 'rotate the alphabet so each letter shifts by thirteen places',
+        what: 'Rotate the alphabet, each letter shifting thirteen places.',
       },
     ],
     example: {
@@ -371,7 +371,7 @@ export const textTools: Tool[] = [
     category: 'text',
     tagline: 'Count lines, words, characters and bytes',
     about:
-      'Reports how many lines, words, characters and bytes its input holds, alone or together. It is the quickest way to size up a log or a document before working with it. With several inputs it prints a total line as well.',
+      'Reports how many lines, words, characters and bytes its input holds, alone or together. It is the quickest way to size up a log or document. With several inputs it adds a total line.',
     developer: 'GNU Project',
     url: 'https://www.gnu.org/software/coreutils/',
     bin: 'wc',
@@ -380,27 +380,27 @@ export const textTools: Tool[] = [
     commands: [
       {
         args: '-l app.log',
-        what: 'count only the number of lines, a fast way to see how busy a log is',
+        what: 'Count only the lines. A fast way to see how busy a log is.',
       },
       {
         args: '-w essay.txt',
-        what: 'count whitespace-separated words in a document',
+        what: 'Count whitespace-separated words in a document.',
       },
       {
         args: '-c payload.json',
-        what: 'report the byte size of the input',
+        what: 'Report the byte size of the input.',
       },
       {
         args: '-m notes.txt',
-        what: 'count characters rather than bytes, which matters for non-ASCII text',
+        what: 'Count characters rather than bytes. That matters for non-ASCII text.',
       },
       {
         args: '*.txt',
-        what: 'report a count for each path and a combined total at the end',
+        what: 'Report a count for each path, then a combined total.',
       },
       {
         args: '-L src/main.c',
-        what: 'print the length of the longest line, useful for spotting runaway rows',
+        what: 'Print the length of the longest line. Useful for spotting runaway rows.',
       },
     ],
     example: {
@@ -418,7 +418,7 @@ export const textTools: Tool[] = [
     category: 'text',
     tagline: 'Page through long output with search and scroll',
     about:
-      'A pager that shows text one screen at a time and lets you scroll both ways, search and jump. It reads from a pipe as happily as from a path, so it tames the output of any command. The standard way to read a long log without drowning in it.',
+      'A pager that shows text one screen at a time. You can scroll both ways, search and jump. It reads from a pipe as happily as from a file, and tames the output of any command.',
     developer: 'Mark Nudelman',
     url: 'https://www.greenwoodsoftware.com/less/',
     bin: 'less',
@@ -427,27 +427,27 @@ export const textTools: Tool[] = [
     commands: [
       {
         args: 'app.log',
-        what: 'open a long log in a scrollable view instead of dumping it all at once',
+        what: 'Open a long log in a scrollable view, not all at once.',
       },
       {
         args: '+F app.log',
-        what: 'start in follow mode so new lines appear as they are written, like a live tail',
+        what: 'Start in follow mode, like a live tail. New lines appear as they are written.',
       },
       {
         args: '-N app.log',
-        what: 'show line numbers down the left side of the screen',
+        what: 'Show line numbers down the left side of the screen.',
       },
       {
         args: '-S data.csv',
-        what: 'stop long lines from wrapping so wide rows can be scrolled sideways',
+        what: 'Stop long lines from wrapping, so wide rows scroll sideways.',
       },
       {
         args: '-R app.log',
-        what: 'display raw colour escape codes correctly so tinted output keeps its colours',
+        what: 'Display raw colour escape codes correctly, keeping tinted output intact.',
       },
       {
         args: '+/ERROR app.log',
-        what: 'open the pager already scrolled to the first line matching the pattern',
+        what: 'Open the pager already scrolled to the first line matching the pattern.',
       },
     ],
     example: {
@@ -466,7 +466,7 @@ export const textTools: Tool[] = [
     category: 'text',
     tagline: 'A colourful pager with syntax highlighting and line numbers',
     about:
-      'A drop-in pager that adds syntax highlighting, a grid and line numbers, and integrates with the version-control diff view. It is easier on the eye than a plain dump when reading code or configuration. Use it whenever you would otherwise print a source path to the screen.',
+      'A drop-in pager that adds syntax highlighting, a grid and line numbers. It also integrates with the version-control diff view. Easier on the eye than a plain dump when you read code or configuration.',
     developer: 'David Peter',
     url: 'https://github.com/sharkdp/bat',
     bin: 'bat',
@@ -475,27 +475,27 @@ export const textTools: Tool[] = [
     commands: [
       {
         args: 'main.ts',
-        what: 'print a source path with syntax highlighting, line numbers and a header',
+        what: 'Print a source file with syntax highlighting, line numbers and a header.',
       },
       {
         args: '-p main.ts',
-        what: 'show the plain highlighted text without line numbers or the header',
+        what: 'Show plain highlighted text, without line numbers or the header.',
       },
       {
         args: '-n main.ts',
-        what: 'force line numbers on even when output is piped',
+        what: 'Force line numbers on, even when output is piped.',
       },
       {
         args: '--line-range 20:40 main.ts',
-        what: 'display only a slice of lines from the middle of a long path',
+        what: 'Display only a slice of lines from the middle of a long file.',
       },
       {
         args: '-A main.ts',
-        what: 'show non-printing characters such as tabs and trailing spaces',
+        what: 'Show non-printing characters such as tabs and trailing spaces.',
       },
       {
         args: '-l json payload.json',
-        what: 'override the detected language so highlighting uses the right rules',
+        what: 'Override the detected language, so highlighting uses the right rules.',
       },
     ],
     example: {
@@ -512,9 +512,9 @@ export const textTools: Tool[] = [
     slug: 'jq',
     name: 'jq',
     category: 'text',
-    tagline: 'Slice, filter and reshape JSON on the command line',
+    tagline: 'Slice, filter and reshape JSON from the terminal',
     about:
-      'A small query language for JSON that turns tangled documents into exactly the fields you want. It filters, maps, orders and reformats, and can pretty-print or minify. Indispensable when reading API responses or configuration in the terminal.',
+      'A small query language for JSON. It turns tangled documents into exactly the fields you want. It filters, maps, orders and reformats, and can pretty-print or minify.',
     developer: 'Stephen Dolan',
     url: 'https://jqlang.github.io/jq/',
     bin: 'jq',
@@ -523,27 +523,27 @@ export const textTools: Tool[] = [
     commands: [
       {
         args: '. payload.json',
-        what: 'pretty-print a compact document with consistent indentation',
+        what: 'Pretty-print a compact document with consistent indentation.',
       },
       {
         args: '.items[].name data.json',
-        what: 'extract one field from every element of an array',
+        what: 'Extract one field from every element of an array.',
       },
       {
         args: '-r .version package.json',
-        what: 'print a value as raw text without surrounding quotes',
+        what: 'Print a value as raw text, without surrounding quotes.',
       },
       {
         args: '.[] | select(.price > 100) catalog.json',
-        what: 'keep only the objects whose numeric field exceeds a threshold',
+        what: 'Keep only the objects whose numeric field exceeds a threshold.',
       },
       {
         args: '-c . data.json',
-        what: 'emit compact output on a single line, the opposite of pretty-printing',
+        what: 'Emit compact output on a single line, the opposite of pretty-printing.',
       },
       {
         args: 'keys data.json',
-        what: 'list the top-level field names of an object',
+        what: 'List the top-level field names of an object.',
       },
     ],
     example: {
