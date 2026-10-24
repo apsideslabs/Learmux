@@ -1,0 +1,66 @@
+## Step 5: Fetch a page with curl
+
+`curl` makes an HTTP request and prints the response body. With no options it does a plain GET and writes the page to the screen.
+
+```bash
+curl http://example.com
+```
+
+```text
+<!doctype html>
+<html>
+<head>
+    <title>Example Domain</title>
+</head>
+<body>
+    <h1>Example Domain</h1>
+</body>
+</html>
+```
+
+Add `-I` to ask for the headers only. This is the quickest way to check whether a page exists and what type it is.
+
+```bash
+curl -I http://example.com
+```
+
+```text
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=UTF-8
+Content-Length: 1256
+Connection: keep-alive
+```
+
+The first line holds the status code. `200` means success, `404` means not found, `301` or `302` means a redirect.
+
+To save the response instead of printing it, use `-o` followed by a filename.
+
+```bash
+curl -o page.html http://example.com
+```
+
+```text
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  1256  100  1256    0     0   8423      0 --:--:-- --:--:-- --:--:--  8423
+```
+
+The progress line shows how much was transferred. Confirm the file is on disk.
+
+```bash
+ls -l page.html
+```
+
+```text
+-rw-r--r-- 1 u0_a123 u0_a123 1256 Jan 26 12:00 page.html
+```
+
+## Step 6: Download with wget
+
+`wget` is built for downloading. Give it a URL and it saves the file under its own name, following redirects on its own.
+
+```bash
+wget http://example.com
+```
+
+```text
