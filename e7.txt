@@ -1,0 +1,7 @@
+dig +short www.example.com
+```
+
+```
+example.com.
+93.184.216.34
+```
