@@ -217,7 +217,7 @@ a:hover { text-decoration: underline; }
   text-decoration: none;
 }
 .brand:hover { text-decoration: none; color: #fff; }
-.brand .mark { width: 22px; height: 22px; flex: none; }
+.brand .mark { width: 26px; height: 26px; flex: none; }
 .brand .accent { color: var(--green); }
 
 .header-actions {
@@ -1246,3 +1246,19 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   text-decoration: none;
 }
 .footer-repo:hover { color: #fff; text-decoration: none; }
+
+/* ── footer studio credit ──────────────────────────────────────────────── */
+.footer-base .studio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+}
+.footer-base .studio:hover { color: #fff; text-decoration: none; }
+.footer-base .studio strong { font-weight: 600; color: #fff; }
+.studio__mark { flex: none; width: 20px; height: 20px; }
+
+/* the studio wordmark on the about page */
+.studio-credit { display: inline-block; margin-top: 0.4rem; }
+.studio-credit img { width: 190px; height: auto; display: block; }
