@@ -1,0 +1,219 @@
+---
+title: "Project: a log analyser"
+description: "Build a shell script that reads a log file and prints the top ten source addresses, the error count, and the busiest hour."
+excerpt: "Read a web server log, rank the top talkers, count the errors, and find the busiest hour of the day."
+category: "Projects"
+author: "The Study Cipher"
+date: "2026-03-31"
+order: 25
+track: "projects"
+level: "Advanced"
+tags: [project, logs, awk]
+---
+
+import Callout from '../../components/Callout.astro';
+
+You are going to write a script that reads a web server log and answers three questions: which addresses sent the most requests, how many requests failed, and which hour was the busiest. It runs with the tools you already have.
+
+## What you'll be able to do
+
+- Pull a single column out of a log line with `awk`.
+- Count repeated lines with `sort` and `uniq -c`, then rank them with `sort -nr`.
+- Keep the first few rows of a result with `head`.
+- Slice a timestamp apart with `cut` to get the hour.
+- Group repeated work into shell functions and call them by name.
+
+## What you are building
+
+A script called `analyse.sh` that takes a log file as its argument and prints a short report. You test it against a sample log you generate yourself, so no real server is needed.
+
+```text
+$ sh analyse.sh sample.log
+-- Top 10 source addresses --
+      8 203.0.113.7
+      6 198.51.100.4
+      6 192.0.2.55
+-- Errors (5xx) --
+count: 3
+-- Busiest hour --
+      6 11
+```
+
+## Step 1: Make a sample log
+
+A web server log is one line per request: the source address, then the timestamp in square brackets, then the request and its status code. Create a small one with a here-document.
+
+```sh
+$ cat > sample.log <<'LOG'
+203.0.113.7 - - [10/Oct/2026:09:12:01 +0000] "GET /index.html HTTP/1.1" 200 1043
+198.51.100.4 - - [10/Oct/2026:09:12:05 +0000] "GET /style.css HTTP/1.1" 200 512
+203.0.113.7 - - [10/Oct/2026:09:15:44 +0000] "GET /about.html HTTP/1.1" 200 2210
+192.0.2.55 - - [10/Oct/2026:10:01:10 +0000] "POST /login HTTP/1.1" 302 0
+198.51.100.4 - - [10/Oct/2026:10:02:33 +0000] "GET /index.html HTTP/1.1" 200 1043
+203.0.113.7 - - [10/Oct/2026:10:30:00 +0000] "GET /missing.html HTTP/1.1" 404 153
+192.0.2.55 - - [10/Oct/2026:10:41:59 +0000] "GET /index.html HTTP/1.1" 200 1043
+203.0.113.7 - - [10/Oct/2026:10:55:12 +0000] "GET /boom HTTP/1.1" 500 21
+198.51.100.4 - - [10/Oct/2026:10:55:40 +0000] "GET /boom HTTP/1.1" 500 21
+192.0.2.55 - - [10/Oct/2026:11:03:22 +0000] "GET /index.html HTTP/1.1" 200 1043
+203.0.113.7 - - [10/Oct/2026:11:07:07 +0000] "GET /about.html HTTP/1.1" 200 2210
+198.51.100.4 - - [10/Oct/2026:11:22:18 +0000] "GET /style.css HTTP/1.1" 200 512
+192.0.2.55 - - [10/Oct/2026:11:44:59 +0000] "GET /index.html HTTP/1.1" 200 1043
+203.0.113.7 - - [10/Oct/2026:11:50:31 +0000] "GET /index.html HTTP/1.1" 200 1043
+198.51.100.4 - - [10/Oct/2026:11:58:02 +0000] "GET /boom HTTP/1.1" 500 21
+192.0.2.55 - - [10/Oct/2026:12:00:01 +0000] "GET /index.html HTTP/1.1" 200 1043
+203.0.113.7 - - [10/Oct/2026:12:14:14 +0000] "GET /index.html HTTP/1.1" 200 1043
+198.51.100.4 - - [10/Oct/2026:12:19:19 +0000] "GET /style.css HTTP/1.1" 200 512
+192.0.2.55 - - [10/Oct/2026:12:25:25 +0000] "GET /index.html HTTP/1.1" 200 1043
+203.0.113.7 - - [10/Oct/2026:12:30:30 +0000] "GET /index.html HTTP/1.1" 200 1043
+LOG
+$ wc -l < sample.log
+20
+```
+
+<Callout type="tip">
+The quoted `<<'LOG'` marker stops the shell expanding anything inside the block. That matters when a log line contains a `$` or a backslash, because those characters are then copied through exactly as written.
+</Callout>
+
+## Step 2: Pull out the source address
+
+The address is the first whitespace-separated field on the line. `awk` splits each line on whitespace by default, and `$1` is the first field.
+
+```sh
+$ awk '{print $1}' sample.log | head -n 5
+203.0.113.7
+198.51.100.4
+203.0.113.7
+192.0.2.55
+198.51.100.4
+```
+
+## Step 3: Count and rank
+
+You now have one address per line. Sort so identical addresses sit together, then let `uniq -c` collapse each group and prefix the count. A second sort, numeric and reversed with `sort -nr`, puts the largest counts first, and `head` keeps the top ten.
+
+```sh
+$ awk '{print $1}' sample.log | sort | uniq -c | sort -nr | head -n 10
+      8 203.0.113.7
+      6 198.51.100.4
+      6 192.0.2.55
+```
+
+<Callout type="warning">
+`uniq` only collapses adjacent repeats, so the first `sort` is not optional. Leave it out and `uniq -c` counts each run of identical lines separately and reports a wrong total.
+</Callout>
+
+## Step 4: Count the errors
+
+A server error has a status code in the 500 range. That code sits between spaces on the line, so `grep -c` counts the matching lines.
+
+```sh
+$ grep -c ' 5[0-9][0-9] ' sample.log
+3
+```
+
+The pattern `5[0-9][0-9]` matches any three-digit number from 500 to 599, and the spaces on either side stop it matching a number that is part of something longer.
+
+## Step 5: Find the busiest hour
+
+The hour lives inside the timestamp, between square brackets: `10/Oct/2026:11:03:22`. Tell `awk` to split on the bracket characters with `-F'[][]'`. Field two is then the whole timestamp, and `cut -d: -f2` takes the hour out of it.
+
+```sh
+$ awk -F'[][]' '{print $2}' sample.log | cut -d: -f2 | sort | uniq -c | sort -nr | head -n 1
+      6 11
+```
+
+That says hour `11` had `6` requests, more than any other hour in the file.
+
+## Step 6: Wrap it in functions and finish
+
+Three commands that each do one job read better when they have names. A shell function is a block of commands with a label, defined once and called like any other command.
+
+```sh
+#!/bin/sh
+# analyse.sh — summarise a web server log.
+# Usage: sh analyse.sh access.log
+
+LOG="$1"
+
+if [ -z "$LOG" ] || [ ! -f "$LOG" ]; then
+  echo "usage: analyse.sh <logfile>" >&2
+  exit 2
+fi
+
+top_ips() {
+  awk '{print $1}' "$LOG" | sort | uniq -c | sort -nr | head -n 10
+}
+
+error_count() {
+  grep -c ' 5[0-9][0-9] ' "$LOG"
+}
+
+busiest_hour() {
+  awk -F'[][]' '{print $2}' "$LOG" \
+    | cut -d: -f2 \
+    | sort \
+    | uniq -c \
+    | sort -nr \
+    | head -n 1
+}
+
+echo "== Log summary for $LOG =="
+echo
+echo "-- Top 10 source addresses --"
+top_ips
+echo
+echo "-- Errors (5xx) --"
+echo "count: $(error_count)"
+echo
+echo "-- Busiest hour --"
+busiest_hour
+```
+
+The `-z "$LOG"` test is true when the argument is empty, and `! -f "$LOG"` is true when the path is not a file. Together they catch both a forgotten argument and a path that does not exist.
+
+```sh
+$ sh analyse.sh sample.log
+== Log summary for sample.log ==
+
+-- Top 10 source addresses --
+      8 203.0.113.7
+      6 198.51.100.4
+      6 192.0.2.55
+
+-- Errors (5xx) --
+count: 3
+
+-- Busiest hour --
+      6 11
+```
+
+A run with no argument proves the guard works.
+
+```sh
+$ sh analyse.sh; echo "exit=$?"
+usage: analyse.sh <logfile>
+exit=2
+```
+
+## Quick reference
+
+| Command or syntax | What it does |
+| --- | --- |
+| `awk '{print $1}'` | Prints the first whitespace-separated field of each line. |
+| `awk -F'[][]' '{print $2}'` | Splits on `[` or `]` and prints the second field. |
+| `cut -d: -f2` | Splits each line on `:` and keeps field two. |
+| `sort` | Sorts lines alphabetically so repeats sit together. |
+| `uniq -c` | Collapses adjacent repeats and prefixes the count. |
+| `sort -nr` | Sorts numerically, largest first. |
+| `head -n 10` | Keeps the first ten lines. |
+| `grep -c pattern file` | Prints the number of matching lines. |
+| `name() { ... }` | Defines a shell function called `name`. |
+| `"$(cmd)"` | Substitutes the output of a command into a string. |
+
+## Where to take it next
+
+- Add a `--paths` mode that ranks the most requested URLs, reusing the count-and-rank pipeline on field seven of the request.
+- Accept several log files at once by looping over `"$@"` and printing one report per file, with a total line at the end.
+- Print the busiest hour as a labelled time instead of a bare number, using `date` with an explicit format string.
+
+Read [Text processing with awk](/learn/text-processing-with-awk/) for the field syntax, and [Sorting and counting](/learn/sorting-and-counting/) for the `sort` and `uniq` pair.
