@@ -1,70 +1,190 @@
 ---
 title: "File permissions"
-description: "Read the permissions column, understand octal modes, and change them with chmod."
-excerpt: "Read the permissions column, understand octal modes, and change them with chmod."
+description: "Read the ten-character mode string from ls -l and change who can read, write and run your files with chmod and chown."
+excerpt: "Learn to read the ten-character mode string and set safe permissions on every file with chmod."
 category: "Permissions"
 author: "The Study Cipher"
 date: "2026-01-26"
 order: 5
 level: Intermediate
-tags: [permissions, chmod, security]
-updated: "2026-01"
+tags: [permissions, chmod]
 ---
 
-## Reading the permissions column
+import Callout from '../../components/Callout.astro';
 
-`ls -l` prints a ten-character code at the start of each line:
+Every file on your phone carries a small set of permissions that decide who can read it, who can change it, and who can run it. Termux prints those permissions as a ten-character string at the start of every `ls -l` line. Once you can read that string, you can tighten the permissions on a file that holds a key or a password, and loosen them on a script you want to run.
 
+## What you'll be able to do
+
+- Read the ten-character mode string that `ls -l` prints for every file.
+- Explain the user, group and others classes and the r, w and x flags.
+- Convert between the letters rwx and the octal values 4, 2 and 1.
+- Set common modes such as 644, 755, 600 and 666 with `chmod`.
+- Spot a world-writable file and say why it is a risk.
+
+## Step 1: Read the mode string
+
+Change into your home directory and list the files with the long form. The `-l` flag asks `ls` for one line per file, and that line starts with the mode string.
+
+```bash
+cd ~
+ls -l
 ```
--rwxr-xr--  1 u0_a0 u0_a0  512 Jan  1 00:00 deploy.sh
+
+```text
+total 8
+drwx------ 2 u0_a123 u0_a123 4096 Jan 20 10:12 storage
+-rw-r--r-- 1 u0_a123 u0_a123  220 Jan 20 10:15 notes.txt
+-rwxr-xr-x 1 u0_a123 u0_a123  512 Jan 20 10:18 run.sh
 ```
 
-Break it into one type character plus three groups of three:
+The mode string is the first field on each line. In `-rw-r--r--` the leading `-` says this is a regular file. A `d` instead means a directory, and an `l` means a symbolic link. The remaining nine characters are three groups of three.
 
-- character 1 — the type: `-` file, `d` directory, `l` symlink
-- characters 2–4 — **user** (the owner)
-- characters 5–7 — **group**
-- characters 8–10 — **others** (everyone else)
+## Step 2: user, group and others
 
-Each group is `r` (read), `w` (write), `x` (execute), with `-` where a permission is missing. So
-`rwxr-xr--` means the owner can do everything, the group can read and execute, and everyone else can
-only read.
+The three groups are the file's owner (user), the owner's group (group), and everyone else (others). Each group holds three flags in the order read, write, execute.
 
-## Octal (numeric) modes
+- `r` lets you read the file.
+- `w` lets you change the file.
+- `x` lets you run the file as a program, or enter a directory.
 
-Each permission has a value: **r = 4, w = 2, x = 1**. Add them per group:
+Each flag has an octal value. Add the values in a group to get one digit for that group.
 
-| Symbolic | Octal | Meaning |
+| Flag | Meaning | Octal value |
 | --- | --- | --- |
-| rw-r--r-- | 644 | owner writes, others read (typical file) |
-| rwxr-xr-x | 755 | owner writes, others read/execute (typical directory or script) |
-| rw------- | 600 | private to the owner |
-| rw-rw-rw- | 666 | anyone can write — a red flag |
+| r | read | 4 |
+| w | write | 2 |
+| x | execute | 1 |
+| - | no permission | 0 |
 
-A file that is world-writable (666) can be modified by any user or process on the system. That is
-exactly the kind of misconfiguration an attacker looks for.
+So `rwx` is 4 + 2 + 1 = 7, `rw-` is 4 + 2 = 6, `r--` is 4, and `---` is 0.
 
-## Changing permissions with chmod
+## Step 3: Read a single file
 
-```bash
-chmod 644 notes.txt     # set an exact mode
-chmod 600 id_rsa        # lock a key down to the owner
-chmod +x deploy.sh      # make a script executable
-chmod -R 755 public/    # apply recursively
-```
-
-`chmod +x` is the one you will type most: a script is not runnable until it has the execute bit.
-
-## Ownership
+To keep the output short, list one file at a time. Here `notes.txt` is readable and writable by you, and readable by everyone else.
 
 ```bash
-ls -l                  # owner and group are columns 3 and 4
-chown user file        # change the owner (needs privilege in real life)
+ls -l notes.txt
 ```
 
-## Practise
+```text
+-rw-r--r-- 1 u0_a123 u0_a123 220 Jan 20 10:15 notes.txt
+```
 
-- [World-Writable](/challenges/world-writable/) — spot the file that is too permissive.
+The mode is `-rw-r--r--`. As octal digits that is 644. This is the default for new files.
 
-> Security habit: run `ls -l` on anything you download before you execute it, and be suspicious of
-> files that are writable by everyone.
+## Step 4: Change permissions with octal chmod
+
+`chmod` takes a three-digit octal number, one digit for user, group and others. To make `notes.txt` private so only you can read and write it, use 600.
+
+```bash
+chmod 600 notes.txt
+ls -l notes.txt
+```
+
+```text
+-rw------- 1 u0_a123 u0_a123 220 Jan 20 10:15 notes.txt
+```
+
+The group and others digits are now 0, so nobody else can touch the file. To make a shell script runnable by everyone, use 755.
+
+```bash
+chmod 755 run.sh
+ls -l run.sh
+```
+
+```text
+-rwxr-xr-x 1 u0_a123 u0_a123 512 Jan 20 10:18 run.sh
+```
+
+Here the user digit is 7 (read, write, execute) and the group and others digits are 5 (read and execute, but not write).
+
+## Step 5: Add one permission with chmod +x
+
+When you only want to add execute permission and leave the rest alone, use the symbolic form. A `+` adds, a `-` removes, and the letters name the flag.
+
+```bash
+chmod +x run.sh
+ls -l run.sh
+```
+
+```text
+-rwxr-xr-x 1 u0_a123 u0_a123 512 Jan 20 10:18 run.sh
+```
+
+You can also name a class. `chmod u+x` adds execute for the user only, `chmod go-w` removes write from group and others.
+
+<Callout type="tip" title="Make a script runnable">
+After you download or write a script, it often arrives without execute permission. Run `chmod +x` followed by the script name, then `./` and the name to run it.
+</Callout>
+
+## Step 6: Apply a mode to a whole directory
+
+The `-R` flag makes `chmod` walk into a directory and apply the mode to every file and folder inside. Create a private folder and lock it down.
+
+```bash
+mkdir mydir
+chmod -R 700 mydir
+ls -ld mydir
+```
+
+```text
+drwx------ 2 u0_a123 u0_a123 4096 Jan 20 10:20 mydir
+```
+
+The `-d` flag on `ls` shows the directory entry itself rather than its contents. Mode 700 gives you full access and gives group and others nothing.
+
+## Step 7: Change the owner with chown
+
+`chown` changes which user and group own a file. You give it a user, a colon, and a group. This is a root-only operation, so on a stock phone it fails with an error.
+
+```bash
+chown root:root notes.txt
+ls -l notes.txt
+```
+
+```text
+-rw------- 1 root root 220 Jan 20 10:15 notes.txt
+```
+
+<Callout type="warning" title="chown needs root">
+On a non-rooted phone, `chown` returns `Operation not permitted` because only root can hand a file to another user. The example above only works inside a rooted shell or a distribution started with proot. You do not need `chown` for everyday Termux work.
+</Callout>
+
+## Step 8: Understand the world-writable risk
+
+The last group is others, which means every other user and every other app on the device. If you give others write permission, anything on the phone can replace the file's contents. Mode 666 is the classic mistake.
+
+```bash
+chmod 666 notes.txt
+ls -l notes.txt
+```
+
+```text
+-rw-rw-rw- 1 u0_a123 u0_a123 220 Jan 20 10:15 notes.txt
+```
+
+Every account can now edit `notes.txt`. Mode 777 is worse, because it also grants execute. A world-writable file in a directory on your path is a way for an attacker to replace a command with their own and have you run it.
+
+<Callout type="warning" title="World-writable is a hole">
+Only use 666 or 777 when you have a specific reason and you trust every account on the machine. For anything private, use 600 for files and 700 for directories.
+</Callout>
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `ls -l` | List files with the ten-character mode string |
+| `ls -ld DIR` | Show the mode of a directory itself |
+| `chmod 600 FILE` | Give the owner read and write only |
+| `chmod 755 FILE` | Owner read, write and execute; others read and execute |
+| `chmod 666 FILE` | Make a file world-writable (risky) |
+| `chmod +x FILE` | Add execute permission |
+| `chmod -R MODE DIR` | Apply a mode to a directory and everything inside |
+| `chown USER:GROUP FILE` | Change the owner and group (needs root) |
+
+## Next steps
+
+- [File permissions challenge: world-writable](/challenges/world-writable/) to hunt down unsafe modes on your own files.
+- [Pipes and redirection](/learn/pipes-and-redirection/) to move command output around before you lock files down.
+- [Managing packages](/learn/managing-packages/) to see where the system stores its own files and how their modes differ.
