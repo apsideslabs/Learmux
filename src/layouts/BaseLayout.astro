@@ -3,7 +3,7 @@ import '../styles/global.css';
 import '../styles/terminal.css';
 import { ClientRouter } from 'astro:transitions';
 import { challenges } from '../lib/challenges';
-import { site, nav, drawerNav } from '../lib/site';
+import { site, studio, nav, drawerNav } from '../lib/site';
 import Icon from '../components/Icon.astro';
 
 interface Props {
@@ -182,7 +182,10 @@ const isExternal = (href: string) => /^https?:/.test(href);
 
         <div class="footer-base">
           <span>© {new Date().getFullYear()} {site.name}. Released under the MIT licence.</span>
-          <span class="mono">built with Astro &amp; TypeScript</span>
+          <a class="studio" href={studio.url} target="_blank" rel="noopener">
+            <img class="studio__mark" src={`${base}brand/apsides-icon-light.svg`} width="20" height="20" alt="" />
+            <span>Developed by <strong>{studio.name}</strong></span>
+          </a>
         </div>
       </div>
     </footer>
