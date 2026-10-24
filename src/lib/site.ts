@@ -7,26 +7,28 @@ export const site = {
   name: 'Learmux',
   tagline: 'A cybersecurity tutorial publication for Termux and the Linux command line.',
   description:
-    'Learmux teaches Termux and the Linux command line through short written lessons and an interactive terminal where you capture flags.',
+    'Learmux teaches Termux and the Linux command line through an ordered course and an interactive terminal where you capture flags.',
   author: 'The Study Cipher',
 };
 
 export const nav = [
-  { href: 'learn/', label: 'Course' },
-  { href: 'categories/', label: 'Categories' },
+  { href: 'course/', label: 'Course' },
   { href: 'challenges/', label: 'Play CTF', cta: true },
-  { href: 'about/', label: 'About' },
+  { href: 'categories/', label: 'Categories' },
+  { href: 'about/', label: 'About us' },
 ];
 
+/** The mobile drawer carries the fuller set, per the design brief. */
 export const drawerNav = [
-  { href: 'learn/', label: 'Home', note: '' },
-  { href: 'categories/', label: 'Categories', note: 'chevron' },
-  { href: 'about/', label: 'About Us', note: '' },
-  { href: 'https://www.youtube.com/', label: 'YouTube', note: 'external' },
-  { href: 'contact/', label: 'Contact Us', note: '' },
-  { href: 'privacy/', label: 'Privacy Policy', note: '' },
-  { href: 'learn/', label: 'Course', note: '' },
-  { href: 'challenges/', label: 'Play CTF Game', note: 'tag' },
+  { href: '', label: 'Home' },
+  { href: 'course/', label: 'Course' },
+  { href: 'categories/', label: 'Categories', chevron: true },
+  { href: 'learn/', label: 'All lessons' },
+  { href: 'about/', label: 'About Us' },
+  { href: 'https://www.youtube.com/', label: 'YouTube', external: true },
+  { href: 'contact/', label: 'Contact Us' },
+  { href: 'privacy/', label: 'Privacy Policy' },
+  { href: 'challenges/', label: 'Play CTF Game', tag: 'CTF' },
 ];
 
 export const social = [
