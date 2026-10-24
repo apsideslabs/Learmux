@@ -1,79 +1,197 @@
 ---
 title: "Navigating the filesystem"
-description: "Absolute and relative paths, dot-directories, and finding files with find and tree."
-excerpt: "Absolute and relative paths, dot-directories, and finding files with find and tree."
+description: "Learn absolute and relative paths, read listing options, make nested directories, and find files on Termux."
+excerpt: "Learn how paths really work and how to move around the filesystem with confidence in Termux."
 category: "Filesystem"
 author: "The Study Cipher"
 date: "2026-01-12"
 order: 2
 level: Beginner
-tags: [filesystem, find, ls]
-updated: "2026-01"
+tags: [filesystem, paths]
 ---
 
-## Paths: absolute vs relative
+import Callout from '../../components/Callout.astro';
 
-An **absolute** path starts at the root, `/`. A **relative** path starts where you are now. Three
-special names make relative paths powerful:
+A filesystem is a tree of directories, and every file sits somewhere on it. In this lesson you learn how to name any spot on that tree, move to it, and build and search your own branches. This turns the terminal from a mystery into a place you know.
 
-| Symbol | Meaning |
+## What you'll be able to do
+
+- Tell an absolute path from a relative path.
+- Use `.`, `..`, `~` and `cd -` to move around quickly.
+- Read a long listing and understand every column.
+- Create nested directories with `mkdir -p`.
+- Find files by name and by type with `find`, and view a tree with `tree`.
+
+## Step 1: Absolute and relative paths
+
+An absolute path starts at the root, written as a forward slash, and spells out the whole route. A relative path starts from where you are now.
+
+```
+$ cd /data/data/com.termux/files/home/projects
+$ pwd
+/data/data/com.termux/files/home/projects
+```
+
+Now move with a relative path. This one names a directory next to you, with no leading slash.
+
+```
+$ cd notes
+$ pwd
+/data/data/com.termux/files/home/projects/notes
+```
+
+## Step 2: The dots and the tilde
+
+A single dot `.` means the directory you are in. Two dots `..` mean the directory one level up.
+
+```
+$ cd ..
+$ pwd
+/data/data/com.termux/files/home/projects
+```
+
+The tilde `~` always means your home directory, wherever you are.
+
+```
+$ cd ~
+$ pwd
+/data/data/com.termux/files/home
+```
+
+There is also `cd -`, which returns you to the previous directory and prints where it took you.
+
+```
+$ cd ~/projects
+$ cd -
+/data/data/com.termux/files/home
+```
+
+<Callout type="tip" title="Bouncing between two directories">
+`cd -` is a toggle. Run it again and you jump back to the directory you came from.
+</Callout>
+
+## Step 3: Reading a long listing
+
+A plain `ls` gives you names. Add `-l` for a long listing with the details.
+
+```
+$ cd ~
+$ mkdir -p projects/notes
+$ printf 'buy milk\ncall plumber\n' > projects/notes/todo.txt
+$ ls -l projects/notes
+total 4
+-rw------- 1 u0_a123 u0_a123 26 Jan 12 09:15 todo.txt
+```
+
+Read the line left to right. `-rw-------` is the permission string, where the leading dash means a plain file. The `1` is the link count. Then the owner and group, both `u0_a123` here. Then the size in bytes, `26`. Then the date, then the name.
+
+Add `-h` to make sizes human readable, so large files show as kilobytes or megabytes.
+
+```
+$ ls -lh /data/data/com.termux/files/usr/bin
+total 26M
+-rwx------ 1 u0_a123 u0_a123  35K Jan  1 00:00 awk
+-rwx------ 1 u0_a123 u0_a123 111K Jan  1 00:00 bash
+...
+```
+
+That listing is abridged. The sizes now read as `35K` and `111K` rather than long byte counts. Add `-a` to include hidden files, and `-R` to list subdirectories as well.
+
+```
+$ ls -R projects
+projects:
+notes
+
+projects/notes:
+todo.txt
+```
+
+<Callout type="warning" title="Recursive listings can flood the screen">
+Add `-R` only on a small tree. On a large directory it prints thousands of lines. If a command runs away, press Ctrl and C to stop it.
+</Callout>
+
+## Step 4: Making directories
+
+`mkdir` makes a directory. With `-p` it creates every missing directory in the path, and it stays quiet if the directory already exists.
+
+```
+$ mkdir -p work/logs/2026
+$ ls -R work
+work:
+logs
+
+work/logs:
+2026
+
+work/logs/2026:
+```
+
+Without `-p`, `mkdir work/logs/2026` would fail, because `work/logs` did not exist yet.
+
+## Step 5: Finding files
+
+`find` searches a directory tree. Give it a starting directory, then a test. Here `-name` matches a file name.
+
+```
+$ find ~ -name "todo.txt"
+/data/data/com.termux/files/home/projects/notes/todo.txt
+```
+
+Add `-type f` to match plain files only, or `-type d` for directories only.
+
+```
+$ find ~ -type f -name "*.txt"
+/data/data/com.termux/files/home/projects/notes/todo.txt
+```
+
+<Callout type="tip" title="Quote your patterns">
+Put the pattern in quotes, as in `-name "*.txt"`. Without quotes the shell may expand the `*` before `find` sees it.
+</Callout>
+
+For a picture of a small tree, install `tree`.
+
+```
+$ pkg install tree
+Reading package lists... Done
+Building dependency tree... Done
+The following NEW packages will be installed:
+  tree
+0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+Setting up tree ...
+```
+
+Then run it on your home directory.
+
+```
+$ tree ~
+/data/data/com.termux/files/home
+├── projects
+│   └── notes
+│       └── todo.txt
+└── work
+    └── logs
+        └── 2026
+
+5 directories, 1 file
+```
+
+## Quick reference
+
+| Command | What it does |
 | --- | --- |
-| `.` | the current directory |
-| `..` | the parent directory |
-| `~` | your home directory |
+| `pwd` | Print the full path of the current directory |
+| `cd PATH` | Change to the directory at the given path |
+| `cd ..` | Move up one level |
+| `cd -` | Return to the previous directory |
+| `ls -l` | Long listing with details |
+| `ls -a` | Include hidden files |
+| `ls -h` | Human readable sizes, with `-l` |
+| `ls -R` | List subdirectories as well |
+| `mkdir -p PATH` | Create a directory and any missing parents |
+| `find DIR -name PATTERN` | Find entries by name |
+| `find DIR -type f` | Find plain files only |
+| `tree DIR` | Show a directory tree |
 
-So `cd ..` moves up one level, `cd ~/projects` jumps home and into `projects`, and `cd -` returns
-to wherever you were before.
+## Next steps
 
-## Listing, in more detail
-
-```bash
-ls          # names only
-ls -l       # long format: permissions, owner, size, date
-ls -a       # include hidden (dot) files
-ls -lh      # human-readable sizes
-ls -lR      # recurse into subdirectories
-```
-
-The long format is the one worth reading carefully — the first column tells you the file type and
-its permissions:
-
-```
--rw-r--r-- 1 u0_a0 u0_a0  128 Jan  1 00:00 notes.txt
-drwxr-xr-x 2 u0_a0 u0_a0 4096 Jan  1 00:00 projects
-```
-
-The leading `-` means a regular file; `d` means a directory. You will read the rest of that column
-in [File permissions](/learn/file-permissions/).
-
-## Making directories
-
-```bash
-mkdir reports                 # one directory
-mkdir -p projects/android/app # create the whole chain, no error if it exists
-```
-
-## Finding files
-
-`find` walks a directory tree for you:
-
-```bash
-find . -name "*.log"       # every .log file below here
-find . -name flag.txt      # hunt for a specific name
-find / -type f -name "*.conf" 2>/dev/null   # system-wide, hiding permission errors
-```
-
-`2>/dev/null` discards error messages — we cover redirection properly in
-[Pipes and redirection](/learn/pipes-and-redirection/).
-
-## Seeing the shape of a tree
-
-```bash
-tree            # a visual tree of the current directory
-tree -L 2       # only two levels deep
-```
-
-## Practise
-
-- [Follow the Trail](/challenges/follow-the-trail/) — use `find` to locate a buried flag.
-- [Hidden in Plain Sight](/challenges/hidden-in-plain-sight/) — the power of `ls -a`.
+Now that you can reach any file, learn to read what is inside it in [Reading and searching text](/learn/reading-and-searching-text/). To link commands together and save their output, continue to [Pipes and redirection](/learn/pipes-and-redirection/). For practice with real files, try [Logs Never Lie](/challenges/logs-never-lie/).
