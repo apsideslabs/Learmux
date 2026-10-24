@@ -13,7 +13,7 @@ tags: [cron, automation]
 
 import Callout from '../../components/Callout.astro';
 
-Cron runs commands for you on a schedule. Instead of remembering to make a backup each evening, you write the job once and cron fires it at the times you choose. This lesson sets up a daily job and shows you how to read back what happened.
+Cron runs commands for you on a schedule. Instead of remembering to make a backup each evening, you write the job once. Cron then fires it at the times you choose. This lesson sets up a daily job, and shows you how to read back what happened.
 
 ## What you'll be able to do
 
@@ -67,7 +67,7 @@ sv-enable crond
 
 ## Step 2: Read the five time fields
 
-A cron line is five time fields followed by the command to run. The fields are minute, hour, day of the month, month, and day of the week, in that order. A star means every value.
+A cron line is five time fields, then the command to run. The fields are minute, hour, day of the month, month, and day of the week, in that order. A star means every value.
 
 ```text
 30 7 * * * command
@@ -83,7 +83,7 @@ Here are the field ranges:
 - Month: 1 to 12
 - Day of the week: 0 to 6, where 0 is Sunday
 
-A star in the day of the week field means every day, which is what you want for a daily job.
+A star in the day of the week field means every day. That is what you want for a daily job.
 
 ## Step 3: Add a daily job
 
@@ -117,13 +117,13 @@ The job is registered. Cron will run it at the next 07:30.
 
 ## Step 4: Send output to a log
 
-A job that runs in the background has nowhere to print. Any output it produces is either mailed away or lost. Send it to a file instead, so you can read it later. Redirect both normal output and errors.
+A job that runs in the background has nowhere to print. Any output it produces is either mailed away or lost. Send it to a file instead, so you can read it later. Redirect normal output and errors.
 
 ```text
 30 7 * * * /data/data/com.termux/files/home/bin/backup.sh >> /data/data/com.termux/files/home/backup.log 2>&1
 ```
 
-The `>>` appends normal output to the log. The `2>&1` sends error output to the same place, so nothing slips past. Read the log whenever you want to check on a run.
+The `>>` appends normal output to the log. The `2>&1` sends errors to the same place, so nothing slips past. Read the log whenever you want to check on a run.
 
 ```bash
 tail -n 5 /data/data/com.termux/files/home/backup.log
@@ -142,9 +142,9 @@ Before you schedule a command, run it once in your terminal with the exact path 
 
 ## Step 5: Use absolute paths
 
-Cron does not read your shell startup files, so it runs with a minimal `PATH`, often only the system directories. A command like `backup.sh` or `python` may not be found, even though it works when you type it yourself.
+Cron does not read your shell startup files. It runs with a minimal `PATH`, often only the system directories. A command like `backup.sh` or `python` may not be found. It works when you type it yourself.
 
-The fix is to write the full path to everything. Compare the two lines. The first depends on `PATH` being set up for it.
+The fix is to write the full path to everything. Compare the two lines below. The first depends on `PATH` being set up for it.
 
 ```text
 30 7 * * * backup.sh
@@ -156,7 +156,7 @@ The second names the script outright, so `PATH` does not matter.
 30 7 * * * /data/data/com.termux/files/home/bin/backup.sh
 ```
 
-The same rule applies inside the script. If it calls `python`, `tar` or `curl`, give each one its full path, or set `PATH` at the top of the script.
+The same rule applies inside the script. If it calls `python`, `tar` or `curl`, give each one its full path. Or set `PATH` at the top of the script.
 
 ```bash
 export PATH=/data/data/com.termux/files/usr/bin:$PATH
@@ -166,7 +166,7 @@ export PATH=/data/data/com.termux/files/usr/bin:$PATH
 
 ```
 
-Set `PATH` inside the script itself, not in your crontab, so the script works the same whether cron runs it or you do.
+Set `PATH` inside the script itself, not in your crontab. Then the script works the same, whether cron runs it or you do.
 
 ## Quick reference
 
