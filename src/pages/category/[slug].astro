@@ -1,0 +1,53 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import { categoryGroups } from '../../lib/tutorials';
+
+export async function getStaticPaths() {
+  const groups = await categoryGroups();
+  return groups.map((g) => ({ params: { slug: g.slug }, props: { group: g } }));
+}
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const { group } = Astro.props;
+
+const intros: Record<string, string> = {
+  Termux: 'Setting up Termux and getting comfortable in its shell.',
+  Filesystem: 'Moving around the filesystem and finding what you need.',
+  Text: 'Reading files and pulling out the one line that matters.',
+  Pipes: 'Composing small tools into pipelines, and sending output where you want it.',
+  Permissions: 'Reading and changing file permissions.',
+  Packages: 'Installing and inspecting software with the Termux package manager.',
+  Encoding: 'Base64, ROT13, hex dumps, strings and hashes.',
+  Networking: 'Interfaces, port scanning, HTTP and SSH from the shell.',
+};
+---
+
+<BaseLayout
+  title={`${group.name} tutorials`}
+  description={`Learmux tutorials on ${group.name.toLowerCase()}. ${intros[group.name] ?? ''}`}
+>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a>
+      <span class="sep">›</span>
+      <a href={`${base}categories/`}>Categories</a>
+      <span class="sep">›</span>
+      <span>{group.name}</span>
+    </nav>
+
+    <header style="margin-bottom:1.4rem">
+      <h1>{group.name}</h1>
+      <p class="lede">{intros[group.name] ?? `Lessons filed under ${group.name}.`}</p>
+    </header>
+
+    <div class="cards cards--3">
+      {group.items.map((t) => <ArticleCard entry={t} />)}
+    </div>
+
+    <div class="actions" style="margin-top:2rem">
+      <a class="btn btn--outline" href={`${base}categories/`}>All categories</a>
+      <a class="btn btn--outline" href={`${base}learn/`}>All lessons</a>
+    </div>
+  </div>
+</BaseLayout>
