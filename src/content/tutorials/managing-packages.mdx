@@ -1,71 +1,269 @@
 ---
-title: "Managing packages in Termux"
-description: "Install tools with pkg and apt, keep them updated, and inspect what is installed."
-excerpt: "Install tools with pkg and apt, keep them updated, and inspect what is installed."
+title: "Managing packages"
+description: "Update, search, install and remove Termux packages with pkg, and understand where your files live under the Termux prefix."
+excerpt: "Update, search, install and remove packages with pkg, and know where they land."
 category: "Packages"
 author: "The Study Cipher"
 date: "2026-01-30"
 order: 6
-level: Beginner
-tags: [termux, pkg, apt]
-updated: "2026-01"
+level: Intermediate
+tags: [packages, pkg]
 ---
 
-## pkg is your app store
+import Callout from '../../components/Callout.astro';
 
-Termux ships a package manager, `pkg`, which wraps the Debian-style `apt` underneath. Before you
-install anything, refresh the index:
+Termux does not ship every tool you will want. It gives you a package manager called `pkg`, and through it you install the compilers, network tools and editors you need. This lesson shows you how to refresh the package list, search for software, install and remove it, and where all of it lands on the disk.
+
+## What you'll be able to do
+
+- Refresh and upgrade your installed packages with `pkg update` and `pkg upgrade`.
+- Search for a package and install one or several at once.
+- Remove a package you no longer need.
+- Find where Termux keeps its binaries and configuration under `$PREFIX`.
+- Share your phone's storage with Termux using `termux-setup-storage`.
+
+## Step 1: Refresh the package list
+
+Before you install anything, ask `pkg` to fetch the latest list of available packages. This updates the index, not the packages themselves.
 
 ```bash
 pkg update
+```
+
+```text
+Hit:1 https://packages.termux.dev/apt/termux-main stable InRelease
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+All packages are up to date.
+```
+
+Run this first whenever you are about to install something. An out-of-date index can point at versions that no longer exist.
+
+## Step 2: Upgrade installed packages
+
+`pkg upgrade` compares the versions you have against the index and installs newer ones. Answer `y` when it asks to confirm.
+
+```bash
 pkg upgrade
 ```
 
-Then install what you need:
+```text
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+Calculating upgrade... Done
+0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+```
+
+If packages were out of date, the last line would instead list how many are being upgraded. On a fresh install this often reports that nothing needs changing.
+
+<Callout type="tip" title="Update, then upgrade">
+Run `pkg update` before `pkg upgrade`. The update refreshes the list and the upgrade uses that list to decide what to install.
+</Callout>
+
+## Step 3: Search for a package
+
+If you are not sure of a package's exact name, search for it. `pkg search` matches the text against package names and their descriptions.
+
+```bash
+pkg search python
+```
+
+```text
+Sorting... Done
+Full Text Search... Done
+python/stable 3.12.7 aarch64
+  Python 3 programming language
+
+python-pip/stable 24.2 all
+  Python package manager
+```
+
+Each hit shows the package name, its version and architecture, then a short description on the following line.
+
+## Step 4: Install a package
+
+Give `pkg install` the name you found. It downloads the package and its dependencies, then unpacks them.
 
 ```bash
 pkg install git
-pkg install python
-pkg install nmap openssh
 ```
 
-You can install several packages in one line. Remove them with `pkg uninstall <name>`.
+```text
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following NEW packages will be installed:
+  git
+0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+Need to get 5.2 MB of archives.
+After this operation, 21.4 MB of additional disk space will be used.
+Get:1 https://packages.termux.dev/apt/termux-main stable/main aarch64 git aarch64 1:2.45.2 [5,204 kB]
+Fetched 5.2 MB in 3s (1734 kB/s)
+Selecting previously unselected package git.
+Unpacking git (1:2.45.2) ...
+Setting up git (1:2.45.2) ...
+```
 
-## Inspecting what is installed
+The last line, `Setting up`, means the install finished. You can confirm the tool is on your path by asking for its version.
 
 ```bash
-pkg list-installed        # everything currently installed
-pkg show nmap             # details about a package
-pkg search scanner        # search the index
+git --version
 ```
 
-Listing installed packages is a genuine security habit: unexpected packages are a common sign of a
-compromised or misconfigured environment. Read the list, and know why each one is there.
+```text
+git version 2.45.2
+```
 
-## Where things live
+## Step 5: Install several packages at once
 
-Termux keeps its files under a single prefix rather than scattered across the system:
+You can pass more than one name to a single `pkg install` call. This is faster than running the command repeatedly, because the list is read once.
 
-- `$PREFIX/bin` — executables
-- `$PREFIX/etc` — configuration
-- `$PREFIX/var` — variable data, including package metadata
+```bash
+pkg install curl wget tree
+```
 
-`echo $PREFIX` prints the root (usually `/data/data/com.termux/files/usr`). Because everything lives
-under one prefix, you can back up or move your whole Termux install easily.
+```text
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following NEW packages will be installed:
+  curl tree wget
+0 upgraded, 3 newly installed, 0 to remove and 0 not upgraded.
+Setting up curl (8.8.0) ...
+Setting up wget (1.24.5) ...
+Setting up tree (2.1.1) ...
+```
 
-## The storage bridge
+Dependencies are pulled in automatically, so you only name the tools you actually want.
 
-By default Termux cannot see your phone's shared storage. Grant it access with:
+## Step 6: List what is installed
+
+`pkg list-installed` prints every package on the system. Pipe it through `grep` to check for one name.
+
+```bash
+pkg list-installed | grep git
+```
+
+```text
+git/stable,now 1:2.45.2 aarch64 [installed]
+```
+
+Each line names the package, the version, the architecture, and the word `installed`.
+
+<Callout type="warning" title="Listing packages is a security habit">
+Every so often, list your installed packages and read the names. A tool you did not install is a reason to investigate. Attackers who gain a foothold on a machine often add a small package or replace an existing one, and the package list is one of the quickest places to spot it.
+</Callout>
+
+## Step 7: Remove a package
+
+When you are done with a tool, remove it with `pkg uninstall`. This leaves your own files alone and only removes the package.
+
+```bash
+pkg uninstall wget
+```
+
+```text
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following packages will be REMOVED:
+  wget
+0 upgraded, 0 newly installed, 1 to remove and 0 not upgraded.
+Removing wget (1.24.5) ...
+```
+
+`pkg remove` is an accepted alias for `pkg uninstall`.
+
+## Step 8: Find where Termux keeps its files
+
+Termux installs everything into a private prefix rather than the usual system directories. The location is stored in the `$PREFIX` variable. Print it.
+
+```bash
+echo $PREFIX
+```
+
+```text
+/data/data/com.termux/files/usr
+```
+
+List that directory and you will see the standard layout of a Linux install.
+
+```bash
+ls $PREFIX
+```
+
+```text
+bin  etc  include  lib  libexec  share  tmp  var
+```
+
+- `bin` holds the programs you run, such as `git` and `curl`.
+- `etc` holds configuration files.
+- `lib` holds shared libraries.
+- `var` holds variable data such as caches and logs.
+
+```bash
+ls $PREFIX/bin | head -n 3
+```
+
+```text
+apt
+bash
+cat
+```
+
+<Callout type="tip" title="Read before you edit">
+Anything under `$PREFIX/etc` is a configuration file. Back up a file before you change it, so you can restore the original if the tool stops working.
+</Callout>
+
+## Step 9: Share your phone's storage
+
+Termux cannot read your photos and downloads by default, because Android keeps app storage separate. The `termux-setup-storage` command asks Android for permission and creates links to the shared areas.
 
 ```bash
 termux-setup-storage
 ```
 
-That creates `~/storage` symlinks into `~/storage/shared` (your Downloads, DCIM, and so on), so you
-can `cp` files in and out.
+Android shows a permission dialog. After you allow it, a `storage` folder appears in your home directory.
 
-## Practise
+```bash
+ls ~/storage
+```
 
-- [Package Cache](/challenges/package-cache/) — a suspicious package is installed; find it.
+```text
+dcim  downloads  movies  music  pictures  shared
+```
 
-> Tip: `pkg install root-repo x11-repo` unlocks extra repositories with even more packages.
+The `shared` link points at your phone's main storage. Confirm where it leads with `readlink`.
+
+```bash
+readlink ~/storage/shared
+```
+
+```text
+/storage/emulated/0
+```
+
+So `~/storage/shared` is the same place as your phone's internal storage, and `~/storage/downloads` is your Downloads folder.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `pkg update` | Refresh the list of available packages |
+| `pkg upgrade` | Install newer versions of installed packages |
+| `pkg search TERM` | Search package names and descriptions |
+| `pkg install NAME` | Install a package and its dependencies |
+| `pkg install A B C` | Install several packages in one call |
+| `pkg list-installed` | List every installed package |
+| `pkg uninstall NAME` | Remove a package |
+| `echo $PREFIX` | Print the Termux install prefix |
+| `termux-setup-storage` | Grant access to shared phone storage |
+| `ls ~/storage` | List the linked storage folders |
+
+## Next steps
+
+- [File permissions](/learn/file-permissions/) to see why programs under `$PREFIX/bin` are marked executable.
+- [Networking basics](/learn/networking-basics/) to put `curl`, `wget` and `nmap` to work after you install them.
+- [Encoding and hashes](/learn/encoding-and-hashes/) to verify a file you downloaded before you trust it.
