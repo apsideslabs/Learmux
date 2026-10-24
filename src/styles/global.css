@@ -1257,7 +1257,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 }
 .footer-base .studio:hover { color: #fff; text-decoration: none; }
 .footer-base .studio strong { font-weight: 600; color: #fff; }
-.studio__mark { flex: none; width: 20px; height: 20px; }
+.studio__mark { flex: none; height: 19px; width: auto; display: block; }
 
 /* the studio wordmark on the about page */
 .studio-credit { display: inline-block; margin-top: 0.4rem; }
