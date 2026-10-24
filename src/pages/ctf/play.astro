@@ -1,0 +1,158 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import '../../styles/ctf.css';
+import Cmd from '../../components/Cmd.astro';
+import { coreCommands, extraCommands, ctfRepo } from '../../lib/termux-ctf';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+---
+
+<BaseLayout
+  title="How to play the Termux CTF"
+  description="The four commands you need, what each one does, and a worked example of the first challenge."
+>
+  <div class="wrap">
+    <header class="ctf-hero">
+      <h1>How to play</h1>
+      <p class="lede">
+        Four commands cover almost everything. They work the same way for every
+        challenge, so once you have played one you have played them all.
+      </p>
+    </header>
+
+    <section>
+      <h2>The four you will use constantly</h2>
+      <div class="cmd-table">
+        {coreCommands.map((c) => (
+          <div class="cmd-row">
+            <code>{c.cmd}</code>
+            <span>{c.what}</span>
+          </div>
+        ))}
+      </div>
+      <p>
+        Anywhere a command takes an <code>&lt;id&gt;</code>, the number and the name both
+        work. <code>ctf start 01</code> and <code>ctf start hidden-file</code> do the same
+        thing.
+      </p>
+    </section>
+
+    <section>
+      <h2>Three more, for when you need them</h2>
+      <div class="cmd-table">
+        {extraCommands.map((c) => (
+          <div class="cmd-row">
+            <code>{c.cmd}</code>
+            <span>{c.what}</span>
+          </div>
+        ))}
+      </div>
+      <p>
+        <code>ctf hint</code> reveals one hint at a time and remembers how many you have
+        seen, so asking again gives you the next one rather than starting over.
+        <code>ctf doctor</code> is the first thing to run if something behaves oddly.
+      </p>
+    </section>
+
+    <section>
+      <h2>The menu</h2>
+      <p>
+        Typing on a phone is the worst part of any terminal tool, so running
+        <code>ctf</code> with no arguments opens a menu instead of a wall of text. It is
+        the same seven commands, numbered, and it stays open until you quit.
+      </p>
+      <p class="ctf-empty">
+        Piped into another command, it prints the how-to-play text instead, so scripts
+        never end up waiting for input that will not come.
+      </p>
+    </section>
+
+    <section>
+      <h2>A whole session, start to finish</h2>
+      <p>This is the first challenge, played from beginning to end.</p>
+
+      <Cmd cmd="ctf list" note="See what is there." />
+
+      <div class="ctf-banner">
+        <pre>  ────────────────────────────────────────────────
+    01   hidden-file          Easy     10 pts  open
+    02   owner-only           Easy     15 pts  open
+  ────────────────────────────────────────────────
+    0 of 6 captured, 0 of 120 points</pre>
+      </div>
+
+      <Cmd cmd="ctf start 01" note="Read the briefing. It writes the files and tells you how many." />
+
+      <div class="ctf-banner">
+        <pre>Two files were written into your home directory before you started.
+
+Both have names that begin with a dot. A plain listing leaves those out,
+which is why a directory can look emptier than it is.
+
+One of the two holds your flag. The other is noise.
+
+  Ready. 2 file(s) are in place in your home directory.</pre>
+      </div>
+
+      <p>
+        Now the part that is up to you. A plain <code>ls</code> shows nothing, which is the
+        first half of the lesson. The listing command has a flag of its own for showing
+        everything.
+      </p>
+
+      <Cmd cmd="ls -a" />
+      <Cmd cmd="cat .backup-52b09ac4" note="Read the file you found. The name is different on your device." />
+
+      <Cmd cmd="ctf check 01 LEARMUX&#123;...&#125;" note="Paste the flag you found. Copy buttons are everywhere in the tool." />
+
+      <div class="ctf-banner">
+        <pre>  LEARMUX&#123;3f2a91c4b7e05d18&#125;
+  Correct. 01 captured, 10 points.
+
+  10 of 120 points.  ctf list to see what is left.</pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>When you get stuck</h2>
+      <ol class="ctf-steps">
+        <li>
+          <strong>Re-read the briefing</strong>
+          <span>It teaches the concept the challenge is testing. The answer is usually a step you skipped.</span>
+        </li>
+        <li>
+          <strong>Run <code>ctf start &lt;id&gt;</code> again</strong>
+          <span>It prints everything a second time without touching your progress.</span>
+        </li>
+        <li>
+          <strong>Ask for one hint</strong>
+          <span>Then go and try again. Come back for the second one only if you need it.</span>
+        </li>
+        <li>
+          <strong>Reset the challenge</strong>
+          <span>If you deleted or edited something past the point where it makes sense, <code>ctf reset &lt;id&gt;</code> puts it back.</span>
+        </li>
+      </ol>
+      <p>
+        If a flag looks right and is rejected, check you copied all of it. A flag is
+        exactly 25 characters: <code>LEARMUX&#123;</code>, sixteen characters, and a
+        closing brace.
+      </p>
+    </section>
+
+    <section>
+      <h2>Where things are kept</h2>
+      <p>
+        The tool and your progress live in <code>~/.learmux</code>, and the command itself
+        is installed into <code>$PREFIX/bin</code>. Every path the tool creates is recorded
+        in a manifest as it goes, which is what lets the uninstaller remove exactly those
+        paths and nothing else.
+      </p>
+      <Cmd cmd="./uninstall.sh" note="Removes only what the tool recorded, and prints the list first." />
+      <p>
+        <a class="btn" href={`${base}ctf/challenges/`}>See the challenges</a>
+        <a class="btn" href={ctfRepo} target="_blank" rel="noopener">Read the source</a>
+      </p>
+    </section>
+  </div>
+</BaseLayout>
