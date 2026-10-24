@@ -1,0 +1,24 @@
+---
+/**
+ * Callout for article bodies. Usable directly from MDX:
+ *   import Callout from '../../components/Callout.astro';
+ *   <Callout type="warning" title="Authorised testing only">...</Callout>
+ */
+import Icon from './Icon.astro';
+
+interface Props {
+  type?: 'note' | 'warning' | 'tip';
+  title?: string;
+}
+const { type = 'note', title } = Astro.props;
+const icon = { note: 'info', warning: 'warning', tip: 'tip' }[type] as 'info' | 'warning' | 'tip';
+const label = title ?? { note: 'Note', warning: 'Warning', tip: 'Tip' }[type];
+---
+
+<div class={`callout callout--${type}`}>
+  <span class="callout__icon"><Icon name={icon} size={18} /></span>
+  <div class="callout__body">
+    <span class="callout__title">{label}</span>
+    <slot />
+  </div>
+</div>
