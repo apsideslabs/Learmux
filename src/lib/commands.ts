@@ -621,13 +621,33 @@ def('man', 'Display the manual for a command', (ctx) => {
   return ok([`NAME`, `    ${cmd.name}  ${cmd.summary}`, '', `SYNOPSIS`, `    ${cmd.usage ?? cmd.name}`].join('\n'));
 }, 'man cmd');
 
-def('help', 'List available commands', () => {
-  const lines = ['Learmux shell. Available commands:', ''];
-  const width = Math.max(...commands.map((c) => c.name.length));
-  for (const c of [...commands].sort((a, b) => a.name.localeCompare(b.name))) {
-    lines.push(`  ${c.name.padEnd(width + 2)}${c.summary}`);
+def('help', 'List the commands that matter here', (ctx) => {
+  const lines: string[] = [];
+  const topics = (ctx.helpTopics ?? []).filter((t) => commands.some((c) => c.name === t));
+
+  if (topics.length) {
+    lines.push('Commands this challenge is about:', '');
+    const w1 = Math.max(...topics.map((t) => t.length));
+    for (const t of topics) {
+      const c = commands.find((x) => x.name === t)!;
+      lines.push(`  ${t.padEnd(w1 + 2)}${c.summary}`);
+    }
+    lines.push('', 'Useful for any challenge:', '');
+  } else {
+    lines.push('Available commands:', '');
   }
-  lines.push('', 'Tip: pipes (|), redirection (> and >>) and history (↑/↓) all work.');
+
+  const extras = ['hint', 'submit', 'reset', 'clear', 'help'];
+  const w2 = Math.max(...extras.map((e) => e.length));
+  const describe: Record<string, string> = {
+    hint: 'Reveal the next hint for this challenge',
+    submit: 'Hand in a flag you have found',
+    reset: 'Restore the original files and start over',
+    clear: 'Clear the screen',
+    help: 'Show this list',
+  };
+  for (const e of extras) lines.push(`  ${e.padEnd(w2 + 2)}${describe[e]}`);
+  lines.push('', 'Pipes (|), redirection (> and >>) and history (↑/↓) all work.');
   return ok(lines.join('\n'));
 });
 
