@@ -13,7 +13,7 @@ tags: [pipes, redirection]
 
 import Callout from '../../components/Callout.astro';
 
-Every command reads something and writes something. Pipes and redirection let you control both ends, so one command's output can feed straight into the next. This is where the terminal beats any app, because you build a small tool out of parts that already exist.
+Every command reads something and writes something. Pipes and redirection let you control both ends. One command's output can then feed straight into the next. This is where the terminal beats any app. You build a small tool out of parts that already exist.
 
 ## What you'll be able to do
 
@@ -25,7 +25,7 @@ Every command reads something and writes something. Pipes and redirection let yo
 
 ## Step 1: Make a file to work with
 
-This writes a small access log. It uses redirection, which this lesson covers below, so read it for now as "put the text between the markers into access.log". There is no output, and the prompt returns.
+This command writes a small access log. It uses redirection, which this lesson covers below. For now, read it as "put the text between the markers into access.log". There is no output, and the prompt returns.
 
 ```
 $ cd ~
@@ -43,7 +43,7 @@ Each line has four parts: a client address, a method, a path, and a status code.
 
 ## Step 2: What a pipe is
 
-The pipe symbol `|` takes the output of the command on its left and feeds it to the command on its right. First, a count with no pipe.
+The pipe symbol `|` takes the output of the command on its left and feeds it to the command on its right. Start with a count and no pipe.
 
 ```
 $ wc -l access.log
@@ -57,7 +57,7 @@ $ cat access.log | wc -l
 6
 ```
 
-`cat` prints the file, the pipe hands that text to `wc`, and `wc` counts the lines. The number is the same, but `wc` never saw a file name, so it prints only the count.
+`cat` prints the file. The pipe hands that text to `wc`, and `wc` counts the lines. The number is the same, but `wc` never saw a file name, so it prints only the count.
 
 <Callout type="tip" title="Read a pipeline left to right">
 A pipeline is a sentence. Data enters on the left, passes through each command in turn, and leaves on the right.
@@ -65,7 +65,7 @@ A pipeline is a sentence. Data enters on the left, passes through each command i
 
 ## Step 3: Chaining commands
 
-`cut` picks one field from every line. `-d ' '` sets the space as the separator, and `-f1` asks for the first field, the client address.
+`cut` picks one field from every line. `-d ' '` sets the space as the separator. `-f1` asks for the first field, the client address.
 
 ```
 $ cut -d ' ' -f1 access.log
@@ -77,7 +77,7 @@ $ cut -d ' ' -f1 access.log
 10.0.0.4
 ```
 
-Now chain three. `sort` groups identical addresses, and `uniq -c` collapses each group and counts it.
+Now chain three. `sort` groups identical addresses. `uniq -c` then collapses each group and counts it.
 
 ```
 $ cut -d ' ' -f1 access.log | sort | uniq -c
@@ -86,7 +86,7 @@ $ cut -d ' ' -f1 access.log | sort | uniq -c
       1 10.0.0.9
 ```
 
-`uniq` only compares neighbours, which is why `sort` must come first. Add `sort -n` to order the results by the count.
+`uniq` only compares neighbours, which is why `sort` must come first. Add `sort -n` to order the results by count.
 
 ```
 $ cut -d ' ' -f1 access.log | sort | uniq -c | sort -n
@@ -99,7 +99,7 @@ Four commands, one line, and a ranked list of your busiest clients.
 
 ## Step 4: Writing output to files
 
-A single `>` sends a command's output into a file, replacing whatever was there before. Two `>>` append instead, adding to the end of the file.
+A single `>` sends a command's output into a file, replacing whatever was there before. Two `>>` append instead, adding to the end.
 
 ```
 $ echo "first line" > demo.txt
@@ -128,7 +128,7 @@ The `2>` redirects that error stream, numbered 2, into a file. The file `/dev/nu
 $ ls no-such-file 2>/dev/null
 ```
 
-Nothing is printed now. This is useful when you search widely and expect harmless errors.
+Nothing is printed now. This helps when you search widely and expect harmless errors.
 
 ```
 $ find ~ -name "*.log" 2>/dev/null
@@ -137,7 +137,7 @@ $ find ~ -name "*.log" 2>/dev/null
 
 ## Step 6: Sorting and counting numbers
 
-`sort` puts lines in order, but by default it compares them as text, so `10` comes before `2`. Add `-n` to sort by numeric value instead.
+`sort` puts lines in order. By default it compares them as text, so `10` comes before `2`. Add `-n` to sort by numeric value instead.
 
 ```
 $ printf '10\n2\n1\n30\n2\n' > numbers.txt
@@ -161,7 +161,7 @@ $ sort -n -u numbers.txt
 
 ## Step 7: Editing text with sed
 
-`sed` edits a stream of text. The form `s/old/new/g` replaces text, and the trailing `g` means every match on a line.
+`sed` edits a stream of text. The form `s/old/new/g` replaces text. The trailing `g` means every match on a line.
 
 ```
 $ sed 's/line/LINE/g' demo.txt
@@ -177,7 +177,7 @@ first LINE
 second line
 ```
 
-`sed` prints its result to the screen. It does not change the file unless you redirect the output somewhere.
+`sed` prints its result to the screen. It does not change the file unless you redirect the output.
 
 ## Step 8: A realistic one-liner
 
@@ -219,4 +219,4 @@ That is the shape of the whole lesson. Small commands, joined by pipes, answerin
 
 ## Next steps
 
-You now have the core of the command line. Put the whole set to work in a real investigation with [Logs Never Lie](/challenges/logs-never-lie/). To look up a command you half remember, revisit [Reading and searching text](/learn/reading-and-searching-text/). And if paths still trip you up, refresh [Navigating the filesystem](/learn/navigating-the-filesystem/).
+You now have the core of the command line. Put the whole set to work in a real investigation with [Logs Never Lie](/challenges/logs-never-lie/). To look up a command you half remember, revisit [Reading and searching text](/learn/reading-and-searching-text/). If paths still trip you up, refresh [Navigating the filesystem](/learn/navigating-the-filesystem/).
