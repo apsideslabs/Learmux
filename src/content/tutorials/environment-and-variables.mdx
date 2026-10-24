@@ -13,7 +13,7 @@ tags: [shell, environment]
 
 import Callout from '../../components/Callout.astro';
 
-Every time you open Termux you get a fresh shell, and that shell keeps a set of named values called environment variables. They hold your home directory, the folders searched for commands, your terminal type and your locale. Change one and you change how your commands behave, without editing the commands themselves.
+Every time you open Termux you get a fresh shell. That shell keeps a set of named values called environment variables. They hold your home directory, the folders searched for commands, your terminal type and your locale. Change one and you change how your commands behave, without editing the commands themselves.
 
 ## What you'll be able to do
 
@@ -90,7 +90,7 @@ This variable lives only in the current shell session. Close the session and it 
 
 ## Step 4: Export it so child processes see it
 
-A variable you set stays private to your shell until you export it. A child process, such as another `bash`, starts with a fresh copy of the environment and cannot see private shell variables.
+A variable you set stays private to your shell until you export it. A child process, such as another `bash`, starts with a fresh copy of the environment. It cannot see private shell variables.
 
 ```bash
 local_only=hello
@@ -141,7 +141,7 @@ Never put a password, an API key or a token into a variable that you export in a
 
 ## Step 5: Understand PATH and why order matters
 
-`PATH` is a list of folders separated by colons. When you type a command name, the shell walks that list from left to right and runs the first matching program it finds.
+`PATH` is a list of folders separated by colons. When you type a command name, the shell walks that list from left to right. It runs the first matching program it finds.
 
 ```bash
 echo $PATH
