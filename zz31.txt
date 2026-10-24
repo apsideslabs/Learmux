@@ -1,0 +1,19 @@
+```
+
+Now the shape is clear: three keys and their values. JSON has a small set of value types, namely text in double quotes, numbers, the words true and false, arrays in square brackets, and objects. When the text is not valid JSON the tool stops and names the line where it failed, which usually means you saved an error page instead of the data.
+
+<Callout type="tip" title="Keep keys out of your history">
+Always use HTTPS so the request and the reply are encrypted in transit. Never paste a real API key into a command you share, and remember that shells save commands to a history file on disk. Read a key from a file or an environment variable instead of typing it on the line.
+</Callout>
+
+## Step 5: Pull one field out of a reply
+
+Once a reply is in a file you can read single values from it in a script. The json module loads the file, and the result behaves like a dictionary:
+
+```
+python3 -c "import json; d=json.load(open('people.json')); print(d['id'])"
+```
+
+```
+42
+```
