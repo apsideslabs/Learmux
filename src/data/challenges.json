@@ -119,7 +119,7 @@
     "points": 10,
     "summary": "Unix hides files whose names start with a dot. Find one.",
     "objective": "Find and read the hidden file in your home directory.",
-    "briefing": "On Unix-like systems a leading dot marks a file as hidden — `ls` will not show it by default. Use `ls -a` to list *all* entries, then `cat` the one that looks suspicious.",
+    "briefing": "On Unix-like systems a leading dot marks a file as hidden, so `ls` will not show it by default. Use `ls -a` to list *all* entries, then `cat` the one that looks suspicious.",
     "flag": "TERMUX{hidden_in_plain_sight}",
     "hints": [
       "`ls` skips dotfiles.",
@@ -388,11 +388,11 @@
     "points": 20,
     "summary": "Spot the file that any user on the system can write to.",
     "objective": "Find the one file whose permissions are rw-rw-rw- and read it.",
-    "briefing": "`ls -l` shows a permissions column like `-rw-r--r--`. Read it as three groups: **user**, **group**, **others**. A file that is `rw-rw-rw-` (octal `666`) can be written by *anyone* — a classic security smell.\n\nList the directory in long form and find the file that is too permissive.",
+    "briefing": "`ls -l` shows a permissions column like `-rw-r--r--`. Read it as three groups: **user**, **group**, **others**. A file that is `rw-rw-rw-` (octal `666`) can be written by *anyone*. That is a classic security smell.\n\nList the directory in long form and find the file that is too permissive.",
     "flag": "TERMUX{world_writable}",
     "hints": [
       "`ls -l` prints the modes.",
-      "Look for `-rw-rw-rw-` — that is the odd one out."
+      "Look for `-rw-rw-rw-`. That is the odd one out."
     ],
     "starters": [
       "ls -l",
@@ -508,7 +508,7 @@
     "points": 15,
     "summary": "A flag is buried in a noisy access log. Grep it out.",
     "objective": "Search access.log for the flag.",
-    "briefing": "`grep <pattern> <file>` prints only the lines that match. The log is hundreds of lines of noise, but the flag starts with `TERMUX{` — search for that.",
+    "briefing": "`grep <pattern> <file>` prints only the lines that match. The log is hundreds of lines of noise, but the flag starts with `TERMUX{`. Search for that.",
     "flag": "TERMUX{logs_never_lie}",
     "hints": [
       "`grep TERMUX access.log`",
@@ -1367,7 +1367,7 @@
     "points": 20,
     "summary": "A careless admin left a secret in a running command line.",
     "objective": "List running processes and find the flag in a command argument.",
-    "briefing": "On real systems, `ps` shows the full command line of every process — including secrets people pass as arguments by mistake. Run `ps` here and read carefully.",
+    "briefing": "On real systems, `ps` shows the full command line of every process, including secrets people pass as arguments by mistake. Run `ps` here and read carefully.",
     "flag": "TERMUX{process_hunt}",
     "hints": [
       "`ps` lists processes.",
@@ -1699,7 +1699,7 @@
       "nmap 127.0.0.1"
     ],
     "overrides": {
-      "nmap": "Starting Nmap 7.94 ( https://nmap.org )\nNmap scan report for localhost (127.0.0.1)\nPORT     STATE SERVICE VERSION\n22/tcp   open  ssh     OpenSSH 9.6 (protocol 2.0)\n1337/tcp open  waste   Learmux flag service — banner: TERMUX{network_recon}\n8022/tcp open  ssh     OpenSSH 9.6 (Termux dropbear)\nNmap done: 1 IP address (1 host up) scanned in 1.42 seconds\n"
+      "nmap": "Starting Nmap 7.94 ( https://nmap.org )\nNmap scan report for localhost (127.0.0.1)\nPORT     STATE SERVICE VERSION\n22/tcp   open  ssh     OpenSSH 9.6 (protocol 2.0)\n1337/tcp open  waste   Learmux flag service, banner: TERMUX{network_recon}\n8022/tcp open  ssh     OpenSSH 9.6 (Termux dropbear)\nNmap done: 1 IP address (1 host up) scanned in 1.42 seconds\n"
     },
     "fs": {
       "type": "dir",
@@ -1997,7 +1997,7 @@
     "points": 15,
     "summary": "A file holds the flag written backwards.",
     "objective": "Reverse the characters in reversed.txt to read the flag.",
-    "briefing": "Not every obfuscation is cryptography. `rev` reverses each line — perfect for text stored backwards:\n\n```\nrev reversed.txt\n```",
+    "briefing": "Not every obfuscation is cryptography. `rev` reverses each line. Perfect for text stored backwards:\n\n```\nrev reversed.txt\n```",
     "flag": "TERMUX{reverse_engineering}",
     "hints": [
       "`rev reversed.txt`",
