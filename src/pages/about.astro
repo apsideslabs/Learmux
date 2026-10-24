@@ -1,9 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { challenges, categories, totalPoints } from '../lib/challenges';
+import { studio } from '../lib/site';
+import { tools } from '../data/tools';
+import { allTutorials } from '../lib/tutorials';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const cats = categories();
+const lessons = await allTutorials();
 ---
 
 <BaseLayout
@@ -34,6 +38,21 @@ const cats = categories();
         Everything is designed for a phone first, because that is where Termux lives. It works just as well
         on a laptop.
       </p>
+
+      <h2>Who makes it</h2>
+      <p>
+        Learmux is designed, engineered and maintained by <strong>{studio.name}</strong> — an independent
+        research and engineering studio. We build software that teaches.
+      </p>
+      <p>
+        The studio builds for the people who have the least — the slowest connection, the oldest device,
+        the smallest budget — so its work is offline-first, dependency-free and CPU-only wherever it can
+        be. Learmux follows the same rule: static pages, no tracking, no account, and nothing that needs a
+        server to work.
+      </p>
+      <a class="studio-credit" href={studio.url} target="_blank" rel="noopener">
+        <img src={`${base}brand/apsides-labs.svg`} alt={studio.name} />
+      </a>
 
       <h2>How the sandbox works</h2>
       <p>
@@ -72,10 +91,10 @@ const cats = categories();
     </div>
 
     <div class="stats">
+      <div class="stat"><span class="n">{lessons.length}</span><span class="l">lessons</span></div>
+      <div class="stat"><span class="n">{tools.length}</span><span class="l">tools documented</span></div>
       <div class="stat"><span class="n">{challenges.length}</span><span class="l">challenges</span></div>
       <div class="stat"><span class="n">{totalPoints}</span><span class="l">points</span></div>
-      <div class="stat"><span class="n">{cats.length}</span><span class="l">topics</span></div>
-      <div class="stat"><span class="n">50+</span><span class="l">shell commands</span></div>
     </div>
 
     <div class="actions" style="margin-top:2rem">
