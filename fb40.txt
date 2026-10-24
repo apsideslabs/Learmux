@@ -1,0 +1,5 @@
+        args: '{sum += $2} END {print sum} sales.txt',
+        what: 'accumulate a running total across every row and print it once at the end',
+      },
+      {
+        args: '$3 > 100 {print $0} report.txt',
