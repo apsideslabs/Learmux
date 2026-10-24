@@ -1,0 +1,168 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import '../../../styles/ctf.css';
+import Cmd from '../../../components/Cmd.astro';
+import { allTermux, findTermux, termuxNeighbours, ctfRepo } from '../../../lib/termux-ctf';
+
+export function getStaticPaths() {
+  return allTermux().map((c) => ({ params: { slug: c.slug }, props: { challenge: c } }));
+}
+
+const { challenge } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const { prev, next } = termuxNeighbours(challenge.slug);
+const startCommand = `ctf start ${challenge.id}`;
+
+/**
+ * The briefing is plain text written for a terminal, wrapped at about seventy
+ * characters. Blocks that are indented are examples and stay monospaced;
+ * everything else is reflowed into a paragraph.
+ */
+function briefingBlocks(text: string): { kind: 'p' | 'pre'; text: string }[] {
+  return text
+    .split(/\n\s*\n/)
+    .map((b) => b.replace(/\s+$/, ''))
+    .filter((b) => b.length > 0)
+    .map((b) => {
+      const lines = b.split('\n');
+      const indented = lines.some((l) => /^\s{4,}/.test(l));
+      return indented
+        ? { kind: 'pre' as const, text: b }
+        : { kind: 'p' as const, text: lines.map((l) => l.trim()).join(' ') };
+    });
+}
+
+const blocks = briefingBlocks(challenge.briefing);
+---
+
+<BaseLayout
+  title={`${challenge.title} · Termux CTF`}
+  description={`${challenge.objective} A ${challenge.difficulty.toLowerCase()} ${challenge.points} point challenge in the Termux CTF.`}
+>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={`${base}ctf/`}>Termux CTF</a>
+      <span>/</span>
+      <a href={`${base}ctf/challenges/`}>Challenges</a>
+    </nav>
+
+    <header class="ctf-head">
+      <h1>{challenge.title}</h1>
+      <div class="chip-row">
+        <span class="chip chip--mono">{challenge.id}</span>
+        <span class={`chip chip--${challenge.difficulty.toLowerCase()}`}>{challenge.difficulty}</span>
+        <span class="chip">{challenge.points} points</span>
+        <span class="chip">{challenge.category}</span>
+      </div>
+    </header>
+
+    <div class="ctf-objective">
+      <h2>Objective</h2>
+      <p>{challenge.objective}</p>
+    </div>
+
+    <section class="ctf-briefing">
+      <h2>The briefing</h2>
+      {blocks.map((b) =>
+        b.kind === 'pre' ? <pre class="ctf-fig">{b.text}</pre> : <p>{b.text}</p>
+      )}
+    </section>
+
+    <section>
+      <h2>Set it up</h2>
+      <p>
+        Run this in Termux. It teaches the concept above a second time, then writes the
+        challenge files into your home directory.
+      </p>
+      <Cmd cmd={startCommand} note="The tool tells you how many files it wrote, never their names." />
+      <p class="ctf-empty">
+        Then find the flag and hand it in with <code>ctf check {challenge.id} LEARMUX&#123;...&#125;</code>.
+      </p>
+    </section>
+
+    <section class="ctf-hints" data-hints data-total={challenge.hints.length}>
+      <h2>Hints</h2>
+      <p class="ctf-hints__note">
+        Two of them, revealed one at a time. The tool works the same way and remembers how
+        many you have seen, so nothing is spoiled by accident.
+      </p>
+      {challenge.hints.map((h, i) => (
+        <div class="ctf-hint" hidden data-hint-index={i}>
+          <span class="ctf-hint__label">Hint {i + 1}</span>
+          {h}
+        </div>
+      ))}
+      <div class="ctf-import__actions">
+        <button class="btn" type="button" data-hint-next>Reveal the first hint</button>
+      </div>
+    </section>
+
+    <div class="ctf-note">
+      <strong>The flag is not on this page</strong>
+      It cannot be. Every flag is derived from a random value created on your device when
+      you install the tool, so the answer here would be wrong for you. The tool is the only
+      thing that can tell you whether you got it right.
+    </div>
+
+    <nav class="ctf-pager" aria-label="Challenge navigation">
+      {prev ? (
+        <a href={`${base}ctf/challenges/${prev.slug}/`}>← {prev.id} {prev.title}</a>
+      ) : (
+        <span>← nothing before this one</span>
+      )}
+      {next ? (
+        <a href={`${base}ctf/challenges/${next.slug}/`}>{next.id} {next.title} →</a>
+      ) : (
+        <span>nothing after this one →</span>
+      )}
+    </nav>
+
+    <p style="margin-top:var(--sp-4)">
+      <a class="btn" href={`${base}ctf/challenges/`}>All challenges</a>
+      <a class="btn" href={ctfRepo} target="_blank" rel="noopener">Source on GitHub</a>
+    </p>
+  </div>
+
+  <script>
+    function initHints() {
+      document.querySelectorAll<HTMLElement>('[data-hints]').forEach((panel) => {
+        if (panel.dataset.bound) return;
+        panel.dataset.bound = '1';
+
+        const hints = Array.from(panel.querySelectorAll<HTMLElement>('.ctf-hint'));
+        const button = panel.querySelector<HTMLButtonElement>('[data-hint-next]');
+        if (!button) return;
+
+        let shown = 0;
+
+        const label = () => {
+          if (shown === 0) return 'Reveal the first hint';
+          if (shown >= hints.length) return '';
+          return shown === 1 ? 'Reveal the second hint' : 'Reveal the next hint';
+        };
+
+        const sync = () => {
+          const text = label();
+          if (text) {
+            button.textContent = text;
+            button.hidden = false;
+          } else {
+            button.hidden = true;
+          }
+        };
+
+        button.addEventListener('click', () => {
+          if (shown >= hints.length) return;
+          hints[shown].hidden = false;
+          shown += 1;
+          sync();
+        });
+
+        sync();
+      });
+    }
+
+    initHints();
+    document.addEventListener('astro:page-load', initHints);
+  </script>
+</BaseLayout>
