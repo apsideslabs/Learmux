@@ -1,0 +1,139 @@
+      ].join('\n'),
+    },
+  },
+
+  // ---------------------------------------------------------------- text
+  {
+    slug: 'grep',
+    name: 'grep',
+    category: 'text',
+    tagline: 'Search text line by line and print the matches',
+    about:
+      'The classic pattern matcher that reads lines and prints those containing a match, with regular-expression support. It recurses, counts, inverts and colourises, and is the backbone of countless pipelines. Reach for it whenever you need to pull matching lines out of text or command output.',
+    developer: 'GNU Project',
+    url: 'https://www.gnu.org/software/grep/',
+    bin: 'grep',
+    install: 'pkg install grep',
+    glyph: 'magnifier',
+    commands: [
+      {
+        args: '-i error app.log',
+        what: 'print every line of a log containing the word, ignoring upper and lower case',
+      },
+      {
+        args: '-rn "TODO" src/',
+        what: 'walk a directory and show matching lines prefixed with their path and line number',
+      },
+      {
+        args: '-c "GET" access.log',
+        what: 'count matching lines and print only the total instead of the lines',
+      },
+      {
+        args: '-v "^#" config.ini',
+        what: 'invert the match so everything that does not begin with a comment marker is shown',
+      },
+      {
+        args: '-E "warn|error" app.log',
+        what: 'use extended regular expressions so alternation works without escaping',
+      },
+      {
+        args: '-A2 -B2 "panic" app.log',
+        what: 'include two lines of context before and after each match',
+      },
+    ],
+    example: {
+      args: '-rn "TODO" src/',
+      out: [
+        'src/main.ts:14:// TODO: handle empty input',
+        'src/util.ts:3:// TODO: cache results',
+        'src/api.ts:52:// TODO: retry on timeout',
+      ].join('\n'),
+    },
+  },
+  {
+    slug: 'ripgrep',
+    name: 'ripgrep',
+    category: 'text',
+    tagline: 'A very fast recursive search that respects ignore rules',
+    about:
+      'A modern search tool that skips hidden entries and anything listed in ignore files by default, making it ideal inside code repositories. It is multi-threaded, colourises output and understands many archive and encoding cases. Use it in place of the older recursive search when speed and sensible defaults matter.',
+    developer: 'Andrew Gallant',
+    url: 'https://github.com/BurntSushi/ripgrep',
+    bin: 'rg',
+    install: 'pkg install ripgrep',
+    glyph: 'magnifier',
+    commands: [
+      {
+        args: 'TODO src/',
+        what: 'search a directory hierarchy for the pattern and print each hit with its path and line number',
+      },
+      {
+        args: '-i timeout',
+        what: 'match case-insensitively wherever the search goes',
+      },
+      {
+        args: '-t js',
+        what: 'limit the search to a single language type',
+      },
+      {
+        args: '-l "import React"',
+        what: 'list only the names of paths that contain a match, not the matching lines',
+      },
+      {
+        args: '-w error',
+        what: 'match whole words only, so substrings inside longer words are ignored',
+      },
+      {
+        args: '-uu',
+        what: 'include hidden entries and ignored paths in the search',
+      },
+    ],
+    example: {
+      args: '-i timeout',
+      out: [
+        'src/api.ts:52:// TODO: retry on timeout',
+        'src/api.ts:88:const TIMEOUT_MS = 5000',
+        'docs/guide.md:12:increase the timeout if requests fail',
+      ].join('\n'),
+    },
+  },
+  {
+    slug: 'sed',
+    name: 'sed',
+    category: 'text',
+    tagline: 'Edit a stream of text with find-and-replace rules',
+    about:
+      'A non-interactive stream editor that applies a script of substitutions, deletions and insertions to text as it flows past. It is the standard way to rewrite one pattern across many lines or paths without opening an editor. Use it for quick in-place edits in scripts.',
+    developer: 'GNU Project',
+    url: 'https://www.gnu.org/software/sed/',
+    bin: 'sed',
+    install: 'pkg install sed',
+    glyph: 'replace',
+    commands: [
+      {
+        args: 's/http/https/g config.txt',
+        what: 'replace every occurrence of a pattern on each line with another value',
+      },
+      {
+        args: '-i "s/localhost/127.0.0.1/g" app.conf',
+        what: 'rewrite matches directly in the given path instead of printing to the screen',
+      },
+      {
+        args: '-n "5,10p" notes.txt',
+        what: 'suppress the default output and print only lines five through ten',
+      },
+      {
+        args: '/^$/d app.log',
+        what: 'delete every blank line from the stream',
+      },
+      {
+        args: 's/^[ \t]*// data.txt',
+        what: 'strip leading spaces and tabs from the beginning of each line',
+      },
+      {
+        args: '-n "/ERROR/=" app.log',
+        what: 'print only the line numbers of lines matching a pattern',
+      },
+    ],
+    example: {
+      args: 's/http/https/g config.txt',
