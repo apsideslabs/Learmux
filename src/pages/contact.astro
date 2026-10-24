@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import { social } from '../lib/site';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+---
+
+<BaseLayout
+  title="Contact us"
+  description="Get in touch with the Learmux team, report a problem, or suggest a lesson."
+>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span><span>Contact us</span>
+    </nav>
+
+    <header style="margin-bottom:1.4rem">
+      <h1>Contact us</h1>
+      <p class="lede">Found a mistake, or want a lesson on something specific? We would like to hear it.</p>
+    </header>
+
+    <div class="prose">
+      <h2>Email</h2>
+      <p>
+        The quickest way to reach us is email:
+        <a href="mailto:contact.thestudycipher@gmail.com">contact.thestudycipher@gmail.com</a>.
+      </p>
+
+      <h2>Elsewhere</h2>
+      <p>We post short walkthroughs and updates on the channels below.</p>
+    </div>
+
+    <div class="social" style="margin-bottom:2rem">
+      {social.map((s) => (
+        <a href={s.href} aria-label={s.label} title={s.label} target="_blank" rel="noopener">
+          <Icon name={s.icon as any} size={19} />
+        </a>
+      ))}
+    </div>
+
+    <div class="soft-panel" style="max-width:640px">
+      <h2 style="font-size:1.05rem">Reporting a bug</h2>
+      <p class="muted mb-0" style="font-size:0.94rem">
+        If a challenge behaves unexpectedly, the source and issue tracker live on
+        <a href="https://github.com/apsideslabs/Learmux" target="_blank" rel="noopener">GitHub</a>.
+      </p>
+    </div>
+  </div>
+</BaseLayout>
