@@ -7,106 +7,80 @@ const cats = categories();
 ---
 
 <BaseLayout
-  title="About"
-  description="What Learmux is, how it is built, and how the sandbox works under the hood."
+  title="About us"
+  description="What Learmux is, how the sandbox works, and how the site is built."
 >
   <div class="wrap">
-    <header class="section--tight" style="padding-bottom:0">
-      <h1>About Learmux</h1>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span><span>About us</span>
+    </nav>
+
+    <header style="margin-bottom:1.4rem">
+      <h1>About us</h1>
       <p class="lede">
-        A small, self-contained place to learn Termux — Android's terminal and Linux environment — and the
-        command line in general.
+        Learmux is a small publication for learning Termux — Android's terminal and Linux environment —
+        and the command line in general.
       </p>
     </header>
 
-    <section class="section--tight">
-      <div class="split split--aside">
-        <div><h2>Why it exists</h2></div>
-        <div class="prose measure">
-          <p>
-            Termux puts a real shell in your pocket, but most tutorials stop at listing commands. Learmux
-            pairs a short written lesson with a challenge that makes you use it. You read about
-            <code>grep</code>, then you pull a flag out of a noisy log with it.
-          </p>
-          <p>
-            Everything is designed for a phone first, because that is where Termux lives. It works just as
-            well on a laptop.
-          </p>
-        </div>
-      </div>
-    </section>
+    <div class="prose">
+      <h2>What this is</h2>
+      <p>
+        Most command-line tutorials stop at listing commands. Learmux pairs a short written lesson with a
+        challenge that makes you use it. You read about <code>grep</code>, then you pull a flag out of a
+        noisy log with it.
+      </p>
+      <p>
+        Everything is designed for a phone first, because that is where Termux lives. It works just as well
+        on a laptop.
+      </p>
 
-    <section class="section--tight">
-      <div class="split split--aside">
-        <div><h2>How the sandbox works</h2></div>
-        <div class="prose measure">
-          <p>
-            There is no operating system behind the terminal. Each challenge declares a virtual filesystem,
-            and your keystrokes are parsed by an explicit tokeniser and pipeline executor. The same command
-            always produces the same result, and resetting a challenge simply restores the original files.
-          </p>
-          <p>
-            Commands that would normally touch a network or the device — <code>nmap</code>, <code>curl</code>,
-            <code>pkg</code>, <code>ps</code> — return output written specifically for that challenge, so
-            nothing depends on a server.
-          </p>
-          <blockquote>
-            This is a learning prototype. Flags live in the client-side data, so a determined reader could
-            find them early. That is fine for teaching; the next step would be moving challenge checks
-            behind an API.
-          </blockquote>
-        </div>
-      </div>
-    </section>
+      <h2>How the sandbox works</h2>
+      <p>
+        There is no operating system behind the terminal, and nothing you type ever reaches a real shell.
+        Each challenge declares a virtual filesystem, and your keystrokes are parsed by an explicit
+        tokeniser and pipeline executor. The same command always produces the same result, and resetting a
+        challenge restores the original files.
+      </p>
+      <p>
+        Commands that would normally touch a network or the device — <code>nmap</code>, <code>curl</code>,
+        <code>pkg</code>, <code>ps</code> — return output written for that challenge, so nothing depends on
+        a server.
+      </p>
 
-    <section class="section--tight">
-      <div class="stats">
-        <div class="stat"><span class="n">{challenges.length}</span><span class="l">challenges</span></div>
-        <div class="stat"><span class="n">{totalPoints}</span><span class="l">points</span></div>
-        <div class="stat"><span class="n">{cats.length}</span><span class="l">topics</span></div>
-        <div class="stat"><span class="n">50+</span><span class="l">shell commands</span></div>
-      </div>
-    </section>
+      <h2>How challenges are validated</h2>
+      <p>
+        Completing a challenge is decided by explicit rules stored with the challenge, not by scanning for a
+        flag string. A rule might require that you read a particular file, run a particular command, or move
+        into a particular directory. Submitting the flag directly also works.
+      </p>
 
-    <section class="section--tight">
-      <div class="split split--aside">
-        <div><h2>How it is built</h2></div>
-        <div class="prose measure">
-          <ul>
-            <li><strong>Astro</strong> renders the site to static files — pages, lessons, navigation and the sitemap.</li>
-            <li><strong>TypeScript</strong> powers the terminal: an explicit command parser, a virtual filesystem and a deterministic shell.</li>
-            <li><strong>Hand-written CSS</strong> — no framework — gives the mobile-first interface and the terminal its own character.</li>
-            <li><strong>Markdown</strong> holds the lessons, so adding one is just adding a file.</li>
-            <li><strong>JSON</strong> holds the challenge definitions, with no database needed.</li>
-          </ul>
-          <p class="mb-0">
-            The source is on <a href="https://github.com/apsideslabs/Learmux" rel="noopener">GitHub</a> under
-            the MIT licence.
-          </p>
-        </div>
-      </div>
-    </section>
+      <h2>How it is built</h2>
+      <ul>
+        <li><strong>Astro</strong> renders the site to static files — pages, lessons, categories, search and the sitemap.</li>
+        <li><strong>TypeScript</strong> powers the terminal: an explicit command parser, a virtual filesystem and a deterministic shell.</li>
+        <li><strong>Custom CSS</strong> gives the interface and the terminal their own character.</li>
+        <li><strong>Markdown</strong> holds the lessons; <strong>JSON</strong> holds the challenge definitions.</li>
+      </ul>
+      <p>
+        The source is on
+        <a href="https://github.com/apsideslabs/Learmux" target="_blank" rel="noopener">GitHub</a>
+        under the MIT licence.
+      </p>
 
-    <section class="section--tight">
-      <div class="split split--aside">
-        <div><h2>Run it yourself</h2></div>
-        <div class="prose measure">
-          <pre><code>npm install
-npm run dev      # http://localhost:4321
-npm run build    # static output in dist/
-npm test         # check every challenge is solvable</code></pre>
-        </div>
-      </div>
-    </section>
+      <h2>Numbers</h2>
+    </div>
 
-    <section class="section--tight">
-      <div class="card card--pad-lg" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1.5rem">
-        <div>
-          <h2 style="margin-bottom:0.3rem">Start with challenge 01</h2>
-          <p class="muted mb-0">Two commands, one flag, about a minute.</p>
-        </div>
-        <a class="btn btn--primary" href={`${base}challenges/first-steps/`}>Open it</a>
-      </div>
-    </section>
+    <div class="stats">
+      <div class="stat"><span class="n">{challenges.length}</span><span class="l">challenges</span></div>
+      <div class="stat"><span class="n">{totalPoints}</span><span class="l">points</span></div>
+      <div class="stat"><span class="n">{cats.length}</span><span class="l">topics</span></div>
+      <div class="stat"><span class="n">50+</span><span class="l">shell commands</span></div>
+    </div>
+
+    <div class="actions" style="margin-top:2rem">
+      <a class="btn btn--green" href={`${base}challenges/`}>Play the CTF</a>
+      <a class="btn btn--outline" href={`${base}learn/`}>Read the lessons</a>
+    </div>
   </div>
 </BaseLayout>
