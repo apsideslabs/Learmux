@@ -1,0 +1,24 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  entry: CollectionEntry<'tutorials'>;
+}
+
+const { entry } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const { title, category, excerpt, date } = entry.data;
+const thumb = `${base}thumbs/${entry.id}.svg`;
+const nice = new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+---
+
+<a class="post" href={`${base}learn/${entry.id}/`}>
+  <span class="post__thumb">
+    <img src={thumb} alt="" width="1200" height="675" loading="lazy" decoding="async" />
+  </span>
+  <span>
+    <span class="post__title">{title}</span>
+    <span class="post__meta">{category} · {nice}</span>
+    <span class="post__excerpt">{excerpt}</span>
+  </span>
+</a>
