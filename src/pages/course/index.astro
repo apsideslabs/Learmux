@@ -1,0 +1,92 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import { course } from '../../lib/curriculum';
+import { trackGroups, allTutorials } from '../../lib/tutorials';
+import { challenges, totalPoints } from '../../lib/challenges';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const groups = await trackGroups();
+const lessons = await allTutorials();
+---
+
+<BaseLayout
+  title="Course"
+  description={course.summary}
+>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span><span>Course</span>
+    </nav>
+
+    <header style="margin-bottom:1.6rem">
+      <p class="eyebrow">The course</p>
+      <h1>{course.title}</h1>
+      <p class="lede">{course.summary}</p>
+    </header>
+
+    <div class="course-facts">
+      <div class="fact"><span class="n">{groups.length}</span><span class="l">tracks</span></div>
+      <div class="fact"><span class="n">{lessons.length}</span><span class="l">lessons</span></div>
+      <div class="fact"><span class="n">{challenges.length}</span><span class="l">challenges</span></div>
+      <div class="fact"><span class="n">{course.timeEstimate}</span><span class="l">at ~20 min a lesson</span></div>
+    </div>
+
+    <div class="course-intro">
+      <div>
+        <h2>Who it is for</h2>
+        <p>{course.audience}</p>
+        <h2>What you need</h2>
+        <p>{course.requirements}</p>
+      </div>
+      <div class="soft-panel">
+        <h2 style="font-size:1.02rem;margin-top:0">What you will be able to do</h2>
+        <p class="mb-0" style="font-size:0.94rem">{course.outcome}</p>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:2.4rem"><span>The path</span></div>
+
+    {groups.map((group) => (
+      <section class="track" style="margin-top:1.6rem">
+        <div class="track__head">
+          <span class="track__num">{group.track.number}</span>
+          <div>
+            <h2 style="margin:0">
+              <a href={`${base}course/${group.track.id}/`}>{group.track.title}</a>
+            </h2>
+            <p class="track__tag">{group.track.tagline}</p>
+          </div>
+          <span class="chip">{group.lessons.length} lessons</span>
+        </div>
+        <p class="track__desc">{group.track.description}</p>
+        <div class="rows">
+          {group.lessons.map((l) => (
+            <a class="row" href={`${base}learn/${l.id}/`}>
+              <span>
+                <span class="row__title">{l.data.title}</span>
+                <span class="row__meta">{l.data.excerpt}</span>
+              </span>
+              <span class="row__side">
+                <span class="chip chip--mono">{l.data.level}</span>
+                <Icon name="chevron" size={15} />
+              </span>
+            </a>
+          ))}
+        </div>
+        <a class="track__link" href={`${base}course/${group.track.id}/`}>
+          About this track <Icon name="chevron" size={14} />
+        </a>
+      </section>
+    ))}
+
+    <section class="ctf-panel" style="margin-top:2.6rem">
+      <h2>Practise as you go</h2>
+      <p>
+        Every track pairs with challenges. {challenges.length} terminal challenges, {totalPoints} points,
+        all playable in the browser.
+      </p>
+      <a class="btn btn--green" href={`${base}challenges/`}>Play CTF</a>
+    </section>
+  </div>
+</BaseLayout>
