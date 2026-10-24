@@ -13,7 +13,7 @@ tags: [scp, rsync, transfer]
 
 import Callout from '../../components/Callout.astro';
 
-Sooner or later you need a file that is on another machine, or you need to send one there. scp copies over an encrypted connection, and rsync does the same job while sending only what has changed. In this lesson you will copy a file both ways, copy a directory, and use rsync to preview a transfer before you run it.
+Sooner or later you need a file that is on another machine. Or you need to send one there. scp copies over an encrypted connection. rsync does the same job, but sends only what has changed. In this lesson you will copy a file both ways, and copy a directory. You will use rsync to preview a transfer before you run it.
 
 ## What you'll be able to do
 
@@ -25,7 +25,7 @@ Sooner or later you need a file that is on another machine, or you need to send 
 
 ## Step 1: Copy a file to a host
 
-scp copies files over SSH, so both ends must be reachable and you need an account on the far side. The pattern is scp source destination, and a destination that contains a colon is a remote path. This sends a local file to your home directory on the host:
+scp copies files over SSH, so both ends must be reachable. You also need an account on the far side. The pattern is scp source destination. A destination that contains a colon is a remote path. This sends a local file to your home directory on the host:
 
 ```
 scp notes.txt ada@example.com:~/
@@ -35,7 +35,7 @@ scp notes.txt ada@example.com:~/
 notes.txt                                100% 2048     2.0KB/s   00:01
 ```
 
-The part before the colon is user@host, and the part after it is the path on that host. The tilde means the home directory.
+The part before the colon is user@host. The part after it is the path on that host. The tilde means the home directory.
 
 ## Step 2: Copy a file back
 
@@ -65,7 +65,7 @@ notes/draft.md                           100% 1024     1.0KB/s   00:01
 notes/final.md                           100% 3072     3.0KB/s   00:01
 ```
 
-Each file is listed as it moves. On a slow link this is where a big directory starts to hurt, because scp sends every file again each time you run it.
+Each file is listed as it moves. On a slow link, a big directory starts to hurt here. scp sends every file again each time you run it.
 
 <Callout type="tip" title="Confirm the host once">
 The first time you connect, scp asks you to confirm the host key. Check it against a value you trust before you accept, and never accept a key you cannot check.
@@ -73,7 +73,7 @@ The first time you connect, scp asks you to confirm the host key. Check it again
 
 ## Step 4: Send only the difference with rsync
 
-rsync does the same job, but it compares the two sides first and sends only what differs. That makes a second run far cheaper than the first. It is not always installed, so add it if needed:
+rsync does the same job, but it compares the two sides first. Then it sends only what differs. That makes a second run far cheaper than the first. It is not always installed, so add it if needed:
 
 ```
 pkg install rsync
@@ -85,7 +85,7 @@ Reading package lists... Done
 Setting up rsync (3.3.0) ...
 ```
 
-The -a flag keeps permissions and times and recurses, and -v prints what it does:
+The -a flag keeps permissions and times, and recurses. The -v flag prints what it does:
 
 ```
 rsync -av notes/ ada@example.com:~/notes/
@@ -118,7 +118,7 @@ notes/final.md
 notes/notes.txt
 ```
 
-With no trailing slash the directory name is carried across, so the files land one level deeper under backup. With the slash, the contents go straight into the destination.
+With no trailing slash the directory name is carried across. The files then land one level deeper under backup. With the slash, the contents go straight into the destination.
 
 ## Step 5: Preview before you copy
 
