@@ -6,12 +6,12 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 
 <BaseLayout title="Page not found" description="That page does not exist." noindex>
   <div class="wrap section">
-    <p class="eyebrow mono">404</p>
-    <h1 style="max-width:16ch">That page isn't here.</h1>
-    <p class="lede">It may have moved, or the link may be wrong. The terminal is still open, though.</p>
-    <div class="actions" style="margin-top:1.6rem">
-      <a class="btn btn--primary" href={`${base}challenges/`}>Go to the challenges</a>
-      <a class="btn btn--ghost" href={base}>Back home</a>
+    <p class="mono muted">404</p>
+    <h1>That page isn't here.</h1>
+    <p class="lede">It may have moved, or the link may be wrong.</p>
+    <div class="actions" style="margin-top:1.4rem">
+      <a class="btn btn--green" href={`${base}challenges/`}>Play the CTF</a>
+      <a class="btn btn--outline" href={base}>Back home</a>
     </div>
   </div>
 </BaseLayout>
