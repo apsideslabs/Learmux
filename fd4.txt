@@ -1,0 +1,140 @@
+    category: 'files',
+    tagline: 'Print a directory hierarchy as an indented diagram',
+    about:
+      'Renders the contents of a folder as a branching diagram so the shape of a project is visible at a glance. It can cap the depth, filter by pattern and print sizes. Useful for documentation and for understanding an unfamiliar codebase.',
+    developer: 'Steve Baker',
+    url: 'http://mama.indstate.edu/users/ice/tree/',
+    bin: 'tree',
+    install: 'pkg install tree',
+    glyph: 'tree',
+    commands: [
+      {
+        args: '-L 2',
+        what: 'limit the diagram to two levels of depth so a large project does not flood the screen',
+      },
+      {
+        args: '-a',
+        what: 'include hidden dotfiles and folders in the output',
+      },
+      {
+        args: '-h',
+        what: 'append a human-readable size to each entry',
+      },
+      {
+        args: '-d',
+        what: 'show directories only, giving a map of the folder skeleton',
+      },
+      {
+        args: '-I "node_modules|.git"',
+        what: 'exclude any path matching the given patterns, keeping the diagram focused',
+      },
+      {
+        args: '-P "*.ts"',
+        what: 'print only entries matching the pattern while still showing their parent folders',
+      },
+    ],
+    example: {
+      args: '-L 1',
+      out: [
+        '.',
+        '├── docs',
+        '├── scripts',
+        '├── src',
+        '└── README.md',
+        '',
+        '3 directories, 1 file',
+      ].join('\n'),
+    },
+  },
+  {
+    slug: 'ranger',
+    name: 'ranger',
+    category: 'files',
+    tagline: 'A keyboard-driven file manager that runs in the terminal',
+    about:
+      'A full-screen navigator with three columns showing the parent, current and preview panes. Movement is vi-like, and a preview of text, images or archives appears beside the selection. Reach for it when you would rather browse and open things visually than type paths.',
+    developer: 'Roman Zimbelmann',
+    url: 'https://ranger.github.io/',
+    bin: 'ranger',
+    install: 'pkg install ranger',
+    glyph: 'columns',
+    commands: [
+      {
+        args: '.',
+        what: 'open the browser rooted at the current directory with the three-pane layout',
+      },
+      {
+        args: '/sdcard',
+        what: 'start with the shared storage mount as the working location',
+      },
+      {
+        args: '--choosedir=/tmp/chosen-dir',
+        what: 'write the folder you quit from into a temporary note so a shell can change into it afterwards',
+      },
+      {
+        args: '--copy-config=all',
+        what: 'write the default configuration and key bindings into your home directory so you can customise them',
+      },
+      {
+        args: '-d',
+        what: 'open with the debug log enabled, which helps when a preview fails',
+      },
+      {
+        args: '--cmd=set colorscheme default',
+        what: 'override a setting for a single session, here restoring the default colour scheme',
+      },
+    ],
+  },
+  {
+    slug: 'midnight-commander',
+    name: 'Midnight Commander',
+    category: 'files',
+    tagline: 'A dual-pane orthodox file manager for the terminal',
+    about:
+      'An old-school two-panel commander that shows two directories side by side with function-key actions along the bottom. Copying, moving and comparing between panes is quick, and an internal viewer and editor are built in. Good when you want classic file-management muscle without leaving the terminal.',
+    developer: 'Miguel de Icaza',
+    url: 'https://midnight-commander.org/',
+    bin: 'mc',
+    install: 'pkg install mc',
+    glyph: 'columns',
+    commands: [
+      {
+        args: '.',
+        what: 'start the dual-pane manager with the current folder in the left panel',
+      },
+      {
+        args: '-b',
+        what: 'run in black-and-white mode for terminals without colour support',
+      },
+      {
+        args: '--view notes.txt',
+        what: 'open the built-in viewer directly on the named path, read-only',
+      },
+      {
+        args: '--edit scripts/deploy.sh',
+        what: 'jump straight into the bundled editor on the given path',
+      },
+      {
+        args: '-x',
+        what: 'force the program to run inside the current terminal instead of spawning a subshell',
+      },
+      {
+        args: '-P /tmp/panel-dir',
+        what: 'write the last directory you visited to the given location when the program exits',
+      },
+    ],
+  },
+  {
+    slug: 'tar',
+    name: 'tar',
+    category: 'files',
+    tagline: 'Bundle many files into one archive and unpack it again',
+    about:
+      'The classic tape-archiver, now the standard way to package a directory hierarchy into a single stream. Combined with a compressor it produces the familiar .tar.gz bundles shipped by most projects. Use it to move or back up a whole hierarchy while preserving permissions and timestamps.',
+    developer: 'GNU Project',
+    url: 'https://www.gnu.org/software/tar/',
+    bin: 'tar',
+    install: 'pkg install tar',
+    glyph: 'archive',
+    commands: [
+      {
