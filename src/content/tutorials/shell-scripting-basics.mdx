@@ -1,0 +1,239 @@
+---
+title: "Shell scripting basics"
+description: "Write a shell script with the shebang, variables, quoting, tests and loops, then run it in Termux."
+excerpt: "Turn a string of typed commands into a script you can run again and again."
+category: "Scripting"
+author: "The Study Cipher"
+date: "2026-02-14"
+order: 9
+level: Intermediate
+tags: [scripting, bash]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Typing the same commands every day wastes time and invites mistakes. A shell script puts those commands in a file so you run them with one short word. In this lesson you write your first scripts on Termux, using variables, tests and loops, and finish with a backup script that copies your files and prints a summary.
+
+## What you'll be able to do
+
+- Write a script that starts with a shebang and runs as `./script.sh`.
+- Store values in variables and use them safely with quotes.
+- Make decisions with `if` and tests, and repeat work with a `for` loop.
+- Make a file executable and read its exit code with `$?`.
+- Write a small backup script that copies files and reports what it did.
+
+## Step 1 — Start with a shebang
+
+The first line of a script is the shebang. It tells the system which program should run the file. For a portable script use `/bin/sh`, which on Termux is a POSIX shell.
+
+```sh
+#!/bin/sh
+```
+
+The command below writes a two-line script to a file called `hello.sh`. The `%s\n` format prints each argument on its own line, and the `>` sends the result into the file.
+
+```sh
+printf '%s\n' '#!/bin/sh' 'echo "Hello from Termux"' > hello.sh
+```
+
+```
+```
+
+Check what landed in the file.
+
+```sh
+cat hello.sh
+```
+
+```
+#!/bin/sh
+echo "Hello from Termux"
+```
+
+<Callout type="tip" title="Line endings">
+Keep scripts to plain line endings. If you ever edit a script on a computer and it fails with a strange error, run `dos2unix hello.sh` to strip Windows line endings.
+</Callout>
+
+## Step 2 — Variables and quoting
+
+A variable holds a value. You set it without a dollar sign and read it back with one. The commands below set `name` and then print it two ways.
+
+```sh
+name="Study Cipher"
+echo "Hello, $name"
+echo 'Hello, $name'
+```
+
+```
+Hello, Study Cipher
+Hello, $name
+```
+
+Double quotes expand the variable. Single quotes print the text exactly as written. Use double quotes around variables almost everywhere, so spaces and special characters survive.
+
+You can also store the output of a command in a variable.
+
+```sh
+today=$(date +%F)
+echo "backup for $today"
+```
+
+```
+backup for 2026-02-14
+```
+
+<Callout type="warning" title="Quote your variables">
+An unquoted variable that holds a space can split into two words and break a command. Write `"$name"`, not `$name`, unless you have a reason not to.
+</Callout>
+
+## Step 3 — Branch with if and loop with for
+
+The `if` statement runs one block or another depending on a test. The test goes in square brackets, and the block ends with `fi`.
+
+```sh
+#!/bin/sh
+if [ -d "$HOME/storage" ]; then
+  echo "shared storage is set up"
+else
+  echo "run termux-setup-storage first"
+fi
+```
+
+```
+run termux-setup-storage first
+```
+
+The `-d` test is true when the path is a directory. Other useful tests are `-f` for a file, `-z` for an empty string, and `-eq` for number equality.
+
+A `for` loop repeats a block once for each item in a list.
+
+```sh
+#!/bin/sh
+for name in alpha beta gamma; do
+  echo "item: $name"
+done
+```
+
+```
+item: alpha
+item: beta
+item: gamma
+```
+
+## Step 4 — Make it executable and read the exit code
+
+A script file is not runnable until you add the execute permission. This command prints nothing when it works.
+
+```sh
+chmod +x hello.sh
+```
+
+```
+```
+
+Confirm the new permission, then run the script.
+
+```sh
+ls -l hello.sh
+```
+
+```
+-rwxr-xr-x 1 u0_a123 u0_a123 41 Feb 14 10:00 hello.sh
+```
+
+```sh
+./hello.sh
+```
+
+```
+Hello from Termux
+```
+
+Every command finishes with an exit code. Zero means success. Anything else means a problem. You read the last one with `$?`.
+
+```sh
+./hello.sh
+echo $?
+```
+
+```
+Hello from Termux
+0
+```
+
+A command that fails sets a non-zero code.
+
+```sh
+cat /no/such/file
+echo $?
+```
+
+```
+cat: /no/such/file: No such file or directory
+1
+```
+
+## Step 5 — A complete backup script
+
+Here is a small script that copies files into a dated folder and prints a summary. It uses everything from the steps above.
+
+```sh
+#!/bin/sh
+# backup.sh - copy notes into a dated folder
+
+src="$HOME/notes"
+dest="$HOME/backups/$(date +%F)"
+
+if [ ! -d "$src" ]; then
+  echo "source folder $src is missing" >&2
+  exit 1
+fi
+
+mkdir -p "$dest"
+count=0
+for file in "$src"/*; do
+  cp "$file" "$dest/"
+  count=$((count + 1))
+done
+
+echo "copied $count file(s) to $dest"
+```
+
+Save it, make it executable, and run it.
+
+```sh
+chmod +x backup.sh
+```
+
+```
+```
+
+```sh
+./backup.sh
+```
+
+```
+copied 3 file(s) to /data/data/com.termux/files/home/backups/2026-02-14
+```
+
+Run it again the next day and it makes a fresh folder for that date, so an earlier backup is never overwritten.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `#!/bin/sh` | Shebang that names the interpreter for the script |
+| `name=value` | Sets a variable, with no spaces around the equals sign |
+| `"$name"` | Reads a variable, expanding it inside double quotes |
+| `$(command)` | Runs a command and captures its output |
+| `if [ -f "$file" ]; then ... fi` | Runs a block only when the test is true |
+| `for x in a b c; do ... done` | Repeats a block once per item |
+| `chmod +x script.sh` | Adds the execute permission |
+| `./script.sh` | Runs a script in the current folder |
+| `$?` | Holds the exit code of the last command |
+
+## Next steps
+
+- [Processes and jobs](/learn/processes-and-jobs/) to run scripts in the background.
+- [Shell config and aliases](/learn/shell-config-and-aliases/) to load your tools on every shell.
+- [Buried Strings](/challenges/buried-strings/) to practise the tools you used here.
