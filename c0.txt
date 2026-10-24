@@ -1,0 +1,48 @@
+---
+title: "Networking basics"
+description: "Inspect your network with ifconfig, ip, ping and nmap, fetch pages with curl and wget, and connect over ssh from Termux."
+excerpt: "Inspect your own network, fetch pages and connect over ssh from your phone."
+category: "Networking"
+author: "The Study Cipher"
+date: "2026-02-09"
+order: 8
+level: Intermediate
+tags: [networking, ssh]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Your phone is a networked computer, and Termux gives you the same tools an administrator uses on a server. In this lesson you will find your own address, test whether another host is reachable, fetch a page from the command line, and open a secure shell to another machine. You will also see how to read a service banner and why you must never scan a network you do not control.
+
+## What you'll be able to do
+
+- Find your own IP address with `ifconfig` and `ip addr`.
+- Test reachability and round-trip time with `ping`.
+- Run a basic `nmap` scan and read the ports and versions it reports.
+- Fetch a page with `curl`, read its headers with `-I`, and save it with `-o`.
+- Download a file with `wget`.
+- Connect over `ssh` and understand the host-key fingerprint prompt.
+
+## Step 1: Install the tools
+
+Termux does not include these commands by default. Install them in one call. The `openssh` package provides `ssh` and `sshd`, `iproute2` provides `ip`, and `net-tools` provides `ifconfig` and `netstat`.
+
+```bash
+pkg install iproute2 net-tools nmap curl wget openssh
+```
+
+```text
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following NEW packages will be installed:
+  curl iproute2 net-tools nmap openssh wget
+0 upgraded, 6 newly installed, 0 to remove and 0 not upgraded.
+Setting up curl (8.8.0) ...
+Setting up iproute2 (6.10.0) ...
+Setting up nmap (7.95) ...
+Setting up openssh (9.8p1) ...
+Setting up wget (1.24.5) ...
+```
+
+## Step 2: Find your own address
