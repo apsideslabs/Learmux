@@ -1,0 +1,192 @@
+---
+title: "Shell config and aliases"
+description: "Edit your bashrc, add aliases, set a prompt with PS1, and fix your PATH in Termux."
+excerpt: "Shape the shell you get every time you open Termux with a few small edits."
+category: "Termux"
+author: "The Study Cipher"
+date: "2026-03-01"
+order: 12
+level: Intermediate
+tags: [bashrc, aliases, path]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Every time you open Termux, the shell reads a startup file before it gives you a prompt. Editing that file lets you set short names for long commands, change the prompt, and add your own folders to the search path. In this lesson you edit the file, add aliases, set the prompt, and understand how the shell finds commands.
+
+## What you'll be able to do
+
+- Find and read your shell startup file, `~/.bashrc`.
+- Add aliases for commands you type often.
+- Change your prompt with `PS1`.
+- Understand `PATH` and why the order of folders matters.
+- Export environment variables and reload the file with `source`.
+
+## Step 1 — Meet the bashrc file
+
+The file `~/.bashrc` runs each time an interactive Bash shell starts. On Termux it already exists. Read it with `cat`.
+
+```sh
+cat ~/.bashrc
+```
+
+```
+# ~/.bashrc
+export PS1='\u@\h:\w\$ '
+```
+
+Lines starting with `#` are comments. The one real line sets the prompt. Anything you add here runs on every new shell, so keep it short and correct.
+
+## Step 2 — Add aliases
+
+An alias is a short name for a longer command. This one makes `ll` run `ls -l`. Setting an alias prints nothing when it works.
+
+```sh
+alias ll='ls -l'
+```
+
+```
+```
+
+Run it.
+
+```sh
+ll
+```
+
+```
+total 8
+drwx------ 2 u0_a123 u0_a123 4096 Feb 14 10:00 backups
+-rwxr-xr-x 1 u0_a123 u0_a123   41 Feb 14 10:00 hello.sh
+```
+
+List your aliases to check them.
+
+```sh
+alias
+```
+
+```
+alias ll='ls -l'
+alias ..='cd ..'
+```
+
+<Callout type="tip" title="Aliases last until you close the shell">
+An alias set at the prompt is gone when the shell closes. Put the line in `~/.bashrc` to keep it for every session.
+</Callout>
+
+## Step 3 — Change your prompt with PS1
+
+The `PS1` variable holds your prompt. It understands escapes such as `\u` for the user, `\h` for the host, `\w` for the current folder, and `\$` for the prompt symbol.
+
+```sh
+PS1='\u@\h:\w\$ '
+```
+
+```
+u0_a123@localhost:~$ 
+```
+
+Move into another folder and the prompt follows.
+
+```sh
+cd backups
+```
+
+```
+u0_a123@localhost:~/backups$ 
+```
+
+## Step 4 — Understand PATH and its order
+
+When you type a command, the shell searches the folders listed in `PATH`, in order, and runs the first match. Print it to see the list.
+
+```sh
+echo $PATH
+```
+
+```
+/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets
+```
+
+Folders are separated by colons. To add your own folder, put it at the front so your version wins.
+
+```sh
+export PATH="$HOME/bin:$PATH"
+```
+
+```
+```
+
+```sh
+echo $PATH
+```
+
+```
+/data/data/com.termux/files/home/bin:/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets
+```
+
+<Callout type="warning" title="Order decides which command runs">
+A folder earlier in `PATH` wins. If two programs share a name, the one in the earlier folder is the one that runs. Put your own folder first only when you mean to override the system tools.
+</Callout>
+
+## Step 5 — Export variables and reload the file
+
+An environment variable is a value passed to the programs you run. `export` makes a variable part of the environment.
+
+```sh
+export EDITOR=nano
+```
+
+```
+```
+
+```sh
+echo $EDITOR
+```
+
+```
+nano
+```
+
+After you edit `~/.bashrc`, load it into the current shell with `source`, so you do not have to open a new one.
+
+```sh
+source ~/.bashrc
+```
+
+```
+```
+
+Here are a few aliases that earn their place on a phone.
+
+```sh
+alias ll='ls -la'
+alias ..='cd ..'
+alias update='pkg update && pkg upgrade -y'
+alias grep='grep --color=auto'
+```
+
+```
+```
+
+Add those lines to `~/.bashrc` and run `source ~/.bashrc` once, and they are there every time you open Termux.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `cat ~/.bashrc` | Shows your shell startup file |
+| `alias name='command'` | Creates a short name for a command |
+| `alias` | Lists the aliases in this shell |
+| `PS1='\u@\h:\w\$ '` | Sets the prompt format |
+| `echo $PATH` | Prints the command search path |
+| `export PATH="$HOME/bin:$PATH"` | Adds a folder to the front of the path |
+| `export NAME=value` | Puts a variable into the environment |
+| `source ~/.bashrc` | Reloads the startup file into this shell |
+
+## Next steps
+
+- [Shell scripting basics](/learn/shell-scripting-basics/) to turn aliases into full scripts.
+- [Managing packages in Termux](/learn/managing-packages/) to install the tools your aliases call.
+- [Buried Strings](/challenges/buried-strings/) to use `grep` in a real task.
