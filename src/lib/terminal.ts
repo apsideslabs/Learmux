@@ -118,7 +118,7 @@ export function mountTerminal(root: HTMLElement, challenge: Challenge, opts: Ter
 
   function boot() {
     output.innerHTML = '';
-    banner(`Learmux sandbox — ${challenge.title}`);
+    banner(`Learmux sandbox: ${challenge.title}`);
     if (isSolved(challenge.slug)) {
       line(`✔ You have already captured this flag (${challenge.flag}).`, 'lx-term__muted');
     }
@@ -153,11 +153,11 @@ export function mountTerminal(root: HTMLElement, challenge: Challenge, opts: Ter
 
   function celebrate() {
     if (isSolved(challenge.slug)) {
-      banner(`✔ ${challenge.flag} — already captured`);
+      banner(`✔ ${challenge.flag}  already captured`);
       return;
     }
     markSolved(challenge.slug);
-    banner(`★ FLAG CAPTURED — +${challenge.points} pts  ${challenge.flag}`);
+    banner(`★ FLAG CAPTURED  +${challenge.points} pts  ${challenge.flag}`);
     opts.onSolved?.(challenge);
   }
 
