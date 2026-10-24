@@ -55,8 +55,11 @@ export interface Challenge {
   /** The secret. Anything the player types that reveals this counts. */
   flag: string;
   hints: string[];
-  /** A couple of example commands to get unstuck. */
-  starters?: string[];
+  /**
+   * Worked solutions, used by the test harness to prove a challenge is
+   * solvable. Never rendered: the player gets hints and `help` instead.
+   */
+  solutions?: string[];
   /** Absolute starting directory. */
   cwd: string;
   user: string;
@@ -96,6 +99,8 @@ export interface CmdContext {
   overrides?: Record<string, string>;
   /** Records player actions so explicit validation rules can be evaluated. */
   record?: (kind: 'read', value: string) => void;
+  /** Binaries this challenge expects, so `help` can point at the right tools. */
+  helpTopics?: string[];
 }
 
 export interface CmdResult {
