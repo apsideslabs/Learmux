@@ -1,0 +1,109 @@
+---
+title: "DNS and addresses"
+description: "How your phone turns a name like example.com into a reachable address, and how to inspect each step with dig."
+excerpt: "See how a name becomes an address on your phone and check the answer yourself with dig."
+category: "Networking"
+author: "The Study Cipher"
+date: "2026-02-19"
+order: 15
+track: "networking"
+level: "Intermediate"
+tags: [dns, networking]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Every time you open a site, your phone has to turn a name into an address before it can send anything. That translation is DNS. In this lesson you will find the resolver your phone uses, ask it for several kinds of record, and read the replies yourself. By the end you will know what happens between typing a name and reaching a server.
+
+## What you'll be able to do
+
+- Find the DNS resolver your phone is using.
+- Ask for A, AAAA, MX and TXT records with dig and nslookup.
+- Read the answer section of a dig reply.
+- Tell the difference between a name and an address.
+- Follow a CNAME and run a reverse lookup.
+
+## Step 1: Find your resolver
+
+A resolver is the server your phone asks when it needs to turn a name into an address. On Android it is stored as a system property. The getprop command reads those properties, and it is available in Termux.
+
+Read the first resolver address:
+
+```
+getprop net.dns1
+```
+
+```
+192.168.1.1
+```
+
+That address is your router, which forwards the question on. Some phones leave this property empty and fill in the second one instead. To see every DNS property at once, filter the full list:
+
+```
+getprop | grep -i dns
+```
+
+```
+[net.dns1]: [192.168.1.1]
+[net.dns2]: [8.8.8.8]
+```
+
+The first entry is your local resolver, and the second is a fallback.
+
+<Callout type="tip" title="The resolver is a choice">
+The address you see here decides who answers your questions. Changing it later is a real change to how your phone works.
+</Callout>
+
+## Step 2: Ask for an address
+
+dig is the standard tool for asking DNS questions. It ships in the dnsutils package, which you may need to install first.
+
+```
+pkg install dnsutils
+```
+
+```
+Reading package lists... Done
+Setting up dnsutils (9.18.28) ...
+```
+
+Now ask for the address of example.com. The A record type holds an IPv4 address:
+
+```
+dig example.com A
+```
+
+```
+; <<>> DiG 9.18.28 <<>> example.com A
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 41022
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;example.com.                    IN      A
+
+;; ANSWER SECTION:
+example.com.            3600    IN      A       93.184.216.34
+
+;; SERVER: 192.168.1.1#53(192.168.1.1)
+```
+
+The QUESTION SECTION repeats what you asked. The ANSWER SECTION holds the reply: the name, the number 3600, the record type, and the address. The 3600 is the time to live in seconds, the length of time a resolver may keep this answer before asking again.
+
+For the IPv6 address, ask for the AAAA record:
+
+```
+dig +short example.com AAAA
+```
+
+```
+2606:2800:220:1:248:1893:25c8:1946
+```
+
+The +short option prints only the answer, which is useful when you want the value and not the full report.
+
+## Step 3: Look up mail and text records
+
+Not every record holds an address. The MX record says where mail for a domain should go, and the TXT record holds free text that other systems read.
+
+Ask for the mail servers:
