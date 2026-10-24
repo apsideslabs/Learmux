@@ -13,7 +13,7 @@ tags: [tar, zip, gzip]
 
 import Callout from '../../components/Callout.astro';
 
-Sooner or later you need to move a whole folder as a single file, or make a download smaller. That is what archives and compression are for. `tar` packs many files into one, `gzip` shrinks a single file, and `zip` does both in one format that other devices understand. You will use all three.
+Sooner or later you need to move a whole folder as one file. Other times you only want a smaller download. That is what archives and compression are for. `tar` packs many files into one. `gzip` shrinks a single file. `zip` does both, in a format other devices understand. You will use all three.
 
 ## What you'll be able to do
 
@@ -25,7 +25,7 @@ Sooner or later you need to move a whole folder as a single file, or make a down
 
 ## Step 1: Create an archive with tar
 
-`tar` collects files into one stream. The flags `-czf` mean create (`c`), compress with gzip (`z`) and write to the file named next (`f`). Build a small folder first.
+`tar` collects files into one stream. In `-czf`, the `c` creates the archive and `z` compresses it with gzip. The `f` names the file to write. Build a small folder first.
 
 ```bash
 mkdir -p project/notes
@@ -49,7 +49,7 @@ ls -l project.tar.gz
 -rw-r--r-- 1 u0_a123 u0_a123 214 Jan 30 10:12 project.tar.gz
 ```
 
-The name ends in `.tar.gz` because it is a tar archive that has then been gzipped. You will also see `.tgz`, which means the same thing.
+The name ends in `.tar.gz` because it is a tar archive, then gzipped. You will also see `.tgz`, which means the same thing.
 
 <Callout type="tip" title="Name the folder itself">
 Run `tar -czf project.tar.gz project` and the archive stores the folder itself, so extraction rebuilds `project/`. Run it on `project/*` instead and you get a loose pile of files. Naming the folder keeps things tidy.
@@ -57,7 +57,7 @@ Run `tar -czf project.tar.gz project` and the archive stores the folder itself, 
 
 ## Step 2: List the contents before extracting
 
-The `-t` flag lists an archive without unpacking it. Use the same `-zf` tail so `tar` knows it is gzipped and where to read from.
+The `-t` flag lists an archive without unpacking it. Keep the `-zf` tail, so `tar` knows it is gzipped and where to read from.
 
 ```bash
 tar -tzf project.tar.gz
@@ -71,11 +71,11 @@ project/a.txt
 project/b.txt
 ```
 
-Look at those paths. Every entry is under `project/`. Nothing is loose at the top level, so extracting here would not scatter files across your current directory.
+Look at those paths. Every entry is under `project/`. Nothing is loose at the top level. Extracting here would not scatter files across your current directory.
 
 ## Step 3: Extract with tar
 
-The `-x` flag extracts. Point the archive at a target directory with `-C` so it does not unpack into wherever you happen to be.
+The `-x` flag extracts. Point the archive at a target directory with `-C`. Then it does not unpack into wherever you happen to be.
 
 ```bash
 mkdir -p outdir
@@ -109,7 +109,7 @@ ls a.txt.gz
 a.txt.gz
 ```
 
-The original `a.txt` is gone, and `a.txt.gz` is in its place. To bring it back, use `gunzip`, which is the reverse.
+The original `a.txt` is gone. In its place is `a.txt.gz`. To bring it back, use `gunzip`, which reverses the change.
 
 ```bash
 gunzip a.txt.gz
@@ -120,7 +120,7 @@ cat a.txt
 alpha
 ```
 
-`gzip` is fast and widely used, but remember it works on single files. To compress a whole folder you pack it with `tar` first, which is why the two are so often paired.
+`gzip` is fast and widely used, but it works on single files. To compress a whole folder, pack it with `tar` first. That is why the two are so often paired.
 
 ## Step 5: Use zip and unzip
 
@@ -138,7 +138,7 @@ zip -r project.zip project
   adding: project/b.txt (stored 0%)
 ```
 
-Unlike `tar`, `zip` talks as it works and lists each file it adds. To read the contents without unpacking, use `unzip -l`.
+Unlike `tar`, `zip` talks as it works. It lists each file it adds. To read the contents without unpacking, use `unzip -l`.
 
 ```bash
 unzip -l project.zip
