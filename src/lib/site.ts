@@ -1,6 +1,5 @@
 /**
- * Site-wide configuration: brand, navigation and social links in one place.
- * Social URLs are placeholders — swap them for real profiles.
+ * Site-wide configuration: brand, navigation and the project link in one place.
  */
 
 export const site = {
@@ -9,6 +8,7 @@ export const site = {
   description:
     'Learmux teaches Termux and the Linux command line through an ordered course and an interactive terminal where you capture flags.',
   author: 'The Study Cipher',
+  repository: 'https://github.com/apsideslabs/Learmux',
 };
 
 export const nav = [
@@ -25,15 +25,7 @@ export const drawerNav = [
   { href: 'categories/', label: 'Categories', chevron: true },
   { href: 'learn/', label: 'All lessons' },
   { href: 'about/', label: 'About Us' },
-  { href: 'https://www.youtube.com/', label: 'YouTube', external: true },
   { href: 'contact/', label: 'Contact Us' },
   { href: 'privacy/', label: 'Privacy Policy' },
   { href: 'challenges/', label: 'Play CTF Game', tag: 'CTF' },
-];
-
-export const social = [
-  { href: 'https://www.youtube.com/', label: 'YouTube', icon: 'youtube' },
-  { href: 'https://www.instagram.com/', label: 'Instagram', icon: 'instagram' },
-  { href: 'https://github.com/apsideslabs/Learmux', label: 'GitHub', icon: 'github' },
-  { href: 'https://www.facebook.com/', label: 'Facebook', icon: 'facebook' },
 ];
