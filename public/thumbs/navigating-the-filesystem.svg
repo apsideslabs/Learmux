@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" role="img">
+  <defs>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#1b222c" stroke-width="1"/>
+    </pattern>
+    <clipPath id="card"><rect x="96" y="104" width="1008" height="486" rx="14"/></clipPath>
+  </defs>
+
+  <rect width="1200" height="675" fill="#101419"/>
+  <rect width="1200" height="675" fill="url(#grid)"/>
+  <rect x="0" y="0" width="1200" height="7" fill="#2878d0"/>
+
+  <circle cx="1080" cy="565" r="150" fill="#2878d0" opacity="0.08"/>
+  <circle cx="1080" cy="565" r="88" fill="#2878d0" opacity="0.07"/>
+
+  <rect x="96" y="104" width="1008" height="486" rx="14" fill="#0b0e12" stroke="#232a33" stroke-width="2"/>
+  <rect x="96" y="104" width="1008" height="58" rx="14" fill="#161c23"/>
+  <rect x="96" y="148" width="1008" height="14" fill="#161c23"/>
+  <circle cx="130" cy="133" r="7" fill="#3a444f"/>
+  <circle cx="156" cy="133" r="7" fill="#3a444f"/>
+  <circle cx="182" cy="133" r="7" fill="#3a444f"/>
+  <g clip-path="url(#card)"><text x="140" y="222" font-family="'JetBrains Mono', monospace" font-size="40" fill="#eef1f5">$ ls -la</text><text x="140" y="304" font-family="'JetBrains Mono', monospace" font-size="40" fill="#8b95a3">drwxr-xr-x  projects</text><text x="140" y="386" font-family="'JetBrains Mono', monospace" font-size="40" fill="#eef1f5">$ cd projects/android</text></g>
+</svg>
