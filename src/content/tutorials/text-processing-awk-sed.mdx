@@ -1,0 +1,220 @@
+---
+title: "Text processing with sed and awk"
+description: "Edit streams of text with sed and pull fields out of them with awk, then combine both in a pipeline over a real log file."
+excerpt: "Two small tools that reshape text on the way through a pipe."
+category: "Text"
+author: "The Study Cipher"
+date: "2026-02-04"
+order: 11
+track: "practice"
+level: "Intermediate"
+tags: [text, sed, awk]
+---
+
+import Callout from '../../components/Callout.astro';
+
+`sed` and `awk` are the two workhorses of text on the command line. `sed` rewrites lines as they pass through. `awk` splits each line into fields and lets you pick, test or total them. Together they turn a wall of output into the few numbers or lines you actually want.
+
+## What you'll be able to do
+
+- Replace text with `sed` and control how many times each line is touched.
+- Delete lines that match a pattern, and print only a range of lines.
+- Pull single fields out of a line with `awk`.
+- Read colon-separated data with `awk -F`.
+- Total a column and build a pipeline over a log file.
+
+## Step 1: Create a file and substitute text with sed
+
+Start with a small file. The heredoc writes it in one go and `cat` shows what landed.
+
+```bash
+cat > scores.txt << 'EOF'
+alice 90 maths
+bob 75 physics
+carol 88 chemistry
+dave 60 maths
+EOF
+cat scores.txt
+```
+
+```text
+alice 90 maths
+bob 75 physics
+carol 88 chemistry
+dave 60 maths
+```
+
+The `s` command substitutes. It takes a pattern, a replacement and flags. By default it replaces the first match on each line.
+
+```bash
+sed 's/maths/MATHS/' scores.txt
+```
+
+```text
+alice 90 MATHS
+bob 75 physics
+carol 88 chemistry
+dave 60 MATHS
+```
+
+Every line containing `maths` changed. Now watch the `g` flag, which replaces every match on a line rather than only the first.
+
+```bash
+printf 'cat dog cat\ndog cat dog\ncat cat cat\n' > words.txt
+sed 's/cat/CAT/' words.txt
+```
+
+```text
+CAT dog cat
+dog CAT dog
+CAT cat cat
+```
+
+Only the first `cat` on each line changed. Add `g` and every one changes.
+
+```bash
+sed 's/cat/CAT/g' words.txt
+```
+
+```text
+CAT dog CAT
+dog CAT dog
+CAT CAT CAT
+```
+
+<Callout type="warning" title="Editing in place">
+The `-i` flag makes `sed` rewrite the file itself, as in `sed -i 's/cat/CAT/g' words.txt`. There is no undo, so copy the file first or test the substitution without `-i` until the output looks right.
+</Callout>
+
+## Step 2: Delete and print lines with sed
+
+The `d` command deletes every line that matches a pattern.
+
+```bash
+sed '/maths/d' scores.txt
+```
+
+```text
+bob 75 physics
+carol 88 chemistry
+```
+
+The `-n` flag turns off the default printing of every line. Pair it with the `p` command to print only the lines you ask for, here a range.
+
+```bash
+sed -n '2,3p' scores.txt
+```
+
+```text
+bob 75 physics
+carol 88 chemistry
+```
+
+<Callout type="tip" title="Read the middle of a file">
+`sed -n '2,3p'` is a quick way to look at a slice of a large file without scrolling past the start. Change the numbers to move the window.
+</Callout>
+
+## Step 3: Pick fields with awk
+
+`awk` splits each line on whitespace and numbers the pieces `$1`, `$2` and so on. The special name `$NF` means the last field.
+
+```bash
+awk '{print $1}' scores.txt
+```
+
+```text
+alice
+bob
+carol
+dave
+```
+
+```bash
+awk '{print $NF}' scores.txt
+```
+
+```text
+maths
+physics
+chemistry
+maths
+```
+
+When the fields are separated by something other than spaces, set the separator with `-F`. This file uses colons.
+
+```bash
+printf 'web1:10.0.0.11:8080\nweb2:10.0.0.12:8080\ndb1:10.0.0.21:5432\n' > servers.txt
+awk -F: '{print $2}' servers.txt
+```
+
+```text
+10.0.0.11
+10.0.0.12
+10.0.0.21
+```
+
+## Step 4: Total a column with awk
+
+The `END` block runs once, after the last line, which is where a total belongs.
+
+```bash
+printf '12\n7\n30\n5\n' > numbers.txt
+awk '{sum+=$1} END {print sum}' numbers.txt
+```
+
+```text
+54
+```
+
+The first block adds each line's value into `sum`. The `END` block prints it once the file runs out. Add a counter in the first block and divide in the `END` block, and the same shape gives you an average.
+
+## Step 5: A realistic pipeline over a log file
+
+Here is a small access log. Each line records an address, a request and a status code.
+
+```bash
+cat > access.log << 'EOF'
+10.0.0.4 - - "GET /index.html" 200
+10.0.0.7 - - "GET /about.html" 404
+10.0.0.4 - - "GET /style.css" 200
+10.0.0.9 - - "GET /missing.png" 404
+10.0.0.4 - - "GET /app.js" 200
+10.0.0.7 - - "GET /old.html" 404
+EOF
+```
+
+```text
+
+```
+
+Now chain the tools. Take the first field, count how often each value repeats, and sort so the busiest address is on top.
+
+```bash
+awk '{print $1}' access.log | sort | uniq -c | sort -rn
+```
+
+```text
+      3 10.0.0.4
+      2 10.0.0.7
+      1 10.0.0.9
+```
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `sed 's/old/new/' file` | Replace the first match on each line |
+| `sed 's/old/new/g' file` | Replace every match on each line |
+| `sed '/pattern/d' file` | Delete lines that match the pattern |
+| `sed -n '2,3p' file` | Print only lines 2 to 3 |
+| `sed -i 's/old/new/g' file` | Edit the file in place |
+| `awk '{print $1}' file` | Print the first field of each line |
+| `awk '{print $NF}' file` | Print the last field of each line |
+| `awk -F: '{print $2}' file` | Split on colons and print the second field |
+| `awk '{sum+=$1} END {print sum}' file` | Add up a column and print the total |
+
+## Next steps
+
+- [Environment variables and PATH](/learn/environment-and-variables/) to control the tools your pipeline runs.
+- [Archives and compression](/learn/archives-and-compression/) to pack the files you produce.
+- [Pipe Dreams](/challenges/pipe-dreams/) to build longer pipelines of your own.
