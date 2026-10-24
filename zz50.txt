@@ -1,0 +1,4 @@
+
+- [DNS and addresses](/learn/dns-and-addresses/) explains how the name in the URL became an address.
+- [Moving files between machines](/learn/transferring-files/) covers sending data to another host.
+- [Fetch the Flag](/challenges/fetch-the-flag/) uses requests like these.
