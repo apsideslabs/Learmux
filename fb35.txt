@@ -1,0 +1,8 @@
+        what: 'keep the second and fourth comma-separated columns and drop the rest',
+      },
+      {
+        args: '-c1-10 notes.txt',
+        what: 'keep only the first ten characters of every line',
+      },
+      {
+        args: '-f3 --complement report.txt',
