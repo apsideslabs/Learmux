@@ -1,0 +1,254 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import '../../styles/ctf.css';
+import { allTermux, termuxCount, termuxTotal, ctfRepo } from '../../lib/termux-ctf';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const list = allTermux();
+const count = termuxCount();
+const total = termuxTotal();
+---
+
+<BaseLayout
+  title="Termux CTF progress"
+  description="Paste the output of ctf export to see your Termux CTF progress here. Stored in your browser, nothing is sent anywhere."
+>
+  <div class="wrap">
+    <header class="ctf-hero">
+      <h1>Your progress</h1>
+      <p class="lede">
+        Run <code>ctf export</code> in Termux, copy what it prints, and paste it below.
+        This page reads it and shows you the whole picture: what you have captured, what
+        is left, and how many points you have.
+      </p>
+    </header>
+
+    <div class="ctf-note">
+      <strong>What this page can and cannot do</strong>
+      It cannot check your answers. Every flag comes from a seed that only exists on your
+      device, so this site has no way to know whether a capture is real, and it will not
+      pretend otherwise. What you paste is stored in your browser, is never sent anywhere,
+      and is a record of what the tool told you. The tool is where the score is real.
+    </div>
+
+    <section class="ctf-import">
+      <h2>Paste your export</h2>
+      <p>
+        In Termux:
+      </p>
+      <div class="ctf-cmd">
+        <code>ctf export</code>
+        <button class="copy-btn" data-copy="ctf export" aria-label="Copy ctf export" title="Copy">Copy</button>
+      </div>
+      <p class="ctf-empty">
+        Then paste the JSON below. It starts with <code>&#123;</code> and ends with
+        <code>&#125;</code>.
+      </p>
+      <label for="ctf-export-input" class="ctf-empty">Your export</label>
+      <textarea
+        id="ctf-export-input"
+        spellcheck="false"
+        autocomplete="off"
+        placeholder={'{\n  "format": "learmux-ctf/progress/1",\n  ...\n}'}
+      ></textarea>
+      <div class="ctf-import__actions">
+        <button class="btn btn--green" type="button" data-import>Read it</button>
+        <button class="btn" type="button" data-import-sample>Try a sample</button>
+        <button class="btn" type="button" data-import-clear>Clear</button>
+      </div>
+      <p class="ctf-empty" data-import-status aria-live="polite"></p>
+    </section>
+
+    <section class="ctf-report" data-report hidden>
+      <div class="ctf-report__head">
+        <h2 style="margin:0">Your report</h2>
+        <span class="ctf-report__device" data-report-device></span>
+      </div>
+      <div class="ctf-bar"><span data-report-bar style="width:0%"></span></div>
+      <p data-report-summary></p>
+      <div data-report-list></div>
+      <p class="ctf-empty" data-report-exported></p>
+    </section>
+
+    <section>
+      <h2>How the numbers are worked out</h2>
+      <p>
+        The export carries one entry per challenge with whether it is captured and how many
+        hints you asked for. {count} challenges, {total} points, and the same tool version
+        this site was built against.
+      </p>
+      <p>
+        Because the file names and the flags differ per device, the export also carries a
+        short one-way device name. Two exports from the same phone carry the same value,
+        which is what makes it useful as a label, and it reveals nothing about the seed.
+      </p>
+      <p>
+        <a class="btn" href={`${base}ctf/play/`}>How to play</a>
+        <a class="btn" href={`${base}ctf/challenges/`}>All challenges</a>
+        <a class="btn" href={ctfRepo} target="_blank" rel="noopener">Source on GitHub</a>
+      </p>
+    </section>
+  </div>
+
+  <script define:vars={{ catalogue: list.map((c) => ({ id: c.id, slug: c.slug, title: c.title, difficulty: c.difficulty, points: c.points })) }}>
+    const KEY = 'learmux-ctf-progress';
+    const input = document.getElementById('ctf-export-input');
+    const status = document.querySelector('[data-import-status]');
+    const report = document.querySelector('[data-report]');
+
+    function say(text, tone) {
+      if (!status) return;
+      status.textContent = text || '';
+      status.style.color = tone === 'bad' ? 'var(--danger)' : tone === 'good' ? 'var(--ok)' : '';
+    }
+
+    /** Reject anything that is not an export, and say why rather than failing silently. */
+    function readExport(raw) {
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch (e) {
+        return { error: 'That is not valid JSON. Copy everything the command printed, from the opening brace to the closing one.' };
+      }
+      if (!data || typeof data !== 'object') {
+        return { error: 'That parsed, but it is not an export.' };
+      }
+      if (typeof data.format !== 'string' || !data.format.startsWith('learmux-ctf/progress/')) {
+        return { error: 'That is not a progress export. Run `ctf export` with no arguments, not `--challenges`.' };
+      }
+      if (!Array.isArray(data.challenges)) {
+        return { error: 'The export has no challenge list in it.' };
+      }
+      return { data };
+    }
+
+    function render(data) {
+      if (!report) return;
+
+      const bySlug = new Map(data.challenges.map((c) => [c.slug, c]));
+      const solved = data.challenges.filter((c) => c.solved).length;
+      const points = data.challenges.reduce((n, c) => n + (c.solved ? Number(c.points) || 0 : 0), 0);
+      const pointsTotal = catalogue.reduce((n, c) => n + c.points, 0);
+
+      const device = report.querySelector('[data-report-device]');
+      if (device) device.textContent = data.device ? `device ${data.device}` : '';
+
+      const bar = report.querySelector('[data-report-bar]');
+      if (bar) bar.style.width = pointsTotal ? `${Math.round((points / pointsTotal) * 100)}%` : '0%';
+
+      const summary = report.querySelector('[data-report-summary]');
+      if (summary) {
+        const hints = data.challenges.reduce((n, c) => n + (Number(c.hintsUsed) || 0), 0);
+        summary.textContent =
+          `${solved} of ${catalogue.length} captured, ${points} of ${pointsTotal} points.` +
+          (hints ? ` ${hints} hint${hints === 1 ? '' : 's'} used.` : ' No hints used.');
+      }
+
+      const list = report.querySelector('[data-report-list]');
+      if (list) {
+        list.innerHTML = catalogue
+          .map((c) => {
+            const row = bySlug.get(c.slug) || { solved: false, hintsUsed: 0 };
+            const hints = Number(row.hintsUsed) || 0;
+            const meta = row.solved
+              ? `${c.points} points${hints ? `, ${hints} hint${hints === 1 ? '' : 's'}` : ''}`
+              : 'not captured';
+            return (
+              `<div class="ctf-result ctf-result--${row.solved ? 'solved' : 'open'}">` +
+              `<div class="ctf-result__title"><strong>${c.id} ${c.title}</strong>` +
+              `<span class="chip chip--${c.difficulty.toLowerCase()}">${c.difficulty}</span></div>` +
+              `<div class="ctf-result__meta">${meta}</div>` +
+              `</div>`
+            );
+          })
+          .join('');
+      }
+
+      const exported = report.querySelector('[data-report-exported]');
+      if (exported) {
+        exported.textContent = data.exported
+          ? `Exported ${data.exported}${data.version ? `, tool version ${data.version}` : ''}. Stored in this browser only.`
+          : 'Stored in this browser only.';
+      }
+
+      report.hidden = false;
+    }
+
+    function apply(raw, quiet) {
+      const result = readExport(raw);
+      if (result.error) {
+        say(result.error, 'bad');
+        if (report) report.hidden = true;
+        return false;
+      }
+      render(result.data);
+      try {
+        localStorage.setItem(KEY, raw);
+      } catch {
+        /* private mode, or storage full: the page still works, it just will not remember */
+      }
+      if (!quiet) say('Read. Nothing was sent anywhere.', 'good');
+      return true;
+    }
+
+    const importBtn = document.querySelector('[data-import]');
+    importBtn?.addEventListener('click', () => {
+      if (!input) return;
+      if (!input.value.trim()) {
+        say('Paste your export first, or press Try a sample.', 'bad');
+        return;
+      }
+      apply(input.value);
+    });
+
+    document.querySelector('[data-import-sample]')?.addEventListener('click', () => {
+      const sample = {
+        format: 'learmux-ctf/progress/1',
+        version: '0.2.0',
+        device: 'sample1',
+        exported: new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
+        solved: 3,
+        total: catalogue.length,
+        points: 45,
+        pointsTotal: catalogue.reduce((n, c) => n + c.points, 0),
+        hintsUsed: 2,
+        challenges: catalogue.map((c, i) => ({
+          id: c.id,
+          slug: c.slug,
+          title: c.title,
+          difficulty: c.difficulty,
+          points: c.points,
+          solved: i < 3,
+          hintsUsed: i === 2 ? 2 : 0,
+        })),
+      };
+      const text = JSON.stringify(sample, null, 2);
+      if (input) input.value = text;
+      apply(text);
+      say('That was a made-up sample, so you can see what a report looks like.', 'good');
+    });
+
+    document.querySelector('[data-import-clear]')?.addEventListener('click', () => {
+      if (input) input.value = '';
+      try {
+        localStorage.removeItem(KEY);
+      } catch {
+        /* nothing to do */
+      }
+      if (report) report.hidden = true;
+      say('Cleared from this browser.');
+    });
+
+    // Restore a previous paste, so the page is not empty on a return visit.
+    try {
+      const saved = localStorage.getItem(KEY);
+      if (saved) {
+        if (input) input.value = saved;
+        apply(saved, true);
+        say('Showing the export you pasted last time.');
+      }
+    } catch {
+      /* storage unavailable, nothing to restore */
+    }
+  </script>
+</BaseLayout>
