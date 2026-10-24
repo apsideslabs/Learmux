@@ -13,7 +13,7 @@ tags: [project, scripting, shell]
 
 import Callout from '../../components/Callout.astro';
 
-You are going to write a script that prints a small dashboard when you open Termux: the date, how long the phone has been up, disk and memory use, battery if the device reports it, how many packages you have installed, and a local line that works with no network at all.
+You are going to write a script that prints a small dashboard when you open Termux. It shows the date and how long the phone has been up. It shows disk and memory use, and battery if the device reports it. It counts your installed packages, then adds a local line that works with no network at all.
 
 ## What you'll be able to do
 
@@ -39,7 +39,7 @@ Disk
 
 ## Step 1: The header
 
-Start with a title, the full date, and the uptime. The raw `uptime` line has extra words, so trim it with `sed` to the part after `up` and before the first comma.
+Start with a title, the full date, and the uptime. The raw `uptime` line has extra words. Trim it with `sed` to the part after `up` and before the first comma.
 
 ```sh
 $ echo "$(date '+%A %d %B %Y')"
@@ -52,7 +52,7 @@ The format string `%A %d %B %Y` gives the weekday, day, month name, and year. Ev
 
 ## Step 2: Disk usage
 
-`df -h` lists the filesystems with human-readable sizes. `tail -n +2` drops the header line, and `awk` picks out the used size, the total, and the percentage.
+`df -h` lists the filesystems with human-readable sizes. `tail -n +2` drops the header line. `awk` then picks out the used size, the total, and the percentage.
 
 ```sh
 $ df -h / | tail -n +2 | awk '{printf "  %s used of %s (%s)\n", $3, $2, $5}'
@@ -74,7 +74,7 @@ $ free -h | awk '/^Mem:/ {printf "  %s used of %s\n", $3, $2}'
 
 ## Step 4: Battery, if it exists
 
-Not every phone exposes a battery to Termux. The capacity is a plain number in a file under the power supply tree, so test that the file is readable first.
+Not every phone exposes a battery to Termux. The capacity is a plain number in a file under the power supply tree. Test that the file is readable first.
 
 ```sh
 BAT=/sys/class/power_supply/BAT0/capacity
@@ -91,7 +91,7 @@ The battery path is a device detail. Do not assume the file is there: an unguard
 
 ## Step 5: Count the installed packages
 
-The count differs between a Debian-style system and Termux, so check which tool is present with `command -v`. `dpkg-query` lists every package name with no spacing and `wc -c` counts the characters, which equals the number of packages. On Termux, `pkg list-installed` prints one line per package and `wc -l` counts them.
+The count differs between a Debian-style system and Termux, so check which tool is present with `command -v`. `dpkg-query` lists every package name with no spacing. `wc -c` counts the characters, which equals the number of packages. On Termux, `pkg list-installed` prints one line per package. `wc -l` counts them.
 
 ```sh
 $ if command -v dpkg-query >/dev/null 2>&1; then dpkg-query -f '.' -W | wc -c | tr -d ' '; else pkg list-installed | wc -l | tr -d ' '; fi
@@ -114,7 +114,7 @@ Put the sections into functions, then choose which to print with a `case` statem
 
 ```sh
 #!/bin/sh
-# dash.sh — a compact terminal dashboard. Usage: sh dash.sh [--brief]
+# dash.sh: a compact terminal dashboard. Usage: sh dash.sh [--brief]
 
 BRIEF=0
 case "$1" in
