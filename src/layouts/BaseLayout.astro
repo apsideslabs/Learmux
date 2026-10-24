@@ -13,7 +13,7 @@ interface Props {
 }
 
 const {
-  title = `${site.name} — learn Termux, the command line and cybersecurity`,
+  title = `${site.name} · learn Termux, the command line and cybersecurity`,
   description = site.description,
   noindex = false,
 } = Astro.props;
@@ -78,7 +78,7 @@ const isExternal = (href: string) => /^https?:/.test(href);
           <span class="bar-line" aria-hidden="true"></span>
         </button>
 
-        <a class="brand" href={base} aria-label={`${site.name} — home`}>
+        <a class="brand" href={base} aria-label={`${site.name} home`}>
           <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <rect x="2" y="3.5" width="20" height="17" rx="3.5" stroke="#20d65a" stroke-width="1.8"></rect>
             <path d="M6.6 10.2l2.6 2.1-2.6 2.1" stroke="#20d65a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -183,8 +183,8 @@ const isExternal = (href: string) => /^https?:/.test(href);
         <div class="footer-base">
           <span>© {new Date().getFullYear()} {site.name}. Released under the MIT licence.</span>
           <a class="studio" href={studio.url} target="_blank" rel="noopener">
-            <img class="studio__mark" src={`${base}brand/apsides-icon-light.svg`} width="20" height="20" alt="" />
-            <span>Developed by <strong>{studio.name}</strong></span>
+            <span>Developed by</span>
+            <img class="studio__mark" src={`${base}brand/apsides-labs-light.svg`} height="19" alt={studio.name} />
           </a>
         </div>
       </div>
