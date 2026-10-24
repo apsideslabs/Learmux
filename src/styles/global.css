@@ -905,21 +905,33 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 }
 .skip-link:focus { top: 0.7rem; color: #06280f; }
 
-.pager { display: flex; gap: 0.35rem; margin-top: 1.5rem; flex-wrap: wrap; }
-.pager a, .pager span {
-  min-width: 38px;
-  height: 38px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  font-size: 0.88rem;
-  color: var(--ink);
-  text-decoration: none;
+/* ── previous / next lesson ────────────────────────────────────────────── */
+.pager {
+  display: grid;
+  gap: var(--sp-3);
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--line);
 }
-.pager a:hover { border-color: #cfcfd6; background: var(--soft); text-decoration: none; }
-.pager .current { background: var(--navy); border-color: var(--navy); color: #fff; font-weight: 600; }
+.pager__link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  text-decoration: none;
+  color: inherit;
+}
+.pager__link:hover { border-color: var(--line-2); background: var(--soft); text-decoration: none; }
+.pager__link--next { text-align: right; }
+.pager__dir { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.pager__title { font-family: var(--font-head); font-weight: 600; font-size: 0.94rem; color: var(--ink); }
+.pager__link:hover .pager__title { color: var(--blue); }
+.pager__empty { display: none; }
+@media (min-width: 700px) {
+  .pager { grid-template-columns: 1fr 1fr; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -927,4 +939,219 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* ==========================================================================
+   Course, curriculum and homepage path
+   ========================================================================== */
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 var(--sp-2);
+}
+
+/* ── homepage hero ─────────────────────────────────────────────────────── */
+.hero { padding-block: clamp(2.2rem, 6vw, 3.6rem) clamp(1.4rem, 3vw, 2rem); }
+.hero__copy { max-width: 62ch; }
+.hero h1 { margin: 0 0 var(--sp-3); }
+.hero__facts {
+  margin: var(--sp-4) 0 0;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+/* ── course facts strip ────────────────────────────────────────────────── */
+.course-facts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-6);
+}
+.fact {
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.fact .n { font-family: var(--font-head); font-weight: 700; font-size: 1.12rem; line-height: 1.25; color: var(--ink); }
+.fact .l { font-size: 0.8rem; color: var(--muted); }
+@media (min-width: 700px) {
+  .course-facts { grid-template-columns: repeat(4, 1fr); }
+}
+
+.course-intro { display: grid; gap: var(--sp-5); }
+.course-intro h2 { font-size: 1.02rem; margin: var(--sp-4) 0 var(--sp-2); }
+.course-intro h2:first-child { margin-top: 0; }
+.course-intro p { margin: 0 0 var(--sp-2); color: #4d4d55; }
+@media (min-width: 860px) {
+  .course-intro { grid-template-columns: 1.3fr 1fr; gap: var(--sp-6); }
+}
+
+/* ── track blocks on the course page ───────────────────────────────────── */
+.track__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.track__num,
+.track-hero__num,
+.next-track__num {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--green);
+  background: #0e1a12;
+  border: 1px solid #1d3324;
+  border-radius: var(--r);
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.track__head h2 { font-size: 1.28rem; }
+.track__head h2 a { color: var(--ink); text-decoration: none; }
+.track__head h2 a:hover { color: var(--green); text-decoration: none; }
+.track__head .chip { margin-left: auto; }
+.track__tag { margin: 0.1rem 0 0; font-size: 0.88rem; color: var(--muted); }
+.track__desc { margin: var(--sp-3) 0 var(--sp-3); color: #4d4d55; max-width: 78ch; }
+.track__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: var(--sp-3);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: var(--blue);
+  text-decoration: none;
+}
+.track__link:hover { text-decoration: underline; }
+
+/* ── track landing page ────────────────────────────────────────────────── */
+.track-hero {
+  display: flex;
+  gap: var(--sp-4);
+  align-items: flex-start;
+  margin-bottom: var(--sp-4);
+}
+.track-hero h1 { margin: 0 0 var(--sp-2); }
+.track-hero .lede { margin: 0; }
+
+.lesson-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.lesson-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-4) 0;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: inherit;
+}
+.lesson-item:hover { background: var(--soft); }
+.lesson-item__num {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  flex: none;
+  width: 2ch;
+  /* line the number up with the title, not the middle of the row */
+  align-self: flex-start;
+  padding-top: 0.22rem;
+}
+.lesson-item__body { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; }
+.lesson-item__title { font-family: var(--font-head); font-weight: 600; font-size: 1rem; color: var(--ink); }
+.lesson-item:hover .lesson-item__title { color: var(--blue); }
+.lesson-item__excerpt { font-size: 0.875rem; color: #5a5a63; }
+.lesson-item__meta { font-size: 0.74rem; color: var(--muted); }
+.lesson-item > svg { color: var(--muted); flex: none; }
+
+.track-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+}
+
+.next-track { margin-top: var(--sp-7); border-top: 1px solid var(--line); padding-top: var(--sp-5); }
+.next-track a {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  text-decoration: none;
+  color: inherit;
+}
+.next-track a:hover .next-track__title { color: var(--blue); }
+.next-track__title { display: block; font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; color: var(--ink); }
+.next-track__tag { display: block; font-size: 0.86rem; color: var(--muted); }
+.next-track a > svg { margin-left: auto; color: var(--muted); }
+
+/* ── homepage path grid ────────────────────────────────────────────────── */
+.path-grid { display: grid; gap: var(--sp-4); }
+@media (min-width: 640px) { .path-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1000px) { .path-grid { grid-template-columns: repeat(3, 1fr); } }
+
+.path-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-4);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.path-card:hover { border-color: var(--line-2); box-shadow: var(--shadow); }
+.path-card__num {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--green);
+}
+.path-card__title { font-family: var(--font-head); font-weight: 600; font-size: 1.06rem; color: var(--ink); }
+.path-card:hover .path-card__title { color: var(--blue); }
+.path-card__tag { font-size: 0.875rem; color: #5a5a63; }
+.path-card__meta { font-size: 0.74rem; color: var(--muted); }
+.path-card__go {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: auto;
+  padding-top: var(--sp-2);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--blue);
+}
+
+/* ── download strip ────────────────────────────────────────────────────── */
+.download {
+  display: grid;
+  gap: var(--sp-4);
+  align-items: center;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-5);
+}
+.download h2 { font-size: 1.15rem; margin: 0 0 var(--sp-2); }
+.download p { margin: 0; color: #4d4d55; max-width: 62ch; }
+@media (min-width: 860px) {
+  .download { grid-template-columns: 1fr auto; gap: var(--sp-6); }
+  .download .actions { margin: 0; }
+}
+
+.rule {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: var(--sp-5) 0;
 }
