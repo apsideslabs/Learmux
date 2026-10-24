@@ -1,0 +1,86 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import '../../../styles/ctf.css';
+import { allTermux, termuxByDifficulty, termuxCount, termuxTotal, ctfRepo } from '../../../lib/termux-ctf';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const groups = termuxByDifficulty();
+const count = termuxCount();
+const total = termuxTotal();
+---
+
+<BaseLayout
+  title="Termux CTF challenges"
+  description={`All ${count} challenges in the Termux CTF, with briefings and progressive hints. ${total} points.`}
+>
+  <div class="wrap">
+    <header class="ctf-hero">
+      <h1>The challenges</h1>
+      <p class="lede">
+        {count} challenges, {total} points. Read the briefing here, then play it in your own
+        terminal. Nothing on this page is a flag, and nothing is a solution.
+      </p>
+    </header>
+
+    <div class="ctf-note">
+      <strong>These pages are the briefing, not the game</strong>
+      The challenge files only exist on your device, so the work happens in Termux. Install
+      the tool, then run the command on each page to set that challenge up.
+    </div>
+
+    {groups.map((group) => (
+      <section>
+        <h2>
+          {group.difficulty}
+          <span class="ctf-empty"> · {group.items.length} challenge{group.items.length === 1 ? '' : 's'}</span>
+        </h2>
+        <table class="ctf-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Challenge</th>
+              <th class="ctf-topic">Topic</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {group.items.map((c) => (
+              <tr>
+                <td class="ctf-id">{c.id}</td>
+                <td class="ctf-name">
+                  <a href={`${base}ctf/challenges/${c.slug}/`}>{c.title}</a>
+                  <div class="ctf-empty">{c.objective}</div>
+                </td>
+                <td class="ctf-topic">{c.category}</td>
+                <td class="ctf-pts">{c.points}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    ))}
+
+    <section>
+      <h2>Playing them in order</h2>
+      <p>
+        They are numbered easiest first, and each one teaches something the next one leans
+        on. You can jump straight to the hard ones if you would rather, but the two Easy
+        challenges are worth ten minutes even if you think you know them.
+      </p>
+      <p>
+        <a class="btn" href={`${base}ctf/play/`}>How to play</a>
+        <a class="btn" href={`${base}ctf/progress/`}>Show your progress here</a>
+        <a class="btn" href={ctfRepo} target="_blank" rel="noopener">Source on GitHub</a>
+      </p>
+    </section>
+
+    <section>
+      <h2>Every challenge, listed</h2>
+      <p class="ctf-empty">
+        {allTermux().map((c, i) => (
+          <>{i > 0 ? ' · ' : ''}<a href={`${base}ctf/challenges/${c.slug}/`}>{c.title}</a></>
+        ))}
+      </p>
+    </section>
+  </div>
+</BaseLayout>
