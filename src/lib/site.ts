@@ -25,8 +25,8 @@ export const studio = {
 export const nav = [
   { href: 'course/', label: 'Course' },
   { href: 'tools/', label: 'Tools' },
-  { href: 'challenges/', label: 'Play CTF', cta: true },
-  { href: 'categories/', label: 'Categories' },
+  { href: 'ctf/', label: 'Termux CTF', cta: true },
+  { href: 'challenges/', label: 'In-browser' },
   { href: 'about/', label: 'About us' },
 ];
 
@@ -37,8 +37,12 @@ export const drawerNav = [
   { href: 'tools/', label: 'Tools' },
   { href: 'categories/', label: 'Categories', chevron: true },
   { href: 'learn/', label: 'All lessons' },
+  { href: 'ctf/', label: 'Termux CTF', tag: 'Real' },
+  { href: 'ctf/play/', label: 'How to play' },
+  { href: 'ctf/challenges/', label: 'CTF challenges' },
+  { href: 'ctf/progress/', label: 'Your progress' },
+  { href: 'challenges/', label: 'In-browser CTF', tag: 'Demo' },
   { href: 'about/', label: 'About Us' },
   { href: 'contact/', label: 'Contact Us' },
   { href: 'privacy/', label: 'Privacy Policy' },
-  { href: 'challenges/', label: 'Play CTF Game', tag: 'CTF' },
 ];
