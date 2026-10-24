@@ -1,0 +1,125 @@
+---
+title: "HTTP and APIs from the shell"
+description: "Read a web response, shape a request, and pull a JSON reply apart from the Termux shell with curl."
+excerpt: "Learn to send a request and read the reply from the shell with curl and python."
+category: "Web"
+author: "The Study Cipher"
+date: "2026-02-24"
+order: 16
+track: "networking"
+level: "Intermediate"
+tags: [http, api, json]
+---
+
+import Callout from '../../components/Callout.astro';
+
+When you open a page or call an API, your phone sends an HTTP request and a server sends back a response. curl lets you do the same thing from the shell, one request at a time, and see the raw reply. In this lesson you will read a response, learn what the status code means, send your own headers and body, and pull apart a JSON answer.
+
+## What you'll be able to do
+
+- Read a full HTTP response, headers and all, with curl.
+- Tell what a 200, 301, 404 or 500 status code means.
+- Send request headers and a POST body.
+- Save a response to a file and pretty-print its JSON.
+
+## Step 1: A request and its response
+
+HTTP is a request and a response. The request says what you want, and the response says what happened and carries the data. A request has a method such as GET, a path, a set of headers, and sometimes a body. The response has a status line, its own headers, and a body.
+
+The -i option tells curl to print the response headers before the body:
+
+```text
+$ curl -i https://example.com/api/people/42
+HTTP/2 200
+content-type: application/json
+date: Thu, 19 Feb 2026 10:05:00 GMT
+content-length: 45
+
+{"id": 42, "name": "ada", "created": true}
+```
+
+The first line is the status line, reading HTTP/2 and then the code 200. The lines after it are the response headers. After one blank line comes the body, which here is a short JSON object.
+
+## Step 2: What the status code means
+
+The number on the status line is the status code, and it tells you what the server did with your request.
+
+| Code | Meaning |
+| --- | --- |
+| 200 | OK. The request succeeded and the body holds the result. |
+| 301 | Moved permanently. The resource now lives at another address. |
+| 404 | Not found. The address is valid but nothing is there. |
+| 500 | Server error. The server failed while handling the request. |
+
+Codes also fall into classes. A 2xx means success, a 3xx means the resource moved and the client should follow, a 4xx means the request had a problem, and a 5xx means the server did. The exact number matters, because a 301 tells you to update a saved address while a 302 is only temporary.
+
+The code is the fastest way to tell success from failure. A 200 is a result, a 4xx is your side, and a 5xx is theirs.
+
+## Step 3: Send headers and a body
+
+Requests carry headers of their own, and you add your own with -H. To send data with the request you use -d, which switches it to a POST. The -d value is sent as form data by default, so the server reads it as a set of fields.
+
+These are the request headers you will meet most often:
+
+| Header | What it tells the server |
+| --- | --- |
+| Accept | The kind of content you can handle |
+| Content-Type | The format of the body you are sending |
+| User-Agent | Which client is making the request |
+| Authorization | Credentials for a protected resource |
+
+This request sends an Accept header and a form field, and writes the reply body to a file with -o:
+
+```text
+$ curl -i -H "Accept: application/json" https://example.com/api/people
+HTTP/2 201
+content-type: application/json
+date: Thu, 19 Feb 2026 10:06:12 GMT
+location: /api/people/42
+content-length: 45
+```
+
+The -o option sent the body to people.json, so only the headers printed here. The server answered with a 201, which means a new record was created.
+
+## Step 4: Read the JSON reply
+
+The reply body is JSON, which is text with a fixed shape. Look at the raw file first:
+
+```
+cat people.json
+```
+
+```
+{"id": 42, "name": "ada", "created": true}
+```
+
+That is hard to read once it grows. Python ships with a tool that reformats JSON, and Termux has python installed. Point it at the file:
+
+```text
+$ python -m json.tool people.json
+{
+    "id": 42,
+    "name": "ada",
+    "created": true
+}
+```
+
+Now the shape is clear: three keys and their values. JSON has a small set of value types, namely text in double quotes, numbers, the words true and false, arrays in square brackets, and objects. When the text is not valid JSON the tool stops and names the line where it failed, which usually means you saved an error page instead of the data.
+
+<Callout type="tip" title="Keep keys out of your history">
+Always use HTTPS so the request and the reply are encrypted in transit. Never paste a real API key into a command you share, and remember that shells save commands to a history file on disk. Read a key from a file or an environment variable instead of typing it on the line.
+</Callout>
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `curl -i` | Prints the response headers and then the body |
+| `curl -H`, `-d`, `-o` | Add a header, send a POST body, or write the reply to a file |
+| a JSON formatter | Reformats a JSON reply so you can read it |
+
+## Next steps
+
+- [DNS and addresses](/learn/dns-and-addresses/) explains how the name in the URL became an address.
+- [Moving files between machines](/learn/transferring-files/) covers sending data to another host.
+- [Fetch the Flag](/challenges/fetch-the-flag/) uses requests like these.
