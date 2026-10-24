@@ -13,7 +13,7 @@ tags: [project, scripting, backup]
 
 import Callout from '../../components/Callout.astro';
 
-You are going to write one shell script that takes a folder, packs it into a dated archive inside a backups directory, refuses to run twice on the same day, prints a short summary, and exits with a code other programs can read.
+You are going to write one shell script. It takes a folder and packs it into a dated archive inside a backups directory. It refuses to run twice on the same day. Then it prints a short summary and exits with a code other programs can read.
 
 ## What you'll be able to do
 
@@ -55,7 +55,7 @@ Wrap a command in `$(...)` and the shell stores whatever it printed. Quote the v
 
 ## Step 2: Set up the folders
 
-The source defaults to `~/notes` and the destination is always `~/backups`. `mkdir -p` creates every missing parent and does not complain if the folder already exists, so it is safe on every run.
+The source defaults to `~/notes`. The destination is always `~/backups`. `mkdir -p` creates every missing parent and does not complain if the folder already exists. That makes it safe on every run.
 
 ```sh
 $ mkdir -p "$HOME/backups"; ls -d "$HOME/backups"
@@ -98,7 +98,7 @@ $ tar -tzf "$ARCHIVE"
 ./todo.txt
 ```
 
-The `-C "$SRC"` changes into the source folder first, and the trailing `.` means everything there. Listing the archive back with `-t` instead of `-c` confirms it worked, and `wc -l` counts the entries.
+The `-C "$SRC"` changes into the source folder first. The trailing `.` means everything there. List the archive back with `-t` instead of `-c` to confirm it worked. `wc -l` counts the entries.
 
 ```sh
 $ tar -tzf "$ARCHIVE" | wc -l
@@ -129,7 +129,7 @@ Put every piece together into `backup.sh`.
 
 ```sh
 #!/bin/sh
-# backup.sh — archive a folder into a dated tarball.
+# backup.sh: archive a folder into a dated tarball.
 # Usage: sh backup.sh [source-folder]
 
 SRC="${1:-$HOME/notes}"
