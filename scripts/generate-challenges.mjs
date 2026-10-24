@@ -17,8 +17,8 @@ const OUT = resolve(__dirname, '../src/data/challenges.json');
 
 const HOME = '/data/data/com.termux/files/home';
 const PREFIX = '/data/data/com.termux/files/usr';
-const USER = 'u0_a0';
-const HOST = 'localhost';
+const USER = 'player';
+const HOST = 'termux';
 
 // ── fs builders ─────────────────────────────────────────────────────────────
 const d = (children, mode = '755', owner = USER) => ({ type: 'dir', children, mode, owner });
@@ -52,6 +52,80 @@ const rot13 = (s) =>
 const rev = (s) => [...s].reverse().join('');
 
 // ── challenge definitions ───────────────────────────────────────────────────
+/**
+ * Explicit completion rules, keyed by slug. The engine evaluates these against
+ * what the player actually did (files read, commands run, output produced)
+ * rather than scanning for a flag string. Submitting the flag directly also
+ * completes a challenge.
+ */
+const V = {
+  'first-steps': [{ type: 'read', path: `${HOME}/welcome.txt` }],
+  'hidden-in-plain-sight': [{ type: 'read', path: `${HOME}/.secret` }],
+  'follow-the-trail': [{ type: 'read', path: `${HOME}/projects/android/scripts/backup/flag.txt` }],
+  'world-writable': [{ type: 'read', path: `${HOME}/shared.ini` }],
+  'logs-never-lie': [
+    { type: 'command', pattern: '\\bgrep\\b' },
+    { type: 'output', pattern: 'TERMUX\\{logs_never_lie\\}' },
+  ],
+  'case-insensitive': [
+    { type: 'command', pattern: '\\bgrep\\b' },
+    { type: 'output', pattern: 'TERMUX\\{case_insensitive\\}' },
+  ],
+  'pipe-dreams': [
+    { type: 'command', pattern: '\\bcut\\b' },
+    { type: 'output', pattern: 'TERMUX\\{pipe_dreams\\}' },
+  ],
+  'decode-me': [
+    { type: 'command', pattern: 'base64\\s+(-d|--decode)' },
+    { type: 'output', pattern: 'TERMUX\\{decode_me\\}' },
+  ],
+  'rot13-is-weak': [
+    { type: 'command', pattern: '\\brot13\\b' },
+    { type: 'output', pattern: 'TERMUX\\{rot13_is_weak\\}' },
+  ],
+  'hex-on-the-wire': [
+    { type: 'command', pattern: '\\b(xxd|hexdump|strings)\\b' },
+    { type: 'output', pattern: 'TERMUX\\{hex_on_the_wire\\}' },
+  ],
+  'integrity-matters': [
+    { type: 'command', pattern: '\\bsha256sum\\b' },
+    { type: 'output', pattern: 'TERMUX\\{integrity_matters\\}' },
+  ],
+  'environment-leak': [
+    { type: 'command', pattern: '\\b(env|printenv)\\b' },
+    { type: 'output', pattern: 'TERMUX\\{env_vars_leak\\}' },
+  ],
+  'process-hunt': [
+    { type: 'command', pattern: '\\bps\\b' },
+    { type: 'output', pattern: 'TERMUX\\{process_hunt\\}' },
+  ],
+  'package-cache': [
+    { type: 'command', pattern: '\\bpkg\\b' },
+    { type: 'output', pattern: 'TERMUX\\{package_cache\\}' },
+  ],
+  'user-accounts': [{ type: 'read', path: '/etc/accounts' }],
+  'network-recon': [
+    { type: 'command', pattern: '\\bnmap\\b' },
+    { type: 'output', pattern: 'TERMUX\\{network_recon\\}' },
+  ],
+  'fetch-the-flag': [
+    { type: 'command', pattern: '\\b(curl|wget)\\b' },
+    { type: 'output', pattern: 'TERMUX\\{fetched_from_web\\}' },
+  ],
+  'buried-strings': [
+    { type: 'command', pattern: '\\bstrings\\b' },
+    { type: 'output', pattern: 'TERMUX\\{buried_strings\\}' },
+  ],
+  'reverse-engineering': [
+    { type: 'command', pattern: '\\brev\\b' },
+    { type: 'output', pattern: 'TERMUX\\{reverse_engineering\\}' },
+  ],
+  'final-boss': [
+    { type: 'command', pattern: 'base64\\s+(-d|--decode)' },
+    { type: 'output', pattern: 'TERMUX\\{final_boss\\}' },
+  ],
+};
+
 const challenges = [];
 const add = (c) =>
   challenges.push({
@@ -59,6 +133,7 @@ const add = (c) =>
     host: HOST,
     cwd: HOME,
     ...c,
+    validation: V[c.slug] ?? [],
   });
 
 // 01 ─────────────────────────────────────────────────────────────────────────
