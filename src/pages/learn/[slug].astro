@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import ArticleCard from '../../components/ArticleCard.astro';
 import Icon from '../../components/Icon.astro';
 import { getCollection, render } from 'astro:content';
-import { allTutorials, categorySlug, formatDate } from '../../lib/tutorials';
+import { allTutorials, categorySlug, formatDate, neighbours, positionInTrack, trackOf } from '../../lib/tutorials';
 
 export async function getStaticPaths() {
   const tutorials = await getCollection('tutorials');
@@ -15,50 +15,70 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 const { title, description, category, author, date, level, tags } = entry.data;
 
+const track = trackOf(entry);
+const pos = await positionInTrack(entry);
+const { prev, next } = await neighbours(entry);
+
+// Related: the rest of this track, minus the current lesson.
 const all = await allTutorials();
-const related = all
-  .filter((t) => t.id !== entry.id && t.data.category === category)
-  .slice(0, 3);
-const fill = related.length ? related : all.filter((t) => t.id !== entry.id).slice(0, 3);
+const related = all.filter((l) => l.data.track === entry.data.track && l.id !== entry.id).slice(0, 3);
 ---
 
 <BaseLayout title={title} description={description}>
   <div class="wrap">
     <nav class="crumbs" aria-label="Breadcrumb">
-      <a href={base}>Home</a>
-      <span class="sep">›</span>
-      <a href={`${base}category/${categorySlug(category)}/`}>{category}</a>
-      <span class="sep">›</span>
+      <a href={base}>Home</a><span class="sep">›</span>
+      <a href={`${base}course/`}>Course</a><span class="sep">›</span>
+      {track && <><a href={`${base}course/${track.id}/`}>{track.title}</a><span class="sep">›</span></>}
       <span>{title}</span>
     </nav>
 
     <article>
       <header class="article-head">
+        {track && (
+          <p class="eyebrow">
+            Track {track.number} · Lesson {pos.index} of {pos.total}
+          </p>
+        )}
         <h1>{title}</h1>
+        <p class="lede">{description}</p>
         <div class="byline">
-          <span class="who"><Icon name="user" size={15} />{author}</span>
-          <span class="when"><Icon name="calendar" size={15} />{formatDate(date)}</span>
-          <span class="chip chip--easy">{level}</span>
+          <span><Icon name="user" size={15} /> {author}</span>
+          <span><Icon name="calendar" size={15} /> <time datetime={date}>{formatDate(date)}</time></span>
+          <span class="chip">{category}</span>
+          <span class="chip chip--mono">{level}</span>
         </div>
       </header>
 
-      <hr class="rule" style="margin:0 0 1.6rem" />
+      <hr class="rule" />
 
       <div class="prose">
         <Content />
       </div>
+
+      <nav class="pager" aria-label="Lesson navigation">
+        {prev
+          ? <a class="pager__link" href={`${base}learn/${prev.id}/`}>
+              <span class="pager__dir">Previous</span>
+              <span class="pager__title">← {prev.data.title}</span>
+            </a>
+          : <span class="pager__empty"></span>}
+        {next
+          ? <a class="pager__link pager__link--next" href={`${base}learn/${next.id}/`}>
+              <span class="pager__dir">Next</span>
+              <span class="pager__title">{next.data.title} →</span>
+            </a>
+          : <span class="pager__empty"></span>}
+      </nav>
     </article>
 
-    <section class="related">
-      <div class="section-label"><span>Related articles</span></div>
-      <div class="cards cards--3">
-        {fill.map((t) => <ArticleCard entry={t} />)}
-      </div>
-    </section>
-
-    <div class="actions" style="margin-top:2rem">
-      <a class="btn btn--outline" href={`${base}learn/`}>All lessons</a>
-      <a class="btn btn--green" href={`${base}challenges/`}>Practise in the CTF</a>
-    </div>
+    {related.length > 0 && (
+      <section class="section--tight">
+        <div class="section-label"><span>More in {track ? track.title : category}</span></div>
+        <div class="cards cards--3">
+          {related.map((r) => <ArticleCard entry={r} />)}
+        </div>
+      </section>
+    )}
   </div>
 </BaseLayout>
