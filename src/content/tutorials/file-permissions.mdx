@@ -13,7 +13,7 @@ tags: [permissions, chmod]
 
 import Callout from '../../components/Callout.astro';
 
-Every file on your phone carries a small set of permissions that decide who can read it, who can change it, and who can run it. Termux prints those permissions as a ten-character string at the start of every `ls -l` line. Once you can read that string, you can tighten the permissions on a file that holds a key or a password, and loosen them on a script you want to run.
+Every file on your phone carries a small set of permissions. They decide who can read it, who can change it, and who can run it. Termux prints those permissions as a ten-character string at the start of every `ls -l` line. Once you can read that string, you can tighten the permissions on a file that holds a key or a password. You can also loosen them on a script you want to run.
 
 ## What you'll be able to do
 
@@ -25,7 +25,7 @@ Every file on your phone carries a small set of permissions that decide who can 
 
 ## Step 1: Read the mode string
 
-Change into your home directory and list the files with the long form. The `-l` flag asks `ls` for one line per file, and that line starts with the mode string.
+Change into your home directory and list the files with the long form. The `-l` flag asks `ls` for one line per file. That line starts with the mode string.
 
 ```bash
 cd ~
@@ -39,11 +39,11 @@ drwx------ 2 u0_a123 u0_a123 4096 Jan 20 10:12 storage
 -rwxr-xr-x 1 u0_a123 u0_a123  512 Jan 20 10:18 run.sh
 ```
 
-The mode string is the first field on each line. In `-rw-r--r--` the leading `-` says this is a regular file. A `d` instead means a directory, and an `l` means a symbolic link. The remaining nine characters are three groups of three.
+The mode string is the first field on each line. In `-rw-r--r--` the leading `-` says this is a regular file. A `d` instead means a directory. An `l` means a symbolic link. The remaining nine characters are three groups of three.
 
 ## Step 2: user, group and others
 
-The three groups are the file's owner (user), the owner's group (group), and everyone else (others). Each group holds three flags in the order read, write, execute.
+The three groups are the file's owner (user), the owner's group (group), and everyone else (others). Each group holds three flags, in the order read, write, execute.
 
 - `r` lets you read the file.
 - `w` lets you change the file.
@@ -62,7 +62,7 @@ So `rwx` is 4 + 2 + 1 = 7, `rw-` is 4 + 2 = 6, `r--` is 4, and `---` is 0.
 
 ## Step 3: Read a single file
 
-To keep the output short, list one file at a time. Here `notes.txt` is readable and writable by you, and readable by everyone else.
+To keep the output short, list one file at a time. Here `notes.txt` is readable and writable by you. Everyone else can only read it.
 
 ```bash
 ls -l notes.txt
@@ -76,7 +76,7 @@ The mode is `-rw-r--r--`. As octal digits that is 644. This is the default for n
 
 ## Step 4: Change permissions with octal chmod
 
-`chmod` takes a three-digit octal number, one digit for user, group and others. To make `notes.txt` private so only you can read and write it, use 600.
+`chmod` takes a three-digit octal number, one digit for user, group and others. To make `notes.txt` private, use 600. Then only you can read and write it.
 
 ```bash
 chmod 600 notes.txt
@@ -98,7 +98,7 @@ ls -l run.sh
 -rwxr-xr-x 1 u0_a123 u0_a123 512 Jan 20 10:18 run.sh
 ```
 
-Here the user digit is 7 (read, write, execute) and the group and others digits are 5 (read and execute, but not write).
+Here the user digit is 7 (read, write, execute). The group and others digits are 5 (read and execute, but not write).
 
 ## Step 5: Add one permission with chmod +x
 
@@ -113,7 +113,7 @@ ls -l run.sh
 -rwxr-xr-x 1 u0_a123 u0_a123 512 Jan 20 10:18 run.sh
 ```
 
-You can also name a class. `chmod u+x` adds execute for the user only, `chmod go-w` removes write from group and others.
+You can also name a class. `chmod u+x` adds execute for the user only. `chmod go-w` removes write from group and others.
 
 <Callout type="tip" title="Make a script runnable">
 After you download or write a script, it often arrives without execute permission. Run `chmod +x` followed by the script name, then `./` and the name to run it.
@@ -133,11 +133,11 @@ ls -ld mydir
 drwx------ 2 u0_a123 u0_a123 4096 Jan 20 10:20 mydir
 ```
 
-The `-d` flag on `ls` shows the directory entry itself rather than its contents. Mode 700 gives you full access and gives group and others nothing.
+The `-d` flag on `ls` shows the directory entry itself rather than its contents. Mode 700 gives you full access. Group and others get nothing.
 
 ## Step 7: Change the owner with chown
 
-`chown` changes which user and group own a file. You give it a user, a colon, and a group. This is a root-only operation, so on a stock phone it fails with an error.
+`chown` changes which user and group own a file. You give it a user, a colon, and a group. This is a root-only operation, so on a stock phone it fails.
 
 ```bash
 chown root:root notes.txt
@@ -154,7 +154,7 @@ On a non-rooted phone, `chown` returns `Operation not permitted` because only ro
 
 ## Step 8: Understand the world-writable risk
 
-The last group is others, which means every other user and every other app on the device. If you give others write permission, anything on the phone can replace the file's contents. Mode 666 is the classic mistake.
+The last group is others, which means every other user and every other app on the device. Give others write permission and anything on the phone can replace the file's contents. Mode 666 is the classic mistake.
 
 ```bash
 chmod 666 notes.txt
@@ -165,7 +165,7 @@ ls -l notes.txt
 -rw-rw-rw- 1 u0_a123 u0_a123 220 Jan 20 10:15 notes.txt
 ```
 
-Every account can now edit `notes.txt`. Mode 777 is worse, because it also grants execute. A world-writable file in a directory on your path is a way for an attacker to replace a command with their own and have you run it.
+Every account can now edit `notes.txt`. Mode 777 is worse, because it also grants execute. A world-writable file in a directory on your path lets an attacker replace a command with their own and have you run it.
 
 <Callout type="warning" title="World-writable is a hole">
 Only use 666 or 777 when you have a specific reason and you trust every account on the machine. For anything private, use 600 for files and 700 for directories.
