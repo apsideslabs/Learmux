@@ -21,7 +21,7 @@ export type CategoryId =
   | 'monitor';
 
 export interface ToolCommand {
-  /** Everything after the binary name — for `ls` this is `-la`, never `ls -la`. */
+  /** Everything after the binary name. For `ls` this is `-la`, never `ls -la`. */
   args: string;
   /** What it does, and when you would reach for it. */
   what: string;
