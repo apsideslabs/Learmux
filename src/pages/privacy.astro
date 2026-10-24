@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { studio } from '../lib/site';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 ---
@@ -49,7 +50,7 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
       <h2>Contact</h2>
       <p>
         Questions about this policy can go to
-        <a href="mailto:contact.thestudycipher@gmail.com">contact.thestudycipher@gmail.com</a>.
+        <a href={`mailto:${studio.email}`}>{studio.email}</a>.
       </p>
     </div>
   </div>
