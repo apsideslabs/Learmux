@@ -275,3 +275,54 @@
 }
 .related-tools a:hover { color: var(--blue); text-decoration: none; }
 .related-tools a > svg { margin-left: auto; color: var(--muted); }
+
+/* ── command chip in the page header ───────────────────────────────────── */
+.chip--bin {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #eef1f5;
+  padding: 0.14rem 0.5rem;
+}
+
+/* ── worked example: a small terminal ──────────────────────────────────── */
+.example {
+  border: 1px solid var(--lx-line, #232a33);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: #101419;
+  max-width: 74ch;
+}
+.example__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  background: #0b0e12;
+  border-bottom: 1px solid #232a33;
+}
+.example__dot { width: 8px; height: 8px; border-radius: 50%; background: #2f3944; flex: none; }
+.example__label {
+  margin-left: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #7d8794;
+}
+.example__pre {
+  margin: 0;
+  padding: 0.85rem 0.9rem;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.62;
+  color: #d6dae0;
+  white-space: pre;
+}
+.example__prompt { color: #20d65a; }
+.example__note {
+  margin: 0.7rem 0 0;
+  font-size: 0.85rem;
+  color: #55555e;
+  max-width: 74ch;
+}
