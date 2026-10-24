@@ -618,11 +618,11 @@ def('man', 'Display the manual for a command', (ctx) => {
   const name = ctx.argv[0];
   const cmd = name ? commands.find((c) => c.name === name) : undefined;
   if (!cmd) return ok('What manual page do you want?');
-  return ok([`NAME`, `    ${cmd.name} — ${cmd.summary}`, '', `SYNOPSIS`, `    ${cmd.usage ?? cmd.name}`].join('\n'));
+  return ok([`NAME`, `    ${cmd.name}  ${cmd.summary}`, '', `SYNOPSIS`, `    ${cmd.usage ?? cmd.name}`].join('\n'));
 }, 'man cmd');
 
 def('help', 'List available commands', () => {
-  const lines = ['Learmux shell — available commands:', ''];
+  const lines = ['Learmux shell. Available commands:', ''];
   const width = Math.max(...commands.map((c) => c.name.length));
   for (const c of [...commands].sort((a, b) => a.name.localeCompare(b.name))) {
     lines.push(`  ${c.name.padEnd(width + 2)}${c.summary}`);
@@ -660,8 +660,8 @@ def('python', 'Python interpreter', (ctx) => {
   if (ctx.argv[0] === '-c') return ok(''); // no real evaluation in the sandbox
   return ok('Python 3.12.4 (main, Termux) \nType "help", "copyright", "credits" or "license" for more information.\n>>> ');
 });
-def('nano', 'A simple text editor', () => fail('nano: terminal too small (this sandbox is read-only for editors — use echo > file)'));
-def('vim', 'Vi IMproved', () => fail('vim: editors are disabled in the Learmux sandbox — use echo > file'));
+def('nano', 'A simple text editor', () => fail('nano: terminal too small (this sandbox has no editors; write with echo > file)'));
+def('vim', 'Vi IMproved', () => fail('vim: no editors in this sandbox. Write files with echo > file'));
 def('less', 'View file contents page by page', (ctx) => commands.find((c) => c.name === 'cat')!.run(ctx));
 def('more', 'View file contents page by page', (ctx) => commands.find((c) => c.name === 'cat')!.run(ctx));
 
