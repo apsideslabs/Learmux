@@ -25,6 +25,21 @@ export type FSNode = FileNode | DirNode;
 
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
+/**
+ * Explicit, authored completion rules — evaluated by the engine instead of
+ * guessing from output text. A challenge is solved when every rule in its
+ * `validation` list matches (or the player submits the flag directly).
+ */
+export type ValidationRule =
+  /** A file at this absolute path was read by the player. */
+  | { type: 'read'; path: string }
+  /** An executed command line matched this regular expression. */
+  | { type: 'command'; pattern: string }
+  /** Accumulated terminal output matched this regular expression. */
+  | { type: 'output'; pattern: string }
+  /** The player moved into this absolute directory. */
+  | { type: 'cwd'; path: string };
+
 export interface Challenge {
   id: string;
   slug: string;
@@ -52,6 +67,8 @@ export interface Challenge {
   env?: Record<string, string>;
   /** Authored output for commands that would otherwise be non-deterministic. */
   overrides?: Record<string, string>;
+  /** Explicit completion rules. All must match for the challenge to be solved. */
+  validation?: ValidationRule[];
 }
 
 /** A single challenge entry, kept lightweight for index pages. */
@@ -77,6 +94,8 @@ export interface CmdContext {
   flag?: string;
   /** Authored, per-challenge output for device/network commands. */
   overrides?: Record<string, string>;
+  /** Records player actions so explicit validation rules can be evaluated. */
+  record?: (kind: 'read', value: string) => void;
 }
 
 export interface CmdResult {
