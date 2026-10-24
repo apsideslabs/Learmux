@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import '../styles/terminal.css';
+import { ClientRouter } from 'astro:transitions';
 import { challenges } from '../lib/challenges';
 
 interface Props {
@@ -11,14 +12,21 @@ interface Props {
 
 const {
   title = 'Learmux — learn Termux, the command line and cybersecurity',
-  description = 'Learmux is a hands-on learning platform for Termux and the Linux command line, with bite-sized tutorials and an interactive capture-the-flag terminal you can play in the browser.',
+  description = 'Learmux teaches Termux and the Linux command line through short written lessons and an interactive terminal where you capture flags.',
   noindex = false,
 } = Astro.props;
 
-const canonical = new URL(Astro.url.pathname, Astro.site);
-const fullTitle = title.includes('Learmux') ? title : `${title} · Learmux`;
-const totalChallenges = challenges.length;
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const path = Astro.url.pathname;
+const canonical = new URL(path, Astro.site);
+const fullTitle = title.includes('Learmux') ? title : `${title} · Learmux`;
+
+const nav = [
+  { href: 'learn/', label: 'Learn' },
+  { href: 'challenges/', label: 'Challenges' },
+  { href: 'about/', label: 'About' },
+];
+const total = challenges.length;
 ---
 
 <!doctype html>
@@ -28,8 +36,15 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
     <meta name="generator" content={Astro.generator} />
-    <meta name="theme-color" content="#0b1220" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#faf8f4" />
+    <meta name="color-scheme" content="light" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=Instrument+Sans:ital,wght@0,400..600;1,400..600&family=JetBrains+Mono:wght@400..600&display=swap"
+    />
 
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
@@ -44,58 +59,186 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
+
+    <ClientRouter />
   </head>
-  <body data-total-challenges={totalChallenges}>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
     <header class="site-header">
       <div class="wrap">
-        <a class="brand" href={base} aria-label="Learmux home">
-          <svg viewBox="0 0 64 64" aria-hidden="true">
-            <rect x="2" y="8" width="60" height="48" rx="10" fill="#0b1220" stroke="#3ddc97" stroke-width="3"></rect>
-            <path d="M14 26l8 6-8 6" fill="none" stroke="#3ddc97" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>
-            <line x1="28" y1="40" x2="46" y2="40" stroke="#7ee0ff" stroke-width="5" stroke-linecap="round"></line>
-          </svg>
-          <span>Lear<span class="brand-x">mux</span></span>
+        <a class="brand" href={base} aria-label="Learmux — home">
+          <span>Learmux<span class="dot">.</span></span>
         </a>
+
         <nav class="nav" aria-label="Primary">
-          <a href={`${base}learn/`} aria-current={Astro.url.pathname.includes('/learn') ? 'page' : undefined}>Learn</a>
-          <a href={`${base}challenges/`} aria-current={Astro.url.pathname.includes('/challenges') ? 'page' : undefined}>Challenges</a>
-          <a href={`${base}about/`} aria-current={Astro.url.pathname.includes('/about') ? 'page' : undefined}>About</a>
-          <span class="progress-chip" data-progress-chip data-total={totalChallenges}>0 / {totalChallenges}</span>
+          {nav.map((item) => (
+            <a
+              href={base + item.href}
+              aria-current={path.includes('/' + item.href.replace(/\/$/, '')) ? 'page' : undefined}
+            >{item.label}</a>
+          ))}
+          <span class="nav-progress" data-progress-chip data-total={total}>0 / {total} captured</span>
         </nav>
+
+        <button
+          class="menu-toggle"
+          type="button"
+          data-menu-toggle
+          aria-expanded="false"
+          aria-controls="site-menu"
+          aria-label="Open menu"
+        >
+          <span class="bar" aria-hidden="true"></span>
+          <span class="bar" aria-hidden="true"></span>
+        </button>
       </div>
     </header>
 
-    <main class="site-main">
+    <div class="drawer-scrim" data-drawer-scrim aria-hidden="true"></div>
+
+    <div class="drawer" id="site-menu" data-drawer data-open="false" role="dialog" aria-modal="true" aria-label="Site menu">
+      <div class="drawer__top">
+        <span class="drawer__label">Menu</span>
+        <button class="drawer__close" type="button" data-drawer-close aria-label="Close menu">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+          </svg>
+        </button>
+      </div>
+
+      <nav aria-label="Menu">
+        {nav.map((item, i) => (
+          <a href={base + item.href}>
+            <span>{item.label}</span>
+            <span class="idx">0{i + 1}</span>
+          </a>
+        ))}
+      </nav>
+
+      <div class="drawer__foot">
+        <p class="meta" data-drawer-progress data-total={total}>0 of {total} flags captured</p>
+        <a class="btn btn--primary btn--block" href={`${base}challenges/`}>Start a challenge</a>
+      </div>
+    </div>
+
+    <main class="site-main" id="main">
       <slot />
     </main>
 
     <footer class="site-footer">
       <div class="wrap">
-        <span>Learmux — built with Astro, TypeScript and a lot of <span class="mono">ls -la</span>.</span>
-        <span>
-          <a href={`${base}challenges/`}>Challenges</a> ·
-          <a href={`${base}learn/`}>Tutorials</a> ·
-          <a href={`${base}about/`}>About</a>
-        </span>
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <a class="brand" href={base}>Learmux<span class="dot">.</span></a>
+            <p>A quiet place to learn Termux and the Linux command line, one flag at a time.</p>
+          </div>
+          <div class="footer-col">
+            <h4>Learn</h4>
+            <a href={`${base}learn/`}>All lessons</a>
+            <a href={`${base}learn/getting-started/`}>Getting started</a>
+            <a href={`${base}learn/pipes-and-redirection/`}>Pipes and redirection</a>
+          </div>
+          <div class="footer-col">
+            <h4>Practise</h4>
+            <a href={`${base}challenges/`}>All challenges</a>
+            <a href={`${base}challenges/first-steps/`}>Your first flag</a>
+            <a href={`${base}about/`}>About Learmux</a>
+          </div>
+        </div>
+        <div class="footer-base">
+          <span>© {new Date().getFullYear()} Learmux · MIT licensed</span>
+          <span class="mono">built with Astro &amp; TypeScript</span>
+        </div>
       </div>
     </footer>
 
     <script>
       import { solvedSlugs } from '../lib/progress';
 
-      function refresh() {
+      function refreshProgress() {
         const solved = new Set(solvedSlugs());
         document.querySelectorAll('[data-challenge-slug]').forEach((elm) => {
           const slug = elm.getAttribute('data-challenge-slug');
           elm.classList.toggle('is-solved', slug ? solved.has(slug) : false);
         });
         const chip = document.querySelector('[data-progress-chip]');
-        if (chip) chip.textContent = `${solved.size} / ${chip.getAttribute('data-total')}`;
+        if (chip) chip.textContent = `${solved.size} / ${chip.getAttribute('data-total')} captured`;
+        const drawerProgress = document.querySelector('[data-drawer-progress]');
+        if (drawerProgress) {
+          drawerProgress.textContent = `${solved.size} of ${drawerProgress.getAttribute('data-total')} flags captured`;
+        }
       }
 
-      refresh();
-      document.addEventListener('DOMContentLoaded', refresh);
-      window.addEventListener('Learmux:progress', refresh);
+      function initMenu() {
+        const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+        const drawer = document.querySelector<HTMLElement>('[data-drawer]');
+        const scrim = document.querySelector<HTMLElement>('[data-drawer-scrim]');
+        const closeBtn = document.querySelector<HTMLButtonElement>('[data-drawer-close]');
+        if (!toggle || !drawer || !scrim || toggle.dataset.bound) return;
+        toggle.dataset.bound = '1';
+
+        const focusables = () =>
+          Array.from(drawer.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'));
+
+        const open = () => {
+          drawer.dataset.open = 'true';
+          toggle.setAttribute('aria-expanded', 'true');
+          toggle.setAttribute('aria-label', 'Close menu');
+          document.body.classList.add('menu-open');
+          window.requestAnimationFrame(() => focusables()[0]?.focus());
+        };
+
+        const close = (returnFocus = true) => {
+          drawer.dataset.open = 'false';
+          toggle.setAttribute('aria-expanded', 'false');
+          toggle.setAttribute('aria-label', 'Open menu');
+          document.body.classList.remove('menu-open');
+          if (returnFocus) toggle.focus();
+        };
+
+        toggle.addEventListener('click', () =>
+          toggle.getAttribute('aria-expanded') === 'true' ? close() : open()
+        );
+        closeBtn?.addEventListener('click', () => close());
+        scrim.addEventListener('click', () => close());
+        drawer.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => close(false)));
+
+        document.addEventListener('keydown', (e) => {
+          if (toggle.getAttribute('aria-expanded') !== 'true') return;
+          if (e.key === 'Escape') {
+            close();
+          } else if (e.key === 'Tab') {
+            const f = focusables();
+            if (!f.length) return;
+            const first = f[0];
+            const last = f[f.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        });
+      }
+
+      function boot() {
+        document.body.classList.remove('menu-open');
+        document.querySelectorAll('[data-drawer]').forEach((d) => d.setAttribute('data-open', 'false'));
+        document.querySelectorAll('[data-menu-toggle]').forEach((t) => {
+          t.setAttribute('aria-expanded', 'false');
+          t.setAttribute('aria-label', 'Open menu');
+        });
+        initMenu();
+        refreshProgress();
+      }
+
+      boot();
+      document.addEventListener('astro:page-load', boot);
+      window.addEventListener('Learmux:progress', refreshProgress);
     </script>
   </body>
 </html>
