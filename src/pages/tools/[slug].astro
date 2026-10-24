@@ -13,6 +13,7 @@ const { tool } = Astro.props;
 const category = categoryById(tool.category);
 const related = tools.filter((t) => t.category === tool.category && t.slug !== tool.slug).slice(0, 5);
 const projectName = tool.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+const exampleCmd = tool.example ? displayCommand(tool, tool.example.args) : '';
 ---
 
 <BaseLayout title={tool.name} description={`${tool.name} — ${tool.tagline}`}>
@@ -20,7 +21,7 @@ const projectName = tool.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
     <nav class="crumbs" aria-label="Breadcrumb">
       <a href={base}>Home</a><span class="sep">›</span>
       <a href={`${base}tools/`}>Tools</a><span class="sep">›</span>
-      {category && <><a href={`${base}tools/?cat=${category.id}`}>{category.name}</a><span class="sep">›</span></>}
+      {category && <><a href={`${base}tools/category/${category.id}/`}>{category.name}</a><span class="sep">›</span></>}
       <span>{tool.name}</span>
     </nav>
 
@@ -33,7 +34,7 @@ const projectName = tool.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
         <p class="lede">{tool.tagline}</p>
         <div class="chip-row">
           <code class="chip chip--bin">{tool.bin}</code>
-          {category && <a class="chip chip--link" href={`${base}tools/?cat=${category.id}`}>{category.name}</a>}
+          {category && <a class="chip chip--link" href={`${base}tools/category/${category.id}/`}>{category.name}</a>}
           {tool.license && <span class="chip">{tool.license}</span>}
         </div>
       </div>
@@ -49,7 +50,13 @@ const projectName = tool.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
         {tool.install && (
           <section>
             <h2>Install it</h2>
-            <div class="cmd-block"><code>{tool.install}</code></div>
+            <div class="cmd-block">
+              <code>{tool.install}</code>
+              <button class="copy-btn" data-copy={tool.install} aria-label={`Copy ${tool.install}`} title="Copy">
+                <span class="icon-copy"><Icon name="copy" size={15} /></span>
+                <span class="icon-check"><Icon name="check" size={15} /></span>
+              </button>
+            </div>
             <p class="muted" style="margin-top:0.6rem;font-size:0.85rem">
               Run this inside Termux. If the package is already present, <code>pkg</code> will say so and
               do nothing.
@@ -60,15 +67,23 @@ const projectName = tool.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
         <section>
           <h2>Commands worth knowing</h2>
           <p class="muted" style="margin-bottom:0.9rem">
-            {tool.commands.length} of the invocations you will actually reach for, with what each one is for.
+            {tool.commands.length} of the invocations you will actually reach for. Tap the copy button to
+            put one on your clipboard.
           </p>
           <div class="cmd-table">
-            {tool.commands.map((c) => (
-              <div class="cmd-row">
-                <code>{displayCommand(tool, c.args)}</code>
-                <span>{c.what}</span>
-              </div>
-            ))}
+            {tool.commands.map((c) => {
+              const full = displayCommand(tool, c.args);
+              return (
+                <div class="cmd-row">
+                  <code>{full}</code>
+                  <span>{c.what}</span>
+                  <button class="copy-btn" data-copy={full} aria-label={`Copy ${full}`} title="Copy">
+                    <span class="icon-copy"><Icon name="copy" size={15} /></span>
+                    <span class="icon-check"><Icon name="check" size={15} /></span>
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </section>
 
@@ -76,14 +91,18 @@ const projectName = tool.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
           <section>
             <h2>Worked example</h2>
             <p class="muted" style="margin-bottom:0.9rem">
-              Run <code>{displayCommand(tool, tool.example.args)}</code> and this is what you should see.
+              Run <code>{exampleCmd}</code> and this is what you should see.
             </p>
             <div class="example">
               <div class="example__bar">
                 <span class="example__dot"></span><span class="example__dot"></span><span class="example__dot"></span>
                 <span class="example__label">termux</span>
+                <button class="copy-btn" data-copy={exampleCmd} aria-label={`Copy ${exampleCmd}`} title="Copy">
+                  <span class="icon-copy"><Icon name="copy" size={14} /></span>
+                  <span class="icon-check"><Icon name="check" size={14} /></span>
+                </button>
               </div>
-              <pre class="example__pre"><span class="example__prompt">$ {displayCommand(tool, tool.example.args)}</span>
+              <pre class="example__pre"><span class="example__prompt">$ {exampleCmd}</span>
 {tool.example.out}</pre>
             </div>
             {tool.example.note && <p class="example__note">{tool.example.note}</p>}
@@ -109,7 +128,7 @@ const projectName = tool.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
           <h2 class="fact-card__title">At a glance</h2>
           <dl class="fact-list">
             <div><dt>Command</dt><dd><code>{tool.bin}</code></dd></div>
-            <div><dt>Category</dt><dd>{category?.name ?? tool.category}</dd></div>
+            <div><dt>Category</dt><dd><a href={`${base}tools/category/${tool.category}/`}>{category?.name ?? tool.category}</a></dd></div>
             <div><dt>Developer</dt><dd>{tool.developer}</dd></div>
             {tool.license && <div><dt>Licence</dt><dd>{tool.license}</dd></div>}
             {tool.install && <div><dt>Install</dt><dd><code>{tool.install}</code></dd></div>}
@@ -141,4 +160,39 @@ const projectName = tool.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
       <a class="btn btn--green" href={`${base}challenges/`}>Practise with the CTF</a>
     </div>
   </div>
+
+  <script>
+    function initCopyButtons() {
+      document.querySelectorAll<HTMLButtonElement>('.copy-btn[data-copy]').forEach((btn) => {
+        if (btn.dataset.bound) return;
+        btn.dataset.bound = '1';
+
+        btn.addEventListener('click', async () => {
+          const text = btn.dataset.copy ?? '';
+          let ok = false;
+          try {
+            await navigator.clipboard.writeText(text);
+            ok = true;
+          } catch {
+            // clipboard API needs a secure context; fall back to a hidden field
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.top = '-1000px';
+            document.body.appendChild(ta);
+            ta.select();
+            try { ok = document.execCommand('copy'); } catch { ok = false; }
+            document.body.removeChild(ta);
+          }
+          if (!ok) return;
+          btn.classList.add('is-copied');
+          window.setTimeout(() => btn.classList.remove('is-copied'), 1400);
+        });
+      });
+    }
+
+    initCopyButtons();
+    document.addEventListener('astro:page-load', initCopyButtons);
+  </script>
 </BaseLayout>
