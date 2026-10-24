@@ -1,68 +1,176 @@
 ---
 title: "Getting started with Termux"
-description: "Install Termux on Android and run your first Linux commands — pwd, ls, cd and whoami."
-excerpt: "Install Termux on Android and run your first four commands: pwd, ls, cd and whoami."
+description: "Install Termux from F-Droid, open your first prompt, and learn the commands that show where you are and what sits around you."
+excerpt: "Install Termux and take your first confident steps at the command prompt, one command at a time."
 category: "Termux"
 author: "The Study Cipher"
 date: "2026-01-08"
 order: 1
 level: Beginner
-tags: [termux, basics, setup]
-updated: "2026-01"
+tags: [termux, basics]
 ---
 
-## What is Termux?
+import Callout from '../../components/Callout.astro';
 
-Termux is a terminal emulator and Linux environment for Android. It gives you a real shell, a
-package manager and thousands of command-line tools — all without root, all in your pocket. If you
-have ever wanted to learn the command line but did not have a Linux machine handy, Termux is the
-shortest path.
+Termux gives your Android phone a real Linux command line. In this lesson you install it, open the prompt, and learn the handful of commands that answer two questions. Where am I, and what is here? Get these right and every later lesson becomes easier to follow.
 
-Install it from **F-Droid** (recommended, always current) or Google Play. When you open it you land
-in a shell prompt that looks something like this:
+## What you'll be able to do
+
+- Install Termux from F-Droid and open its prompt.
+- Read a shell prompt and understand what it is telling you.
+- Use `pwd` and `ls` to see where you are and what a directory holds.
+- Move between directories with `cd`.
+- Ask any command for help with `--help` and `man`.
+
+## Step 1: Install Termux
+
+Termux is a terminal emulator and a small Linux environment in one app. It runs on Android without root, so nothing here can damage the rest of your phone.
+
+Install it from F-Droid. The F-Droid build is the current one and it keeps receiving updates. The Play Store listing is an old, abandoned version, so treat it as a last resort.
+
+<Callout type="warning" title="Do not mix install sources">
+If you install Termux from F-Droid, keep updating it from F-Droid. Installing over the top from another store can break your setup, and you may lose files.
+</Callout>
+
+Open the app when it finishes installing. You are dropped straight into a prompt.
+
+## Step 2: Read the prompt
+
+The prompt is the text the shell prints before it waits for you to type.
 
 ```
 ~ $
 ```
 
-The `~` is your **home directory**, and `$` means you are a normal user (a `#` would mean root).
+The `~` is shorthand for your home directory, the folder you start in. The `$` means you are an ordinary user, not the system administrator. The cursor sits after the space, waiting for a command. You type on one line, then press Enter to run it.
 
-## Your first four commands
+## Step 3: Find out where you are
 
-```bash
-pwd      # print working directory — where am I?
-ls       # list what is here
-cd       # change directory
-whoami   # who am I logged in as?
+The first command to learn is `pwd`. It stands for print working directory, and it tells you the full path of the folder you are standing in.
+
+```
+$ pwd
+/data/data/com.termux/files/home
 ```
 
-`pwd` prints the absolute path of your current directory. On Termux that is usually
-`/data/data/com.termux/files/home`. `ls` shows the files in it. Try them now:
+That long path is your home directory. On Android, Termux keeps its own files inside the app's private storage, so all your work lives under this path. You will see it often.
 
-```bash
-pwd
-ls -la
-whoami
+<Callout type="tip" title="A short name for a long path">
+You never have to type that whole path. The tilde `~` always means the same directory, and `cd ~` takes you home from anywhere.
+</Callout>
+
+## Step 4: List what is there
+
+The `ls` command lists the contents of a directory. Run it on its own to list the directory you are in.
+
+```
+$ ls
 ```
 
-`ls -la` is worth learning early: `-l` is *long* format (permissions, owner, size, date) and `-a`
-shows *all* files, including hidden ones whose names start with a dot.
+A fresh install has an empty home directory, so `ls` prints nothing. An empty result is not an error. It means there is nothing to show yet.
 
-## Getting help without leaving the terminal
+Hidden files start with a dot, and `ls` hides them by default. Add `-a` to show everything, and `-l` for a long listing with details.
 
-Every well-behaved command ships a manual:
-
-```bash
-man ls
+```
+$ ls -la
+total 0
+drwx------ 2 u0_a123 u0_a123 4096 Jan  8 10:00 .
+drwx------ 3 u0_a123 u0_a123 4096 Jan  8 10:00 ..
 ```
 
-Press `q` to quit the manual. If `man` is not installed yet, `ls --help` usually works too. In the
-Learmux sandbox, `help` lists every command and `man <command>` shows a short summary.
+The two entries you see, `.` and `..`, exist in every directory. A single dot means this directory. Two dots mean the parent directory. You will use both soon. The user name in the middle, `u0_a123`, is specific to your device. Yours will differ.
 
-## Where to go next
+## Step 5: Move between directories
 
-- Try the challenge [Hello, Termux](/challenges/first-steps/) to capture your first flag.
-- Then [Hidden in Plain Sight](/challenges/hidden-in-plain-sight/) to practise `ls -a`.
-- Continue to [Navigating the filesystem](/learn/navigating-the-filesystem/).
+The `cd` command changes directory. Give it a path and it takes you there. This path is absolute, because it starts at the root of the filesystem.
 
-> Tip: everything you learn here works identically on a Linux server, a Mac and Termux itself.
+```
+$ cd /data/data/com.termux/files
+$ pwd
+/data/data/com.termux/files
+```
+
+Now go back home with the tilde.
+
+```
+$ cd ~
+$ pwd
+/data/data/com.termux/files/home
+```
+
+That is a round trip. You moved away and came back. Lesson two covers paths like these in full.
+
+## Step 6: Who you are, and how to ask for help
+
+The `whoami` command prints the name of the user you are running as.
+
+```
+$ whoami
+u0_a123
+```
+
+On Android every app runs as its own user, so this name is different on every phone. The point is that you are not the system administrator. Some commands will refuse to run, and that is normal.
+
+To ask a command what it can do, add `--help`.
+
+```
+$ ls --help
+Usage: ls [OPTION]... [FILE]...
+List information about the FILEs (the current directory by default).
+Sort entries alphabetically if none of -cftuvSUX nor --sort is specified.
+
+Mandatory arguments to long options are mandatory for short options too.
+  -a, --all                  do not ignore entries starting with .
+  -l                         use a long listing format
+  -h, --human-readable       with -l, print sizes like 1K 234M 2G
+...
+```
+
+The output is long, so it is cut short here. It continues with more options, then ends with a note about exit status.
+
+There is also `man`, the manual reader. Termux does not include man pages by default, so install them once, then you can read the manual for a command.
+
+```
+$ pkg install man
+Reading package lists... Done
+Building dependency tree... Done
+The following NEW packages will be installed:
+  man
+0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.
+Need to get 100 kB of archives.
+...
+Setting up man ...
+```
+
+Now you can open the manual.
+
+```
+$ man ls
+LS(1)                       User Commands                       LS(1)
+
+NAME
+       ls - list directory contents
+
+SYNOPSIS
+       ls [OPTION]... [FILE]...
+:
+```
+
+Press `q` to leave the manual and return to the prompt. When in doubt, `--help` is faster and always available.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `pwd` | Print the full path of the current directory |
+| `ls` | List the contents of the current directory |
+| `ls -la` | Long listing, including hidden files |
+| `cd PATH` | Change to the directory at the given path |
+| `cd ~` | Change to your home directory |
+| `whoami` | Print the name of the current user |
+| `--help` | Show a command's built-in help |
+| `man COMMAND` | Open the manual page for a command |
+
+## Next steps
+
+Now that you can find your way around, learn how paths really work in [Navigating the filesystem](/learn/navigating-the-filesystem/). When you are ready to look inside files, continue to [Reading and searching text](/learn/reading-and-searching-text/). To practise what you have learned on a real puzzle, try [Logs Never Lie](/challenges/logs-never-lie/).
