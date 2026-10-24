@@ -13,7 +13,7 @@ tags: [bashrc, aliases, path]
 
 import Callout from '../../components/Callout.astro';
 
-Every time you open Termux, the shell reads a startup file before it gives you a prompt. Editing that file lets you set short names for long commands, change the prompt, and add your own folders to the search path. In this lesson you edit the file, add aliases, set the prompt, and understand how the shell finds commands.
+Every time you open Termux, the shell reads a startup file before it gives you a prompt. Editing that file lets you set short names for long commands, change the prompt, and add your own folders to the search path. Here you edit the file and add aliases. You set the prompt and learn how the shell finds commands.
 
 ## What you'll be able to do
 
@@ -23,7 +23,7 @@ Every time you open Termux, the shell reads a startup file before it gives you a
 - Understand `PATH` and why the order of folders matters.
 - Export environment variables and reload the file with `source`.
 
-## Step 1 — Meet the bashrc file
+## Step 1: Meet the bashrc file
 
 The file `~/.bashrc` runs each time an interactive Bash shell starts. On Termux it already exists. Read it with `cat`.
 
@@ -38,7 +38,7 @@ export PS1='\u@\h:\w\$ '
 
 Lines starting with `#` are comments. The one real line sets the prompt. Anything you add here runs on every new shell, so keep it short and correct.
 
-## Step 2 — Add aliases
+## Step 2: Add aliases
 
 An alias is a short name for a longer command. This one makes `ll` run `ls -l`. Setting an alias prints nothing when it works.
 
@@ -76,7 +76,7 @@ alias ..='cd ..'
 An alias set at the prompt is gone when the shell closes. Put the line in `~/.bashrc` to keep it for every session.
 </Callout>
 
-## Step 3 — Change your prompt with PS1
+## Step 3: Change your prompt with PS1
 
 The `PS1` variable holds your prompt. It understands escapes such as `\u` for the user, `\h` for the host, `\w` for the current folder, and `\$` for the prompt symbol.
 
@@ -98,7 +98,7 @@ cd backups
 u0_a123@localhost:~/backups$ 
 ```
 
-## Step 4 — Understand PATH and its order
+## Step 4: Understand PATH and its order
 
 When you type a command, the shell searches the folders listed in `PATH`, in order, and runs the first match. Print it to see the list.
 
@@ -131,7 +131,7 @@ echo $PATH
 A folder earlier in `PATH` wins. If two programs share a name, the one in the earlier folder is the one that runs. Put your own folder first only when you mean to override the system tools.
 </Callout>
 
-## Step 5 — Export variables and reload the file
+## Step 5: Export variables and reload the file
 
 An environment variable is a value passed to the programs you run. `export` makes a variable part of the environment.
 
@@ -150,7 +150,7 @@ echo $EDITOR
 nano
 ```
 
-After you edit `~/.bashrc`, load it into the current shell with `source`, so you do not have to open a new one.
+After you edit `~/.bashrc`, load it into the current shell with `source`. Then you do not have to open a new one.
 
 ```sh
 source ~/.bashrc
@@ -171,7 +171,7 @@ alias grep='grep --color=auto'
 ```
 ```
 
-Add those lines to `~/.bashrc` and run `source ~/.bashrc` once, and they are there every time you open Termux.
+Add those lines to `~/.bashrc` and run `source ~/.bashrc` once. Then they are there every time you open Termux.
 
 ## Quick reference
 
