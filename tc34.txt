@@ -1,0 +1,5 @@
+  {
+    slug: 'aria2',
+    name: 'aria2',
+    category: 'transfer',
+    tagline: 'Download from several connections or mirrors at once.',
