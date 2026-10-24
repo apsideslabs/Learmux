@@ -66,7 +66,10 @@ function readInputs(ctx: CmdContext, args: string[]): { text: string; error?: st
   const parts: string[] = [];
   for (const a of args) {
     try {
-      parts.push(ctx.fs.readFile(a, ctx.cwd));
+      const text = ctx.fs.readFile(a, ctx.cwd);
+      // record the read so explicit validation rules can see it
+      ctx.record?.('read', ctx.fs.normalize(a, ctx.cwd));
+      parts.push(text);
     } catch (e) {
       return { text: '', error: (e as FsError).message };
     }
@@ -592,6 +595,8 @@ def('type', 'Show how a command would be interpreted', (ctx) => {
 }, 'type cmd');
 
 def('history', 'Show command history', (ctx) => ok('')); // filled by the UI layer
+
+def('hint', 'Reveal the next hint for this challenge', () => ok('No hints available for this challenge.'));
 
 def('clear', 'Clear the screen', () => ({ clear: true }));
 def('exit', 'Close the session', () => ({ exit: true }));
