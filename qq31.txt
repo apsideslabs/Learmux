@@ -1,0 +1,2 @@
+
+The -i option tells curl to print the response headers before the body:
