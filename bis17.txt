@@ -1,0 +1,4 @@
+| `ifconfig` | List interfaces and their addresses |
+| `ip addr` | Show addresses in the modern layout |
+| `ping -c N HOST` | Send N packets to test reachability |
+| `nmap -sV -p PORTS HOST` | Scan ports and identify services |
