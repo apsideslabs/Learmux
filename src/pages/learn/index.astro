@@ -2,37 +2,49 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const tutorials = (await getCollection('tutorials')).sort(
   (a, b) => a.data.order - b.data.order || a.data.title.localeCompare(b.data.title)
 );
-const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 ---
 
 <BaseLayout
-  title="Tutorials"
-  description="Bite-sized, beginner-friendly tutorials on Termux, the Linux command line, permissions, networking, encoding and shell scripting."
+  title="Lessons"
+  description="Short, plain-language lessons on Termux, the Linux command line, permissions, networking, encoding and shell scripting."
 >
   <div class="wrap">
-    <div class="section-head" style="margin-top:0.5rem">
-      <div>
-        <h1>Tutorials</h1>
-        <p>{tutorials.length} lessons that pair with the challenges. Read, then go break something.</p>
-      </div>
-      <a class="btn btn--primary" href={`${base}challenges/`}>Practise in the terminal →</a>
-    </div>
+    <header class="section--tight" style="padding-bottom:0">
+      <h1>Lessons</h1>
+      <p class="lede">
+        {tutorials.length} short reads that pair with the challenges. Each one covers a handful of commands
+        and points you at something to practise.
+      </p>
+    </header>
 
-    <div class="grid cols-2">
-      {tutorials.map((t) => (
-        <a class="card card--link" href={`${base}learn/${t.id}/`}>
-          <div class="challenge-head">
-            <span class="pill">{t.data.level}</span>
-            {t.data.tags.slice(0, 3).map((tag) => <span class="pill">{tag}</span>)}
-          </div>
-          <h3>{t.data.title}</h3>
-          <p class="muted">{t.data.description}</p>
-          <div class="card-foot"><span class="mono">learn/{t.id}</span></div>
-        </a>
-      ))}
-    </div>
+    <section class="section--tight">
+      <div class="rows">
+        {tutorials.map((t) => (
+          <a class="row" href={`${base}learn/${t.id}/`}>
+            <span>
+              <span class="row__title">{t.data.title}</span>
+              <span class="row__meta">{t.data.description}</span>
+            </span>
+            <span class="row__side">
+              <span class="chip">{t.data.level}</span>
+              <svg class="row__chev" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="section--tight">
+      <div class="card" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1.2rem">
+        <p class="mb-0 muted">Reading is good. Doing is better — the challenges are where it sticks.</p>
+        <a class="btn btn--primary" href={`${base}challenges/`}>Open the challenges</a>
+      </div>
+    </section>
   </div>
 </BaseLayout>
