@@ -1,5 +1,6 @@
 /**
- * Site-wide configuration: brand, navigation and the project link in one place.
+ * Site-wide configuration: brand, navigation, the studio behind it, and the
+ * contact address. One place to change any of them.
  */
 
 export const site = {
@@ -7,8 +8,18 @@ export const site = {
   tagline: 'A cybersecurity tutorial publication for Termux and the Linux command line.',
   description:
     'Learmux teaches Termux and the Linux command line through an ordered course and an interactive terminal where you capture flags.',
-  author: 'The Study Cipher',
   repository: 'https://github.com/apsideslabs/Learmux',
+};
+
+/** The studio that designs, builds and maintains this site. */
+export const studio = {
+  name: 'Apsides Labs',
+  /** One line, used in the footer and the about page. */
+  summary: 'An independent research and engineering studio. We build software that teaches.',
+  /** Where the studio's own site lives. */
+  url: 'https://apsideslabs.github.io/grapheme/',
+  github: 'https://github.com/apsideslabs',
+  email: 'apsideslabs@gmail.com',
 };
 
 export const nav = [
@@ -23,8 +34,8 @@ export const nav = [
 export const drawerNav = [
   { href: '', label: 'Home' },
   { href: 'course/', label: 'Course' },
-  { href: 'categories/', label: 'Categories', chevron: true },
   { href: 'tools/', label: 'Tools' },
+  { href: 'categories/', label: 'Categories', chevron: true },
   { href: 'learn/', label: 'All lessons' },
   { href: 'about/', label: 'About Us' },
   { href: 'contact/', label: 'Contact Us' },
