@@ -1,122 +1,71 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Terminal from '../components/Terminal.astro';
-import ChallengeRow from '../components/ChallengeRow.astro';
-import { challenges, allMeta, categories, totalPoints } from '../lib/challenges';
-import { getCollection } from 'astro:content';
+import ArticleCard from '../components/ArticleCard.astro';
+import PostRow from '../components/PostRow.astro';
+import Icon from '../components/Icon.astro';
+import { challenges, categories, totalPoints } from '../lib/challenges';
+import { recentTutorials } from '../lib/tutorials';
+import { social } from '../lib/site';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
-const demo = challenges.find((c) => c.slug === 'first-steps') ?? challenges[0];
-
-const featured = ['logs-never-lie', 'world-writable', 'pipe-dreams', 'final-boss']
-  .map((s) => allMeta().find((c) => c.slug === s))
-  .filter((c): c is NonNullable<typeof c> => Boolean(c));
-
-const allLessons = (await getCollection('tutorials')).sort((a, b) => a.data.order - b.data.order);
-const lessons = allLessons.slice(0, 4);
-
+const recent = await recentTutorials();
+const [lead, ...rest] = recent;
+const featured = rest.slice(0, 2);
+const feed = rest.slice(2);
 const cats = categories();
 ---
 
 <BaseLayout>
-  <section class="wrap hero">
-    <div class="split split--hero">
-      <div class="hero__copy">
-        <h1>Learn the command line by breaking in.</h1>
-        <p class="lede">
-          Learmux is a small, hands-on place to learn Termux and the Linux shell. Read a short lesson,
-          then use it immediately — every challenge drops you into a working terminal with a flag to find.
-        </p>
-        <div class="actions">
-          <a class="btn btn--primary" href={`${base}challenges/`}>Start a challenge</a>
-          <a class="btn btn--ghost" href={`${base}learn/`}>Read the lessons</a>
-        </div>
-        <p class="hero__note">
-          No account, nothing to install. Progress is saved in your browser.
-        </p>
-      </div>
-
-      <div class="hero__panel">
-        <div class="hero__caption">
-          <span class="live">Live sandbox</span>
-          <span class="mono">challenge 01 — {demo.title}</span>
-        </div>
-        <Terminal challenge={demo} compact />
-      </div>
+  <section class="wrap section">
+    <div class="section-label"><span>Featured</span></div>
+    {lead && <div style="margin-bottom:1.1rem"><ArticleCard entry={lead} variant="hero" /></div>}
+    <div class="cards cards--2">
+      {featured.map((t) => <ArticleCard entry={t} />)}
     </div>
   </section>
 
-  <section class="wrap section--tight">
-    <div class="stats">
-      <div class="stat"><span class="n">{challenges.length}</span><span class="l">challenges</span></div>
-      <div class="stat"><span class="n">{allLessons.length}</span><span class="l">written lessons</span></div>
-      <div class="stat"><span class="n">{totalPoints}</span><span class="l">points to collect</span></div>
-      <div class="stat"><span class="n">{cats.length}</span><span class="l">topics covered</span></div>
+  <section class="wrap">
+    <div class="section-label"><span>Recent posts</span></div>
+    <div class="posts">
+      {feed.map((t) => <PostRow entry={t} />)}
     </div>
   </section>
 
   <section class="wrap section">
-    <div class="split split--aside">
-      <div>
-        <h2>What Learmux is</h2>
+    <div class="ctf-panel">
+      <h2>Learmux CTF</h2>
+      <p>Terminal-based challenges. Find the flags and complete the challenge.</p>
+      <div class="ctf-meta">
+        <span>{challenges.length} challenges</span>
+        <span>{totalPoints} points</span>
+        <span>{cats.length} topics</span>
       </div>
-      <div class="measure">
-        <p>
-          Most command-line tutorials show you a wall of commands and hope they stick. Learmux works the
-          other way around: each lesson is short and plain, and each challenge is a real shell with its own
-          filesystem and one thing to find.
-        </p>
-        <p>
-          You type actual commands — <code>ls</code>, <code>grep</code>, <code>base64</code>, <code>nmap</code> —
-          into a sandbox that behaves the same way every time. Nothing depends on a server, so nothing is
-          flaky, and you can reset a challenge and try again whenever you like.
-        </p>
-        <p class="mb-0">
-          It is built for a phone first, because that is where Termux lives.
-        </p>
+      <a class="btn btn--green btn--lg" href={`${base}challenges/`}>Play CTF</a>
+    </div>
+  </section>
+
+  <section class="wrap section--tight">
+    <div class="soft-panel">
+      <h2>Download Termux</h2>
+      <p class="muted" style="max-width:60ch">
+        Termux is a free terminal emulator and Linux environment for Android — no root required.
+        Install it, then work through the lessons on your phone.
+      </p>
+      <div class="actions">
+        <a class="btn btn--navy" href="https://f-droid.org/en/packages/com.termux/" target="_blank" rel="noopener">Get it on F-Droid</a>
+        <a class="btn btn--outline" href="https://play.google.com/store/apps/details" target="_blank" rel="noopener">Google Play</a>
       </div>
     </div>
   </section>
 
   <section class="wrap section--tight">
-    <div class="section-head">
-      <h2>A few to start with</h2>
-      <a href={`${base}challenges/`}>All {challenges.length} challenges</a>
-    </div>
-    <div class="rows">
-      {featured.map((c, i) => <ChallengeRow challenge={c} index={i + 1} />)}
-    </div>
-  </section>
-
-  <section class="wrap section--tight">
-    <div class="section-head">
-      <h2>Lessons</h2>
-      <a href={`${base}learn/`}>All lessons</a>
-    </div>
-    <div class="rows">
-      {lessons.map((t) => (
-        <a class="row" href={`${base}learn/${t.id}/`}>
-          <span>
-            <span class="row__title">{t.data.title}</span>
-            <span class="row__meta">{t.data.level} · {t.data.tags.slice(0, 2).join(' · ')}</span>
-          </span>
-          <span class="row__side">
-            <svg class="row__chev" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-            </svg>
-          </span>
+    <div class="section-label"><span>Follow</span></div>
+    <div class="social">
+      {social.map((s) => (
+        <a href={s.href} aria-label={s.label} title={s.label} target="_blank" rel="noopener">
+          <Icon name={s.icon as any} size={19} />
         </a>
       ))}
-    </div>
-  </section>
-
-  <section class="wrap section--tight">
-    <div class="card card--pad-lg" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1.5rem">
-      <div>
-        <h2 style="margin-bottom:0.3rem">Ready when you are.</h2>
-        <p class="muted mb-0">Your first flag is two commands away.</p>
-      </div>
-      <a class="btn btn--primary" href={`${base}challenges/first-steps/`}>Open challenge 01</a>
     </div>
   </section>
 </BaseLayout>
