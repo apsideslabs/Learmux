@@ -1,4 +1,0 @@
-        args: '. -perm -o+w',
-        what: 'surface paths that are world-writable, a quick security smell on shared storage',
-      },
-    ],

@@ -1,3 +1,0 @@
-      },
-      {
-        args: '-d, -f2,4 data.csv',

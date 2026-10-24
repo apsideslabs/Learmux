@@ -1,4 +1,0 @@
-    install: 'Included with Termux',
-    glyph: 'columns',
-    commands: [
-      {

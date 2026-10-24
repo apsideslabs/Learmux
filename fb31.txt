@@ -1,8 +1,0 @@
-    install: 'pkg install gawk',
-    glyph: 'braces',
-    commands: [
-      {
-        args: '{print $1, $3} data.txt',
-        what: 'split each line on whitespace and print the first and third columns',
-      },
-      {

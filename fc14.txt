@@ -1,9 +1,0 @@
-    },
-  },
-  {
-    slug: 'fd',
-    name: 'fd',
-    category: 'files',
-    tagline: 'A fast, friendly alternative to the classic search command',
-    about:
-      'A modern rewrite that walks directories in parallel and skips build folders and hidden entries by default. It aims for a friendlier syntax than the older tool, with colour and smart-case matching built in. Reach for it when interactive searches need to be quick and readable.',

@@ -1,2 +1,0 @@
-        what: 'skip lines that contain no delimiter at all, avoiding stray output',
-      },
