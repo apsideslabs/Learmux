@@ -1,0 +1,88 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import { tracks } from '../../lib/curriculum';
+import { trackGroups } from '../../lib/tutorials';
+
+export async function getStaticPaths() {
+  const groups = await trackGroups();
+  return groups.map((g) => ({ params: { track: g.track.id }, props: { group: g } }));
+}
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const { group } = Astro.props;
+const { track, lessons } = group;
+
+const idx = tracks.findIndex((t) => t.id === track.id);
+const next = tracks[idx + 1];
+const prev = tracks[idx - 1];
+const nextGroup = next ? { track: next, href: `${base}course/${next.id}/` } : undefined;
+---
+
+<BaseLayout title={track.title} description={track.description}>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span>
+      <a href={`${base}course/`}>Course</a><span class="sep">›</span>
+      <span>{track.title}</span>
+    </nav>
+
+    <header class="track-hero">
+      <span class="track-hero__num">{String(track.number).padStart(2, '0')}</span>
+      <div>
+        <p class="eyebrow">Track {track.number} of {tracks.length}</p>
+        <h1>{track.title}</h1>
+        <p class="lede">{track.tagline}</p>
+        <div class="chip-row" style="margin-top:0.6rem">
+          <span class="chip">{track.level}</span>
+          <span class="chip">{lessons.length} lessons</span>
+          <span class="chip">Prerequisite: {track.prereq}</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="prose" style="max-width:70ch">
+      <p>{track.description}</p>
+      <p><strong>By the end, {track.outcome}</strong></p>
+    </div>
+
+    <div class="section-label"><span>Lessons in this track</span></div>
+
+    <ol class="lesson-list">
+      {lessons.map((l, i) => (
+        <li>
+          <a class="lesson-item" href={`${base}learn/${l.id}/`}>
+            <span class="lesson-item__num">{String(i + 1).padStart(2, '0')}</span>
+            <span class="lesson-item__body">
+              <span class="lesson-item__title">{l.data.title}</span>
+              <span class="lesson-item__excerpt">{l.data.excerpt}</span>
+              <span class="lesson-item__meta">{l.data.category} · {l.data.level}</span>
+            </span>
+            <Icon name="chevron" size={16} />
+          </a>
+        </li>
+      ))}
+    </ol>
+
+    <div class="track-foot">
+      <a class="btn btn--green" href={`${base}learn/${lessons[0].id}/`}>
+        Start lesson 1
+      </a>
+      <a class="btn btn--outline" href={`${base}course/`}>All tracks</a>
+    </div>
+
+    {nextGroup && (
+      <section class="next-track">
+        <p class="eyebrow" style="margin-bottom:0.3rem">Next up</p>
+        <a href={nextGroup.href}>
+          <span class="next-track__num">{String(nextGroup.track.number).padStart(2, '0')}</span>
+          <span>
+            <span class="next-track__title">{nextGroup.track.title}</span>
+            <span class="next-track__tag">{nextGroup.track.tagline}</span>
+          </span>
+          <Icon name="chevron" size={16} />
+        </a>
+      </section>
+    )}
+  </div>
+</BaseLayout>
