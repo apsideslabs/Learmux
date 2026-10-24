@@ -13,7 +13,7 @@ tags: [networking, ssh]
 
 import Callout from '../../components/Callout.astro';
 
-Your phone is a networked computer, and Termux gives you the same tools an administrator uses on a server. In this lesson you will find your own address, test whether another host is reachable, fetch a page from the command line, and open a secure shell to another machine. You will also see how to read a service banner and why you must never scan a network you do not control.
+Your phone is a networked computer. Termux gives you the same tools an administrator uses on a server. In this lesson you will find your own address, and test whether another host is reachable. You will fetch a page from the command line. You will also open a secure shell to another machine. You will also see how to read a service banner. And you will see why you must never scan a network you do not control.
 
 ## What you'll be able to do
 
@@ -22,11 +22,11 @@ Your phone is a networked computer, and Termux gives you the same tools an admin
 - Run a basic `nmap` scan and read the ports and versions it reports.
 - Fetch a page with `curl`, read its headers with `-I`, and save it with `-o`.
 - Download a file with `wget`.
-- Connect over `ssh` and understand the host-key fingerprint prompt.
+- Connect over `ssh`. Understand the host-key fingerprint prompt.
 
 ## Step 1: Install the tools
 
-Termux does not include these commands by default. Install them in one call. The `openssh` package provides `ssh` and `sshd`, `iproute2` provides `ip`, and `net-tools` provides `ifconfig` and `netstat`.
+Termux does not include these commands by default. Install them in one call. The `openssh` package provides `ssh` and `sshd`. `iproute2` provides `ip`, and `net-tools` provides `ifconfig` and `netstat`.
 
 ```bash
 pkg install iproute2 net-tools nmap curl wget openssh
@@ -64,7 +64,7 @@ wlan0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         ether 02:00:00:00:00:00  txqueuelen 1000  (Ethernet)
 ```
 
-The `inet` line under `wlan0` is your address on the local network. Here it is `192.168.1.42`. Addresses that begin with `192.168`, `10.` or `172.16` through `172.31` are private and only reachable inside your own network.
+The `inet` line under `wlan0` is your address on the local network. Here it is `192.168.1.42`. Addresses that begin with `192.168`, `10.` or `172.16` through `172.31` are private. They are only reachable inside your own network.
 
 The `ip` command shows the same information in a modern layout.
 
@@ -85,7 +85,7 @@ The `/24` after the address is the prefix length. It is another way of writing t
 
 ## Step 3: Test reachability with ping
 
-`ping` sends a small packet and waits for a reply. Use `-c` to set how many packets to send, otherwise it runs until you stop it.
+`ping` sends a small packet and waits for a reply. Use `-c` to set how many packets to send. Otherwise it runs until you stop it.
 
 ```bash
 ping -c 3 192.168.1.1
@@ -106,7 +106,7 @@ The address `192.168.1.1` is usually your router. A reply with `0% packet loss` 
 
 ## Step 4: Scan ports with nmap
 
-`nmap` checks which ports on a host are open. The `-p` flag names the ports to check and `-sV` asks `nmap` to identify the service and its version.
+`nmap` checks which ports on a host are open. The `-p` flag names the ports to check. `-sV` asks `nmap` to identify the service and its version.
 
 <Callout type="warning" title="Only scan what you own">
 Only run `nmap` against systems you own or have written permission to test. Scanning a network you do not control can break its terms of service, and in many countries it is a criminal offence. Your own router and your own devices are fine.
@@ -130,7 +130,7 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 6.21 seconds
 ```
 
-Each line names a port, whether it is open or closed, the service, and the version when `-sV` could work it out. An open port is a service accepting connections, and each one is something to keep patched.
+Each line names a port, and says whether it is open or closed. It gives the service, and the version when `-sV` could work it out. An open port is a service accepting connections. Each one is something to keep patched.
 
 ## Step 5: Fetch a page with curl
 
@@ -191,7 +191,7 @@ ls -l page.html
 
 ## Step 6: Download with wget
 
-`wget` is built for downloading. Give it a URL and it saves the file under its own name, following redirects on its own.
+`wget` is built for downloading. Give it a URL and it saves the file under its own name. It follows redirects on its own.
 
 ```bash
 wget http://example.com
@@ -212,7 +212,7 @@ Both `wget` and `curl` can save under a name you choose, with `-O` and `-o` resp
 
 ## Step 7: Connect over ssh
 
-`ssh` opens an encrypted session on another machine. The first time you connect to a host, `ssh` has no record of its key and asks you to confirm the fingerprint.
+`ssh` opens an encrypted session on another machine. The first time you connect to a host, `ssh` has no record of its key. It asks you to confirm the fingerprint.
 
 ```bash
 ssh user@192.168.1.10
@@ -225,7 +225,7 @@ Continue connecting? yes
 Warning: Permanently added the host key to the list of known hosts.
 ```
 
-That prompt is your only chance to check that the host is the machine you think it is. Compare the fingerprint against one the host's owner gave you through another channel. If they match, type `yes` and `ssh` records the key so it will not ask again. If the fingerprint changes later, `ssh` warns you loudly, and that warning means someone may be impersonating the host.
+That prompt is your only chance to check the host is the machine you expect. Compare the fingerprint against one the host's owner gave you through another channel. If they match, type `yes`. Then `ssh` records the key and will not ask again. If the fingerprint changes later, `ssh` warns you loudly. That warning means someone may be impersonating the host.
 
 ## Step 8: See what is listening with netstat
 
@@ -242,7 +242,7 @@ tcp        0      0 127.0.0.1:8022          0.0.0.0:*               LISTEN
 tcp6       0      0 :::8022                 :::*                    LISTEN
 ```
 
-An address of `127.0.0.1` means the service only accepts connections from this device. An address of `0.0.0.0` or `::` means it accepts connections from anywhere on the network, which is worth knowing. Termux runs its SSH server on port `8022` by default, not the usual `22`, so you connect to it with `-p 8022`.
+An address of `127.0.0.1` means the service only accepts connections from this device. An address of `0.0.0.0` or `::` means it accepts connections from anywhere on the network. That is worth knowing. Termux runs its SSH server on port `8022` by default, not the usual `22`. Connect to it with `-p 8022`.
 
 ## Quick reference
 
