@@ -1,0 +1,18 @@
+---
+title: "HTTP and APIs from the shell"
+description: "Read a web response, shape a request, and pull a JSON reply apart from the Termux shell with curl."
+excerpt: "Learn to send a request and read the reply from the shell with curl and python."
+category: "Web"
+author: "The Study Cipher"
+date: "2026-02-24"
+order: 16
+track: "networking"
+level: "Intermediate"
+tags: [http, api, json]
+---
+
+import Callout from '../../components/Callout.astro';
+
+When you open a page or call an API, your phone sends an HTTP request and a server sends back a response. curl lets you do the same thing from the shell, one request at a time, and see the raw reply. In this lesson you will read a response, learn what the status code means, send your own headers and body, and pull apart a JSON answer.
+
+## What you'll be able to do
