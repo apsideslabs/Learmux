@@ -1,0 +1,132 @@
+---
+title: "Networking basics"
+description: "Inspect your network with ifconfig, ip, ping and nmap, fetch pages with curl and wget, and connect over ssh from Termux."
+excerpt: "Inspect your own network, fetch pages and connect over ssh from your phone."
+category: "Networking"
+author: "The Study Cipher"
+date: "2026-02-09"
+order: 8
+level: Intermediate
+tags: [networking, ssh]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Your phone is a networked computer, and Termux gives you the same tools an administrator uses on a server. In this lesson you will find your own address, test whether another host is reachable, fetch a page from the command line, and open a secure shell to another machine. You will also see how to read a service banner and why you must never scan a network you do not control.
+
+## What you'll be able to do
+
+- Find your own IP address with `ifconfig` and `ip addr`.
+- Test reachability and round-trip time with `ping`.
+- Run a basic `nmap` scan and read the ports and versions it reports.
+- Fetch a page with `curl`, read its headers with `-I`, and save it with `-o`.
+- Download a file with `wget`.
+- Connect over `ssh` and understand the host-key fingerprint prompt.
+
+## Step 1: Install the tools
+
+Termux does not include these commands by default. Install them in one call. The `openssh` package provides `ssh` and `sshd`, `iproute2` provides `ip`, and `net-tools` provides `ifconfig` and `netstat`.
+
+```bash
+pkg install iproute2 net-tools nmap curl wget openssh
+```
+
+```text
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following NEW packages will be installed:
+  curl iproute2 net-tools nmap openssh wget
+0 upgraded, 6 newly installed, 0 to remove and 0 not upgraded.
+Setting up curl (8.8.0) ...
+Setting up iproute2 (6.10.0) ...
+Setting up nmap (7.95) ...
+Setting up openssh (9.8p1) ...
+Setting up wget (1.24.5) ...
+```
+
+## Step 2: Find your own address
+
+`ifconfig` lists every network interface on the device. The `lo` interface is the loopback, which only talks to itself. The interface that faces the network is usually `wlan0` on a phone.
+
+```bash
+ifconfig
+```
+
+```text
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        loop  txqueuelen 1000  (Local Loopback)
+
+wlan0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.42  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 02:00:00:00:00:00  txqueuelen 1000  (Ethernet)
+```
+
+The `inet` line under `wlan0` is your address on the local network. Here it is `192.168.1.42`. Addresses that begin with `192.168`, `10.` or `172.16` through `172.31` are private and only reachable inside your own network.
+
+The `ip` command shows the same information in a modern layout.
+
+```bash
+ip addr
+```
+
+```text
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+2: wlan0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP
+    link/ether 02:00:00:00:00:00 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.42/24 brd 192.168.1.255 scope global wlan0
+```
+
+The `/24` after the address is the prefix length. It is another way of writing the netmask `255.255.255.0`.
+
+## Step 3: Test reachability with ping
+
+`ping` sends a small packet and waits for a reply. Use `-c` to set how many packets to send, otherwise it runs until you stop it.
+
+```bash
+ping -c 3 192.168.1.1
+```
+
+```text
+PING 192.168.1.1 (192.168.1.1) 56(84) bytes of data.
+64 bytes from 192.168.1.1: icmp_seq=1 ttl=64 time=3.21 ms
+64 bytes from 192.168.1.1: icmp_seq=2 ttl=64 time=2.88 ms
+64 bytes from 192.168.1.1: icmp_seq=3 ttl=64 time=3.05 ms
+
+--- 192.168.1.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2004ms
+rtt min/avg/max/mdev = 2.880/3.047/3.210/0.135 ms
+```
+
+The address `192.168.1.1` is usually your router. A reply with `0% packet loss` means the host is reachable. The `time` value is the round trip in milliseconds, and the summary line gives the average.
+
+## Step 4: Scan ports with nmap
+
+`nmap` checks which ports on a host are open. The `-p` flag names the ports to check and `-sV` asks `nmap` to identify the service and its version.
+
+<Callout type="warning" title="Only scan what you own">
+Only run `nmap` against systems you own or have written permission to test. Scanning a network you do not control can break its terms of service, and in many countries it is a criminal offence. Your own router and your own devices are fine.
+</Callout>
+
+```bash
+nmap -sV -p 22,80,8022 192.168.1.10
+```
+
+```text
+Starting Nmap 7.95 ( https://nmap.org ) at 2026-01-26 12:00 IST
+Nmap scan report for 192.168.1.10
+Host is up (0.0040s latency).
+
+PORT     STATE  SERVICE  VERSION
+22/tcp   open   ssh      OpenSSH 9.6 (protocol 2.0)
+80/tcp   open   http     nginx 1.24.0
+8022/tcp closed unknown
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 6.21 seconds
+```
+
+Each line names a port, whether it is open or closed, the service, and the version when `-sV` could work it out. An open port is a service accepting connections, and each one is something to keep patched.
