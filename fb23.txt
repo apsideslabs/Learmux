@@ -1,0 +1,17 @@
+      out: [
+        'base_url = https://example.com/api',
+        'mirror = https://example.org',
+        'retries = 3',
+      ].join('\n'),
+    },
+  },
+  {
+    slug: 'gawk',
+    name: 'GNU Awk',
+    category: 'text',
+    tagline: 'Process and summarise column-based text with a small language',
+    about:
+      'A full implementation of the awk programming language, built for records and fields. It splits each line into columns, applies patterns and actions, and can total, reformat or filter data on the fly. Reach for it when the simpler column tools are not expressive enough for a report.',
+    developer: 'GNU Project',
+    url: 'https://www.gnu.org/software/gawk/',
+    bin: 'awk',
