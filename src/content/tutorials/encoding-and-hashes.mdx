@@ -1,80 +1,220 @@
 ---
-title: "Encoding, hex and hashes"
-description: "Base64, ROT13, hex dumps, strings and SHA-256 — recognise and reverse common encodings."
-excerpt: "Base64, ROT13, hex dumps, strings and SHA-256 — recognise and reverse common encodings."
+title: "Encoding and hashes"
+description: "Learn the difference between encoding and encryption, then encode, decode and verify files with base64, xxd, strings and sha256sum."
+excerpt: "Encode, decode and verify files with base64, xxd, strings and sha256sum on your phone."
 category: "Encoding"
 author: "The Study Cipher"
 date: "2026-02-04"
 order: 7
 level: Intermediate
-tags: [encoding, base64, hashing, forensics]
-updated: "2026-01"
+tags: [encoding, hashes]
 ---
 
-## Encoding is not encryption
+import Callout from '../../components/Callout.astro';
 
-Encodings like Base64 and ROT13 change how data *looks*, not who can read it. Anyone can reverse
-them — which is why recognising them is a core skill for CTFs and for everyday debugging.
+Encoding changes how data is written down. Encryption hides data so only a key holder can read it. Beginners mix the two up, and that mistake leads people to store passwords in base64 thinking they are safe. This lesson shows you how to encode and decode with common tools, how to look inside a file, and how to check that a download arrived intact.
 
-## Base64
+## What you'll be able to do
 
-Base64 turns arbitrary bytes into a safe alphabet of `A–Z a–z 0–9 + /`. You can spot it by the
-trailing `=` padding and the fact it uses no spaces:
+- Explain why encoding is not encryption.
+- Encode and decode text and files with `base64`.
+- Apply ROT13 with `tr` and see why it is a toy, not a lock.
+- Read a file byte by byte with `xxd` and `hexdump -C`.
+- Pull readable text out of a binary with `strings`.
+- Check a download with `sha256sum` and explain why a hash is one-way.
 
-```bash
-echo -n "hello" | base64        # aGVsbG8=
-echo "aGVsbG8=" | base64 -d     # hello
-base64 -d encoded.txt           # decode a whole file
-```
+## Step 1: Encoding is not encryption
 
-## ROT13 and Caesar ciphers
+Encoding is a public, reversible rule for turning bytes into text. Anyone can reverse it without a key. Base64 exists so that binary data can travel through systems that only carry text, such as email bodies and configuration files.
 
-ROT13 rotates each letter 13 places and is its own inverse. In the Learmux sandbox there is a helper:
+Encryption is different. It uses a secret key, and without that key the data should be unreadable. Base64 gives you no secrecy at all. If you encode a password with base64 and someone finds it, they decode it in one command.
 
-```bash
-rot13 cipher.txt
-```
+## Step 2: Encode text with base64
 
-Apply it twice and you are back where you started.
-
-## Hex dumps
-
-`xxd` and `hexdump -C` show raw bytes as hexadecimal with a printable column on the right:
+`base64` reads standard input and writes the encoded text. Encode a short string.
 
 ```bash
-xxd data.bin
-hexdump -C data.bin
+echo "hello termux" | base64
 ```
 
-The right-hand ASCII column is where hidden text often shows up — even when the file "looks like
-gibberish" in the hex.
+```text
+aGVsbG8gdGVybXV4Cg==
+```
 
-## Extracting printable strings
+The trailing `Cg==` is the newline that `echo` added. The `==` padding tells a decoder that the last block was not full.
 
-`strings` pulls runs of printable characters out of any file, which is the first move on an unknown
-binary blob:
+## Step 3: Decode it back
+
+To reverse it, pass `-d` to `base64` and feed the encoded text in.
 
 ```bash
-strings firmware.bin
-strings firmware.bin | grep -i flag
+echo "aGVsbG8gdGVybXV4Cg==" | base64 -d
 ```
 
-## Hashes
+```text
+hello termux
+```
 
-A hash is a fixed-length fingerprint of a file's contents. Change one byte and the hash changes
-completely. Hashes verify integrity; they are not reversible.
+You get the original text back. This round trip needs no key, which is the whole point. Anyone holding the encoded string can read the message.
+
+## Step 4: Encode and decode a file
+
+The same tool works on files. Write a small file, then encode it.
 
 ```bash
-sha256sum backup_a.txt backup_b.txt
+echo "hello termux" > sample.txt
+base64 sample.txt
 ```
 
-If `checksum.txt` records the digest of the genuine file, you can tell the real backup from a
-tampered copy by comparing the digests.
+```text
+aGVsbG8gdGVybXV4Cg==
+```
 
-## Practise
+Decode a file back to its original bytes with `-d`.
 
-- [Decode Me](/challenges/decode-me/) — Base64.
-- [ROT13 Is Weak](/challenges/rot13-is-weak/) — a Caesar shift.
-- [Hex on the Wire](/challenges/hex-on-the-wire/) — read a hex dump.
-- [Integrity Matters](/challenges/integrity-matters/) — spot the tampered file.
-- [Buried Strings](/challenges/buried-strings/) — pull text out of a blob.
+```bash
+base64 -d sample.txt > decoded.txt
+cat decoded.txt
+```
+
+```text
+hello termux
+```
+
+The `>` sends the decoded bytes into a new file instead of the screen.
+
+<Callout type="warning" title="Base64 is not a lock">
+Never store a password, an API key or a token in base64 and call it protected. Decoding takes one command. Use a real secrets manager or a password manager instead.
+</Callout>
+
+## Step 5: Apply ROT13 with tr
+
+ROT13 shifts each letter thirteen places through the alphabet. It is a substitution cipher with no key, and it only changes letters. The `tr` command does the shift by mapping one set of characters to another.
+
+```bash
+echo "Hello" | tr 'A-Za-z' 'N-ZA-Mn-za-m'
+```
+
+```text
+Uryyb
+```
+
+Shift the same text again and it comes back, because the alphabet has twenty-six letters and thirteen is half of that.
+
+```bash
+echo "Uryyb" | tr 'A-Za-z' 'N-ZA-Mn-za-m'
+```
+
+```text
+Hello
+```
+
+ROT13 hides a spoiler in a forum post. It stops nobody who wants to read your data.
+
+## Step 6: Read bytes with xxd and hexdump -C
+
+`xxd` shows a file as hexadecimal, two bytes at a time, with the printable characters alongside.
+
+```bash
+echo "termux" | xxd
+```
+
+```text
+00000000: 7465 726d 7578 0a                       termux.
+```
+
+The first column is the offset in the file. The middle is the hex bytes. The last column is the ASCII view, where each byte that is a printable character is shown as itself and everything else as a dot. Here `0a` is the newline, shown as a dot.
+
+`hexdump -C` prints the same idea in a slightly different layout.
+
+```bash
+echo "termux" | hexdump -C
+```
+
+```text
+00000000  74 65 72 6d 75 78 0a                              |termux.|
+```
+
+The bytes are one per column, and the ASCII view sits between two pipe characters. Reading the ASCII column is the fastest way to confirm that a file really is text and not something else.
+
+<Callout type="tip" title="Spot a file type by its first bytes">
+The first few bytes of a file often identify its type. A PNG starts with the bytes for the letters PNG, and a ZIP archive starts with `PK`. Run `xxd` on a file you cannot open and read the ASCII column.
+</Callout>
+
+## Step 7: Pull text out of a binary with strings
+
+`strings` scans a file and prints every run of printable characters at least four long. This is how you find hidden messages, version numbers and paths inside a binary. Build a small file with text mixed with null bytes.
+
+```bash
+printf 'PNG\x00data\x00Author Ada\x00' > img.bin
+strings img.bin
+```
+
+```text
+PNG
+data
+Author Ada
+```
+
+The null bytes are skipped and the readable runs are listed. Now pipe `strings` into `grep` to keep only the line you want.
+
+```bash
+strings img.bin | grep Author
+```
+
+```text
+Author Ada
+```
+
+## Step 8: Verify a file with sha256sum
+
+A hash turns any input into a short, fixed-length fingerprint. `sha256sum` prints the SHA-256 hash of a file. Write a file and hash it.
+
+```bash
+echo "hello termux" > sample.txt
+sha256sum sample.txt
+```
+
+```text
+ffbcfdedca039b7ee5a26b0fecb97ce32323015ad538839491e7e08e0f176bb3  sample.txt
+```
+
+Change one character and the hash changes completely. Add an exclamation mark and hash again.
+
+```bash
+echo "hello termux!" > sample.txt
+sha256sum sample.txt
+```
+
+```text
+728791eed6b294866d81946d22e93c145d87c0b9384a44023684a797fda689d6  sample.txt
+```
+
+Two files that differ by a single character produce two hashes that share nothing. This is how you check a download. The site you downloaded from publishes the expected hash, you run `sha256sum` on your copy, and if the two strings match the file arrived intact. If they differ, the file was corrupted or tampered with.
+
+## Step 9: Why a hash is one-way
+
+A hash is designed to run in one direction only. You can turn any file into its hash in an instant, but you cannot turn a hash back into the file. There is no key and no undo. This is why a website can store the hash of your password and check a login by hashing what you type and comparing the two hashes, without ever keeping your password.
+
+Because the output is fixed in length, many different inputs could in theory produce the same hash. A good hash makes finding such a pair impractical. That property, plus the one-way direction, is what makes hashes useful for integrity checks and password storage.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `base64 FILE` | Encode a file or input as base64 text |
+| `base64 -d FILE` | Decode base64 text back to its bytes |
+| `tr 'A-Za-z' 'N-ZA-Mn-za-m'` | Apply ROT13 to letters |
+| `xxd` | Show bytes as hex with an ASCII column |
+| `hexdump -C` | Show bytes as hex with a boxed ASCII view |
+| `strings FILE` | Print printable runs of text in a file |
+| `strings FILE` piped to `grep TERM` | Keep only matching lines |
+| `sha256sum FILE` | Print the SHA-256 hash of a file |
+
+## Next steps
+
+- [Networking basics](/learn/networking-basics/) to download files and check their hashes before you open them.
+- [Managing packages](/learn/managing-packages/) to install the tools used in this lesson.
+- [File permissions](/learn/file-permissions/) to lock down a file that holds something private.
+
+If either `xxd` or `hexdump` is missing, run `pkg search xxd` and `pkg search hexdump` to find the package that provides it, then install that package with `pkg install`.
