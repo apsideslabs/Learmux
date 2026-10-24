@@ -13,19 +13,19 @@ tags: [processes, jobs, signals]
 
 import Callout from '../../components/Callout.astro';
 
-Every command you run becomes a process, a running copy of a program with its own number. When something hangs or drains the battery, you need to find it and stop it. In this lesson you list processes, read their resource use, stop them with the right signal, and move long tasks into the background.
+Every command you run becomes a process. A process is a running copy of a program, and it gets its own number. When something hangs or drains your battery, you need to find it and stop it. That is what this lesson is about. You will list processes and read what they use. You will stop them with the right signal, and push long tasks into the background.
 
 ## What you'll be able to do
 
-- See which programs are running and how much memory and CPU they use.
-- Stop a process and choose between SIGTERM and SIGKILL.
-- Run a command in the background and bring it back to the foreground.
+- Find which programs are running. See how much memory and CPU each one uses.
+- Stop a process. Choose between SIGTERM and SIGKILL.
+- Run a command in the background, then bring it back.
 - List and manage jobs with `jobs`, `fg` and `bg`.
-- Understand why a password typed on the command line is visible to others.
+- See why a password typed on the command line is visible to others.
 
-## Step 1 — What a process is
+## Step 1: What a process is
 
-When you run a command, the kernel starts a process for it. Each process has a process ID, or PID, and a parent. The shell you type into is itself a process. The `ps` command lists the processes attached to your terminal.
+When you run a command, the kernel starts a process. Every process has a process ID, or PID, and a parent. The shell you type into is a process too. The `ps` command lists the processes attached to your terminal.
 
 ```sh
 ps
@@ -37,11 +37,11 @@ ps
  5487 pts/0    00:00:00 ps
 ```
 
-The shell is PID 5234. The `ps` you ran is 5487, and it disappears the moment it finishes.
+The shell is PID 5234. The `ps` you ran is 5487. It disappears the moment it finishes.
 
-## Step 2 — List everything and watch it with top
+## Step 2: List everything and watch it with top
 
-`ps aux` shows every process on the device, not only yours, with the user, CPU and memory columns.
+`ps aux` shows every process on the device, not only yours. It adds columns for the user, CPU and memory.
 
 ```sh
 ps aux
@@ -53,9 +53,9 @@ u0_a123   5234  0.0  0.4  22144  4096 pts/0    S    10:01   0:00 bash
 u0_a123   5487  0.0  0.1  10240  2048 pts/0    R    10:05   0:00 ps aux
 ```
 
-The `%CPU` and `%MEM` columns are the share of the processor and memory a process is using. The `STAT` column shows the state: `R` means running, `S` means sleeping and waiting.
+The `%CPU` and `%MEM` columns show the share of the processor and memory a process uses. The `STAT` column shows its state. `R` means running, and `S` means sleeping, waiting for something.
 
-For a live view, use `top`. It refreshes on its own until you press `q`.
+For a live view, use `top`. It refreshes on its own. Press `q` to leave.
 
 ```sh
 top
@@ -73,9 +73,9 @@ PID USER      PR  NI    VIRT    RES  %CPU  %MEM     TIME+ COMMAND
 Inside `top`, press `M` to sort by memory and `P` to sort by CPU. Press `q` to leave.
 </Callout>
 
-## Step 3 — Stop a process with kill
+## Step 3: Stop a process with kill
 
-The `kill` command sends a signal to a process by PID. The default signal is SIGTERM, which asks the program to shut down and lets it save its work first.
+The `kill` command sends a signal to a process by PID. The default is SIGTERM. It asks the program to shut down, and lets it save its work first.
 
 ```sh
 kill 5234
@@ -94,9 +94,9 @@ ps -p 5234
   PID TTY          TIME CMD
 ```
 
-Only the header prints, which means no process has that PID now.
+Only the header prints. No process has that PID now.
 
-Sometimes a program ignores SIGTERM. Suppose PID 6100 will not stop. SIGKILL ends it at once and cannot be caught, so the program gets no chance to clean up.
+Sometimes a program ignores SIGTERM. Suppose PID 6100 will not stop. SIGKILL ends it at once. It cannot be caught, so the program gets no chance to clean up.
 
 ```sh
 kill -KILL 6100
@@ -109,9 +109,9 @@ kill -KILL 6100
 Reach for SIGKILL, also written `kill -9`, only when SIGTERM fails. A killed program cannot close files or flush data, so you can lose work.
 </Callout>
 
-## Step 4 — Background jobs
+## Step 4: Background jobs
 
-A long command holds your terminal until it finishes. Add `&` to send it to the background and get your prompt back at once. The shell prints the job number and the PID.
+A long command holds your terminal until it finishes. Add `&` to send it to the background. You get your prompt back at once. The shell prints the job number and the PID.
 
 ```sh
 sleep 300 &
@@ -141,7 +141,7 @@ fg
 sleep 300
 ```
 
-Press `Ctrl-C` to end it. If you started a job in the foreground and want to keep it running, press `Ctrl-Z` to pause it, then send it back with `bg`.
+Press `Ctrl-C` to end it. To keep a foreground job running, press `Ctrl-Z` to pause it. Then send it back with `bg`.
 
 ```sh
 sleep 300
@@ -168,9 +168,9 @@ jobs
 [1]+  Running                 sleep 300 &
 ```
 
-## Step 5 — Why command-line secrets are visible
+## Step 5: Why command-line secrets are visible
 
-Any user on the device can read every command line through `ps aux`. If you pass a password as an option, it is on show for as long as the program runs.
+Any user on the device can read every command line through `ps aux`. If you pass a password as an option, it stays on show while the program runs.
 
 ```sh
 sshpass -p hunter2 ssh user@example.com
@@ -189,7 +189,7 @@ ps aux | grep sshpass
 u0_a123   6110  0.0  0.2  12345  2048 pts/0    S    10:10   0:00 sshpass -p hunter2 ssh user@example.com
 ```
 
-That is a real leak. Prefer a tool that asks for the password at a prompt, or reads it from a file only you can open, or takes it from an environment variable.
+That is a real leak. Prefer a tool that asks for the password at a prompt. It can also read it from a file only you can open. Or take it from an environment variable.
 
 ## Quick reference
 
