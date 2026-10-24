@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Terminal from '../../components/Terminal.astro';
+import Icon from '../../components/Icon.astro';
 import { challenges } from '../../lib/challenges';
 import { renderMarkdown } from '../../lib/md';
 
@@ -11,12 +12,13 @@ export async function getStaticPaths() {
   }));
 }
 
-const { challenge, idx } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const { challenge, idx } = Astro.props;
 const prev = challenges[idx - 1];
 const next = challenges[idx + 1];
 const diffClass = { Easy: 'chip--easy', Medium: 'chip--medium', Hard: 'chip--hard' }[challenge.difficulty];
 const briefingHtml = renderMarkdown(challenge.briefing);
+const num = String(idx + 1).padStart(2, '0');
 ---
 
 <BaseLayout
@@ -24,69 +26,65 @@ const briefingHtml = renderMarkdown(challenge.briefing);
   description={`${challenge.objective} A ${challenge.difficulty.toLowerCase()} ${challenge.category} challenge worth ${challenge.points} points.`}
 >
   <div class="wrap">
-    <nav class="crumbs" aria-label="Breadcrumb">
-      <a href={`${base}challenges/`}>Challenges</a> / <span>{challenge.title}</span>
-    </nav>
+    <div class="ctf-bar" data-challenge-slug={challenge.slug}>
+      <span class="count">Challenge {num} / {challenges.length}</span>
+      <span class="title">{challenge.title}</span>
+      <span class="chip {diffClass}">{challenge.difficulty}</span>
+      <span class="chip chip--mono">{challenge.points} pts</span>
+      <span class="chip chip--solved" data-solved-only>Captured</span>
+      <span class="spacer"></span>
+      <a class="ctf-close" href={`${base}challenges/`}>
+        <Icon name="close" size={16} /> Close
+      </a>
+    </div>
+    <div class="progress-line" aria-hidden="true">
+      <span data-progress-bar data-total={challenges.length}></span>
+    </div>
 
-    <div class="detail" data-challenge-slug={challenge.slug}>
-      <div class="detail__main">
-        <header>
-          <div class="chip-row" style="margin-bottom:0.9rem">
-            <span class={`chip ${diffClass}`}>{challenge.difficulty}</span>
-            <span class="chip">{challenge.category}</span>
-            <span class="chip chip--mono">{challenge.points} pts</span>
-            <span class="chip chip--solved" data-solved-only>Captured</span>
-          </div>
-          <h1 style="margin-bottom:0.5rem">{challenge.title}</h1>
-          <p class="lede" style="font-size:1.08rem">{challenge.summary}</p>
-        </header>
+    <div class="section--tight">
+      <Terminal challenge={challenge} />
+    </div>
 
-        <Terminal challenge={challenge} />
-
-        <div class="brief">
-          <h2>Briefing</h2>
-          <div class="prose" style="max-width:none">
-            <Fragment set:html={briefingHtml} />
-          </div>
-          <p class="objective">
-            <span class="k">Objective</span>
-            {challenge.objective}
-          </p>
+    <div style="display:grid;gap:1.2rem;grid-template-columns:1fr;align-items:start">
+      <div class="brief">
+        <h2>Briefing</h2>
+        <div class="prose" style="max-width:none;font-size:1rem">
+          <Fragment set:html={briefingHtml} />
         </div>
+        <p class="objective">
+          <span class="k" style="display:block;font-family:var(--font-mono);font-size:0.74rem;color:var(--muted);margin-bottom:0.2rem">Objective</span>
+          {challenge.objective}
+        </p>
       </div>
 
-      <aside class="detail__aside">
-        <div class="side-card">
-          <h3>Hints</h3>
-          <p>Try it yourself first — then open these one at a time.</p>
-          <details class="hints">
-            <summary>Show {challenge.hints.length} hint{challenge.hints.length === 1 ? '' : 's'}</summary>
-            <ol>
-              {challenge.hints.map((h) => <li>{h}</li>)}
-            </ol>
-          </details>
+      <div class="soft-panel">
+        <h2 style="font-size:1.02rem">Stuck?</h2>
+        <p class="muted" style="font-size:0.92rem">
+          Type <code>hint</code> in the terminal to reveal hints one at a time, or use the starters below.
+        </p>
+        <div class="chip-row" style="margin-bottom:0.8rem">
+          {(challenge.starters ?? []).map((s) => <span class="chip chip--mono">{s}</span>)}
         </div>
+        <details class="hints" style="border-top:1px solid var(--line)">
+          <summary style="cursor:pointer;list-style:none;padding:0.5rem 0;font-weight:600;font-size:0.9rem">
+            Show all {challenge.hints.length} hint{challenge.hints.length === 1 ? '' : 's'}
+          </summary>
+          <ol style="margin:0;padding-left:1.15rem;font-size:0.9rem;color:#4d4d55">
+            {challenge.hints.map((h) => <li>{h}</li>)}
+          </ol>
+        </details>
+      </div>
 
-        <div class="side-card">
-          <h3>Try these</h3>
-          <p class="mb-0">Tap one to drop it into the terminal, then press Enter.</p>
-          <ul class="starters">
-            {(challenge.starters ?? []).map((s) => <li>{s}</li>)}
-          </ul>
+      <div class="soft-panel" style="display:flex;flex-wrap:wrap;gap:0.8rem;justify-content:space-between;align-items:center">
+        <div class="actions">
+          {prev
+            ? <a class="btn btn--outline btn--sm" href={`${base}challenges/${prev.slug}/`}>← {prev.title}</a>
+            : <span class="muted" style="font-size:0.88rem">This is the first challenge.</span>}
+          {next
+            ? <a class="btn btn--outline btn--sm" href={`${base}challenges/${next.slug}/`}>{next.title} →</a>
+            : <span class="muted" style="font-size:0.88rem">That was the last one — well done.</span>}
         </div>
-
-        <div class="side-card">
-          <h3>Keep going</h3>
-          <div class="pager">
-            {prev
-              ? <a href={`${base}challenges/${prev.slug}/`}><span class="k">Previous</span><span class="t">{prev.title}</span></a>
-              : <span class="muted" style="font-size:0.88rem">This is the first challenge.</span>}
-            {next
-              ? <a href={`${base}challenges/${next.slug}/`}><span class="k">Next</span><span class="t">{next.title}</span></a>
-              : <span class="muted" style="font-size:0.88rem">That was the last one — well done.</span>}
-          </div>
-        </div>
-      </aside>
+      </div>
     </div>
   </div>
 </BaseLayout>
