@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
-import { social } from '../lib/site';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 ---
@@ -28,15 +27,8 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
       </p>
 
       <h2>Elsewhere</h2>
-      <p>We post short walkthroughs and updates on the channels below.</p>
-    </div>
-
-    <div class="social" style="margin-bottom:2rem">
-      {social.map((s) => (
-        <a href={s.href} aria-label={s.label} title={s.label} target="_blank" rel="noopener">
-          <Icon name={s.icon as any} size={19} />
-        </a>
-      ))}
+      <p>The source, the issue tracker and the full history live on
+        <a href="https://github.com/apsideslabs/Learmux" target="_blank" rel="noopener">GitHub</a>.</p>
     </div>
 
     <div class="soft-panel" style="max-width:640px">
