@@ -1,0 +1,14 @@
+---
+title: "HTTP and APIs from the shell"
+description: "Read a web response, shape a request, and pull a JSON reply apart from the Termux shell with curl."
+excerpt: "Learn to send a request and read the reply from the shell with curl and python."
+category: "Web"
+author: "The Study Cipher"
+date: "2026-02-24"
+order: 16
+track: "networking"
+level: "Intermediate"
+tags: [http, api, json]
+---
+
+Hello.
