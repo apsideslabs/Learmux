@@ -1,0 +1,206 @@
+---
+title: "Project: a backup script"
+description: "Build a shell script that copies a chosen folder into a dated archive, skips repeats, and reports a clear status code."
+excerpt: "Copy a chosen folder into a dated archive, skip repeat runs, and report the result with a status code."
+category: "Projects"
+author: "The Study Cipher"
+date: "2026-03-26"
+order: 24
+track: "projects"
+level: "Advanced"
+tags: [project, scripting, backup]
+---
+
+import Callout from '../../components/Callout.astro';
+
+You are going to write one shell script that takes a folder, packs it into a dated archive inside a backups directory, refuses to run twice on the same day, prints a short summary, and exits with a code other programs can read.
+
+## What you'll be able to do
+
+- Read a date stamp with `date +%Y-%m-%d` and build a filename from it.
+- Create a directory tree safely with `mkdir -p`.
+- Pack a folder into a compressed archive with `tar -czf`.
+- Test for an existing file with `if` and skip work that is already done.
+- Return a meaningful exit code with `exit`.
+
+## What you are building
+
+A script called `backup.sh`. Run it with no arguments and it backs up `~/notes`; pass a folder path and it backs up that instead.
+
+```text
+$ sh backup.sh
+backup: wrote /data/data/com.termux/files/home/backups/notes-2026-03-26.tar.gz
+backup: 5 entries, 4.0K
+```
+
+## Step 1: The date stamp
+
+The filename needs today's date, and `date` formats it for you.
+
+```sh
+$ date +%Y-%m-%d
+2026-03-26
+```
+
+The format string `+%Y-%m-%d` is year, month, then day, each padded with a leading zero. Capture it into a variable with `$(...)`.
+
+```sh
+$ STAMP=$(date +%Y-%m-%d); echo "$STAMP"
+2026-03-26
+```
+
+<Callout type="tip">
+Wrap a command in `$(...)` and the shell stores whatever it printed. Quote the variable every time you use it later, so spaces and slashes survive intact.
+</Callout>
+
+## Step 2: Set up the folders
+
+The source defaults to `~/notes` and the destination is always `~/backups`. `mkdir -p` creates every missing parent and does not complain if the folder already exists, so it is safe on every run.
+
+```sh
+$ mkdir -p "$HOME/backups"; ls -d "$HOME/backups"
+/data/data/com.termux/files/home/backups
+```
+
+## Step 3: Skip a repeat run
+
+Run the script twice in one day and the archive already exists, so there is nothing to rebuild. Test for the file first and leave early.
+
+```sh
+ARCHIVE="$HOME/backups/notes-$STAMP.tar.gz"
+
+if [ -f "$ARCHIVE" ]; then
+  echo "backup: $ARCHIVE already exists, skipping."
+  exit 0
+fi
+```
+
+`[ -f "$ARCHIVE" ]` is true when the path is a regular file, so this prints a note and stops.
+
+```sh
+$ ARCHIVE="$HOME/backups/notes-2026-03-26.tar.gz"; [ -f "$ARCHIVE" ] && echo "already exists"
+already exists
+```
+
+`exit 0` stops the script and reports success, because skipping is not a failure.
+
+## Step 4: Make the archive
+
+`tar` writes a whole folder into a single file. The flags are `-c` to create, `-z` to compress with gzip, and `-f` to name the output.
+
+```sh
+$ tar -czf "$ARCHIVE" -C "$SRC" .
+$ tar -tzf "$ARCHIVE"
+./
+./sub/
+./sub/a.txt
+./sub/b.txt
+./todo.txt
+```
+
+The `-C "$SRC"` changes into the source folder first, and the trailing `.` means everything there. Listing the archive back with `-t` instead of `-c` confirms it worked, and `wc -l` counts the entries.
+
+```sh
+$ tar -tzf "$ARCHIVE" | wc -l
+5
+```
+
+<Callout type="warning">
+`tar -czf` overwrites its output file without asking. That is why the skip test in Step 3 comes first: it protects an archive you already have. Point `-C` only at a folder you intend to copy.
+</Callout>
+
+## Step 5: Summarise and set the exit code
+
+Two `echo` lines report what happened, and `exit 0` says the run succeeded. A failed `tar` exits `1` and a missing source exits `2`, so another script can tell the cases apart.
+
+```sh
+$ COUNT=$(tar -tzf "$ARCHIVE" | wc -l | tr -d ' ')
+$ SIZE=$(du -h "$ARCHIVE" | cut -f1)
+$ echo "backup: wrote $ARCHIVE"; echo "backup: $COUNT entries, $SIZE"
+backup: wrote /data/data/com.termux/files/home/backups/notes-2026-03-26.tar.gz
+backup: 5 entries, 4.0K
+```
+
+`du -h` prints a human-readable size and `cut -f1` keeps that first column. The `tr -d ' '` strips the spaces `wc` adds in front of its number.
+
+## Step 6: The finished script
+
+Put every piece together into `backup.sh`.
+
+```sh
+#!/bin/sh
+# backup.sh — archive a folder into a dated tarball.
+# Usage: sh backup.sh [source-folder]
+
+SRC="${1:-$HOME/notes}"
+DEST="$HOME/backups"
+STAMP=$(date +%Y-%m-%d)
+ARCHIVE="$DEST/notes-$STAMP.tar.gz"
+
+if [ ! -d "$SRC" ]; then
+  echo "backup: source folder not found: $SRC" >&2
+  exit 2
+fi
+
+mkdir -p "$DEST"
+
+if [ -f "$ARCHIVE" ]; then
+  echo "backup: $ARCHIVE already exists, skipping."
+  exit 0
+fi
+
+if ! tar -czf "$ARCHIVE" -C "$SRC" . ; then
+  echo "backup: tar failed for $SRC" >&2
+  exit 1
+fi
+
+COUNT=$(tar -tzf "$ARCHIVE" | wc -l | tr -d ' ')
+SIZE=$(du -h "$ARCHIVE" | cut -f1)
+echo "backup: wrote $ARCHIVE"
+echo "backup: $COUNT entries, $SIZE"
+exit 0
+```
+
+The `${1:-$HOME/notes}` form means use the first argument if given, otherwise fall back to `~/notes`. Run it three ways: a normal run, a repeat, and a bad source.
+
+```sh
+$ sh backup.sh; echo "exit=$?"
+backup: wrote /data/data/com.termux/files/home/backups/notes-2026-03-26.tar.gz
+backup: 5 entries, 4.0K
+exit=0
+$ sh backup.sh; echo "exit=$?"
+backup: /data/data/com.termux/files/home/backups/notes-2026-03-26.tar.gz already exists, skipping.
+exit=0
+$ sh backup.sh /nope/missing; echo "exit=$?"
+backup: source folder not found: /nope/missing
+exit=2
+```
+
+A folder goes in, a dated archive comes out, and the exit code tells you which of the three outcomes you got.
+
+<Callout type="tip">
+Make the script executable once with `chmod +x backup.sh`, then run it as `./backup.sh` instead of typing `sh` in front of it each time.
+</Callout>
+
+## Quick reference
+
+| Command or syntax | What it does |
+| --- | --- |
+| `date +%Y-%m-%d` | Prints today's date as `2026-03-26`. |
+| `$(...)` | Runs a command and substitutes what it printed. |
+| `mkdir -p dir` | Creates a directory and any missing parents. |
+| `[ -f file ]` | True when the path is a regular file. |
+| `[ ! -d dir ]` | True when the path is not a directory. |
+| `tar -czf out.tar.gz -C dir .` | Packs a folder into a compressed archive. |
+| `tar -tzf out.tar.gz` | Lists the contents of an archive. |
+| `du -h file` | Prints a human-readable file size. |
+| `exit N` | Stops the script and returns status N. |
+| `${1:-default}` | Uses the first argument, or the default if empty. |
+
+## Where to take it next
+
+- Keep a set number of archives and delete the oldest with `ls -t` piped into `tail` and `rm`, so the folder never grows without limit.
+- Schedule the script with Termux's `crond` or an Android automation app so the backup runs while you sleep.
+- Add a `--list` flag that runs `tar -tzf` on the newest archive and prints the contents, reusing the argument handling from Step 6.
+
+Read [Shell scripting basics](/learn/shell-scripting-basics/) if the `if` tests felt rushed, and [Working with tar](/learn/working-with-tar/) for the rest of the archive flags.
