@@ -57,5 +57,7 @@ export function startShell(challenge: Challenge): Shell {
     env: challenge.env,
     overrides: challenge.overrides,
     flag: challenge.flag,
+    hints: challenge.hints,
+    validation: challenge.validation,
   });
 }
