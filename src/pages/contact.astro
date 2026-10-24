@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
+import { studio } from '../lib/site';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 ---
@@ -22,20 +23,21 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
     <div class="prose">
       <h2>Email</h2>
       <p>
-        The quickest way to reach us is email:
-        <a href="mailto:contact.thestudycipher@gmail.com">contact.thestudycipher@gmail.com</a>.
+        Learmux is published by {studio.name}. The quickest way to reach us is email:
+        <a href={`mailto:${studio.email}`}>{studio.email}</a>.
       </p>
 
       <h2>Elsewhere</h2>
       <p>The source, the issue tracker and the full history live on
-        <a href="https://github.com/apsideslabs/Learmux" target="_blank" rel="noopener">GitHub</a>.</p>
+        <a href={studio.github} target="_blank" rel="noopener">GitHub</a>, alongside the studio's other
+        projects.</p>
     </div>
 
     <div class="soft-panel" style="max-width:640px">
       <h2 style="font-size:1.05rem">Reporting a bug</h2>
       <p class="muted mb-0" style="font-size:0.94rem">
         If a challenge behaves unexpectedly, the source and issue tracker live on
-        <a href="https://github.com/apsideslabs/Learmux" target="_blank" rel="noopener">GitHub</a>.
+        <a href={studio.repository} target="_blank" rel="noopener">GitHub</a>.
       </p>
     </div>
   </div>
