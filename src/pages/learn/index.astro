@@ -1,42 +1,53 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import ArticleCard from '../../components/ArticleCard.astro';
-import { allTutorials, categoryGroups } from '../../lib/tutorials';
+import Icon from '../../components/Icon.astro';
+import { allTutorials, trackOf } from '../../lib/tutorials';
+import { tracks } from '../../lib/curriculum';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
-const tutorials = await allTutorials();
-const groups = await categoryGroups();
+const lessons = await allTutorials();
+const trackOfId = (id: string) => tracks.find((t) => t.id === id);
 ---
 
 <BaseLayout
-  title="Course"
-  description="Short, plain-language lessons on Termux, the Linux command line, permissions, networking, encoding and shell scripting."
+  title="All lessons"
+  description="Every lesson in the Learmux course, in order."
 >
   <div class="wrap">
-    <header class="section">
-      <h1>Course</h1>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span><a href={`${base}course/`}>Course</a><span class="sep">›</span><span>All lessons</span>
+    </nav>
+
+    <header class="section--tight">
+      <h1>All lessons</h1>
       <p class="lede">
-        {tutorials.length} short lessons that pair with the challenges. Read one, then go and use it.
+        {lessons.length} lessons in reading order. The course page groups them into tracks, which is the
+        better way to work through them.
       </p>
-      <div class="chip-row" style="margin-top:1rem">
-        {groups.map((g) => (
-          <a class="chip" href={`${base}category/${g.slug}/`}>{g.name} · {g.items.length}</a>
-        ))}
+      <div class="actions" style="margin-top:1rem">
+        <a class="btn btn--green" href={`${base}course/`}>View the course</a>
       </div>
     </header>
 
-    <section>
-      <div class="section-label"><span>All lessons</span></div>
-      <div class="cards cards--3">
-        {tutorials.map((t) => <ArticleCard entry={t} />)}
-      </div>
-    </section>
-
-    <section class="section--tight">
-      <div class="soft-panel" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem">
-        <p class="mb-0 muted">Reading is good. Doing is better — the challenges are where it sticks.</p>
-        <a class="btn btn--green" href={`${base}challenges/`}>Play the CTF</a>
-      </div>
-    </section>
+    <ol class="lesson-list">
+      {lessons.map((l, i) => {
+        const track = trackOfId(l.data.track);
+        return (
+          <li>
+            <a class="lesson-item" href={`${base}learn/${l.id}/`}>
+              <span class="lesson-item__num">{String(i + 1).padStart(2, '0')}</span>
+              <span class="lesson-item__body">
+                <span class="lesson-item__title">{l.data.title}</span>
+                <span class="lesson-item__excerpt">{l.data.excerpt}</span>
+                <span class="lesson-item__meta">
+                  {track ? `Track ${track.number} · ${track.title}` : l.data.category} · {l.data.level}
+                </span>
+              </span>
+              <Icon name="chevron" size={16} />
+            </a>
+          </li>
+        );
+      })}
+    </ol>
   </div>
 </BaseLayout>
