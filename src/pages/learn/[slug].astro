@@ -7,6 +7,7 @@ export async function getStaticPaths() {
   return tutorials.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
 }
 
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 const { title, description, level, tags, updated } = entry.data;
@@ -14,32 +15,31 @@ const { title, description, level, tags, updated } = entry.data;
 const ordered = (await getCollection('tutorials')).sort((a, b) => a.data.order - b.data.order);
 const pos = ordered.findIndex((t) => t.id === entry.id);
 const next = ordered[pos + 1];
-const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 ---
 
 <BaseLayout title={title} description={description}>
   <div class="wrap">
     <nav class="crumbs" aria-label="Breadcrumb">
-      <a href={`${base}learn/`}>Learn</a> / <span>{entry.id}</span>
+      <a href={`${base}learn/`}>Lessons</a> / <span>{title}</span>
     </nav>
 
     <article class="prose">
-      <header style="margin-bottom:1.5rem">
-        <div class="challenge-head">
-          <span class="pill pill--easy">{level}</span>
-          {tags.map((tag) => <span class="pill">{tag}</span>)}
-          {updated && <span class="pill">updated {updated}</span>}
+      <header class="article-head">
+        <div class="chip-row" style="margin-bottom:1rem">
+          <span class="chip chip--easy">{level}</span>
+          {tags.map((tag) => <span class="chip">{tag}</span>)}
+          {updated && <span class="chip chip--mono">updated {updated}</span>}
         </div>
-        <h1 style="margin-bottom:0.4rem">{title}</h1>
-        <p class="muted" style="font-size:1.05rem">{description}</p>
+        <h1>{title}</h1>
+        <p class="lede">{description}</p>
       </header>
 
       <Content />
     </article>
 
-    <div class="section-head">
-      <a class="btn btn--ghost" href={`${base}learn/`}>← All tutorials</a>
-      {next && <a class="btn btn--primary" href={`${base}learn/${next.id}/`}>Next: {next.data.title} →</a>}
+    <div class="section-head" style="margin-top:3rem">
+      <a class="btn btn--ghost" href={`${base}learn/`}>All lessons</a>
+      {next && <a class="btn btn--primary" href={`${base}learn/${next.id}/`}>Next: {next.data.title}</a>}
     </div>
   </div>
 </BaseLayout>
