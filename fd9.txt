@@ -1,0 +1,17 @@
+        what: 'list regular entries larger than ten megabytes under the shared storage mount, useful when hunting for space hogs',
+      },
+      {
+        args: '. -mtime -1',
+        what: 'show everything modified within the last twenty-four hours, a quick way to see what changed today',
+      },
+      {
+        args: '. -type d -empty',
+        what: 'print directories that contain nothing, which often marks leftover build or cache folders',
+      },
+      {
+        args: '. -name "*.tmp" -delete',
+        what: 'match temporary items and remove each one as it is encountered, cleaning a hierarchy in a single pass',
+      },
+      {
+        args: '. -perm -o+w',
+        what: 'surface paths that are world-writable, a quick security smell on shared storage',
