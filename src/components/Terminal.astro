@@ -3,23 +3,33 @@ import type { Challenge } from '../lib/types';
 
 interface Props {
   challenge: Challenge;
+  compact?: boolean;
 }
 
-const { challenge } = Astro.props;
+const { challenge, compact = false } = Astro.props;
 // Serialise the challenge so the island can boot without a network request.
 const data = JSON.stringify(challenge);
 ---
 
-<div class="lx-term-host" data-challenge={data}></div>
+<div
+  class="lx-term-host"
+  data-challenge={data}
+  data-compact={compact ? 'true' : undefined}
+></div>
 
 <script>
   import { mountTerminal } from '../lib/terminal';
 
-  document.querySelectorAll<HTMLElement>('.lx-term-host').forEach((host) => {
-    if (host.dataset.mounted) return;
-    host.dataset.mounted = '1';
-    const raw = host.getAttribute('data-challenge');
-    if (!raw) return;
-    mountTerminal(host, JSON.parse(raw));
-  });
+  function init() {
+    document.querySelectorAll<HTMLElement>('.lx-term-host').forEach((host) => {
+      if (host.dataset.mounted) return;
+      host.dataset.mounted = '1';
+      const raw = host.getAttribute('data-challenge');
+      if (!raw) return;
+      mountTerminal(host, JSON.parse(raw), { compact: host.dataset.compact === 'true' });
+    });
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
 </script>
