@@ -1,78 +1,262 @@
 ---
-title: "Networking basics from the shell"
-description: "Inspect interfaces, scan ports, fetch URLs and connect over SSH — all from Termux."
-excerpt: "Inspect interfaces, scan ports, fetch URLs and connect over SSH — all from Termux."
+title: "Networking basics"
+description: "Inspect your network with ifconfig, ip, ping and nmap, fetch pages with curl and wget, and connect over ssh from Termux."
+excerpt: "Inspect your own network, fetch pages and connect over ssh from your phone."
 category: "Networking"
 author: "The Study Cipher"
 date: "2026-02-09"
 order: 8
 level: Intermediate
-tags: [networking, nmap, curl, ssh]
-updated: "2026-01"
+tags: [networking, ssh]
 ---
 
 import Callout from '../../components/Callout.astro';
 
-## Your own address
+Your phone is a networked computer, and Termux gives you the same tools an administrator uses on a server. In this lesson you will find your own address, test whether another host is reachable, fetch a page from the command line, and open a secure shell to another machine. You will also see how to read a service banner and why you must never scan a network you do not control.
+
+## What you'll be able to do
+
+- Find your own IP address with `ifconfig` and `ip addr`.
+- Test reachability and round-trip time with `ping`.
+- Run a basic `nmap` scan and read the ports and versions it reports.
+- Fetch a page with `curl`, read its headers with `-I`, and save it with `-o`.
+- Download a file with `wget`.
+- Connect over `ssh` and understand the host-key fingerprint prompt.
+
+## Step 1: Install the tools
+
+Termux does not include these commands by default. Install them in one call. The `openssh` package provides `ssh` and `sshd`, `iproute2` provides `ip`, and `net-tools` provides `ifconfig` and `netstat`.
 
 ```bash
-ifconfig            # interface details (or: ip addr)
-ping 8.8.8.8        # is the internet reachable?
+pkg install iproute2 net-tools nmap curl wget openssh
 ```
 
-`ifconfig` shows each interface, its IP address and its MAC address. `ping` sends a tiny packet and
-waits for a reply — the simplest possible reachability test.
+```text
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following NEW packages will be installed:
+  curl iproute2 net-tools nmap openssh wget
+0 upgraded, 6 newly installed, 0 to remove and 0 not upgraded.
+Setting up curl (8.8.0) ...
+Setting up iproute2 (6.10.0) ...
+Setting up nmap (7.95) ...
+Setting up openssh (9.8p1) ...
+Setting up wget (1.24.5) ...
+```
 
-## Scanning ports with nmap
+## Step 2: Find your own address
 
-Every networked service listens on a port. `nmap` finds the open ones and, with service detection,
-reads the banner each service announces:
+`ifconfig` lists every network interface on the device. The `lo` interface is the loopback, which only talks to itself. The interface that faces the network is usually `wlan0` on a phone.
 
 ```bash
-nmap 127.0.0.1
-nmap -sV 127.0.0.1
-nmap -p 22,80,443 192.168.1.1
+ifconfig
 ```
 
-Banners are an information leak: they frequently reveal software names and versions. Reading them is
-reconnaissance.
+```text
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        loop  txqueuelen 1000  (Local Loopback)
 
-<Callout type="warning" title="Authorised testing only">
-Only ever scan machines you own or have explicit permission to test. Scanning other people's systems
-is illegal in most jurisdictions.
+wlan0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.42  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 02:00:00:00:00:00  txqueuelen 1000  (Ethernet)
+```
+
+The `inet` line under `wlan0` is your address on the local network. Here it is `192.168.1.42`. Addresses that begin with `192.168`, `10.` or `172.16` through `172.31` are private and only reachable inside your own network.
+
+The `ip` command shows the same information in a modern layout.
+
+```bash
+ip addr
+```
+
+```text
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+2: wlan0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP
+    link/ether 02:00:00:00:00:00 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.42/24 brd 192.168.1.255 scope global wlan0
+```
+
+The `/24` after the address is the prefix length. It is another way of writing the netmask `255.255.255.0`.
+
+## Step 3: Test reachability with ping
+
+`ping` sends a small packet and waits for a reply. Use `-c` to set how many packets to send, otherwise it runs until you stop it.
+
+```bash
+ping -c 3 192.168.1.1
+```
+
+```text
+PING 192.168.1.1 (192.168.1.1) 56(84) bytes of data.
+64 bytes from 192.168.1.1: icmp_seq=1 ttl=64 time=3.21 ms
+64 bytes from 192.168.1.1: icmp_seq=2 ttl=64 time=2.88 ms
+64 bytes from 192.168.1.1: icmp_seq=3 ttl=64 time=3.05 ms
+
+--- 192.168.1.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2004ms
+rtt min/avg/max/mdev = 2.880/3.047/3.210/0.135 ms
+```
+
+The address `192.168.1.1` is usually your router. A reply with `0% packet loss` means the host is reachable. The `time` value is the round trip in milliseconds, and the summary line gives the average.
+
+## Step 4: Scan ports with nmap
+
+`nmap` checks which ports on a host are open. The `-p` flag names the ports to check and `-sV` asks `nmap` to identify the service and its version.
+
+<Callout type="warning" title="Only scan what you own">
+Only run `nmap` against systems you own or have written permission to test. Scanning a network you do not control can break its terms of service, and in many countries it is a criminal offence. Your own router and your own devices are fine.
 </Callout>
 
-## Fetching from the web
-
 ```bash
-curl http://challenge.local/flag       # print a response body
-curl -I http://example.com             # headers only
-curl -o file.zip http://example.com/f.zip   # save to a file
-wget http://example.com/file.zip       # download a file
+nmap -sV -p 22,80,8022 192.168.1.10
 ```
 
-`curl` is the workhorse for talking to APIs and inspecting responses; `wget` is for saving files.
+```text
+Starting Nmap 7.95 ( https://nmap.org ) at 2026-01-26 12:00 IST
+Nmap scan report for 192.168.1.10
+Host is up (0.0040s latency).
 
-## Connecting over SSH
+PORT     STATE  SERVICE  VERSION
+22/tcp   open   ssh      OpenSSH 9.6 (protocol 2.0)
+80/tcp   open   http     nginx 1.24.0
+8022/tcp closed unknown
 
-Termux can be both an SSH client and a server:
-
-```bash
-pkg install openssh
-ssh user@host                          # connect to another machine
-sshd                                   # start an SSH server on the phone
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 6.21 seconds
 ```
 
-The first time you connect you will be asked to verify the host key fingerprint — that is normal and
-important; it is how you know you are talking to the right machine.
+Each line names a port, whether it is open or closed, the service, and the version when `-sV` could work it out. An open port is a service accepting connections, and each one is something to keep patched.
 
-## Seeing connections
+## Step 5: Fetch a page with curl
+
+`curl` makes an HTTP request and prints the response body. With no options it does a plain GET and writes the page to the screen.
 
 ```bash
-netstat                # active connections and listening ports
+curl http://example.com
 ```
 
-## Practise
+```text
+<!doctype html>
+<html>
+<head>
+    <title>Example Domain</title>
+</head>
+<body>
+    <h1>Example Domain</h1>
+</body>
+</html>
+```
 
-- [Network Recon](/challenges/network-recon/) — scan a host and read a banner.
-- [Fetch the Flag](/challenges/fetch-the-flag/) — pull a flag down with curl.
+Add `-I` to ask for the headers only. This is the quickest way to check whether a page exists and what type it is.
+
+```bash
+curl -I http://example.com
+```
+
+```text
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=UTF-8
+Content-Length: 1256
+Connection: keep-alive
+```
+
+The first line holds the status code. `200` means success, `404` means not found, `301` or `302` means a redirect.
+
+To save the response instead of printing it, use `-o` followed by a filename.
+
+```bash
+curl -o page.html http://example.com
+```
+
+```text
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  1256  100  1256    0     0   8423      0 --:--:-- --:--:-- --:--:--  8423
+```
+
+The progress line shows how much was transferred. Confirm the file is on disk.
+
+```bash
+ls -l page.html
+```
+
+```text
+-rw-r--r-- 1 u0_a123 u0_a123 1256 Jan 26 12:00 page.html
+```
+
+## Step 6: Download with wget
+
+`wget` is built for downloading. Give it a URL and it saves the file under its own name, following redirects on its own.
+
+```bash
+wget http://example.com
+```
+
+```text
+HTTP request sent, awaiting response... 200 OK
+Length: 1256 (1.2K) [text/html]
+Saving to: index.html
+index.html saved [1256/1256]
+```
+
+The last line confirms the filename and the number of bytes saved. Because the URL pointed at a directory-style path, `wget` used the default name `index.html`.
+
+<Callout type="tip" title="Save under a name you choose">
+Both `wget` and `curl` can save under a name you choose, with `-O` and `-o` respectively. Reach for that when the site's own filename is unhelpful.
+</Callout>
+
+## Step 7: Connect over ssh
+
+`ssh` opens an encrypted session on another machine. The first time you connect to a host, `ssh` has no record of its key and asks you to confirm the fingerprint.
+
+```bash
+ssh user@192.168.1.10
+```
+
+```text
+ED25519 key fingerprint is SHA256:AbCdEf1234567890abcdefghijklmnopqrstuvwxyz12.
+This key is not known by any other names.
+Continue connecting? yes
+Warning: Permanently added the host key to the list of known hosts.
+```
+
+That prompt is your only chance to check that the host is the machine you think it is. Compare the fingerprint against one the host's owner gave you through another channel. If they match, type `yes` and `ssh` records the key so it will not ask again. If the fingerprint changes later, `ssh` warns you loudly, and that warning means someone may be impersonating the host.
+
+## Step 8: See what is listening with netstat
+
+`netstat` lists open connections and the ports your own device is listening on. The `-tuln` flags ask for TCP and UDP sockets, listening only, with numbers instead of names.
+
+```bash
+netstat -tuln
+```
+
+```text
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State
+tcp        0      0 127.0.0.1:8022          0.0.0.0:*               LISTEN
+tcp6       0      0 :::8022                 :::*                    LISTEN
+```
+
+An address of `127.0.0.1` means the service only accepts connections from this device. An address of `0.0.0.0` or `::` means it accepts connections from anywhere on the network, which is worth knowing. Termux runs its SSH server on port `8022` by default, not the usual `22`, so you connect to it with `-p 8022`.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `ifconfig` | List interfaces and their addresses |
+| `ip addr` | Show addresses in the modern layout |
+| `ping -c N HOST` | Send N packets to test reachability |
+| `nmap -sV -p PORTS HOST` | Scan ports and identify services |
+| `curl`, `wget` | Fetch or download a file over HTTP |
+| `ssh USER@HOST` | Open an encrypted remote shell |
+| `netstat -tuln` | List listening TCP and UDP ports |
+
+## Next steps
+
+- [Encoding and hashes](/learn/encoding-and-hashes/) to verify a file you downloaded before you open it.
+- [Managing packages](/learn/managing-packages/) to install the network tools used here.
+- [File permissions](/learn/file-permissions/) to lock down the keys that `ssh` keeps in your home directory.
