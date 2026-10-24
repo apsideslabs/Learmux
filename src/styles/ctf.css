@@ -1,0 +1,450 @@
+/**
+ * Styles for the Termux CTF section.
+ *
+ * Built from the same tokens as the rest of the site: navy, green, hairlines,
+ * square-ish corners, and the three typefaces. Nothing here invents a new look.
+ */
+
+/* ── hero ────────────────────────────────────────────────────────────────── */
+.ctf-hero {
+  padding: var(--sp-6) 0 var(--sp-5);
+}
+.ctf-hero h1 {
+  margin-bottom: var(--sp-3);
+}
+.ctf-hero .lede {
+  max-width: 46rem;
+}
+
+/* the terminal banner, reproduced from the tool */
+.ctf-banner {
+  background: var(--navy);
+  border-radius: var(--r);
+  padding: var(--sp-4) var(--sp-4) var(--sp-3);
+  overflow-x: auto;
+  margin: var(--sp-5) 0;
+}
+.ctf-banner pre {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--green);
+  margin: 0;
+  white-space: pre;
+}
+.ctf-banner .ctf-banner__note {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #8f93a3;
+  margin-top: var(--sp-3);
+  white-space: pre;
+}
+@media (min-width: 640px) {
+  .ctf-banner pre,
+  .ctf-banner .ctf-banner__note {
+    font-size: 0.82rem;
+  }
+}
+
+/* ── copy buttons ────────────────────────────────────────────────────────── */
+.copy-btn {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  min-width: 3.4rem;
+  height: 28px;
+  padding: 0 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: #fff;
+  color: var(--muted);
+  font-family: var(--font-body, inherit);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: color 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+.copy-btn:hover {
+  color: var(--ink);
+  background: var(--soft);
+}
+.copy-btn.is-copied {
+  color: var(--ok);
+  border-color: var(--green);
+  background: var(--ok-bg);
+}
+
+/* ── command blocks, with a copy button ──────────────────────────────────── */
+.ctf-cmd {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: var(--navy);
+  border-radius: var(--r);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+  margin-bottom: var(--sp-2);
+}
+.ctf-cmd code {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: #eef1f5;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: var(--sp-2) 0;
+}
+.ctf-cmd .copy-btn {
+  flex: 0 0 auto;
+  background: var(--navy-3);
+  color: #d6d8e0;
+  border: 1px solid #43425c;
+}
+.ctf-cmd .copy-btn:hover {
+  background: var(--green);
+  color: var(--navy);
+  border-color: var(--green);
+}
+
+/* ── the three claims ────────────────────────────────────────────────────── */
+.ctf-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  margin: var(--sp-5) 0;
+}
+@media (min-width: 700px) {
+  .ctf-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.ctf-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-4);
+  background: var(--white);
+}
+.ctf-card h3 {
+  font-size: 0.98rem;
+  margin-bottom: var(--sp-2);
+}
+.ctf-card p {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0;
+}
+.ctf-card__mark {
+  display: inline-block;
+  width: 1.6rem;
+  height: 3px;
+  background: var(--green);
+  border-radius: 2px;
+  margin-bottom: var(--sp-3);
+}
+
+/* ── the loop ────────────────────────────────────────────────────────────── */
+.ctf-steps {
+  counter-reset: ctfstep;
+  list-style: none;
+  padding: 0;
+  margin: var(--sp-4) 0;
+  border-top: 1px solid var(--line);
+}
+.ctf-steps li {
+  counter-increment: ctfstep;
+  position: relative;
+  padding: var(--sp-4) 0 var(--sp-4) 2.6rem;
+  border-bottom: 1px solid var(--line);
+}
+.ctf-steps li::before {
+  content: counter(ctfstep);
+  position: absolute;
+  left: 0;
+  top: var(--sp-4);
+  width: 1.7rem;
+  height: 1.7rem;
+  display: grid;
+  place-items: center;
+  background: var(--navy);
+  color: var(--green);
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+.ctf-steps strong {
+  display: block;
+  font-size: 0.95rem;
+  margin-bottom: 0.15rem;
+}
+.ctf-steps span {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* ── the challenge table ─────────────────────────────────────────────────── */
+.ctf-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--sp-4) 0;
+}
+.ctf-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 0 var(--sp-3) var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+.ctf-table td {
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9rem;
+  vertical-align: top;
+}
+.ctf-table tr:last-child td {
+  border-bottom: none;
+}
+.ctf-table .ctf-id {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.ctf-table .ctf-name a {
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: none;
+}
+.ctf-table .ctf-name a:hover {
+  color: var(--green-dark);
+}
+.ctf-table .ctf-pts {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+/* on a phone the topic column is the first thing to go */
+@media (max-width: 560px) {
+  .ctf-table .ctf-topic,
+  .ctf-table .ctf-cat {
+    display: none;
+  }
+}
+
+/* ── a single challenge ──────────────────────────────────────────────────── */
+.ctf-head {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: var(--sp-4);
+  margin-bottom: var(--sp-5);
+}
+.ctf-head .chip-row {
+  margin-top: var(--sp-3);
+}
+.ctf-objective {
+  background: var(--soft);
+  border-left: 3px solid var(--green);
+  border-radius: 0 var(--r) var(--r) 0;
+  padding: var(--sp-3) var(--sp-4);
+  margin: var(--sp-4) 0;
+}
+.ctf-objective h2 {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: var(--sp-1);
+}
+.ctf-objective p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.ctf-briefing p {
+  margin-bottom: var(--sp-3);
+}
+.ctf-briefing p:last-child {
+  margin-bottom: 0;
+}
+
+/* an indented example inside a briefing stays monospaced */
+.ctf-fig {
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-3) var(--sp-4);
+  margin: var(--sp-3) 0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* ── hints, revealed one at a time ───────────────────────────────────────── */
+.ctf-hints {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-4);
+  margin: var(--sp-5) 0;
+}
+.ctf-hints h2 {
+  font-size: 0.95rem;
+  margin-bottom: var(--sp-1);
+}
+.ctf-hints .ctf-hints__note {
+  font-size: 0.86rem;
+  color: var(--muted);
+  margin-bottom: var(--sp-3);
+}
+.ctf-hint {
+  border-left: 2px solid var(--yellow);
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-3);
+  margin-bottom: var(--sp-3);
+  font-size: 0.92rem;
+  white-space: pre-line;
+}
+.ctf-hint:last-child {
+  margin-bottom: 0;
+}
+.ctf-hint[hidden] {
+  display: none;
+}
+.ctf-hint__label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+}
+
+/* ── progress import ─────────────────────────────────────────────────────── */
+.ctf-import textarea {
+  width: 100%;
+  min-height: 9rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--soft);
+  color: var(--ink);
+  resize: vertical;
+}
+.ctf-import textarea:focus {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+  background: var(--white);
+}
+.ctf-import__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.ctf-report {
+  margin-top: var(--sp-5);
+}
+.ctf-report__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--sp-3);
+}
+.ctf-report__device {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+.ctf-bar {
+  height: 8px;
+  background: var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: var(--sp-4);
+}
+.ctf-bar span {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.ctf-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--sp-3);
+  align-items: baseline;
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+.ctf-result:last-child {
+  border-bottom: none;
+}
+.ctf-result__title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+.ctf-result__meta {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.ctf-result--solved .ctf-result__title strong::before {
+  content: '✓';
+  color: var(--ok);
+  margin-right: 0.4rem;
+  font-weight: 700;
+}
+.ctf-result--open .ctf-result__title strong {
+  color: var(--muted);
+}
+
+.ctf-note {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--yellow);
+  border-radius: 0 var(--r) var(--r) 0;
+  background: var(--warn-bg);
+  padding: var(--sp-3) var(--sp-4);
+  margin: var(--sp-4) 0;
+  font-size: 0.9rem;
+}
+.ctf-note strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.ctf-empty {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* ── pager ───────────────────────────────────────────────────────────────── */
+.ctf-pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  padding-top: var(--sp-4);
+  margin-top: var(--sp-5);
+  font-size: 0.9rem;
+}
+.ctf-pager a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.ctf-pager a:hover {
+  border-bottom-color: var(--green);
+}
+.ctf-pager span {
+  color: var(--muted);
+}
