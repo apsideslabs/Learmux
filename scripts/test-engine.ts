@@ -23,7 +23,7 @@ for (const c of challenges) {
   const sh = startShell(c);
   let solved = false;
   const trail: string[] = [];
-  for (const cmd of c.starters ?? []) {
+  for (const cmd of c.solutions ?? []) {
     const res = sh.runLine(cmd);
     trail.push(`    $ ${cmd}\n      -> ${(res.stdout || res.stderr).split('\n')[0]}`);
     if (res.solved) { solved = true; break; }
