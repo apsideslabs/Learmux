@@ -1,0 +1,56 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+---
+
+<BaseLayout
+  title="Privacy policy"
+  description="What Learmux stores, and what it does not."
+>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span><span>Privacy policy</span>
+    </nav>
+
+    <header style="margin-bottom:1.4rem">
+      <h1>Privacy policy</h1>
+      <p class="lede">The short version: Learmux has no accounts, no analytics and no tracking.</p>
+    </header>
+
+    <div class="prose">
+      <h2>What we store</h2>
+      <p>
+        The only data Learmux keeps is your challenge progress — which flags you have captured. It is stored
+        in your browser's <code>localStorage</code> under the key <code>Learmux:progress:v1</code>, on your
+        device. It is never sent anywhere.
+      </p>
+
+      <h2>What we do not do</h2>
+      <ul>
+        <li>No accounts, sign-ups or email collection.</li>
+        <li>No analytics, advertising or third-party trackers.</li>
+        <li>No cookies.</li>
+        <li>Nothing you type into the terminal leaves your browser — the sandbox is entirely client-side.</li>
+      </ul>
+
+      <h2>Third parties</h2>
+      <p>
+        Pages load web fonts from Google Fonts, which means your browser requests those files from Google's
+        servers. No other external requests are made.
+      </p>
+
+      <h2>Clearing your data</h2>
+      <p>
+        Clearing your browser's site data for this domain removes your saved progress. Resetting a challenge
+        inside the terminal only affects that session.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions about this policy can go to
+        <a href="mailto:contact.thestudycipher@gmail.com">contact.thestudycipher@gmail.com</a>.
+      </p>
+    </div>
+  </div>
+</BaseLayout>
