@@ -1,0 +1,3 @@
+| getprop | grep -i dns | Lists every DNS property |
+| dig example.com A | Asks for the IPv4 address of a name |
+| dig +short example.com AAAA | Asks for the IPv6 address, short form |
