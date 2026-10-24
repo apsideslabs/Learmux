@@ -1,0 +1,37 @@
+date: Thu, 19 Feb 2026 10:05:00 GMT
+content-length: 45
+
+{"id": 42, "name": "ada", "created": true}
+```
+
+The first line is the status line, reading HTTP/2 and then the code 200. The lines after it are the response headers. After one blank line comes the body, which here is a short JSON object.
+
+## Step 2: What the status code means
+
+The number on the status line is the status code, and it tells you what the server did with your request.
+
+| Code | Meaning |
+| --- | --- |
+| 200 | OK. The request succeeded and the body holds the result. |
+| 301 | Moved permanently. The resource now lives at another address. |
+| 404 | Not found. The address is valid but nothing is there. |
+| 500 | Server error. The server failed while handling the request. |
+
+Codes also fall into classes. A 2xx means success, a 3xx means the resource moved and the client should follow, a 4xx means the request had a problem, and a 5xx means the server did. The exact number matters, because a 301 tells you to update a saved address while a 302 is only temporary.
+
+The code is the fastest way to tell success from failure. A 200 is a result, a 4xx is your side, and a 5xx is theirs.
+
+## Step 3: Send headers and a body
+
+Requests carry headers of their own, and you add your own with -H. To send data with the request you use -d, which switches it to a POST. The -d value is sent as form data by default, so the server reads it as a set of fields.
+
+These are the request headers you will meet most often:
+
+| Header | What it tells the server |
+| --- | --- |
+| Accept | The kind of content you can handle |
+| Content-Type | The format of the body you are sending |
+| User-Agent | Which client is making the request |
+| Authorization | Credentials for a protected resource |
+
+This request sends an Accept header and a form field, and writes the reply body to a file with -o:
