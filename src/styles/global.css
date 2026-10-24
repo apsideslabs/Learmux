@@ -593,20 +593,6 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 .soft-panel h2 { font-size: 1.2rem; margin-bottom: 0.4rem; }
 
 /* ── social ────────────────────────────────────────────────────────────── */
-.social { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.social a {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-sm);
-  background: var(--soft);
-  border: 1px solid var(--line);
-  color: #4d4d55;
-  text-decoration: none;
-  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
-}
-.social a:hover { background: var(--navy); color: #fff; border-color: var(--navy); text-decoration: none; }
 
 /* ── footer ────────────────────────────────────────────────────────────── */
 .site-footer {
@@ -955,8 +941,35 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 }
 
 /* ── homepage hero ─────────────────────────────────────────────────────── */
-.hero { padding-block: clamp(2.2rem, 6vw, 3.6rem) clamp(1.4rem, 3vw, 2rem); }
-.hero__copy { max-width: 62ch; }
+.hero {
+  padding-block: clamp(1.8rem, 4.5vw, 3rem) clamp(1.4rem, 3vw, 2rem);
+  display: grid;
+  gap: var(--sp-6);
+}
+.hero__copy { max-width: 60ch; }
+@media (min-width: 980px) {
+  .hero {
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--sp-7);
+  }
+}
+
+/* the live sandbox beside the headline */
+.hero__demo { min-width: 0; }
+.hero__demo-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 var(--sp-2);
+}
+.hero__demo-note {
+  margin: var(--sp-2) 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
 .hero h1 { margin: 0 0 var(--sp-3); }
 .hero__facts {
   margin: var(--sp-4) 0 0;
@@ -1155,3 +1168,81 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   border-top: 1px solid var(--line);
   margin: var(--sp-5) 0;
 }
+
+/* ── outcomes: claim, then proof ───────────────────────────────────────── */
+.outcomes { display: grid; gap: var(--sp-5); }
+.outcomes h2 { font-size: clamp(1.3rem, 3vw, 1.6rem); margin: 0 0 var(--sp-2); }
+.outcomes__intro p { margin: 0; max-width: 52ch; }
+.outcomes__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+.outcomes__list li {
+  position: relative;
+  padding-left: 1.6rem;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  color: #3f3f47;
+}
+.outcomes__list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.42rem;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--green);
+}
+@media (min-width: 860px) {
+  .outcomes { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: var(--sp-6); }
+  .outcomes__list { grid-template-columns: 1fr 1fr; gap: var(--sp-3) var(--sp-5); }
+}
+
+/* ── section head with computed totals ─────────────────────────────────── */
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+.section-head h2 { font-size: clamp(1.3rem, 3vw, 1.6rem); margin: 0; }
+.section-head__meta {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* ── path card additions ───────────────────────────────────────────────── */
+.path-card__top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.path-card__level {
+  font-size: 0.72rem;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0.1rem 0.4rem;
+}
+.path-card__first {
+  font-size: 0.8rem;
+  color: var(--muted);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--line);
+}
+.path-card__first::before { content: "→ "; color: var(--green); }
+
+/* ── footer repository link ────────────────────────────────────────────── */
+.footer-repo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: var(--sp-3);
+  font-size: 0.84rem;
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+}
+.footer-repo:hover { color: #fff; text-decoration: none; }
