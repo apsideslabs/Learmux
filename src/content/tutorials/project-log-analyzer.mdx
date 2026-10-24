@@ -13,7 +13,7 @@ tags: [project, logs, awk]
 
 import Callout from '../../components/Callout.astro';
 
-You are going to write a script that reads a web server log and answers three questions: which addresses sent the most requests, how many requests failed, and which hour was the busiest. It runs with the tools you already have.
+You are going to write a script that reads a web server log and answers three questions. Which addresses sent the most requests? How many requests failed? Which hour was the busiest? It runs with the tools you already have.
 
 ## What you'll be able to do
 
@@ -89,7 +89,7 @@ $ awk '{print $1}' sample.log | head -n 5
 
 ## Step 3: Count and rank
 
-You now have one address per line. Sort so identical addresses sit together, then let `uniq -c` collapse each group and prefix the count. A second sort, numeric and reversed with `sort -nr`, puts the largest counts first, and `head` keeps the top ten.
+You now have one address per line. Sort so identical addresses sit together. Then let `uniq -c` collapse each group and prefix the count. A second sort, numeric and reversed with `sort -nr`, puts the largest counts first. `head` keeps the top ten.
 
 ```sh
 $ awk '{print $1}' sample.log | sort | uniq -c | sort -nr | head -n 10
@@ -115,7 +115,7 @@ The pattern `5[0-9][0-9]` matches any three-digit number from 500 to 599, and th
 
 ## Step 5: Find the busiest hour
 
-The hour lives inside the timestamp, between square brackets: `10/Oct/2026:11:03:22`. Tell `awk` to split on the bracket characters with `-F'[][]'`. Field two is then the whole timestamp, and `cut -d: -f2` takes the hour out of it.
+The hour lives inside the timestamp, between square brackets: `10/Oct/2026:11:03:22`. Tell `awk` to split on the bracket characters with `-F'[][]'`. Field two is then the whole timestamp. `cut -d: -f2` takes the hour out of it.
 
 ```sh
 $ awk -F'[][]' '{print $2}' sample.log | cut -d: -f2 | sort | uniq -c | sort -nr | head -n 1
@@ -130,7 +130,7 @@ Three commands that each do one job read better when they have names. A shell fu
 
 ```sh
 #!/bin/sh
-# analyse.sh — summarise a web server log.
+# analyse.sh: summarise a web server log.
 # Usage: sh analyse.sh access.log
 
 LOG="$1"
