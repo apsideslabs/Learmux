@@ -1,7 +1,0 @@
-HTTP request sent, awaiting response... 200 OK
-Length: 1256 (1.2K) [text/html]
-Saving to: index.html
-index.html saved [1256/1256]
-```
-
-The last line confirms the filename and the number of bytes saved. Because the URL pointed at a directory-style path, `wget` used the default name `index.html`.

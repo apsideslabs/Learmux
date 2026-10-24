@@ -1,3 +1,0 @@
-## Step 7: Connect over ssh
-
-`ssh` opens an encrypted session on another machine. The first time you connect to a host, `ssh` has no record of its key and asks you to confirm the fingerprint.
