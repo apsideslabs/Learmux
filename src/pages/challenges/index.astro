@@ -1,44 +1,55 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import ChallengeCard from '../../components/ChallengeCard.astro';
+import ChallengeRow from '../../components/ChallengeRow.astro';
 import { allMeta, categories, totalPoints } from '../../lib/challenges';
 
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const list = allMeta();
 const cats = categories();
 const byDifficulty = ['Easy', 'Medium', 'Hard'] as const;
 const groups = byDifficulty
   .map((d) => ({ difficulty: d, items: list.filter((c) => c.difficulty === d) }))
   .filter((g) => g.items.length);
+
+let counter = 0;
 ---
 
 <BaseLayout
   title="Challenges"
-  description={`${list.length} interactive Termux and Linux command-line challenges — capture the flag in your browser. ${totalPoints} points across ${cats.length} categories.`}
+  description={`${list.length} interactive Termux and Linux command-line challenges. ${totalPoints} points across ${cats.length} topics — capture the flag in your browser.`}
 >
   <div class="wrap">
-    <div class="section-head" style="margin-top:0.5rem">
-      <div>
-        <h1>Challenges</h1>
-        <p>{list.length} puzzles, {totalPoints} points. Each one boots a sandbox with its own filesystem and a flag to find.</p>
+    <header class="section--tight" style="padding-bottom:0">
+      <h1>Challenges</h1>
+      <p class="lede">
+        {list.length} puzzles, {totalPoints} points. Each one opens a sandbox with its own filesystem and a
+        single flag to find. They get harder as you go.
+      </p>
+    </header>
+
+    <div style="margin-top:1.5rem">
+      <div class="chip-row">
+        {cats.map((c) => <span class="chip">{c.name} · {c.count}</span>)}
       </div>
     </div>
 
-    <div class="challenge-head" style="margin-bottom:1.5rem">
-      {cats.map((c) => <span class="pill">{c.name} · {c.count}</span>)}
-    </div>
-
     {groups.map((group) => (
-      <section>
-        <div class="section-head">
-          <div>
-            <h2>{group.difficulty}</h2>
-            <p>{group.items.length} challenges · {group.items.reduce((s, c) => s + c.points, 0)} points</p>
-          </div>
+      <section style="margin-top:2.2rem">
+        <div class="group-head" style="margin-top:0">
+          <h3>{group.difficulty}</h3>
+          <span>{group.items.length} challenges · {group.items.reduce((s, c) => s + c.points, 0)} points</span>
         </div>
-        <div class="grid cols-3">
-          {group.items.map((c) => <ChallengeCard challenge={c} />)}
+        <div class="rows">
+          {group.items.map((c) => <ChallengeRow challenge={c} index={++counter} />)}
         </div>
       </section>
     ))}
+
+    <section class="section--tight" style="padding-bottom:0">
+      <div class="card" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1.2rem">
+        <p class="mb-0 muted">Not sure where to begin? The lessons explain the commands each challenge uses.</p>
+        <a class="btn btn--ghost" href={`${base}learn/`}>Read the lessons</a>
+      </div>
+    </section>
   </div>
 </BaseLayout>
