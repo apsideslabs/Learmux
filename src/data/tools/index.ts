@@ -6,7 +6,8 @@
 
 import type { Tool, ToolCategory, CategoryId } from './types';
 import { toolCategories } from './types';
-import { filesTextTools } from './files-text';
+import { fileTools } from './files';
+import { textTools } from './text';
 import { shellProcessTools } from './shell-process';
 import { networkTransferSecurityTools } from './network-transfer-security';
 import { miscTools } from './misc';
@@ -16,7 +17,8 @@ export { toolCategories } from './types';
 
 /** Every tool, grouped in category order then alphabetical within a category. */
 export const tools: Tool[] = [
-  ...filesTextTools,
+  ...fileTools,
+  ...textTools,
   ...shellProcessTools,
   ...networkTransferSecurityTools,
   ...miscTools,
