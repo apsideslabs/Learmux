@@ -1,0 +1,323 @@
+/**
+ * The tool directory.
+ *
+ * Every entry is a real command-line tool that runs under Termux. Fields are
+ * authored here rather than fetched, so the site ships no third-party data at
+ * runtime. `logo` names a Simple Icons slug where a real project logo exists;
+ * where it does not, the build draws an original monogram instead — so no tile
+ * is ever a blank box.
+ */
+
+export type CategoryId =
+  | 'files'
+  | 'text'
+  | 'shell'
+  | 'process'
+  | 'network'
+  | 'transfer'
+  | 'security'
+  | 'forensics'
+  | 'packages'
+  | 'dev'
+  | 'editors'
+  | 'media'
+  | 'monitor';
+
+export interface ToolCommand {
+  cmd: string;
+  what: string;
+}
+
+export interface Tool {
+  slug: string;
+  name: string;
+  category: CategoryId;
+  tagline: string;
+  about: string;
+  developer: string;
+  license?: string;
+  url: string;
+  install?: string;
+  commands: ToolCommand[];
+  /** Simple Icons slug, when the project has a real mark. */
+  logo?: string;
+  /** Fallback monogram letters (1–2 characters). */
+  mono?: string;
+}
+
+export interface ToolCategory {
+  id: CategoryId;
+  name: string;
+  blurb: string;
+}
+
+export const toolCategories: ToolCategory[] = [
+  { id: 'files', name: 'Files and navigation', blurb: 'Finding, moving, packing and unpacking files.' },
+  { id: 'text', name: 'Text and data', blurb: 'Reading, searching and reshaping text and JSON.' },
+  { id: 'shell', name: 'Shell and sessions', blurb: 'The shell itself, and keeping work alive between sessions.' },
+  { id: 'process', name: 'Processes and system', blurb: 'Seeing what runs, and stopping it cleanly.' },
+  { id: 'network', name: 'Networking', blurb: 'Addresses, ports, name lookups and reachability.' },
+  { id: 'transfer', name: 'Web and transfer', blurb: 'Fetching, downloading and moving files between hosts.' },
+  { id: 'security', name: 'Security and cryptography', blurb: 'Keys, hashes, encryption and authorised testing.' },
+  { id: 'forensics', name: 'Forensics and reversing', blurb: 'Pulling apart packets, binaries and images.' },
+  { id: 'packages', name: 'Package managers', blurb: 'Installing and tracking software.' },
+  { id: 'dev', name: 'Languages and build tools', blurb: 'Writing and running code on the phone.' },
+  { id: 'editors', name: 'Editors', blurb: 'Editing files from the terminal.' },
+  { id: 'media', name: 'Media and documents', blurb: 'Converting audio, video, images and documents.' },
+  { id: 'monitor', name: 'Monitoring and diagnostics', blurb: 'Disk, memory, open files and system state.' },
+];
+
+export const tools: Tool[] = [
+  /* ── files ─────────────────────────────────────────────────────────────── */
+  {
+    slug: 'coreutils',
+    name: 'GNU Coreutils',
+    category: 'files',
+    tagline: 'The everyday file commands: ls, cp, mv, rm, mkdir, df, du.',
+    about:
+      'The base set of file and text utilities present on every Linux system. Most of what you type in a first week of Termux comes from here.',
+    developer: 'GNU Project',
+    license: 'GPL-3.0',
+    url: 'https://www.gnu.org/software/coreutils/',
+    logo: 'gnu',
+    install: 'Included with Termux',
+    commands: [
+      { cmd: 'ls -la', what: 'List everything, including hidden files, in long form' },
+      { cmd: 'cp -r src/ backup/', what: 'Copy a directory and its contents' },
+      { cmd: 'mkdir -p a/b/c', what: 'Create nested directories in one go' },
+      { cmd: 'du -sh *', what: 'Show how much space each item uses' },
+    ],
+  },
+  {
+    slug: 'findutils',
+    name: 'find',
+    category: 'files',
+    tagline: 'Walk a directory tree and select files by name, type, size or age.',
+    about:
+      'Searches a tree rather than a single directory, and can act on what it matches. The workhorse for "where did that file go".',
+    developer: 'GNU Project',
+    license: 'GPL-3.0',
+    url: 'https://www.gnu.org/software/findutils/',
+    mono: 'fi',
+    install: 'pkg install findutils',
+    commands: [
+      { cmd: 'find . -name "*.log"', what: 'Match by filename pattern' },
+      { cmd: 'find . -type d', what: 'List directories only' },
+      { cmd: 'find . -size +10M', what: 'Files larger than ten megabytes' },
+      { cmd: 'find . -name "*.tmp" -delete', what: 'Find and remove in one pass' },
+    ],
+  },
+  {
+    slug: 'tar',
+    name: 'tar',
+    category: 'files',
+    tagline: 'Bundle many files into one archive, optionally compressed.',
+    about:
+      'The standard archiver on Linux. Its flags look cryptic at first, but there are only four you use daily.',
+    developer: 'GNU Project',
+    license: 'GPL-3.0',
+    url: 'https://www.gnu.org/software/tar/',
+    mono: 'ta',
+    install: 'pkg install tar',
+    commands: [
+      { cmd: 'tar -czf out.tar.gz folder/', what: 'Create a gzip-compressed archive' },
+      { cmd: 'tar -tzf out.tar.gz', what: 'List the contents without extracting' },
+      { cmd: 'tar -xzf out.tar.gz', what: 'Extract an archive' },
+      { cmd: 'tar -xzf out.tar.gz -C /tmp', what: 'Extract into a chosen directory' },
+    ],
+  },
+  {
+    slug: 'rsync',
+    name: 'rsync',
+    category: 'files',
+    tagline: 'Copy only what changed, locally or over SSH.',
+    about:
+      'Compares source and destination and transfers the difference. The right tool for backups and for keeping two trees in step.',
+    developer: 'Andrew Tridgell and Wayne Davison',
+    license: 'GPL-3.0',
+    url: 'https://rsync.samba.org/',
+    mono: 'rs',
+    install: 'pkg install rsync',
+    commands: [
+      { cmd: 'rsync -av src/ dst/', what: 'Archive mode, verbose, recurse' },
+      { cmd: 'rsync -av --dry-run src/ dst/', what: 'Show what would happen first' },
+      { cmd: 'rsync -av --delete src/ dst/', what: 'Mirror, removing extras at the destination' },
+    ],
+  },
+  {
+    slug: 'tree',
+    name: 'tree',
+    category: 'files',
+    tagline: 'Print a directory as an indented tree.',
+    about:
+      'The fastest way to understand a project layout at a glance. Pairs well with piping into less on a large tree.',
+    developer: 'Steve Baker',
+    license: 'GPL-2.0',
+    url: 'http://mama.indstate.edu/users/ice/tree/',
+    mono: 'tr',
+    install: 'pkg install tree',
+    commands: [
+      { cmd: 'tree', what: 'Draw the current directory' },
+      { cmd: 'tree -L 2', what: 'Limit the depth' },
+      { cmd: 'tree -d', what: 'Directories only' },
+      { cmd: 'tree -h', what: 'Include human-readable sizes' },
+    ],
+  },
+  {
+    slug: 'fd',
+    name: 'fd',
+    category: 'files',
+    tagline: 'A friendlier find, with sensible defaults and colour.',
+    about:
+      'Ignores hidden files and .gitignore entries by default, uses a regex, and is far quicker to type than find.',
+    developer: 'David Peter',
+    license: 'MIT / Apache-2.0',
+    url: 'https://github.com/sharkdp/fd',
+    mono: 'fd',
+    install: 'pkg install fd',
+    commands: [
+      { cmd: 'fd report', what: 'Match any path containing report' },
+      { cmd: 'fd -e md', what: 'Match by extension' },
+      { cmd: 'fd -H', what: 'Include hidden files' },
+      { cmd: 'fd -x rm', what: 'Run a command on each match' },
+    ],
+  },
+
+  /* ── text ──────────────────────────────────────────────────────────────── */
+  {
+    slug: 'grep',
+    name: 'grep',
+    category: 'text',
+    tagline: 'Print the lines that match a pattern.',
+    about:
+      'The single most useful text tool there is. Nearly every log investigation starts with grep.',
+    developer: 'GNU Project',
+    license: 'GPL-3.0',
+    url: 'https://www.gnu.org/software/grep/',
+    mono: 'gr',
+    install: 'pkg install grep',
+    commands: [
+      { cmd: 'grep error app.log', what: 'Lines containing error' },
+      { cmd: 'grep -i error app.log', what: 'Ignore case' },
+      { cmd: 'grep -rn TODO src/', what: 'Recurse, with line numbers' },
+      { cmd: 'grep -v "#" config', what: 'Invert: drop matching lines' },
+    ],
+  },
+  {
+    slug: 'sed',
+    name: 'sed',
+    category: 'text',
+    tagline: 'Edit a stream of text without opening an editor.',
+    about:
+      'Built for substitutions and deletions inside a pipeline. Substituting with sed is a daily habit once it clicks.',
+    developer: 'GNU Project',
+    license: 'GPL-3.0',
+    url: 'https://www.gnu.org/software/sed/',
+    mono: 'se',
+    install: 'pkg install sed',
+    commands: [
+      { cmd: "sed 's/old/new/' file", what: 'Replace the first match on each line' },
+      { cmd: "sed 's/old/new/g' file", what: 'Replace every match' },
+      { cmd: "sed '/^#/d' file", what: 'Delete comment lines' },
+      { cmd: "sed -n '10,20p' file", what: 'Print a line range' },
+    ],
+  },
+  {
+    slug: 'gawk',
+    name: 'awk',
+    category: 'text',
+    tagline: 'Pick fields out of text and total them up.',
+    about:
+      'A tiny programming language aimed at columns. When cut is not enough, awk is the next step.',
+    developer: 'GNU Project',
+    license: 'GPL-3.0',
+    url: 'https://www.gnu.org/software/gawk/',
+    mono: 'aw',
+    install: 'pkg install gawk',
+    commands: [
+      { cmd: "awk '{print $1}' file", what: 'Print the first field of each line' },
+      { cmd: "awk '{print $NF}' file", what: 'Print the last field' },
+      { cmd: 'awk -F: {print $1}', what: 'Split on a colon and take the first field' },
+      { cmd: "awk '{s+=$1} END {print s}'", what: 'Sum a numeric column' },
+    ],
+  },
+  {
+    slug: 'ripgrep',
+    name: 'ripgrep',
+    category: 'text',
+    tagline: 'A grep that respects .gitignore and is much faster.',
+    about:
+      'Recursive by default, skips binaries and ignored files, and prints results grouped by file. The default search tool in most modern setups.',
+    developer: 'Andrew Gallant',
+    license: 'MIT / Unlicense',
+    url: 'https://github.com/BurntSushi/ripgrep',
+    mono: 'rg',
+    install: 'pkg install ripgrep',
+    commands: [
+      { cmd: 'rg TODO', what: 'Search the current tree' },
+      { cmd: 'rg -i todo', what: 'Case-insensitive' },
+      { cmd: 'rg -t py import', what: 'Restrict to one file type' },
+      { cmd: 'rg -l error', what: 'List matching files only' },
+    ],
+  },
+  {
+    slug: 'jq',
+    name: 'jq',
+    category: 'text',
+    tagline: 'Query and reshape JSON on the command line.',
+    about:
+      'Reads JSON, lets you pick fields with a small path language, and writes JSON back out. Essential when an API reply is large.',
+    developer: 'Stephen Dolan and contributors',
+    license: 'MIT',
+    url: 'https://jqlang.github.io/jq/',
+    mono: 'jq',
+    install: 'pkg install jq',
+    commands: [
+      { cmd: 'jq . data.json', what: 'Pretty-print a file' },
+      { cmd: 'jq .name data.json', what: 'Read one key' },
+      { cmd: 'jq ".[] | .id" data.json', what: 'Take one field from every array item' },
+      { cmd: 'jq -r .token data.json', what: 'Raw output, no quotes' },
+    ],
+  },
+  {
+    slug: 'bat',
+    name: 'bat',
+    category: 'text',
+    tagline: 'cat with syntax highlighting and line numbers.',
+    about:
+      'Shows a file the way an editor would, with a header and a scroll pager. A drop-in replacement for cat when reading code.',
+    developer: 'David Peter',
+    license: 'MIT / Apache-2.0',
+    url: 'https://github.com/sharkdp/bat',
+    logo: 'bat',
+    install: 'pkg install bat',
+    commands: [
+      { cmd: 'bat script.sh', what: 'Print with highlighting' },
+      { cmd: 'bat -n script.sh', what: 'Force line numbers' },
+      { cmd: 'bat -A file', what: 'Show non-printing characters' },
+    ],
+  },
+  {
+    slug: 'less',
+    name: 'less',
+    category: 'text',
+    tagline: 'Page through a file without loading all of it.',
+    about:
+      'A pager: search, scroll and quit without dumping a huge file into your scrollback. Press q to leave.',
+    developer: 'Mark Nudelman',
+    url: 'https://www.greenwoodsoftware.com/less/',
+    mono: 'le',
+    install: 'pkg install less',
+    commands: [
+      { cmd: 'less big.log', what: 'Open a file' },
+      { cmd: 'less +F big.log', what: 'Follow a growing file' },
+      { cmd: '/error', what: 'Search forward inside less' },
+    ],
+  },
+
+  /* ── shell ─────────────────────────────────────────────────────────────── */
+  {
+    slug: 'bash',
+    name: 'Bash',
+    category: 'shell',
+    tagline: 'The shell Termux starts you in.',
