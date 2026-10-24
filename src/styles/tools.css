@@ -101,7 +101,7 @@
 .tool-group__blurb { margin: 0.25rem 0 var(--sp-4); font-size: 0.88rem; color: var(--muted); }
 
 /* ── tool cards ────────────────────────────────────────────────────────── */
-.tool-grid { display: grid; gap: var(--sp-3); }
+.tool-grid { display: grid; gap: var(--sp-3); grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 620px) { .tool-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1040px) { .tool-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
@@ -188,14 +188,14 @@
 .tool-hero h1 { margin: 0 0 var(--sp-2); }
 .tool-hero .lede { margin: 0 0 var(--sp-3); }
 
-.tool-body { display: grid; gap: var(--sp-6); }
+.tool-body { display: grid; gap: var(--sp-6); grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 940px) {
   .tool-body { grid-template-columns: minmax(0, 1fr) 320px; gap: var(--sp-7); align-items: start; }
   .tool-side { position: sticky; top: 78px; }
 }
 .tool-main section { margin-bottom: var(--sp-5); }
 .tool-main h2 { font-size: 1.06rem; margin: 0 0 var(--sp-2); }
-.tool-main p { margin: 0; color: #44444c; max-width: 68ch; }
+.tool-main p { margin: 0; color: #44444c; max-width: 68ch; overflow-wrap: break-word; }
 
 /* command rows: the command, then what it does */
 .cmd-block {
@@ -311,13 +311,15 @@
 }
 .example__pre {
   margin: 0;
+  max-width: 100%;
   padding: 0.85rem 0.9rem;
-  overflow-x: auto;
   font-family: var(--font-mono);
   font-size: 0.82rem;
   line-height: 1.62;
   color: #d6dae0;
-  white-space: pre;
+  /* wrap like the live terminal does, rather than scrolling sideways */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .example__prompt { color: #20d65a; }
 .example__note {
@@ -364,7 +366,7 @@
 
 /* install block gets a copy button too */
 .cmd-block { display: flex; align-items: center; gap: var(--sp-3); }
-.cmd-block code { flex: 1; }
+.cmd-block code { flex: 1; min-width: 0; }
 .cmd-block .copy-btn {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.16);
@@ -378,6 +380,7 @@
 /* ── category navigation ───────────────────────────────────────────────── */
 .cat-nav {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-3);
   margin-bottom: var(--sp-5);
 }
