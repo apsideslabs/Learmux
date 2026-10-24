@@ -127,8 +127,9 @@
 .lx-term__starter:hover { color: var(--lx-prompt); border-color: #38424f; }
 
 @media (max-width: 640px) {
-  .lx-term { height: min(64vh, 460px); }
-  .lx-term--compact { height: min(42vh, 330px); }
-  .lx-term--full { height: min(70vh, 560px); }
-  .lx-term__screen { padding: 0.8rem; padding-bottom: calc(0.8rem + var(--lx-kb)); }
+  /* On a phone the terminal should fit its content, not fill half the screen. */
+  .lx-term { height: auto; min-height: 210px; max-height: 54vh; }
+  .lx-term--compact { height: auto; min-height: 190px; max-height: 36vh; }
+  .lx-term--full { height: auto; min-height: 240px; max-height: 58vh; }
+  .lx-term__screen { padding: 0.75rem; padding-bottom: calc(0.75rem + var(--lx-kb)); }
 }
