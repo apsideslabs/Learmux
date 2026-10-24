@@ -3,14 +3,15 @@
   "type": "module",
   "version": "0.1.0",
   "private": true,
-  "description": "Learmux — a Termux & cybersecurity learning platform with an interactive TypeScript CTF terminal.",
+  "description": "Learmux \u2014 a Termux & cybersecurity learning platform with an interactive TypeScript CTF terminal.",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "generate": "node scripts/generate-challenges.mjs",
-    "test": "node scripts/run-tests.mjs"
+    "test": "node scripts/run-tests.mjs",
+    "generate:thumbs": "node scripts/generate-thumbs.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4",
