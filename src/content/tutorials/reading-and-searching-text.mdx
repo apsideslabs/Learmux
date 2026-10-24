@@ -13,7 +13,7 @@ tags: [text, grep]
 
 import Callout from '../../components/Callout.astro';
 
-Files on a phone are mostly text, and the terminal is the fastest way to read them. In this lesson you build a small log file, print it in several ways, and search it for the lines that matter. The search skills here are the ones you will reach for most often.
+Files on a phone are mostly text. The terminal is the fastest way to read them. Here you build a small log file, print it in several ways, and search it for the lines that matter. These search skills are the ones you will reach for most often.
 
 ## What you'll be able to do
 
@@ -25,7 +25,7 @@ Files on a phone are mostly text, and the terminal is the fastest way to read th
 
 ## Step 1: Make a file to work with
 
-You need a file to read. This writes a small log file. It uses redirection, which lesson four explains in full, so read it for now as "put the text between the markers into app.log". There is no output, and the prompt returns.
+You need a file to read. This command writes a small log file. It uses redirection, which lesson four explains in full. For now, read it as "put the text between the markers into app.log". There is no output, and the prompt returns.
 
 ```
 $ cd ~
@@ -44,7 +44,7 @@ The file now has seven lines. Every command in this lesson reads it.
 
 ## Step 2: Print a file with cat
 
-`cat` prints a file to the screen. Its name is short for concatenate, but its everyday job is showing you what is in a file.
+`cat` prints a file to the screen. The name is short for concatenate. Its everyday job, though, is showing you what is in a file.
 
 ```
 $ cat app.log
@@ -85,7 +85,7 @@ $ head -n 3 app.log
 2026-01-16 09:02:44 ERROR failed to send email to user 42
 ```
 
-`tail` prints the last lines instead. This is how you check the newest entries in a log.
+`tail` prints the last lines instead. Reach for it when you want the newest entries in a log.
 
 ```
 $ tail -n 2 app.log
@@ -95,7 +95,7 @@ $ tail -n 2 app.log
 
 ## Step 4: Page through a file with less
 
-`less` opens a file in a viewer you can scroll. It does not print and quit. It waits for you.
+`less` opens a file in a viewer you can scroll. It does not print and quit. It waits.
 
 ```
 $ less app.log
@@ -104,7 +104,7 @@ $ less app.log
 :
 ```
 
-The colon at the bottom left is the prompt from `less`, waiting for a key. Press Space to move down a screen, `b` to move back up, and `q` to quit. Type `/` then a word and press Enter to jump to the next match.
+The colon at the bottom left is the prompt from `less`, waiting for a key. Press Space to move down a screen. Press `b` to move back up, and `q` to quit. Type `/` then a word, then press Enter to jump to the next match.
 
 <Callout type="tip" title="less is the safe way to read">
 Use `less` whenever a file is longer than a screen. You cannot damage a file by reading it, so explore freely and press `q` when you are done.
@@ -131,7 +131,7 @@ $ wc -c app.log
 366 app.log
 ```
 
-The character count is larger than you might expect, because it includes every space and line break.
+The character count is larger than you might expect. It includes every space and line break.
 
 ## Step 6: Search with grep
 
@@ -195,7 +195,7 @@ $ grep -n "email" app.log
 5:2026-01-16 09:03:55 ERROR failed to send email to user 91
 ```
 
-Both matches are errors, and both are about sending email. That points you straight at the email code. One search narrows the field, and another confirms the pattern.
+Both matches are errors, and both are about sending email. That points you straight at the email code. One search narrows the field, and the next confirms the pattern.
 
 ## Quick reference
 
@@ -218,4 +218,4 @@ Both matches are errors, and both are about sending email. That points you strai
 
 ## Next steps
 
-Now learn to link these commands into a single line in [Pipes and redirection](/learn/pipes-and-redirection/). If you want more practice finding things, revisit [Navigating the filesystem](/learn/navigating-the-filesystem/). Then take on a real investigation in [Logs Never Lie](/challenges/logs-never-lie/).
+Now learn to link these commands into a single line in [Pipes and redirection](/learn/pipes-and-redirection/). For more practice finding things, revisit [Navigating the filesystem](/learn/navigating-the-filesystem/). Then take on a real investigation in [Logs Never Lie](/challenges/logs-never-lie/).
