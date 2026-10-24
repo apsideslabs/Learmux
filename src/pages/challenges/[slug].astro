@@ -61,22 +61,20 @@ const num = String(idx + 1).padStart(2, '0');
         </p>
       </div>
 
-      <div class="soft-panel">
+      <div class="soft-panel hint-panel" data-hint-panel>
         <h2 style="font-size:1.02rem">Stuck?</h2>
         <p class="muted" style="font-size:0.92rem">
-          Type <code>hint</code> in the terminal to reveal hints one at a time, or use the starters below.
+          Take it one step at a time. Ask for a hint here, or type <code>help</code> in the terminal to
+          see the commands this challenge is about. Typing <code>hint</code> works there too.
         </p>
-        <div class="chip-row" style="margin-bottom:0.8rem">
-          {(challenge.starters ?? []).map((s) => <span class="chip chip--mono">{s}</span>)}
-        </div>
-        <details class="hints" style="border-top:1px solid var(--line)">
-          <summary style="cursor:pointer;list-style:none;padding:0.5rem 0;font-weight:600;font-size:0.9rem">
-            Show all {challenge.hints.length} hint{challenge.hints.length === 1 ? '' : 's'}
-          </summary>
-          <ol style="margin:0;padding-left:1.15rem;font-size:0.9rem;color:#4d4d55">
-            {challenge.hints.map((h) => <li>{h}</li>)}
-          </ol>
-        </details>
+        <ol class="hint-list" data-hint-list hidden></ol>
+        <button class="btn btn--outline btn--sm" type="button" data-hint-next>
+          Reveal a hint <span class="hint-count" data-hint-count></span>
+        </button>
+        <p class="muted hint-done" data-hint-done hidden>
+          That is every hint. If you are still stuck, run <code>help</code> in the terminal.
+        </p>
+        <script type="application/json" data-hint-data set:html={JSON.stringify(challenge.hints)} />
       </div>
 
       <div class="soft-panel" style="display:flex;flex-wrap:wrap;gap:0.8rem;justify-content:space-between;align-items:center">
@@ -91,4 +89,39 @@ const num = String(idx + 1).padStart(2, '0');
       </div>
     </div>
   </div>
+  <script>
+    function initHints() {
+      const panel = document.querySelector<HTMLElement>('[data-hint-panel]');
+      if (!panel || panel.dataset.bound) return;
+      panel.dataset.bound = '1';
+
+      const data = panel.querySelector<HTMLElement>('[data-hint-data]');
+      const hints: string[] = data ? JSON.parse(data.textContent || '[]') : [];
+      const list = panel.querySelector<HTMLElement>('[data-hint-list]');
+      const next = panel.querySelector<HTMLButtonElement>('[data-hint-next]');
+      const count = panel.querySelector<HTMLElement>('[data-hint-count]');
+      const done = panel.querySelector<HTMLElement>('[data-hint-done]');
+      let shown = 0;
+
+      const paint = () => {
+        if (count) count.textContent = `(${shown} of ${hints.length})`;
+        if (next) next.hidden = shown >= hints.length;
+        if (done) done.hidden = shown < hints.length;
+        if (list) list.hidden = shown === 0;
+      };
+
+      next?.addEventListener('click', () => {
+        if (shown >= hints.length) return;
+        const li = document.createElement('li');
+        li.textContent = hints[shown];
+        list?.appendChild(li);
+        shown++;
+        paint();
+      });
+
+      paint();
+    }
+    initHints();
+    document.addEventListener('astro:page-load', initHints);
+  </script>
 </BaseLayout>
