@@ -13,7 +13,7 @@ tags: [termux, basics]
 
 import Callout from '../../components/Callout.astro';
 
-Termux gives your Android phone a real Linux command line. In this lesson you install it, open the prompt, and learn the handful of commands that answer two questions. Where am I, and what is here? Get these right and every later lesson becomes easier to follow.
+Termux gives your Android phone a real Linux command line. In this lesson you install it and open the prompt. You also learn the handful of commands that answer two questions. Where am I, and what is here? Get these right and every later lesson gets easier.
 
 ## What you'll be able to do
 
@@ -25,36 +25,36 @@ Termux gives your Android phone a real Linux command line. In this lesson you in
 
 ## Step 1: Install Termux
 
-Termux is a terminal emulator and a small Linux environment in one app. It runs on Android without root, so nothing here can damage the rest of your phone.
+Termux is a terminal emulator and a small Linux environment, all in one app. It runs on Android without root, so nothing here can damage the rest of your phone.
 
-Install it from F-Droid. The F-Droid build is the current one and it keeps receiving updates. The Play Store listing is an old, abandoned version, so treat it as a last resort.
+Install it from F-Droid. That build is the current one and it still receives updates. The Play Store listing is old and abandoned. Treat it as a last resort.
 
 <Callout type="warning" title="Do not mix install sources">
 If you install Termux from F-Droid, keep updating it from F-Droid. Installing over the top from another store can break your setup, and you may lose files.
 </Callout>
 
-Open the app when it finishes installing. You are dropped straight into a prompt.
+Open the app once it finishes installing. You land straight in a prompt.
 
 ## Step 2: Read the prompt
 
-The prompt is the text the shell prints before it waits for you to type.
+The prompt is the text the shell prints while it waits for you to type.
 
 ```
 ~ $
 ```
 
-The `~` is shorthand for your home directory, the folder you start in. The `$` means you are an ordinary user, not the system administrator. The cursor sits after the space, waiting for a command. You type on one line, then press Enter to run it.
+The `~` is shorthand for your home directory, the folder you start in. A `$` means you are an ordinary user, not the system administrator. The cursor sits after the space, waiting for a command. You type on one line, then press Enter to run it.
 
 ## Step 3: Find out where you are
 
-The first command to learn is `pwd`. It stands for print working directory, and it tells you the full path of the folder you are standing in.
+Start with `pwd`. The name is short for print working directory. It shows the full path of the folder you are standing in.
 
 ```
 $ pwd
 /data/data/com.termux/files/home
 ```
 
-That long path is your home directory. On Android, Termux keeps its own files inside the app's private storage, so all your work lives under this path. You will see it often.
+That long path is your home directory. Termux keeps its own files inside the app's private storage, so all your work lives there. You will see this path often.
 
 <Callout type="tip" title="A short name for a long path">
 You never have to type that whole path. The tilde `~` always means the same directory, and `cd ~` takes you home from anywhere.
@@ -62,15 +62,15 @@ You never have to type that whole path. The tilde `~` always means the same dire
 
 ## Step 4: List what is there
 
-The `ls` command lists the contents of a directory. Run it on its own to list the directory you are in.
+The `ls` command lists what a directory holds. Run it on its own and it lists the directory you are in.
 
 ```
 $ ls
 ```
 
-A fresh install has an empty home directory, so `ls` prints nothing. An empty result is not an error. It means there is nothing to show yet.
+A fresh install has an empty home directory, so `ls` prints nothing. That is not an error. It means there is nothing to show yet.
 
-Hidden files start with a dot, and `ls` hides them by default. Add `-a` to show everything, and `-l` for a long listing with details.
+Hidden files start with a dot. By default `ls` hides them. Add `-a` to show everything, and `-l` for a long listing with details.
 
 ```
 $ ls -la
@@ -79,11 +79,11 @@ drwx------ 2 u0_a123 u0_a123 4096 Jan  8 10:00 .
 drwx------ 3 u0_a123 u0_a123 4096 Jan  8 10:00 ..
 ```
 
-The two entries you see, `.` and `..`, exist in every directory. A single dot means this directory. Two dots mean the parent directory. You will use both soon. The user name in the middle, `u0_a123`, is specific to your device. Yours will differ.
+The two entries you see, `.` and `..`, exist in every directory. One dot means this directory. Two dots mean the parent directory. You will use both soon. The user name in the middle, `u0_a123`, is specific to your device. Yours will differ.
 
 ## Step 5: Move between directories
 
-The `cd` command changes directory. Give it a path and it takes you there. This path is absolute, because it starts at the root of the filesystem.
+The `cd` command changes directory. Give it a path and it takes you there. This path is absolute. It starts at the root of the filesystem.
 
 ```
 $ cd /data/data/com.termux/files
@@ -91,7 +91,7 @@ $ pwd
 /data/data/com.termux/files
 ```
 
-Now go back home with the tilde.
+Go back home with the tilde.
 
 ```
 $ cd ~
@@ -99,18 +99,18 @@ $ pwd
 /data/data/com.termux/files/home
 ```
 
-That is a round trip. You moved away and came back. Lesson two covers paths like these in full.
+That is a round trip. You moved away and came back. Lesson two goes into paths like these in full.
 
 ## Step 6: Who you are, and how to ask for help
 
-The `whoami` command prints the name of the user you are running as.
+The `whoami` command prints the name of the user you run as.
 
 ```
 $ whoami
 u0_a123
 ```
 
-On Android every app runs as its own user, so this name is different on every phone. The point is that you are not the system administrator. Some commands will refuse to run, and that is normal.
+On Android every app runs as its own user, so the name differs on every phone. You are not the system administrator. Some commands will refuse to run, and that is normal.
 
 To ask a command what it can do, add `--help`.
 
@@ -127,9 +127,9 @@ Mandatory arguments to long options are mandatory for short options too.
 ...
 ```
 
-The output is long, so it is cut short here. It continues with more options, then ends with a note about exit status.
+The output is long, so it is cut short here. It goes on with more options, then ends with a note about exit status.
 
-There is also `man`, the manual reader. Termux does not include man pages by default, so install them once, then you can read the manual for a command.
+There is also `man`, the manual reader. Termux ships no man pages by default. Install them once, and then you can read the manual for any command.
 
 ```
 $ pkg install man
@@ -157,7 +157,7 @@ SYNOPSIS
 :
 ```
 
-Press `q` to leave the manual and return to the prompt. When in doubt, `--help` is faster and always available.
+Press `q` to leave the manual and return to the prompt. When in doubt, `--help` is faster and always there.
 
 ## Quick reference
 
@@ -174,4 +174,4 @@ Press `q` to leave the manual and return to the prompt. When in doubt, `--help` 
 
 ## Next steps
 
-Now that you can find your way around, learn how paths really work in [Navigating the filesystem](/learn/navigating-the-filesystem/). When you are ready to look inside files, continue to [Reading and searching text](/learn/reading-and-searching-text/). To practise what you have learned on a real puzzle, try [Logs Never Lie](/challenges/logs-never-lie/).
+Now that you can find your way around, learn how paths really work in [Navigating the filesystem](/learn/navigating-the-filesystem/). When you want to look inside files, continue to [Reading and searching text](/learn/reading-and-searching-text/). For practice on a real puzzle, try [Logs Never Lie](/challenges/logs-never-lie/).
