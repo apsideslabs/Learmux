@@ -13,6 +13,7 @@ export const site = {
 
 export const nav = [
   { href: 'course/', label: 'Course' },
+  { href: 'tools/', label: 'Tools' },
   { href: 'challenges/', label: 'Play CTF', cta: true },
   { href: 'categories/', label: 'Categories' },
   { href: 'about/', label: 'About us' },
@@ -23,6 +24,7 @@ export const drawerNav = [
   { href: '', label: 'Home' },
   { href: 'course/', label: 'Course' },
   { href: 'categories/', label: 'Categories', chevron: true },
+  { href: 'tools/', label: 'Tools' },
   { href: 'learn/', label: 'All lessons' },
   { href: 'about/', label: 'About Us' },
   { href: 'contact/', label: 'Contact Us' },
