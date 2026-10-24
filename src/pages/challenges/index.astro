@@ -15,26 +15,37 @@ let counter = 0;
 ---
 
 <BaseLayout
-  title="Challenges"
-  description={`${list.length} interactive Termux and Linux command-line challenges. ${totalPoints} points across ${cats.length} topics — capture the flag in your browser.`}
+  title="Play CTF"
+  description={`${list.length} terminal-based challenges. Find the flags and complete the challenge. ${totalPoints} points across ${cats.length} topics.`}
 >
   <div class="wrap">
-    <header class="section--tight" style="padding-bottom:0">
-      <h1>Challenges</h1>
+    <header class="section--tight">
+      <h1>Play CTF</h1>
       <p class="lede">
-        {list.length} puzzles, {totalPoints} points. Each one opens a sandbox with its own filesystem and a
-        single flag to find. They get harder as you go.
+        {list.length} terminal-based challenges. Find the flags and complete the challenge — each one opens a
+        sandbox with its own filesystem.
       </p>
     </header>
 
-    <div style="margin-top:1.5rem">
-      <div class="chip-row">
-        {cats.map((c) => <span class="chip">{c.name} · {c.count}</span>)}
+    <div class="ctf-panel" style="margin-bottom:1.4rem">
+      <h2>Learmux CTF</h2>
+      <p>Work through them in order, or jump straight to the hard ones.</p>
+      <div class="ctf-meta">
+        <span data-progress-chip data-total={list.length}>0 / {list.length} captured</span>
+        <span>{totalPoints} points</span>
+        <span>{cats.length} topics</span>
+      </div>
+      <div class="progress-line" style="background:#2a2a33">
+        <span data-progress-bar data-total={list.length}></span>
       </div>
     </div>
 
+    <div class="chip-row" style="margin-bottom:0.4rem">
+      {cats.map((c) => <span class="chip">{c.name} · {c.count}</span>)}
+    </div>
+
     {groups.map((group) => (
-      <section style="margin-top:2.2rem">
+      <section style="margin-top:1.8rem">
         <div class="group-head" style="margin-top:0">
           <h3>{group.difficulty}</h3>
           <span>{group.items.length} challenges · {group.items.reduce((s, c) => s + c.points, 0)} points</span>
@@ -45,10 +56,10 @@ let counter = 0;
       </section>
     ))}
 
-    <section class="section--tight" style="padding-bottom:0">
-      <div class="card" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1.2rem">
-        <p class="mb-0 muted">Not sure where to begin? The lessons explain the commands each challenge uses.</p>
-        <a class="btn btn--ghost" href={`${base}learn/`}>Read the lessons</a>
+    <section class="section--tight">
+      <div class="soft-panel" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem">
+        <p class="mb-0 muted">New to the shell? The lessons explain every command the challenges use.</p>
+        <a class="btn btn--outline" href={`${base}learn/`}>Read the lessons</a>
       </div>
     </section>
   </div>
