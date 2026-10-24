@@ -1,0 +1,8 @@
+| `ssh USER@HOST` | Open an encrypted remote shell |
+| `netstat -tuln` | List listening TCP and UDP ports |
+
+## Next steps
+
+- [Encoding and hashes](/learn/encoding-and-hashes/) to verify a file you downloaded before you open it.
+- [Managing packages](/learn/managing-packages/) to install the network tools used here.
+- [File permissions](/learn/file-permissions/) to lock down the keys that `ssh` keeps in your home directory.
