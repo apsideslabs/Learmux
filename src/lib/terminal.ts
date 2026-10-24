@@ -66,23 +66,9 @@ export function mountTerminal(root: HTMLElement, challenge: Challenge, opts: Ter
   inputLine.append(prompt, input);
   screen.append(output, inputLine);
 
-  const footer = el('div', 'lx-term__footer');
-  const hintBar = el('div', 'lx-term__hintbar');
-  for (const s of challenge.starters ?? []) {
-    const b = el('button', 'lx-term__starter');
-    b.type = 'button';
-    b.textContent = s;
-    b.title = 'Insert this command';
-    b.addEventListener('click', (e) => {
-      e.stopPropagation();
-      input.value = s;
-      input.focus();
-    });
-    hintBar.appendChild(b);
-  }
-  footer.appendChild(hintBar);
-
-  root.append(bar, screen, footer);
+  // No starter commands: the player reads the briefing, asks for a hint, or
+  // runs `help` inside the terminal.
+  root.append(bar, screen);
 
   // ── rendering ─────────────────────────────────────────────────────────────
   function scrollToBottom() {
@@ -123,7 +109,7 @@ export function mountTerminal(root: HTMLElement, challenge: Challenge, opts: Ter
       line(`✔ You have already captured this flag (${challenge.flag}).`, 'lx-term__muted');
     }
     line(challenge.objective, 'lx-term__muted');
-    line("Type `help` to list commands, or `submit FLAG{...}` when you find it.", 'lx-term__muted');
+    line("Type `help` for the commands this one is about, `hint` if you are stuck, or `submit FLAG{...}` when you find it.", 'lx-term__muted');
     line('');
     refreshPrompt();
     scrollToBottom();
