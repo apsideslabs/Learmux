@@ -13,7 +13,7 @@ tags: [scripting, bash]
 
 import Callout from '../../components/Callout.astro';
 
-Typing the same commands every day wastes time and invites mistakes. A shell script puts those commands in a file so you run them with one short word. In this lesson you write your first scripts on Termux, using variables, tests and loops, and finish with a backup script that copies your files and prints a summary.
+Typing the same commands every day wastes time and invites mistakes. A shell script puts those commands in a file. Then you run them with one short word. Here you write your first scripts on Termux, using variables, tests and loops. You finish with a backup script that copies your files and prints a summary.
 
 ## What you'll be able to do
 
@@ -23,15 +23,15 @@ Typing the same commands every day wastes time and invites mistakes. A shell scr
 - Make a file executable and read its exit code with `$?`.
 - Write a small backup script that copies files and reports what it did.
 
-## Step 1 — Start with a shebang
+## Step 1: Start with a shebang
 
-The first line of a script is the shebang. It tells the system which program should run the file. For a portable script use `/bin/sh`, which on Termux is a POSIX shell.
+The first line of a script is the shebang. It tells the system which program should run the file. For a portable script use `/bin/sh`. On Termux that is a POSIX shell.
 
 ```sh
 #!/bin/sh
 ```
 
-The command below writes a two-line script to a file called `hello.sh`. The `%s\n` format prints each argument on its own line, and the `>` sends the result into the file.
+The command below writes a two-line script to a file called `hello.sh`. The `%s\n` format prints each argument on its own line. The `>` sends the result into the file.
 
 ```sh
 printf '%s\n' '#!/bin/sh' 'echo "Hello from Termux"' > hello.sh
@@ -55,7 +55,7 @@ echo "Hello from Termux"
 Keep scripts to plain line endings. If you ever edit a script on a computer and it fails with a strange error, run `dos2unix hello.sh` to strip Windows line endings.
 </Callout>
 
-## Step 2 — Variables and quoting
+## Step 2: Variables and quoting
 
 A variable holds a value. You set it without a dollar sign and read it back with one. The commands below set `name` and then print it two ways.
 
@@ -87,9 +87,9 @@ backup for 2026-02-14
 An unquoted variable that holds a space can split into two words and break a command. Write `"$name"`, not `$name`, unless you have a reason not to.
 </Callout>
 
-## Step 3 — Branch with if and loop with for
+## Step 3: Branch with if and loop with for
 
-The `if` statement runs one block or another depending on a test. The test goes in square brackets, and the block ends with `fi`.
+The `if` statement runs one block or another depending on a test. The test goes in square brackets. The block ends with `fi`.
 
 ```sh
 #!/bin/sh
@@ -121,7 +121,7 @@ item: beta
 item: gamma
 ```
 
-## Step 4 — Make it executable and read the exit code
+## Step 4: Make it executable and read the exit code
 
 A script file is not runnable until you add the execute permission. This command prints nothing when it works.
 
@@ -174,7 +174,7 @@ cat: /no/such/file: No such file or directory
 1
 ```
 
-## Step 5 — A complete backup script
+## Step 5: A complete backup script
 
 Here is a small script that copies files into a dated folder and prints a summary. It uses everything from the steps above.
 
@@ -217,7 +217,7 @@ chmod +x backup.sh
 copied 3 file(s) to /data/data/com.termux/files/home/backups/2026-02-14
 ```
 
-Run it again the next day and it makes a fresh folder for that date, so an earlier backup is never overwritten.
+Run it again the next day and it makes a fresh folder for that date. An earlier backup is never overwritten.
 
 ## Quick reference
 
