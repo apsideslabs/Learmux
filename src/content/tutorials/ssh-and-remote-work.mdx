@@ -13,7 +13,7 @@ tags: [ssh, keys, scp]
 
 import Callout from '../../components/Callout.astro';
 
-SSH lets you log in to another computer from your phone and run commands there as if you were sitting in front of it. It also moves files over an encrypted link. In this lesson you make a key pair, connect to a server, copy files with `scp`, and run the SSH server on the phone itself.
+SSH lets you log in to another computer from your phone. You can run commands there as if you were sitting in front of it. It also moves files over an encrypted link. In this lesson you make a key pair and connect to a server. You copy files with `scp`, and run the SSH server on the phone itself.
 
 ## What you'll be able to do
 
@@ -23,9 +23,9 @@ SSH lets you log in to another computer from your phone and run commands there a
 - Move files in both directions with `scp`.
 - Run `sshd` on Termux so your phone can be reached.
 
-## Step 1 — Generate a key pair
+## Step 1: Generate a key pair
 
-A key pair is two files. The private key stays on your phone and the public key goes to the server. Generate one with `ssh-keygen`. The `-t ed25519` option picks a modern key type and `-C` adds a label.
+A key pair is two files. The private key stays on your phone. The public key goes to the server. Generate one with `ssh-keygen`. The `-t ed25519` option picks a modern key type, and `-C` adds a label.
 
 ```sh
 ssh-keygen -t ed25519 -C "you@phone"
@@ -64,7 +64,7 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExAmPlEkEyMaTeRiAlHeRe you@phone
 Never send the private key anywhere. It is the file with no `.pub` on the end. Only the `.pub` file goes to a server.
 </Callout>
 
-## Step 2 — Copy the public key and log in
+## Step 2: Copy the public key and log in
 
 The `ssh-copy-id` command appends your public key to the server account in one step.
 
@@ -93,9 +93,9 @@ user@example.com:~$
 
 If you have no `ssh-copy-id`, you can paste the public key into the server account yourself.
 
-## Step 3 — Check the host fingerprint
+## Step 3: Check the host fingerprint
 
-The first time you connect, SSH shows the server's host-key fingerprint and asks you to trust it. This is the one moment a man-in-the-middle could trick you, so check the fingerprint against one the server's admin has published.
+The first time you connect, SSH shows the server's host-key fingerprint. It asks you to trust it. This is the one moment a man-in-the-middle could trick you. Check the fingerprint against one the server's admin has published.
 
 ```sh
 ssh user@example.com
@@ -115,7 +115,7 @@ If the fingerprint ever changes without warning, stop and ask. The server's keys
 An admin can print the server's fingerprint with `ssh-keygen -lf` on the host key file. Compare that string, character for character, with the one you were shown.
 </Callout>
 
-## Step 4 — Move files with scp
+## Step 4: Move files with scp
 
 The `scp` command copies a file over the same secure link. The last argument is the destination, which can be a remote path written as `user@host:/path`.
 
@@ -139,9 +139,9 @@ report.pdf                                   100% 20480    25.1KB/s   00:00
 
 The dot at the end means the current folder. Add `-r` to copy a whole directory.
 
-## Step 5 — Run sshd on your phone
+## Step 5: Run sshd on your phone
 
-Termux can run an SSH server, so you can reach your phone from a laptop on the same network. First check your username and start the server.
+Termux can run an SSH server. Then you can reach your phone from a laptop on the same network. First check your username, then start the server.
 
 ```sh
 whoami
