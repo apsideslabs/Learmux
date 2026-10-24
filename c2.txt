@@ -1,0 +1,48 @@
+--- 192.168.1.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2004ms
+rtt min/avg/max/mdev = 2.880/3.047/3.210/0.135 ms
+```
+
+The address `192.168.1.1` is usually your router. A reply with `0% packet loss` means the host is reachable. The `time` value is the round trip in milliseconds, and the summary line gives the average.
+
+## Step 4: Scan ports with nmap
+
+`nmap` checks which ports on a host are open. The `-p` flag names the ports to check and `-sV` asks `nmap` to identify the service and its version.
+
+<Callout type="warning" title="Only scan what you own">
+Only run `nmap` against systems you own or have written permission to test. Scanning a network you do not control can break its terms of service, and in many countries it is a criminal offence. Your own router and your own devices are fine.
+</Callout>
+
+```bash
+nmap -sV -p 22,80,8022 192.168.1.10
+```
+
+```text
+Starting Nmap 7.95 ( https://nmap.org ) at 2026-01-26 12:00 IST
+Nmap scan report for 192.168.1.10
+Host is up (0.0040s latency).
+
+PORT     STATE  SERVICE  VERSION
+22/tcp   open   ssh      OpenSSH 9.6 (protocol 2.0)
+80/tcp   open   http     nginx 1.24.0
+8022/tcp closed unknown
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 6.21 seconds
+```
+
+Each line names a port, whether it is open or closed, the service, and the version when `-sV` could work it out. An open port is a service accepting connections, and each one is something to keep patched.
+
+## Step 5: Read a service banner
+
+Many services announce themselves the moment you connect. `nc`, the netcat tool, opens a raw connection and prints what comes back. Here it reads the banner that an SSH server sends first.
+
+```bash
+nc 192.168.1.10 22
+```
+
+```text
+SSH-2.0-OpenSSH_9.6
+```
+
+The banner names the protocol and the software version. Press `Ctrl+C` to close the connection. Banners are useful for confirming what is listening, and for noticing an old version that needs an update.
