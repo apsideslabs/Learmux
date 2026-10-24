@@ -1,0 +1,278 @@
+    category: 'text',
+    tagline: 'Collapse or count repeated adjacent lines',
+    about:
+      'Removes consecutive duplicate lines, or reports how many times each run repeats. It only sees neighbours, so its input is usually piped through the ordering command first. Handy for frequency counts and for cleaning logs.',
+    developer: 'GNU Project',
+    url: 'https://www.gnu.org/software/coreutils/',
+    bin: 'uniq',
+    install: 'Included with Termux',
+    glyph: 'list',
+    commands: [
+      {
+        args: 'ips.txt',
+        what: 'drop consecutive duplicate lines, keeping one copy of each run',
+      },
+      {
+        args: '-c ips.txt',
+        what: 'prefix each distinct line with the number of times it appeared in a row',
+      },
+      {
+        args: '-d ips.txt',
+        what: 'print only the lines that were repeated',
+      },
+      {
+        args: '-u ips.txt',
+        what: 'print only the lines that appeared exactly once',
+      },
+      {
+        args: '-i names.txt',
+        what: 'treat lines that differ only in case as duplicates',
+      },
+      {
+        args: '-f1 log.txt',
+        what: 'skip the first field when deciding whether two lines match',
+      },
+    ],
+    example: {
+      args: '-c ips.txt',
+      out: [
+        '      3 203.0.113.7',
+        '      1 198.51.100.2',
+        '      2 192.0.2.55',
+      ].join('\n'),
+    },
+  },
+  {
+    slug: 'tr',
+    name: 'tr',
+    category: 'text',
+    tagline: 'Translate or delete individual characters in a stream',
+    about:
+      'A tiny filter that maps one set of characters to another, or deletes them outright. It works character by character rather than on words or lines, which makes it perfect for case changes and cleanup. Commonly used to normalise whitespace before further processing.',
+    developer: 'GNU Project',
+    url: 'https://www.gnu.org/software/coreutils/',
+    bin: 'tr',
+    install: 'Included with Termux',
+    glyph: 'replace',
+    commands: [
+      {
+        args: 'a-z A-Z',
+        what: 'map every lowercase letter to its uppercase counterpart',
+      },
+      {
+        args: '-d "0-9"',
+        what: 'delete all digits from the input',
+      },
+      {
+        args: '-s " "',
+        what: 'squeeze runs of spaces down to a single space',
+      },
+      {
+        args: '-c "a-zA-Z0-9" " "',
+        what: 'replace every character that is not a letter or digit with a space',
+      },
+      {
+        args: '-d "[:punct:]"',
+        what: 'delete all punctuation characters from the input',
+      },
+      {
+        args: 'A-Z N-ZA-M',
+        what: 'rotate the alphabet so each letter shifts by thirteen places',
+      },
+    ],
+    example: {
+      args: 'a-z A-Z',
+      out: [
+        'HELLO FROM TERMUX',
+        'THE QUICK BROWN FOX',
+        'GOOD MORNING',
+      ].join('\n'),
+    },
+  },
+  {
+    slug: 'wc',
+    name: 'wc',
+    category: 'text',
+    tagline: 'Count lines, words, characters and bytes',
+    about:
+      'Reports how many lines, words, characters and bytes its input holds, alone or together. It is the quickest way to size up a log or a document before working with it. With several inputs it prints a total line as well.',
+    developer: 'GNU Project',
+    url: 'https://www.gnu.org/software/coreutils/',
+    bin: 'wc',
+    install: 'Included with Termux',
+    glyph: 'gauge',
+    commands: [
+      {
+        args: '-l app.log',
+        what: 'count only the number of lines, a fast way to see how busy a log is',
+      },
+      {
+        args: '-w essay.txt',
+        what: 'count whitespace-separated words in a document',
+      },
+      {
+        args: '-c payload.json',
+        what: 'report the byte size of the input',
+      },
+      {
+        args: '-m notes.txt',
+        what: 'count characters rather than bytes, which matters for non-ASCII text',
+      },
+      {
+        args: '*.txt',
+        what: 'report a count for each path and a combined total at the end',
+      },
+      {
+        args: '-L src/main.c',
+        what: 'print the length of the longest line, useful for spotting runaway rows',
+      },
+    ],
+    example: {
+      args: '*.txt',
+      out: [
+        '  42  210 1280 notes.txt',
+        '  17   88  512 todo.txt',
+        '  59  298 1792 total',
+      ].join('\n'),
+    },
+  },
+  {
+    slug: 'less',
+    name: 'less',
+    category: 'text',
+    tagline: 'Page through long output with search and scroll',
+    about:
+      'A pager that shows text one screen at a time and lets you scroll both ways, search and jump. It reads from a pipe as happily as from a path, so it tames the output of any command. The standard way to read a long log without drowning in it.',
+    developer: 'Mark Nudelman',
+    url: 'https://www.greenwoodsoftware.com/less/',
+    bin: 'less',
+    install: 'pkg install less',
+    glyph: 'pager',
+    commands: [
+      {
+        args: 'app.log',
+        what: 'open a long log in a scrollable view instead of dumping it all at once',
+      },
+      {
+        args: '+F app.log',
+        what: 'start in follow mode so new lines appear as they are written, like a live tail',
+      },
+      {
+        args: '-N app.log',
+        what: 'show line numbers down the left side of the screen',
+      },
+      {
+        args: '-S data.csv',
+        what: 'stop long lines from wrapping so wide rows can be scrolled sideways',
+      },
+      {
+        args: '-R app.log',
+        what: 'display raw colour escape codes correctly so tinted output keeps its colours',
+      },
+      {
+        args: '+/ERROR app.log',
+        what: 'open the pager already scrolled to the first line matching the pattern',
+      },
+    ],
+    example: {
+      args: '-N app.log',
+      out: [
+        '   1 2026-10-24 09:15 INFO  starting service',
+        '   2 2026-10-24 09:15 INFO  listening on port 8080',
+        '   3 2026-10-24 09:16 WARN  slow query took 1200ms',
+        ':',
+      ].join('\n'),
+    },
+  },
+  {
+    slug: 'bat',
+    name: 'bat',
+    category: 'text',
+    tagline: 'A colourful pager with syntax highlighting and line numbers',
+    about:
+      'A drop-in pager that adds syntax highlighting, a grid and line numbers, and integrates with the version-control diff view. It is easier on the eye than a plain dump when reading code or configuration. Use it whenever you would otherwise print a source path to the screen.',
+    developer: 'David Peter',
+    url: 'https://github.com/sharkdp/bat',
+    bin: 'bat',
+    install: 'pkg install bat',
+    glyph: 'doc',
+    commands: [
+      {
+        args: 'main.ts',
+        what: 'print a source path with syntax highlighting, line numbers and a header',
+      },
+      {
+        args: '-p main.ts',
+        what: 'show the plain highlighted text without line numbers or the header',
+      },
+      {
+        args: '-n main.ts',
+        what: 'force line numbers on even when output is piped',
+      },
+      {
+        args: '--line-range 20:40 main.ts',
+        what: 'display only a slice of lines from the middle of a long path',
+      },
+      {
+        args: '-A main.ts',
+        what: 'show non-printing characters such as tabs and trailing spaces',
+      },
+      {
+        args: '-l json payload.json',
+        what: 'override the detected language so highlighting uses the right rules',
+      },
+    ],
+    example: {
+      args: '--line-range 1:3 main.ts',
+      out: [
+        '─── main.ts ───',
+        "   1 import { Tool } from './types';",
+        '   2 ',
+        '   3 export const filesTextTools: Tool[] = [];',
+      ].join('\n'),
+    },
+  },
+  {
+    slug: 'jq',
+    name: 'jq',
+    category: 'text',
+    tagline: 'Slice, filter and reshape JSON on the command line',
+    about:
+      'A small query language for JSON that turns tangled documents into exactly the fields you want. It filters, maps, orders and reformats, and can pretty-print or minify. Indispensable when reading API responses or configuration in the terminal.',
+    developer: 'Stephen Dolan',
+    url: 'https://jqlang.github.io/jq/',
+    bin: 'jq',
+    install: 'pkg install jq',
+    glyph: 'braces',
+    commands: [
+      {
+        args: '. payload.json',
+        what: 'pretty-print a compact document with consistent indentation',
+      },
+      {
+        args: '.items[].name data.json',
+        what: 'extract one field from every element of an array',
+      },
+      {
+        args: '-r .version package.json',
+        what: 'print a value as raw text without surrounding quotes',
+      },
+      {
+        args: '.[] | select(.price > 100) catalog.json',
+        what: 'keep only the objects whose numeric field exceeds a threshold',
+      },
+      {
+        args: '-c . data.json',
+        what: 'emit compact output on a single line, the opposite of pretty-printing',
+      },
+      {
+        args: 'keys data.json',
+        what: 'list the top-level field names of an object',
+      },
+    ],
+    example: {
+      args: '.items[].name data.json',
+      out: ['widget', 'sprocket', 'cog'].join('\n'),
+    },
+  },
+];
