@@ -4,7 +4,7 @@
  * Decorative by default (aria-hidden); pass a `title` for a standalone icon.
  */
 interface Props {
-  name: 'search' | 'chevron' | 'close' | 'user' | 'calendar' | 'github' | 'arrow' | 'info' | 'warning' | 'tip';
+  name: 'search' | 'chevron' | 'close' | 'user' | 'calendar' | 'github' | 'arrow' | 'info' | 'warning' | 'tip' | 'copy' | 'check' | 'grid';
   size?: number;
   title?: string;
 }
@@ -14,6 +14,9 @@ const dim = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', xml
 
 <svg {...dim} aria-hidden={title ? undefined : 'true'} role={title ? 'img' : undefined}>
   {title && <title>{title}</title>}
+  {name === 'copy' && (<><rect x="8.6" y="8.6" width="11" height="11.4" rx="2.2" stroke="currentColor" stroke-width="1.7" /><path d="M15.4 5.8A2.2 2.2 0 0 0 13.2 3.6H6.2A2.2 2.2 0 0 0 4 5.8v7a2.2 2.2 0 0 0 2.2 2.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></>)}
+  {name === 'check' && (<path d="M4.8 12.6l4.8 4.8L19.2 6.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />)}
+  {name === 'grid' && (<><rect x="3.6" y="3.6" width="7.2" height="7.2" rx="1.6" stroke="currentColor" stroke-width="1.7" /><rect x="13.2" y="3.6" width="7.2" height="7.2" rx="1.6" stroke="currentColor" stroke-width="1.7" /><rect x="3.6" y="13.2" width="7.2" height="7.2" rx="1.6" stroke="currentColor" stroke-width="1.7" /><rect x="13.2" y="13.2" width="7.2" height="7.2" rx="1.6" stroke="currentColor" stroke-width="1.7" /></>)}
   {name === 'search' && (<><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8" /><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></>)}
   {name === 'chevron' && (<path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />)}
   {name === 'arrow' && (<path d="M5 12h13m-5-6l6 6-6 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />)}
