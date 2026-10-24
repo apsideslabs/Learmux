@@ -16,7 +16,7 @@ const projectName = tool.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 const exampleCmd = tool.example ? displayCommand(tool, tool.example.args) : '';
 ---
 
-<BaseLayout title={tool.name} description={`${tool.name} — ${tool.tagline}`}>
+<BaseLayout title={tool.name} description={`${tool.name}. ${tool.tagline}`}>
   <div class="wrap">
     <nav class="crumbs" aria-label="Breadcrumb">
       <a href={base}>Home</a><span class="sep">›</span>
