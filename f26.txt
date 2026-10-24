@@ -1,0 +1,2 @@
+curl -i -H "Accept: application/json" https://example.com/api/people
+```
