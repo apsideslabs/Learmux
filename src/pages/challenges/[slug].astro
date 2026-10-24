@@ -27,15 +27,19 @@ const num = String(idx + 1).padStart(2, '0');
 >
   <div class="wrap">
     <div class="ctf-bar" data-challenge-slug={challenge.slug}>
-      <span class="count">Challenge {num} / {challenges.length}</span>
-      <span class="title">{challenge.title}</span>
-      <span class="chip {diffClass}">{challenge.difficulty}</span>
-      <span class="chip chip--mono">{challenge.points} pts</span>
-      <span class="chip chip--solved" data-solved-only>Captured</span>
-      <span class="spacer"></span>
-      <a class="ctf-close" href={`${base}challenges/`}>
-        <Icon name="close" size={16} /> Close
-      </a>
+      <div class="ctf-bar__top">
+        <span class="count">Challenge {num} / {challenges.length}</span>
+        <a class="ctf-close" href={`${base}challenges/`}>
+          <Icon name="close" size={15} /> Close
+        </a>
+      </div>
+      <h1 class="ctf-title">{challenge.title}</h1>
+      <div class="chip-row">
+        <span class={`chip ${diffClass}`}>{challenge.difficulty}</span>
+        <span class="chip">{challenge.category}</span>
+        <span class="chip chip--mono">{challenge.points} pts</span>
+        <span class="chip chip--solved" data-solved-only>Captured</span>
+      </div>
     </div>
     <div class="progress-line" aria-hidden="true">
       <span data-progress-bar data-total={challenges.length}></span>
