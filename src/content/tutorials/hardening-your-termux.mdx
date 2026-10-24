@@ -1,0 +1,156 @@
+---
+title: "Hardening your Termux setup"
+description: "Cut down what is listening, keep packages current, fix loose permissions, and lock Termux behind your device lock."
+excerpt: "Fewer open doors and tighter file permissions make a smaller target, and that is the whole game."
+category: "Security"
+author: "The Study Cipher"
+date: "2026-03-16"
+order: 22
+track: "security"
+level: "Intermediate"
+tags: [security, hardening]
+---
+
+import Callout from '../../components/Callout.astro';
+
+In this lesson you will shrink the surface of your own Termux install. You will look at what is listening on the network, keep your packages current, check the permissions on your home directory, confirm you are not running as root, and put the app behind your device lock. This matters because most attacks do not need a clever exploit. They need a door you left open.
+
+## What you'll be able to do
+
+- List the network services listening on your device and decide which you need.
+- Update your installed packages and understand why it matters.
+- Read file permissions and tighten the loose ones.
+- Confirm your normal shell is not running as root.
+- Lock Termux so it asks for your device unlock before it opens.
+
+## Step 1: Reduce what is listening
+
+A service that listens on a network port is a door. You want as few as possible. The `-tuln` flags ask `netstat` for TCP and UDP listeners, in numeric form, without trying to resolve names.
+
+```bash
+$ netstat -tuln
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State
+tcp        0      0 127.0.0.1:8022          0.0.0.0:*               LISTEN
+tcp6       0      0 :::8022                 :::*                    LISTEN
+```
+
+Two lines, both for port `8022`, which is the Termux SSH daemon. The `127.0.0.1` address is your own loopback, so that listener is only reachable from the phone itself. If you did not start an SSH server, stop it and check again.
+
+```bash
+$ pkill sshd
+(no output)
+$ netstat -tuln
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State
+```
+
+An empty list is a good default. Start a listener only when you are using it, and close it when you are done.
+
+## Step 2: Keep packages updated
+
+Old software keeps old bugs. `pkg` is the Termux package manager, and `pkg upgrade` brings everything you have installed up to date.
+
+```bash
+$ pkg upgrade
+Checking availability of current mirror:
+[*] https://packages.termux.dev/apt/termux-main: ok
+Reading package lists... Done
+Building dependency tree... Done
+Calculating upgrade... Done
+0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+```
+
+Run it now and then. If you see a list of packages to upgrade, read the summary before you accept, and let it finish.
+
+To see what you actually have installed, list the packages.
+
+```bash
+$ pkg list-installed
+bash/stable,now 5.2.37 aarch64 [installed]
+coreutils/stable,now 9.5-1 aarch64 [installed]
+openssh/stable,now 9.9p1 aarch64 [installed]
+openssl/stable,now 3.4.0 aarch64 [installed]
+```
+
+Every line is a package you are trusting. If you do not recognise one and do not need it, removing it is one less thing to keep updated.
+
+## Step 3: Check and fix permissions
+
+Permissions decide who can read and write each file. `ls -la` shows them, including the hidden files that hold your settings and history.
+
+```bash
+$ ls -la
+total 24
+drwx------  5 u0_a231 u0_a231 4096 Mar 10 09:02 .
+drwxrwx--x 12 u0_a231 u0_a231 4096 Mar 10 08:55 ..
+-rw-------  1 u0_a231 u0_a231  220 Mar 10 08:55 .bash_history
+drwx------  2 u0_a231 u0_a231 4096 Mar 10 09:00 .ssh
+-rw-rw-rw-  1 u0_a231 u0_a231   42 Mar 10 09:01 notes.txt
+```
+
+Read the first column from the left. The leading `d` means a directory. The next nine characters are three groups of three: your permissions, your group's, and everyone else's. The file `notes.txt` shows `-rw-rw-rw-`, which means everyone can read and write it. That is too loose for a file you care about. Tighten it so only you can read and write.
+
+```bash
+$ chmod 600 notes.txt
+(no output)
+$ ls -la notes.txt
+-rw-------  1 u0_a231 u0_a231   42 Mar 10 09:01 notes.txt
+```
+
+The `600` sets read and write for you, and nothing for anyone else. Do the same for any file that holds a secret.
+
+Directories carry permissions too, and you want your home directory closed to others. The `-d` flag makes `ls` describe the directory itself rather than its contents.
+
+```bash
+$ ls -ld ~
+drwx------ 5 u0_a231 u0_a231 4096 Mar 10 09:02 /data/data/com.termux/files/home
+```
+
+`drwx------` means only you can enter it. If you saw a trailing group of letters here, others could list your files, and you would tighten it with `chmod 700` on the directory.
+
+<Callout type="tip" title="What the numbers mean">
+`6` is read plus write, `4` is read only, and `0` is no access. The three digits are you, your group, then everyone else. So `600` is private, and `644` is readable by all.
+</Callout>
+
+## Step 4: Do not run as root
+
+Root is the all-powerful account. On a phone, running everything as root means one mistake can damage the whole device. Termux is safer because it does not run as root by default. Confirm where you stand with `id`.
+
+```bash
+$ id
+uid=10231(u0_a231) gid=10231(u0_a231) groups=10231(u0_a231),3003(inet),9997(everybody),20231(u0_a231_cache)
+```
+
+Your user id is a normal app id like `u0_a231`, not `root`. That is what you want. Stay there. If a guide tells you to run a whole session as root, treat that as a red flag and look for a way to do the task as your normal user.
+
+## Step 5: Lock the app behind the device lock
+
+The strongest wall around your shell is the lock screen you already use. Open your Android settings, find the Termux app entry under Apps, and check that the app is protected by your device unlock. Depending on your phone this appears as a per-app lock, a secure folder, or a setting that requires the screen lock before the app opens. With that on, someone who picks up an unlocked-looking phone still cannot reach your terminal.
+
+<Callout type="warning" title="Hardening is a habit, not a trick">
+There is no single switch that makes you safe. Hardening is the repeated work of reducing what is open, keeping things current, and closing what you are not using. Do the small things and the surface shrinks.
+</Callout>
+
+None of these steps is dramatic on its own. Together they mean fewer listeners, fewer old packages, and fewer files that others can read. That is what hardening is: a smaller surface, built from small habits.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `netstat -tuln` | Lists TCP and UDP listeners in numeric form |
+| `pkill sshd` | Stops a running SSH daemon |
+| `pkg upgrade` | Updates your installed packages |
+| `pkg list-installed` | Lists the packages you have installed |
+| `ls -la` | Lists files with permissions, including hidden ones |
+| `ls -ld ~` | Describes the directory itself, not its contents |
+| `chmod 600 file` | Sets read and write for you only |
+| `chmod 644 file` | Sets read for everyone, write for you |
+| `chmod 700 dir` | Gives you full access to a directory, no one else |
+| `id` | Shows your user id and groups |
+
+## Next steps
+
+- [Reading logs and spotting oddities](/learn/logs-and-detection/) helps you notice when one of your doors gets tried.
+- [Safe habits and privacy](/learn/safe-habits-and-privacy/) covers what you leave behind while you work.
+- [Integrity Matters](/challenges/integrity-matters/) is a short challenge on checking that files are what they claim to be.
