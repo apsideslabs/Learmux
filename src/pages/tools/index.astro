@@ -7,6 +7,7 @@ import { tools, toolCategories, toolsByCategory } from '../../data/tools';
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const groups = toolsByCategory();
 const withExamples = tools.filter((t) => t.example).length;
+const countFor = (id: string) => groups.find((g) => g.category.id === id)?.items.length ?? 0;
 ---
 
 <BaseLayout
@@ -26,39 +27,46 @@ const withExamples = tools.filter((t) => t.example).length;
         short explanation, who builds it, and the handful of commands worth memorising.
       </p>
       <p class="tools-head__meta">
-        {tools.length} tools · {groups.length} categories · {withExamples} with a worked example · every one installable with <code>pkg</code>
+        {tools.length} tools · {groups.length} categories · {withExamples} with a worked example · every one
+        installable with <code>pkg</code>
       </p>
     </header>
 
-    <!-- filter bar: search plus one chip per category -->
+    <!-- browse by category -->
+    <div class="section-label"><span>Browse by category</span></div>
+    <div class="cat-nav" style="margin-top:1rem">
+      {toolCategories.map((c) => (
+        <a class="cat-card" href={`${base}tools/category/${c.id}/`}>
+          <span class="cat-card__icon"><Icon name="grid" size={17} /></span>
+          <span class="cat-card__body">
+            <span class="cat-card__name">{c.name}</span>
+            <span class="cat-card__blurb">{c.blurb}</span>
+          </span>
+          <span class="cat-card__count">{countFor(c.id)}</span>
+        </a>
+      ))}
+    </div>
+
+    <!-- filter the full list in place -->
     <div class="tool-filters">
       <div class="tool-search">
         <Icon name="search" size={17} />
         <input
           type="search"
           id="tool-q"
-          placeholder="Search tools…"
-          aria-label="Search tools"
+          placeholder="Filter all tools…"
+          aria-label="Filter tools by name or purpose"
           autocomplete="off"
         />
       </div>
-      <div class="chips" role="group" aria-label="Filter by category">
-        <button class="chip chip--btn is-active" data-cat="all">All {tools.length}</button>
-        {groups.map((g) => (
-          <button class="chip chip--btn" data-cat={g.category.id}>
-            {g.category.name} {g.items.length}
-          </button>
-        ))}
-      </div>
+      <p class="tool-count" id="tool-count" aria-live="polite" style="margin:0"></p>
     </div>
-
-    <p class="tool-count" id="tool-count" aria-live="polite"></p>
 
     <div id="tool-groups">
       {groups.map((g) => (
         <section class="tool-group" data-group={g.category.id}>
           <div class="tool-group__head">
-            <h2>{g.category.name}</h2>
+            <h2><a href={`${base}tools/category/${g.category.id}/`}>{g.category.name}</a></h2>
             <span class="tool-group__count">{g.items.length}</span>
           </div>
           <p class="tool-group__blurb">{g.category.blurb}</p>
@@ -88,7 +96,7 @@ const withExamples = tools.filter((t) => t.example).length;
       ))}
     </div>
 
-    <p class="tool-empty" id="tool-empty" hidden>No tool matches that. Try a different word or clear the filter.</p>
+    <p class="tool-empty" id="tool-empty" hidden>No tool matches that. Try a different word.</p>
 
     <section class="ctf-panel" style="margin-top:2.4rem">
       <h2>Put them to work</h2>
@@ -101,53 +109,37 @@ const withExamples = tools.filter((t) => t.example).length;
   </div>
 
   <script>
-    const q = document.getElementById('tool-q') as HTMLInputElement | null;
-    const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip--btn'));
-    const groups = Array.from(document.querySelectorAll<HTMLElement>('.tool-group'));
-    const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-tool]'));
-    const count = document.getElementById('tool-count');
-    const empty = document.getElementById('tool-empty');
-    let activeCat = 'all';
+    function initToolFilter() {
+      const q = document.getElementById('tool-q') as HTMLInputElement | null;
+      if (!q || q.dataset.bound) return;
+      q.dataset.bound = '1';
 
-    function apply() {
-      const term = (q?.value ?? '').trim().toLowerCase();
-      let shown = 0;
+      const groups = Array.from(document.querySelectorAll<HTMLElement>('.tool-group'));
+      const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-tool]'));
+      const count = document.getElementById('tool-count');
+      const empty = document.getElementById('tool-empty');
 
-      for (const card of cards) {
-        const matchesCat = activeCat === 'all' || card.dataset.cat === activeCat;
-        const matchesText = !term || (card.dataset.search ?? '').includes(term);
-        const visible = matchesCat && matchesText;
-        card.hidden = !visible;
-        if (visible) shown++;
-      }
+      const apply = () => {
+        const term = q.value.trim().toLowerCase();
+        let shown = 0;
+        for (const card of cards) {
+          const visible = !term || (card.dataset.search ?? '').includes(term);
+          card.hidden = !visible;
+          if (visible) shown++;
+        }
+        for (const group of groups) {
+          const any = Array.from(group.querySelectorAll<HTMLElement>('[data-tool]')).some((c) => !c.hidden);
+          group.hidden = !any;
+        }
+        if (count) count.textContent = shown === cards.length ? `${shown} tools` : `${shown} of ${cards.length} tools`;
+        if (empty) empty.hidden = shown !== 0;
+      };
 
-      for (const group of groups) {
-        const anyVisible = Array.from(group.querySelectorAll<HTMLElement>('[data-tool]')).some((c) => !c.hidden);
-        group.hidden = !anyVisible;
-      }
-
-      if (count) count.textContent = shown === cards.length ? `${shown} tools` : `${shown} of ${cards.length} tools`;
-      if (empty) empty.hidden = shown !== 0;
+      q.addEventListener('input', apply);
+      apply();
     }
 
-    for (const chip of chips) {
-      chip.addEventListener('click', () => {
-        activeCat = chip.dataset.cat ?? 'all';
-        for (const c of chips) c.classList.toggle('is-active', c === chip);
-        apply();
-      });
-    }
-    q?.addEventListener('input', apply);
-
-    // deep link: /tools/?cat=security
-    const wanted = new URLSearchParams(location.search).get('cat');
-    if (wanted) {
-      const chip = chips.find((c) => c.dataset.cat === wanted);
-      if (chip) {
-        activeCat = wanted;
-        for (const c of chips) c.classList.toggle('is-active', c === chip);
-      }
-    }
-    apply();
+    initToolFilter();
+    document.addEventListener('astro:page-load', initToolFilter);
   </script>
 </BaseLayout>
