@@ -22,10 +22,29 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+
+      # Fails fast on bad data, before spending a minute on a build.
+      - name: Validate content
+        run: npm run validate
+
+      # Proves every challenge is still solvable.
+      - name: Test engine
+        run: npm test
+
       - name: Build site
         run: npm run build
+
+      # Needs dist/, so it runs after the build.
+      - name: Validate links
+        run: npm run validate:links
+
+      # Guards the guard: breaks content on purpose and asserts it is caught.
+      - name: Test validator
+        run: npm run test:validator
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
