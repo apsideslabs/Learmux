@@ -3,7 +3,7 @@ import '../styles/global.css';
 import '../styles/terminal.css';
 import { ClientRouter } from 'astro:transitions';
 import { challenges } from '../lib/challenges';
-import { site, nav, drawerNav, social } from '../lib/site';
+import { site, nav, drawerNav } from '../lib/site';
 import Icon from '../components/Icon.astro';
 
 interface Props {
@@ -158,13 +158,9 @@ const isExternal = (href: string) => /^https?:/.test(href);
               <span>Lear<span class="accent">mux</span></span>
             </a>
             <p>{site.tagline}</p>
-            <div class="social">
-              {social.map((s) => (
-                <a href={s.href} aria-label={s.label} title={s.label} target="_blank" rel="noopener">
-                  <Icon name={s.icon as any} size={19} />
-                </a>
-              ))}
-            </div>
+            <a class="footer-repo" href={site.repository} target="_blank" rel="noopener">
+              <Icon name="github" size={16} /> Source on GitHub
+            </a>
           </div>
 
           <div class="footer-col">
