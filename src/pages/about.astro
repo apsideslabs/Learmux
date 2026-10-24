@@ -22,15 +22,15 @@ const lessons = await allTutorials();
     <header style="margin-bottom:1.4rem">
       <h1>About us</h1>
       <p class="lede">
-        Learmux is a small publication for learning Termux — Android's terminal and Linux environment —
-        and the command line in general.
+        Learmux is a small publication about Termux, Android's terminal and Linux environment, and about
+        the command line in general.
       </p>
     </header>
 
     <div class="prose">
       <h2>What this is</h2>
       <p>
-        Most command-line tutorials stop at listing commands. Learmux pairs a short written lesson with a
+        Most command-line tutorials stop at listing commands. Learmux pairs each short lesson with a
         challenge that makes you use it. You read about <code>grep</code>, then you pull a flag out of a
         noisy log with it.
       </p>
@@ -41,14 +41,13 @@ const lessons = await allTutorials();
 
       <h2>Who makes it</h2>
       <p>
-        Learmux is designed, engineered and maintained by <strong>{studio.name}</strong> — an independent
+        Learmux is designed, built and maintained by <strong>{studio.name}</strong>, an independent
         research and engineering studio. We build software that teaches.
       </p>
       <p>
-        The studio builds for the people who have the least — the slowest connection, the oldest device,
-        the smallest budget — so its work is offline-first, dependency-free and CPU-only wherever it can
-        be. Learmux follows the same rule: static pages, no tracking, no account, and nothing that needs a
-        server to work.
+        The studio builds for people who have the least. The slowest connection, the oldest device, the
+        smallest budget. So its work is offline-first and CPU-only wherever it can be. Learmux follows the
+        same rule. Static pages, no tracking, no account, and nothing that needs a server.
       </p>
       <a class="studio-credit" href={studio.url} target="_blank" rel="noopener">
         <img src={`${base}brand/apsides-labs.svg`} alt={studio.name} />
@@ -56,15 +55,15 @@ const lessons = await allTutorials();
 
       <h2>How the sandbox works</h2>
       <p>
-        There is no operating system behind the terminal, and nothing you type ever reaches a real shell.
-        Each challenge declares a virtual filesystem, and your keystrokes are parsed by an explicit
-        tokeniser and pipeline executor. The same command always produces the same result, and resetting a
-        challenge restores the original files.
+        There is no operating system behind the terminal, and nothing you type reaches a real shell. Each
+        challenge declares a virtual filesystem, and your keystrokes go through a command parser written
+        for this site. The same command always gives the same result. Resetting a challenge puts the
+        original files back.
       </p>
       <p>
-        Commands that would normally touch a network or the device — <code>nmap</code>, <code>curl</code>,
-        <code>pkg</code>, <code>ps</code> — return output written for that challenge, so nothing depends on
-        a server.
+        Commands that would normally touch a network or the device, such as <code>nmap</code>,
+        <code>curl</code>, <code>pkg</code> and <code>ps</code>, return output written for that challenge.
+        Nothing depends on a server.
       </p>
 
       <h2>How challenges are validated</h2>
@@ -72,19 +71,6 @@ const lessons = await allTutorials();
         Completing a challenge is decided by explicit rules stored with the challenge, not by scanning for a
         flag string. A rule might require that you read a particular file, run a particular command, or move
         into a particular directory. Submitting the flag directly also works.
-      </p>
-
-      <h2>How it is built</h2>
-      <ul>
-        <li><strong>Astro</strong> renders the site to static files — pages, lessons, categories, search and the sitemap.</li>
-        <li><strong>TypeScript</strong> powers the terminal: an explicit command parser, a virtual filesystem and a deterministic shell.</li>
-        <li><strong>Custom CSS</strong> gives the interface and the terminal their own character.</li>
-        <li><strong>Markdown</strong> holds the lessons; <strong>JSON</strong> holds the challenge definitions.</li>
-      </ul>
-      <p>
-        The source is on
-        <a href="https://github.com/apsideslabs/Learmux" target="_blank" rel="noopener">GitHub</a>
-        under the MIT licence.
       </p>
 
       <h2>Numbers</h2>
