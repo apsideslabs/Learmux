@@ -1,0 +1,73 @@
+---
+/**
+ * One command line, with a copy button.
+ *
+ * Copy is the whole point on a phone: typing a path or a flag by hand is the
+ * most likely place to make a mistake.
+ */
+interface Props {
+  cmd: string;
+  note?: string;
+}
+
+const { cmd, note } = Astro.props;
+---
+
+<div class="ctf-cmd">
+  <code>{cmd}</code>
+  <button class="copy-btn" data-copy={cmd} aria-label={`Copy ${cmd}`} title="Copy">Copy</button>
+</div>
+{note && <p class="ctf-cmd__note">{note}</p>}
+
+<style>
+  .ctf-cmd__note {
+    font-size: 0.84rem;
+    color: var(--muted);
+    margin: calc(var(--sp-2) * -1 + 0.1rem) 0 var(--sp-3);
+  }
+</style>
+
+<script>
+  function initCtfCopy() {
+    document.querySelectorAll<HTMLButtonElement>('.copy-btn[data-copy]').forEach((btn) => {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = '1';
+
+      btn.addEventListener('click', async () => {
+        const text = btn.dataset.copy ?? '';
+        let ok = false;
+        try {
+          await navigator.clipboard.writeText(text);
+          ok = true;
+        } catch {
+          // the clipboard API needs a secure context, so keep a fallback
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.top = '-1000px';
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            ok = document.execCommand('copy');
+          } catch {
+            ok = false;
+          }
+          document.body.removeChild(ta);
+        }
+        if (!ok) return;
+
+        const was = btn.textContent;
+        btn.classList.add('is-copied');
+        btn.textContent = 'Copied';
+        window.setTimeout(() => {
+          btn.classList.remove('is-copied');
+          btn.textContent = was;
+        }, 1400);
+      });
+    });
+  }
+
+  initCtfCopy();
+  document.addEventListener('astro:page-load', initCtfCopy);
+</script>
