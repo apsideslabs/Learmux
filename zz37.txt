@@ -1,8 +1,0 @@
-cat people.json
-```
-
-```
-{"id": 42, "name": "ada", "created": true}
-```
-
-That is hard to read once it grows. Python ships with a tool that reformats JSON, and Termux has python installed. Point it at the file:

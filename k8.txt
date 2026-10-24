@@ -1,4 +1,0 @@
-www.example.com canonical name = example.com.
-Name:   example.com
-Address: 93.184.216.34
-```

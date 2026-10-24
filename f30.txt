@@ -1,2 +1,0 @@
-python -m json.tool people.json
-```

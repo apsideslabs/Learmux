@@ -1,7 +1,0 @@
-| --- | --- |
-| Accept | The kind of content you can handle |
-| Content-Type | The format of the body you are sending |
-| User-Agent | Which client is making the request |
-| Authorization | Credentials for a protected resource |
-
-This request sends an Accept header and a form field, and writes the reply body to a file with -o:

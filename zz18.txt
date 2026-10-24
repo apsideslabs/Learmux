@@ -1,4 +1,0 @@
-nslookup www.example.com
-```
-
-```

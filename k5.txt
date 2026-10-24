@@ -1,9 +1,0 @@
-dig +short www.example.com
-```
-
-```
-example.com.
-93.184.216.34
-```
-
-The first line is the CNAME, and the second is the address the alias resolves to. nslookup shows the same idea in a shorter form:
