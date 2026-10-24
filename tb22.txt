@@ -1,0 +1,21 @@
+    about:
+      'A lightweight downloader that splits a file across multiple connections, and can pull a torrent while it is still downloading.',
+    developer: 'Tatsuhiro Tsujikawa',
+    license: 'GPL-2.0',
+    url: 'https://aria2.github.io/',
+    mono: 'ar',
+    install: 'pkg install aria2',
+    commands: [
+      { cmd: 'aria2c URL', what: 'Download with multiple connections' },
+      { cmd: 'aria2c -x 8 -s 8 URL', what: 'Set connections and splits' },
+      { cmd: 'aria2c -i urls.txt', what: 'Download a list of URLs' },
+    ],
+  },
+  {
+    slug: 'openssh',
+    name: 'OpenSSH',
+    category: 'transfer',
+    tagline: 'Encrypted remote shells and file copies.',
+    about:
+      'The ssh, scp, sftp and ssh-keygen suite. On Termux it also runs the server side, so your phone can be the host on port 8022.',
+    developer: 'The OpenBSD Project',
