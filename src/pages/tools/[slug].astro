@@ -1,0 +1,119 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import '../../styles/tools.css';
+import { tools, toolBySlug, categoryById } from '../../data/tools';
+
+export function getStaticPaths() {
+  return tools.map((tool) => ({ params: { slug: tool.slug }, props: { tool } }));
+}
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const { tool } = Astro.props;
+const category = categoryById(tool.category);
+const related = tools.filter((t) => t.category === tool.category && t.slug !== tool.slug).slice(0, 4);
+---
+
+<BaseLayout title={tool.name} description={`${tool.name} — ${tool.tagline}`}>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span>
+      <a href={`${base}tools/`}>Tools</a><span class="sep">›</span>
+      {category && <><span>{category.name}</span><span class="sep">›</span></>}
+      <span>{tool.name}</span>
+    </nav>
+
+    <header class="tool-hero">
+      <span class="tool-hero__logo">
+        <img src={`${base}logos/${tool.slug}.svg`} width="44" height="44" alt="" />
+      </span>
+      <div class="tool-hero__copy">
+        <h1>{tool.name}</h1>
+        <p class="lede">{tool.tagline}</p>
+        <div class="chip-row">
+          {category && <a class="chip chip--link" href={`${base}tools/?cat=${category.id}`}>{category.name}</a>}
+          {tool.license && <span class="chip">{tool.license}</span>}
+        </div>
+      </div>
+    </header>
+
+    <div class="tool-body">
+      <div class="tool-main">
+        <section>
+          <h2>About</h2>
+          <p>{tool.about}</p>
+        </section>
+
+        {tool.install && (
+          <section>
+            <h2>Install</h2>
+            <p class="muted">Get it into Termux with one command:</p>
+            <div class="cmd-block">
+              <code>{tool.install}</code>
+            </div>
+          </section>
+        )}
+
+        <section>
+          <h2>Commands worth knowing</h2>
+          <div class="cmd-table">
+            {tool.commands.map((c) => (
+              <div class="cmd-row">
+                <code>{c.cmd}</code>
+                <span>{c.what}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <h2>Developed by</h2>
+          <p>
+            <strong>{tool.developer}</strong>
+            {tool.license ? <> · released under <strong>{tool.license}</strong></> : null}.
+          </p>
+          <div class="actions" style="margin-top:0.8rem">
+            <a class="btn btn--outline" href={tool.url} target="_blank" rel="noopener">
+              Project home <Icon name="arrow" size={15} />
+            </a>
+          </div>
+        </section>
+      </div>
+
+      <aside class="tool-side">
+        <div class="fact-card">
+          <h2 class="fact-card__title">At a glance</h2>
+          <dl class="fact-list">
+            <div><dt>Category</dt><dd>{category?.name ?? tool.category}</dd></div>
+            <div><dt>Developer</dt><dd>{tool.developer}</dd></div>
+            {tool.license && <div><dt>Licence</dt><dd>{tool.license}</dd></div>}
+            {tool.install && <div><dt>Install</dt><dd><code>{tool.install}</code></dd></div>}
+            <div><dt>Project</dt><dd><a href={tool.url} target="_blank" rel="noopener">{tool.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}</a></dd></div>
+          </dl>
+        </div>
+
+        {related.length > 0 && (
+          <div class="fact-card">
+            <h2 class="fact-card__title">More in {category?.name}</h2>
+            <div class="related-tools">
+              {related.map((r) => (
+                <a href={`${base}tools/${r.slug}/`}>
+                  <span class="tool-logo tool-logo--sm">
+                    <img src={`${base}logos/${r.slug}.svg`} width="20" height="20" alt="" loading="lazy" />
+                  </span>
+                  <span>{r.name}</span>
+                  <Icon name="chevron" size={14} />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </aside>
+    </div>
+
+    <div class="actions" style="margin-top:2rem">
+      <a class="btn btn--outline" href={`${base}tools/`}>All tools</a>
+      <a class="btn btn--green" href={`${base}challenges/`}>Practise with the CTF</a>
+    </div>
+  </div>
+</BaseLayout>
