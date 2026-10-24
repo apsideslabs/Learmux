@@ -1,0 +1,161 @@
+    name: 'FFmpeg',
+    category: 'media',
+    tagline: 'Convert, trim and compress audio and video.',
+    about:
+      'The tool every other media app is built on. It reads almost any format and writes almost any other one.',
+    developer: 'Fabrice Bellard, Michael Niedermayer and the FFmpeg team',
+    license: 'LGPL-2.1 / GPL-2.0',
+    url: 'https://ffmpeg.org/',
+    logo: 'ffmpeg',
+    install: 'pkg install ffmpeg',
+    commands: [
+      { cmd: 'ffmpeg -i in.mp4 out.mkv', what: 'Change container' },
+      { cmd: 'ffmpeg -i in.mp4 -ss 00:01:00 -t 30 out.mp4', what: 'Cut 30 seconds from 1:00' },
+      { cmd: 'ffmpeg -i in.wav -b:a 128k out.mp3', what: 'Convert audio and set bitrate' },
+      { cmd: 'ffmpeg -i in.mp4 -vf scale=720:-1 out.mp4', what: 'Resize the video' },
+    ],
+  },
+  {
+    slug: 'imagemagick',
+    name: 'ImageMagick',
+    category: 'media',
+    tagline: 'Resize, crop and convert images in a batch.',
+    about:
+      'The convert and magick commands handle over a hundred image formats. Ideal for making a folder of screenshots a sensible size.',
+    developer: 'ImageMagick Studio LLC',
+    license: 'ImageMagick licence (Apache-style)',
+    url: 'https://imagemagick.org/',
+    mono: 'im',
+    install: 'pkg install imagemagick',
+    commands: [
+      { cmd: 'magick in.png out.jpg', what: 'Convert between formats' },
+      { cmd: 'magick in.jpg -resize 50% small.jpg', what: 'Halve the dimensions' },
+      { cmd: 'magick in.jpg -strip out.jpg', what: 'Remove metadata' },
+      { cmd: 'magick montage *.png grid.jpg', what: 'Build a contact sheet' },
+    ],
+  },
+  {
+    slug: 'pandoc',
+    name: 'Pandoc',
+    category: 'media',
+    tagline: 'Convert between document formats.',
+    about:
+      'Markdown to PDF, HTML to Word, anything to anything. It is the standard tool for turning plain text into a finished document.',
+    developer: 'John MacFarlane',
+    license: 'GPL-2.0',
+    url: 'https://pandoc.org/',
+    logo: 'pandoc',
+    install: 'pkg install pandoc',
+    commands: [
+      { cmd: 'pandoc in.md -o out.pdf', what: 'Markdown to PDF' },
+      { cmd: 'pandoc in.md -o out.html', what: 'Markdown to a web page' },
+      { cmd: 'pandoc in.md -t plain', what: 'Strip the markup' },
+    ],
+  },
+  {
+    slug: 'tesseract',
+    name: 'Tesseract',
+    category: 'media',
+    tagline: 'Turn an image of text into actual text.',
+    about:
+      'Optical character recognition, trained on over a hundred languages. Point it at a screenshot or a photo of a page and get selectable text back.',
+    developer: 'Ray Smith, now maintained by the community (originally HP, then Google)',
+    license: 'Apache-2.0',
+    url: 'https://github.com/tesseract-ocr/tesseract',
+    mono: 'te',
+    install: 'pkg install tesseract',
+    commands: [
+      { cmd: 'tesseract image.png out', what: 'Write recognised text to out.txt' },
+      { cmd: 'tesseract image.png out -l eng', what: 'Choose the language' },
+      { cmd: 'tesseract image.png stdout', what: 'Print instead of writing a file' },
+    ],
+  },
+
+  /* ── monitor ───────────────────────────────────────────────────────────── */
+  {
+    slug: 'ncdu',
+    name: 'ncdu',
+    category: 'monitor',
+    tagline: 'Find what is eating your storage, interactively.',
+    about:
+      'Walks a directory and shows sizes you can drill into with the arrow keys. The quickest answer to "why is my phone full".',
+    developer: 'Yoran Heling',
+    license: 'MIT',
+    url: 'https://dev.yorhel.nl/ncdu',
+    mono: 'nc',
+    install: 'pkg install ncdu',
+    commands: [
+      { cmd: 'ncdu', what: 'Scan the current directory' },
+      { cmd: 'ncdu /sdcard', what: 'Scan shared storage' },
+      { cmd: 'ncdu -x ~', what: 'Stay on one filesystem' },
+    ],
+  },
+  {
+    slug: 'lsof',
+    name: 'lsof',
+    category: 'monitor',
+    tagline: 'List the files and sockets a process has open.',
+    about:
+      'Answers "what is holding this file" and "what is listening on this port". Especially useful when something will not unmount or stop.',
+    developer: 'Victor A. Abell and the lsof project',
+    license: 'BSD-style',
+    url: 'https://github.com/lsof-org/lsof',
+    mono: 'lo',
+    install: 'pkg install lsof',
+    commands: [
+      { cmd: 'lsof -i', what: 'List network connections' },
+      { cmd: 'lsof -i :8022', what: 'What is using one port' },
+      { cmd: 'lsof /path/to/file', what: 'Which process holds a file' },
+    ],
+  },
+  {
+    slug: 'fastfetch',
+    name: 'fastfetch',
+    category: 'monitor',
+    tagline: 'Print a summary of your system at a glance.',
+    about:
+      'Device, kernel, shell, uptime and memory in one compact panel. It is the first thing many people put in their shell profile.',
+    developer: 'Linus Dierheimer and the fastfetch community',
+    license: 'MIT',
+    url: 'https://github.com/fastfetch-cli/fastfetch',
+    mono: 'ff',
+    install: 'pkg install fastfetch',
+    commands: [
+      { cmd: 'fastfetch', what: 'Print the summary' },
+      { cmd: 'fastfetch --logo none', what: 'Skip the ASCII art' },
+      { cmd: 'fastfetch -s Memory', what: 'Show one section only' },
+    ],
+  },
+  {
+    slug: 'chafa',
+    name: 'chafa',
+    category: 'monitor',
+    tagline: 'Show an image in the terminal using text characters.',
+    about:
+      'Renders pictures with Unicode blocks and colour, so you can check an image without leaving the shell or opening a viewer.',
+    developer: 'Hans Petter Jansson',
+    license: 'LGPL-3.0',
+    url: 'https://hpjansson.org/chafa/',
+    mono: 'ch',
+    install: 'pkg install chafa',
+    commands: [
+      { cmd: 'chafa image.png', what: 'Render an image' },
+      { cmd: 'chafa -s 60x30 image.png', what: 'Choose the output size' },
+      { cmd: 'chafa --symbols block image.png', what: 'Use solid blocks' },
+    ],
+  },
+];
+
+export function toolsByCategory(): { category: ToolCategory; items: Tool[] }[] {
+  return toolCategories
+    .map((category) => ({ category, items: tools.filter((t) => t.category === category.id) }))
+    .filter((g) => g.items.length > 0);
+}
+
+export function toolBySlug(slug: string): Tool | undefined {
+  return tools.find((t) => t.slug === slug);
+}
+
+export function categoryById(id: CategoryId): ToolCategory | undefined {
+  return toolCategories.find((c) => c.id === id);
+}
