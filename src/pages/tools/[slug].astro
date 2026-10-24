@@ -59,7 +59,7 @@ const related = tools.filter((t) => t.category === tool.category && t.slug !== t
           <div class="cmd-table">
             {tool.commands.map((c) => (
               <div class="cmd-row">
-                <code>{c.cmd}</code>
+                <code>{c.cmd ?? `${tool.bin ?? tool.name.toLowerCase()} ${c.args ?? ''}`.trim()}</code>
                 <span>{c.what}</span>
               </div>
             ))}
