@@ -27,6 +27,30 @@ No backend. The whole thing builds to static files.
   output for a flag string.
 - **Responsive navigation drawer** — the spec's link set, focus management, Escape to close.
 
+## Course structure
+
+Content is a course, not a list. Lessons carry a `track` and a global `order`, and the tracks are
+ordered with prerequisites:
+
+| # | Track | Level | Lessons | Covers |
+| --- | --- | --- | --- | --- |
+| 1 | Foundations | Beginner | 7 | the filesystem, reading and searching text, pipes, permissions, packages, shell config |
+| 2 | The shell in practice | Intermediate | 6 | scripting, processes, environment and PATH, sed and awk, archives, cron |
+| 3 | Networking and the internet | Intermediate | 5 | interfaces and scanning, DNS, HTTP and APIs, SSH, moving files |
+| 4 | Security fundamentals | Intermediate | 5 | encoding and hashes, passwords and keys, log reading, hardening, safe habits |
+| 5 | Projects | Advanced | 3 | a backup script, a log analyser, a terminal dashboard |
+
+Routes:
+
+- `/course/` — the curriculum: who it is for, what you need, the path, every track and lesson
+- `/course/<track>/` — a track landing page with its lessons in order and the next track
+- `/learn/` — all lessons in reading order
+- `/learn/<lesson>/` — the article, with its position in the track and previous/next navigation
+
+Each lesson follows the same shape: an opening paragraph, a "What you'll be able to do" list, numbered
+steps where every command is followed by its expected output, callouts, a quick-reference table and
+next steps.
+
 ## The stack
 
 | Layer | Choice | Why |
@@ -54,7 +78,8 @@ Learmux/
 │   │   ├── commands.ts          # the command set
 │   │   ├── hash.ts              # pure-JS SHA-256
 │   │   ├── challenges.ts        # challenge loader
-│   │   ├── tutorials.ts         # lesson helpers (sorting, categories, dates)
+│   │   ├── curriculum.ts        # the course: tracks, order, outcomes
+│   │   ├── tutorials.ts         # lesson helpers (ordering, tracks, categories)
 │   │   ├── site.ts              # brand, nav and social config
 │   │   ├── progress.ts          # localStorage progress
 │   │   ├── md.ts                # small markdown renderer for briefings
