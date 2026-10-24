@@ -13,19 +13,19 @@ tags: [text, sed, awk]
 
 import Callout from '../../components/Callout.astro';
 
-`sed` and `awk` are the two workhorses of text on the command line. `sed` rewrites lines as they pass through. `awk` splits each line into fields and lets you pick, test or total them. Together they turn a wall of output into the few numbers or lines you actually want.
+`sed` and `awk` are the two workhorses of text on the command line. `sed` rewrites lines as they pass through. `awk` splits each line into fields. Then you can pick, test or total them. Together they turn a wall of output into the few numbers or lines you actually want.
 
 ## What you'll be able to do
 
-- Replace text with `sed` and control how many times each line is touched.
-- Delete lines that match a pattern, and print only a range of lines.
+- Replace text with `sed`. Control how many times each line is touched.
+- Delete lines that match a pattern. Print only a range of lines.
 - Pull single fields out of a line with `awk`.
 - Read colon-separated data with `awk -F`.
-- Total a column and build a pipeline over a log file.
+- Total a column. Build a pipeline over a log file.
 
 ## Step 1: Create a file and substitute text with sed
 
-Start with a small file. The heredoc writes it in one go and `cat` shows what landed.
+Start with a small file. The heredoc writes it in one go, and `cat` shows what landed.
 
 ```bash
 cat > scores.txt << 'EOF'
@@ -57,7 +57,7 @@ carol 88 chemistry
 dave 60 MATHS
 ```
 
-Every line containing `maths` changed. Now watch the `g` flag, which replaces every match on a line rather than only the first.
+Every line containing `maths` changed. Now watch the `g` flag. It replaces every match on a line, not only the first.
 
 ```bash
 printf 'cat dog cat\ndog cat dog\ncat cat cat\n' > words.txt
@@ -99,7 +99,7 @@ bob 75 physics
 carol 88 chemistry
 ```
 
-The `-n` flag turns off the default printing of every line. Pair it with the `p` command to print only the lines you ask for, here a range.
+The `-n` flag turns off the default printing of every line. Pair it with the `p` command to print only the lines you ask for. Here that is a range.
 
 ```bash
 sed -n '2,3p' scores.txt
@@ -116,7 +116,7 @@ carol 88 chemistry
 
 ## Step 3: Pick fields with awk
 
-`awk` splits each line on whitespace and numbers the pieces `$1`, `$2` and so on. The special name `$NF` means the last field.
+`awk` splits each line on whitespace. The pieces are numbered `$1`, `$2` and so on. The special name `$NF` means the last field.
 
 ```bash
 awk '{print $1}' scores.txt
@@ -155,7 +155,7 @@ awk -F: '{print $2}' servers.txt
 
 ## Step 4: Total a column with awk
 
-The `END` block runs once, after the last line, which is where a total belongs.
+The `END` block runs once, after the last line. That is where a total belongs.
 
 ```bash
 printf '12\n7\n30\n5\n' > numbers.txt
@@ -166,7 +166,7 @@ awk '{sum+=$1} END {print sum}' numbers.txt
 54
 ```
 
-The first block adds each line's value into `sum`. The `END` block prints it once the file runs out. Add a counter in the first block and divide in the `END` block, and the same shape gives you an average.
+The first block adds each line's value into `sum`. The `END` block prints it once the file runs out. Add a counter in the first block, and divide in the `END` block. The same shape gives you an average.
 
 ## Step 5: A realistic pipeline over a log file
 
@@ -187,7 +187,7 @@ EOF
 
 ```
 
-Now chain the tools. Take the first field, count how often each value repeats, and sort so the busiest address is on top.
+Now chain the tools. Take the first field, then count how often each value repeats. Sort the result so the busiest address is on top.
 
 ```bash
 awk '{print $1}' access.log | sort | uniq -c | sort -rn
