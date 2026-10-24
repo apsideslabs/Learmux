@@ -1,0 +1,8 @@
+
+```
+cat people.json
+```
+
+```
+{"id": 42, "name": "ada", "created": true}
+```
