@@ -13,7 +13,7 @@ tags: [security, hardening]
 
 import Callout from '../../components/Callout.astro';
 
-In this lesson you will shrink the surface of your own Termux install. You will look at what is listening on the network, keep your packages current, check the permissions on your home directory, confirm you are not running as root, and put the app behind your device lock. This matters because most attacks do not need a clever exploit. They need a door you left open.
+In this lesson you will shrink the surface of your own Termux install. You will look at what is listening on the network, and keep your packages current. You will check the permissions on your home directory. You will confirm you are not running as root, then put the app behind your device lock. This matters, because most attacks do not need a clever exploit. They need a door you left open.
 
 ## What you'll be able to do
 
@@ -21,11 +21,11 @@ In this lesson you will shrink the surface of your own Termux install. You will 
 - Update your installed packages and understand why it matters.
 - Read file permissions and tighten the loose ones.
 - Confirm your normal shell is not running as root.
-- Lock Termux so it asks for your device unlock before it opens.
+- Lock Termux so it asks for your screen lock before it opens.
 
 ## Step 1: Reduce what is listening
 
-A service that listens on a network port is a door. You want as few as possible. The `-tuln` flags ask `netstat` for TCP and UDP listeners, in numeric form, without trying to resolve names.
+A service that listens on a network port is a door. Keep as few open as you can. The `-tuln` flags ask `netstat` for TCP and UDP listeners. They print in numeric form and skip name lookups.
 
 ```bash
 $ netstat -tuln
@@ -35,7 +35,7 @@ tcp        0      0 127.0.0.1:8022          0.0.0.0:*               LISTEN
 tcp6       0      0 :::8022                 :::*                    LISTEN
 ```
 
-Two lines, both for port `8022`, which is the Termux SSH daemon. The `127.0.0.1` address is your own loopback, so that listener is only reachable from the phone itself. If you did not start an SSH server, stop it and check again.
+Two lines, both for port `8022`, which is the Termux SSH daemon. The `127.0.0.1` address is your own loopback. That listener is only reachable from the phone itself. If you did not start an SSH server, stop it and check again.
 
 ```bash
 $ pkill sshd
@@ -73,7 +73,7 @@ openssh/stable,now 9.9p1 aarch64 [installed]
 openssl/stable,now 3.4.0 aarch64 [installed]
 ```
 
-Every line is a package you are trusting. If you do not recognise one and do not need it, removing it is one less thing to keep updated.
+Every line is a package you are trusting. If you do not recognise one and do not need it, remove it. That is one less thing to keep updated.
 
 ## Step 3: Check and fix permissions
 
@@ -89,7 +89,7 @@ drwx------  2 u0_a231 u0_a231 4096 Mar 10 09:00 .ssh
 -rw-rw-rw-  1 u0_a231 u0_a231   42 Mar 10 09:01 notes.txt
 ```
 
-Read the first column from the left. The leading `d` means a directory. The next nine characters are three groups of three: your permissions, your group's, and everyone else's. The file `notes.txt` shows `-rw-rw-rw-`, which means everyone can read and write it. That is too loose for a file you care about. Tighten it so only you can read and write.
+Read the first column from the left. The leading `d` means a directory. The next nine characters are three groups of three. They cover your permissions, your group's, and everyone else's. The file `notes.txt` shows `-rw-rw-rw-`, so everyone can read and write it. That is too loose for a file you care about. Tighten it so only you can read and write.
 
 ```bash
 $ chmod 600 notes.txt
@@ -100,7 +100,7 @@ $ ls -la notes.txt
 
 The `600` sets read and write for you, and nothing for anyone else. Do the same for any file that holds a secret.
 
-Directories carry permissions too, and you want your home directory closed to others. The `-d` flag makes `ls` describe the directory itself rather than its contents.
+Directories carry permissions too. You want your home directory closed to others. The `-d` flag makes `ls` describe the directory itself rather than its contents.
 
 ```bash
 $ ls -ld ~
@@ -115,7 +115,7 @@ drwx------ 5 u0_a231 u0_a231 4096 Mar 10 09:02 /data/data/com.termux/files/home
 
 ## Step 4: Do not run as root
 
-Root is the all-powerful account. On a phone, running everything as root means one mistake can damage the whole device. Termux is safer because it does not run as root by default. Confirm where you stand with `id`.
+Root is the account with the most privilege. On a phone, running everything as root means one mistake can damage the whole device. Termux is safer because it does not run as root by default. Confirm where you stand with `id`.
 
 ```bash
 $ id
@@ -126,13 +126,13 @@ Your user id is a normal app id like `u0_a231`, not `root`. That is what you wan
 
 ## Step 5: Lock the app behind the device lock
 
-The strongest wall around your shell is the lock screen you already use. Open your Android settings, find the Termux app entry under Apps, and check that the app is protected by your device unlock. Depending on your phone this appears as a per-app lock, a secure folder, or a setting that requires the screen lock before the app opens. With that on, someone who picks up an unlocked-looking phone still cannot reach your terminal.
+The strongest wall around your shell is the lock screen you already use. Open your Android settings. Find the Termux app entry under Apps, and check that the app is protected by your screen lock. Depending on your phone this appears as a per-app lock, a secure folder, or a setting that asks for the screen lock before the app opens. With that on, someone who picks up your phone still cannot reach your terminal without your lock.
 
 <Callout type="warning" title="Hardening is a habit, not a trick">
 There is no single switch that makes you safe. Hardening is the repeated work of reducing what is open, keeping things current, and closing what you are not using. Do the small things and the surface shrinks.
 </Callout>
 
-None of these steps is dramatic on its own. Together they mean fewer listeners, fewer old packages, and fewer files that others can read. That is what hardening is: a smaller surface, built from small habits.
+None of these steps is dramatic on its own. Together they mean fewer listeners, fewer old packages, and fewer files that others can read. That is what hardening is. A smaller surface, built from small habits.
 
 ## Quick reference
 
