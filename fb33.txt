@@ -1,0 +1,9 @@
+    slug: 'cut',
+    name: 'cut',
+    category: 'text',
+    tagline: 'Pull selected columns or character ranges out of lines',
+    about:
+      'A small filter that keeps only the fields, bytes or characters you name and drops the rest. It works on a fixed delimiter or on character positions, so it suits simple, regular data. Use it when a table needs narrowing before the next stage of a pipeline.',
+    developer: 'GNU Project',
+    url: 'https://www.gnu.org/software/coreutils/',
+    bin: 'cut',
