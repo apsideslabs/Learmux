@@ -171,7 +171,7 @@ add({
   summary: 'Unix hides files whose names start with a dot. Find one.',
   objective: 'Find and read the hidden file in your home directory.',
   briefing:
-    'On Unix-like systems a leading dot marks a file as hidden — `ls` will not show it by default. ' +
+    'On Unix-like systems a leading dot marks a file as hidden, so `ls` will not show it by default. ' +
     'Use `ls -a` to list *all* entries, then `cat` the one that looks suspicious.',
   flag: 'TERMUX{hidden_in_plain_sight}',
   hints: ['`ls` skips dotfiles.', '`ls -a` shows them, including `.secret`'],
@@ -228,10 +228,10 @@ add({
   objective: 'Find the one file whose permissions are rw-rw-rw- and read it.',
   briefing:
     '`ls -l` shows a permissions column like `-rw-r--r--`. Read it as three groups: **user**, **group**, **others**. ' +
-    'A file that is `rw-rw-rw-` (octal `666`) can be written by *anyone* — a classic security smell.\n\n' +
+    'A file that is `rw-rw-rw-` (octal `666`) can be written by *anyone*. That is a classic security smell.\n\n' +
     'List the directory in long form and find the file that is too permissive.',
   flag: 'TERMUX{world_writable}',
-  hints: ['`ls -l` prints the modes.', 'Look for `-rw-rw-rw-` — that is the odd one out.'],
+  hints: ['`ls -l` prints the modes.', 'Look for `-rw-rw-rw-`. That is the odd one out.'],
   starters: ['ls -l', 'cat shared.ini'],
   fs: termuxRoot({
     'config.cfg': f('debug = false\n', '644'),
@@ -253,7 +253,7 @@ add({
   objective: 'Search access.log for the flag.',
   briefing:
     '`grep <pattern> <file>` prints only the lines that match. The log is hundreds of lines of noise, ' +
-    'but the flag starts with `TERMUX{` — search for that.',
+    'but the flag starts with `TERMUX{`. Search for that.',
   flag: 'TERMUX{logs_never_lie}',
   hints: ['`grep TERMUX access.log`', 'Add `-n` to see line numbers.'],
   starters: ['grep TERMUX access.log'],
@@ -451,7 +451,7 @@ add({
   summary: 'A careless admin left a secret in a running command line.',
   objective: 'List running processes and find the flag in a command argument.',
   briefing:
-    'On real systems, `ps` shows the full command line of every process — including secrets people pass as ' +
+    'On real systems, `ps` shows the full command line of every process, including secrets people pass as ' +
     'arguments by mistake. Run `ps` here and read carefully.',
   flag: 'TERMUX{process_hunt}',
   hints: ['`ps` lists processes.', 'One process passes a `--token`.'],
@@ -544,7 +544,7 @@ add({
       'Nmap scan report for localhost (127.0.0.1)\n' +
       'PORT     STATE SERVICE VERSION\n' +
       '22/tcp   open  ssh     OpenSSH 9.6 (protocol 2.0)\n' +
-      '1337/tcp open  waste   Learmux flag service — banner: TERMUX{network_recon}\n' +
+      '1337/tcp open  waste   Learmux flag service, banner: TERMUX{network_recon}\n' +
       '8022/tcp open  ssh     OpenSSH 9.6 (Termux dropbear)\n' +
       'Nmap done: 1 IP address (1 host up) scanned in 1.42 seconds\n',
   },
@@ -608,7 +608,7 @@ add({
   summary: 'A file holds the flag written backwards.',
   objective: 'Reverse the characters in reversed.txt to read the flag.',
   briefing:
-    'Not every obfuscation is cryptography. `rev` reverses each line — perfect for text stored backwards:\n\n' +
+    'Not every obfuscation is cryptography. `rev` reverses each line. Perfect for text stored backwards:\n\n' +
     '```\nrev reversed.txt\n```',
   flag: 'TERMUX{reverse_engineering}',
   hints: ['`rev reversed.txt`', '`cat` then read it right-to-left also works.'],
