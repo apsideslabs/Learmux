@@ -1,0 +1,212 @@
+---
+title: "Environment variables and PATH"
+description: "Read, set and export environment variables in Termux, and learn how PATH decides which command runs when you type a name."
+excerpt: "The values your shell remembers for you, and how PATH decides what runs."
+category: "Shell"
+author: "The Study Cipher"
+date: "2026-01-30"
+order: 10
+track: "practice"
+level: "Intermediate"
+tags: [shell, environment]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Every time you open Termux you get a fresh shell, and that shell keeps a set of named values called environment variables. They hold your home directory, the folders searched for commands, your terminal type and your locale. Change one and you change how your commands behave, without editing the commands themselves.
+
+## What you'll be able to do
+
+- Print any environment variable with `echo` or `printenv`.
+- Set your own shell variables and reuse them later in the session.
+- Export a variable so the programs you launch inherit it.
+- Explain what `PATH` is and why the order of its entries matters.
+- Add a folder to `PATH` for the current session.
+
+## Step 1: List what the shell already knows
+
+The `env` command prints every environment variable in the current session. Termux sets a few dozen. This is a trimmed view.
+
+```bash
+env
+```
+
+```text
+ANDROID_DATA=/data
+ANDROID_ROOT=/system
+COLORTERM=truecolor
+HOME=/data/data/com.termux/files/home
+LANG=en_US.UTF-8
+PATH=/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets
+PREFIX=/data/data/com.termux/files/usr
+PWD=/data/data/com.termux/files/home
+SHELL=/data/data/com.termux/files/usr/bin/bash
+TERM=xterm-256color
+TMPDIR=/data/data/com.termux/files/usr/tmp
+```
+
+`printenv` prints the same values, one per line. Pipe it through `sort` to put them in alphabetical order.
+
+## Step 2: Read a single variable
+
+Put a `$` in front of a name and the shell replaces it with the value before running the command. `echo` is the quickest way to see that value.
+
+```bash
+echo $HOME
+```
+
+```text
+/data/data/com.termux/files/home
+```
+
+`printenv` does the same job but takes the bare name, with no `$`.
+
+```bash
+printenv HOME
+```
+
+```text
+/data/data/com.termux/files/home
+```
+
+<Callout type="tip" title="Quoting">
+Wrap the name in double quotes when it sits inside a longer string, as in `echo "home is $HOME"`. Double quotes still expand the variable. Single quotes do not, so `echo 'home is $HOME'` prints that text literally.
+</Callout>
+
+## Step 3: Set your own variable
+
+Assign a value with the name on the left, an equals sign, then the value on the right. Keep the spaces away from the equals sign.
+
+```bash
+project=notes
+echo $project
+```
+
+```text
+notes
+```
+
+This variable lives only in the current shell session. Close the session and it is gone.
+
+## Step 4: Export it so child processes see it
+
+A variable you set stays private to your shell until you export it. A child process, such as another `bash`, starts with a fresh copy of the environment and cannot see private shell variables.
+
+```bash
+local_only=hello
+bash -c 'echo $local_only'
+```
+
+```text
+
+```
+
+The output is empty. The child shell has no idea what `local_only` is. The parent still does.
+
+```bash
+echo $local_only
+```
+
+```text
+hello
+```
+
+Now export a variable and run the same test.
+
+```bash
+export project
+bash -c 'echo $project'
+```
+
+```text
+notes
+```
+
+Because `project` is exported, every child process inherits it. That is the whole difference. An exported variable is copied into the environment of the programs you run. A plain shell variable is not.
+
+You can set and export in one line.
+
+```bash
+export EDITOR=nano
+printenv EDITOR
+```
+
+```text
+nano
+```
+
+<Callout type="warning" title="Secrets">
+Never put a password, an API key or a token into a variable that you export in a script you share. Exported variables are copied into every child process and can be read from the environment of those processes. Keep secrets in a file that only you can read, and load them only when a command needs them.
+</Callout>
+
+## Step 5: Understand PATH and why order matters
+
+`PATH` is a list of folders separated by colons. When you type a command name, the shell walks that list from left to right and runs the first matching program it finds.
+
+```bash
+echo $PATH
+```
+
+```text
+/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets
+```
+
+Because the shell stops at the first match, the leftmost folder wins. If two folders both hold a program called `python`, the copy in the earlier folder runs.
+
+To make your own folder take priority, put it at the front.
+
+```bash
+export PATH="$HOME/bin:$PATH"
+echo $PATH
+```
+
+```text
+/data/data/com.termux/files/home/bin:/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets
+```
+
+Anything in `$HOME/bin` now runs ahead of the system copies. To search your folder last instead, swap the order.
+
+```bash
+export PATH="$PATH:$HOME/bin"
+echo $PATH
+```
+
+```text
+/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets:/data/data/com.termux/files/home/bin
+```
+
+<Callout type="tip" title="Use absolute paths">
+When you change `PATH`, write the full path, such as `$HOME/bin`, rather than a relative one. `PATH` is read from whatever directory you happen to be in, so a relative entry changes meaning every time you change directory.
+</Callout>
+
+The change lasts only for this session. To keep it, put the `export` line at the end of your shell startup file.
+
+```bash
+echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+```
+
+```text
+
+```
+
+That line prints nothing when it succeeds. Open a new session and the change is there.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `env` | Print all environment variables |
+| `printenv` | Print all, or one named, environment variable |
+| `echo $NAME` | Print the value of a variable |
+| `NAME=value` | Set a shell variable for this session |
+| `export NAME` | Mark a variable so child processes inherit it |
+| `export NAME=value` | Set and export in one step |
+| `unset NAME` | Remove a variable |
+| `echo $PATH` | Show the command search path |
+| `export PATH="$HOME/bin:$PATH"` | Prepend a folder to `PATH` |
+
+## Next steps
+
+- [Shell scripting basics](/learn/shell-scripting-basics/) to put these values to work inside a script.
+- [Text processing with sed and awk](/learn/text-processing-awk-sed/) to filter the output you generate.
+- [Pipe Dreams](/challenges/pipe-dreams/) to practise combining commands.
