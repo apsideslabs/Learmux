@@ -35,6 +35,20 @@ const thumbs = [
   { slug: 'processes-and-jobs', accent: '#e8734a', lines: ['$ ps aux', 'player  1420  backup --token', '$ kill 1420'] },
   { slug: 'ssh-and-remote-work', accent: '#2878d0', lines: ['$ ssh-keygen -t ed25519', 'Your public key has been saved', '$ ssh player@host'] },
   { slug: 'shell-config-and-aliases', accent: '#f3bc36', lines: ['$ cat ~/.bashrc', "alias ll='ls -la'", '$ source ~/.bashrc'] },
+  { slug: 'environment-and-variables', accent: '#20d65a', lines: ['$ echo $HOME', '/data/data/com.termux/files/home', '$ export EDITOR=nano'] },
+  { slug: 'text-processing-awk-sed', accent: '#f3bc36', lines: ["$ sed 's/old/new/g' notes.txt", '$ awk -F: {print $1}', '$ cat log | awk {sum+=$1}'] },
+  { slug: 'archives-and-compression', accent: '#e8734a', lines: ['$ tar -czf backup.tar.gz project', '$ tar -tzf backup.tar.gz', '$ unzip -l pack.zip'] },
+  { slug: 'scheduling-with-cron', accent: '#8b7cd8', lines: ['$ crontab -l', '0 3 * * * /path/backup.sh', '$ crontab -e'] },
+  { slug: 'dns-and-addresses', accent: '#2878d0', lines: ['$ dig example.com A', '93.184.216.34', '$ dig -x 93.184.216.34'] },
+  { slug: 'http-and-apis-from-the-shell', accent: '#35b0c4', lines: ['$ curl -i example.com', 'HTTP/1.1 200 OK', '$ curl -o page.html example.com'] },
+  { slug: 'transferring-files', accent: '#3fb98a', lines: ['$ scp notes.txt player@host:~', '$ rsync -av --dry-run src/ dst/', '$ rsync -av src/ dst/'] },
+  { slug: 'passwords-and-keys', accent: '#e0559a', lines: ['$ openssl rand -base64 24', '$ sha256sum secret.txt', '$ ssh-keygen -t ed25519'] },
+  { slug: 'logs-and-detection', accent: '#e8734a', lines: ['$ grep Failed auth.log | wc -l', '128', '$ cut -d" " -f1 auth.log | sort | uniq -c'] },
+  { slug: 'hardening-your-termux', accent: '#20d65a', lines: ['$ netstat -tuln', 'tcp 127.0.0.1:8022 LISTEN', '$ pkg upgrade'] },
+  { slug: 'safe-habits-and-privacy', accent: '#8b7cd8', lines: ['$ history', '$ history -d 42', '$ ls -la ~/storage/shared'] },
+  { slug: 'project-backup-script', accent: '#20d65a', lines: ['$ cat backup.sh', '#!/bin/sh', '$ ./backup.sh ~/notes'] },
+  { slug: 'project-log-analyzer', accent: '#f3bc36', lines: ['$ ./analyse.sh access.log', 'Top sources by requests', '$ ./analyse.sh'] },
+  { slug: 'project-personal-dashboard', accent: '#2878d0', lines: ['$ ./dash.sh', 'Uptime 3h 12m', '$ ./dash.sh --brief'] },
 ];
 
 function esc(s) {
