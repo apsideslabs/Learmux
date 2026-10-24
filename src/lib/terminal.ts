@@ -15,6 +15,8 @@ import { markSolved, isSolved } from './progress';
 
 export interface TerminalOptions {
   onSolved?: (challenge: Challenge) => void;
+  /** Shorter shell, for the home-page showcase. */
+  compact?: boolean;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string): HTMLElementTagNameMap[K] {
@@ -29,6 +31,7 @@ export function mountTerminal(root: HTMLElement, challenge: Challenge, opts: Ter
 
   root.innerHTML = '';
   root.classList.add('lx-term');
+  if (opts.compact) root.classList.add('lx-term--compact');
 
   // ── chrome ────────────────────────────────────────────────────────────────
   const bar = el('div', 'lx-term__bar');
