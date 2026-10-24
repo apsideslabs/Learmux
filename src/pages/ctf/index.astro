@@ -1,0 +1,191 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import '../../styles/ctf.css';
+import Cmd from '../../components/Cmd.astro';
+import {
+  allTermux,
+  termuxCount,
+  termuxTotal,
+  termuxVersion,
+  installCommands,
+  ctfRepo,
+} from '../../lib/termux-ctf';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const list = allTermux();
+const count = termuxCount();
+const total = termuxTotal();
+const version = termuxVersion();
+---
+
+<BaseLayout
+  title="Termux CTF"
+  description={`A capture-the-flag you play in Termux, on your own phone. ${count} challenges, ${total} points, real files on your device.`}
+>
+  <div class="wrap">
+    <header class="ctf-hero">
+      <h1>Termux CTF</h1>
+      <p class="lede">
+        {count} challenges you play in your own terminal, against files that are really on
+        your phone. Real permissions, real tools, no simulator. Every flag is generated
+        on your device, so a walkthrough you find online contains someone else's answer.
+      </p>
+    </header>
+
+    <div class="ctf-banner">
+      <pre>█░░ █▀▀ ▄▀█ █▀█ █▀▄▀█ █░█ ▀▄▀
+█▄▄ ██▄ █▀█ █▀▄ █░▀░█ █▄█ █░█
+▀▀▀ ▀▀▀ ▀░▀ ▀░▀ ▀░░░▀ ▀░▀ ▀░▀</pre>
+      <div class="ctf-banner__note">  Termux CTF   real flags, on your own device
+
+  ────────────────────────────────────────────────
+    01   hidden-file          Easy     10 pts  open
+    02   owner-only           Easy     15 pts  open
+    03   two-halves           Medium   20 pts  open
+    04   read-the-log         Medium   20 pts  open
+    05   twice-over           Hard     30 pts  open
+    06   inside-the-archive   Medium   25 pts  open
+  ────────────────────────────────────────────────
+    0 of 6 captured, 0 of 120 points</div>
+    </div>
+
+    <section>
+      <h2>Install it</h2>
+      <p>
+        Termux from F-Droid, then four commands. The installer checks for Termux, prints
+        exactly what it is going to write, and waits for you to say yes. Nothing is
+        written before that, and nothing needs root.
+      </p>
+      {installCommands.map((c) => <Cmd cmd={c} />)}
+      <p class="ctf-empty">
+        Then run <code>ctf list</code>. Run <code>ctf</code> on its own for a menu, which is
+        easier than typing on a phone.
+      </p>
+      <p>
+        <a class="btn" href={ctfRepo} target="_blank" rel="noopener">Read the source on GitHub</a>
+      </p>
+    </section>
+
+    <section>
+      <h2>What makes it different</h2>
+      <div class="ctf-cards">
+        <div class="ctf-card">
+          <span class="ctf-card__mark"></span>
+          <h3>The files are real</h3>
+          <p>
+            A challenge writes real files into your home directory with real permissions.
+            You find them with <code>ls</code>, <code>grep</code>, <code>tar</code> and
+            <code>base64</code>, the same tools you would use anywhere.
+          </p>
+        </div>
+        <div class="ctf-card">
+          <span class="ctf-card__mark"></span>
+          <h3>Your flags are yours</h3>
+          <p>
+            Every flag comes from a random value created on your device at install time,
+            and so does every file name. Two people playing the same challenge get
+            different answers.
+          </p>
+        </div>
+        <div class="ctf-card">
+          <span class="ctf-card__mark"></span>
+          <h3>It works offline</h3>
+          <p>
+            No account, no server, no network traffic. Once it is installed, the whole
+            thing runs on the phone in your pocket.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>The loop</h2>
+      <p>Every challenge follows the same four steps.</p>
+      <ol class="ctf-steps">
+        <li>
+          <strong>Look at what is on offer</strong>
+          <span><code>ctf list</code> shows each challenge, its difficulty, and whether you have captured it.</span>
+        </li>
+        <li>
+          <strong>Read the briefing and set it up</strong>
+          <span><code>ctf start 01</code> teaches the concept, then writes the files into your home directory.</span>
+        </li>
+        <li>
+          <strong>Find the flag</strong>
+          <span>This part is up to you. The briefing points at the tool, the hints narrow the search.</span>
+        </li>
+        <li>
+          <strong>Hand it in</strong>
+          <span><code>ctf check 01 LEARMUX&#123;...&#125;</code> decides. Right or wrong, you know straight away.</span>
+        </li>
+      </ol>
+      <p>
+        <a class="btn btn--green" href={`${base}ctf/play/`}>How to play, command by command</a>
+      </p>
+    </section>
+
+    <section>
+      <h2>The {count} challenges</h2>
+      <p>{total} points between them.</p>
+      <table class="ctf-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Challenge</th>
+            <th class="ctf-cat">Topic</th>
+            <th>Difficulty</th>
+            <th>Points</th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.map((c) => (
+            <tr>
+              <td class="ctf-id">{c.id}</td>
+              <td class="ctf-name">
+                <a href={`${base}ctf/challenges/${c.slug}/`}>{c.title}</a>
+              </td>
+              <td class="ctf-cat">{c.category}</td>
+              <td><span class={`chip chip--${c.difficulty.toLowerCase()}`}>{c.difficulty}</span></td>
+              <td class="ctf-pts">{c.points}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>
+        <a class="btn" href={`${base}ctf/challenges/`}>Every challenge, with briefings and hints</a>
+      </p>
+    </section>
+
+    <section>
+      <h2>Keeping score</h2>
+      <p>
+        The tool decides whether a flag is right, because it is the only thing that has
+        your seed. When you want to see the whole picture here, run
+        <code>ctf export</code> and paste the result into the
+        <a href={`${base}ctf/progress/`}>progress page</a>.
+      </p>
+      <div class="ctf-note">
+        <strong>Worth being straight about</strong>
+        This site cannot check your answers, and it does not pretend to. It has no seed, so
+        it has no way to know whether a flag is right, and a receipt you paste in is
+        something you told it about yourself. The tool is where the score is real.
+      </div>
+    </section>
+
+    <section>
+      <h2>Before you start</h2>
+      <p>
+        Play only on your own device. Everything the tool touches is under your home
+        directory, plus one command in <code>$PREFIX/bin</code>. There is no network
+        activity anywhere in it, and nothing needs root.
+      </p>
+      <p>
+        You can read the challenge source, because it is on your machine and nothing can
+        stop you. The worked solutions are the one thing held back: they live in the
+        repository for the test suite, and the installer deliberately does not copy them.
+        The score only means something if you earned it.
+      </p>
+      <p class="ctf-empty">Tool version {version}.</p>
+    </section>
+  </div>
+</BaseLayout>
