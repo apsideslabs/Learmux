@@ -1,0 +1,4 @@
+
+That prints only the id, which is the value you would pass to the next request in a longer script.
+
+## Quick reference
