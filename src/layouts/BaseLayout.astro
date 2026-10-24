@@ -3,6 +3,8 @@ import '../styles/global.css';
 import '../styles/terminal.css';
 import { ClientRouter } from 'astro:transitions';
 import { challenges } from '../lib/challenges';
+import { site, nav, drawerNav, social } from '../lib/site';
+import Icon from '../components/Icon.astro';
 
 interface Props {
   title?: string;
@@ -11,22 +13,17 @@ interface Props {
 }
 
 const {
-  title = 'Learmux — learn Termux, the command line and cybersecurity',
-  description = 'Learmux teaches Termux and the Linux command line through short written lessons and an interactive terminal where you capture flags.',
+  title = `${site.name} — learn Termux, the command line and cybersecurity`,
+  description = site.description,
   noindex = false,
 } = Astro.props;
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const path = Astro.url.pathname;
 const canonical = new URL(path, Astro.site);
-const fullTitle = title.includes('Learmux') ? title : `${title} · Learmux`;
-
-const nav = [
-  { href: 'learn/', label: 'Learn' },
-  { href: 'challenges/', label: 'Challenges' },
-  { href: 'about/', label: 'About' },
-];
+const fullTitle = title.includes(site.name) ? title : `${title} · ${site.name}`;
 const total = challenges.length;
+const isExternal = (href: string) => /^https?:/.test(href);
 ---
 
 <!doctype html>
@@ -36,14 +33,14 @@ const total = challenges.length;
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
     <meta name="generator" content={Astro.generator} />
-    <meta name="theme-color" content="#faf8f4" />
+    <meta name="theme-color" content="#1c1b27" />
     <meta name="color-scheme" content="light" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=Instrument+Sans:ital,wght@0,400..600;1,400..600&family=JetBrains+Mono:wght@400..600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Poppins:wght@500;600;700&display=swap"
     />
 
     <title>{fullTitle}</title>
@@ -52,7 +49,7 @@ const total = challenges.length;
     {noindex && <meta name="robots" content="noindex" />}
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Learmux" />
+    <meta property="og:site_name" content={site.name} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
@@ -67,21 +64,7 @@ const total = challenges.length;
     <a class="skip-link" href="#main">Skip to content</a>
 
     <header class="site-header">
-      <div class="wrap">
-        <a class="brand" href={base} aria-label="Learmux — home">
-          <span>Learmux<span class="dot">.</span></span>
-        </a>
-
-        <nav class="nav" aria-label="Primary">
-          {nav.map((item) => (
-            <a
-              href={base + item.href}
-              aria-current={path.includes('/' + item.href.replace(/\/$/, '')) ? 'page' : undefined}
-            >{item.label}</a>
-          ))}
-          <span class="nav-progress" data-progress-chip data-total={total}>0 / {total} captured</span>
-        </nav>
-
+      <div class="bar">
         <button
           class="menu-toggle"
           type="button"
@@ -90,9 +73,33 @@ const total = challenges.length;
           aria-controls="site-menu"
           aria-label="Open menu"
         >
-          <span class="bar" aria-hidden="true"></span>
-          <span class="bar" aria-hidden="true"></span>
+          <span class="bar-line" aria-hidden="true"></span>
+          <span class="bar-line" aria-hidden="true"></span>
         </button>
+
+        <a class="brand" href={base} aria-label={`${site.name} — home`}>
+          <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="2" y="3.5" width="20" height="17" rx="3.5" stroke="#20d65a" stroke-width="1.8"></rect>
+            <path d="M6.6 10.2l2.6 2.1-2.6 2.1" stroke="#20d65a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M11.8 14.6h5.2" stroke="#eef1f5" stroke-width="1.8" stroke-linecap="round"></path>
+          </svg>
+          <span>Lear<span class="accent">mux</span></span>
+        </a>
+
+        <nav class="header-nav" aria-label="Primary">
+          {nav.map((item) => (
+            <a
+              href={base + item.href}
+              class={item.cta ? 'cta' : undefined}
+              aria-current={path.includes('/' + item.href.replace(/\/$/, '')) ? 'page' : undefined}
+            >{item.label}</a>
+          ))}
+        </nav>
+
+        <a class="header-search" href={`${base}search/`} aria-label="Search tutorials">
+          <Icon name="search" size={19} />
+          <span>Search</span>
+        </a>
       </div>
     </header>
 
@@ -100,26 +107,36 @@ const total = challenges.length;
 
     <div class="drawer" id="site-menu" data-drawer data-open="false" role="dialog" aria-modal="true" aria-label="Site menu">
       <div class="drawer__top">
-        <span class="drawer__label">Menu</span>
-        <button class="drawer__close" type="button" data-drawer-close aria-label="Close menu">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+        <a class="brand" href={base}>
+          <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="2" y="3.5" width="20" height="17" rx="3.5" stroke="#20d65a" stroke-width="1.8"></rect>
+            <path d="M6.6 10.2l2.6 2.1-2.6 2.1" stroke="#20d65a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M11.8 14.6h5.2" stroke="#eef1f5" stroke-width="1.8" stroke-linecap="round"></path>
           </svg>
+          <span>Lear<span class="accent">mux</span></span>
+        </a>
+        <button class="drawer__close" type="button" data-drawer-close aria-label="Close menu">
+          <Icon name="close" size={20} />
         </button>
       </div>
 
       <nav aria-label="Menu">
-        {nav.map((item, i) => (
-          <a href={base + item.href}>
+        {drawerNav.map((item) => (
+          <a
+            href={isExternal(item.href) ? item.href : base + item.href}
+            {...(isExternal(item.href) ? { target: '_blank', rel: 'noopener' } : {})}
+          >
             <span>{item.label}</span>
-            <span class="idx">0{i + 1}</span>
+            {item.note === 'chevron' && <span class="chev"><Icon name="chevron" size={16} /></span>}
+            {item.note === 'external' && <span class="chev"><Icon name="arrow" size={16} /></span>}
+            {item.note === 'tag' && <span class="tag">CTF</span>}
           </a>
         ))}
       </nav>
 
       <div class="drawer__foot">
-        <p class="meta" data-drawer-progress data-total={total}>0 of {total} flags captured</p>
-        <a class="btn btn--primary btn--block" href={`${base}challenges/`}>Start a challenge</a>
+        <p data-drawer-progress data-total={total}>0 of {total} flags captured</p>
+        <a class="btn btn--green btn--block" href={`${base}challenges/`}>Play the CTF</a>
       </div>
     </div>
 
@@ -131,24 +148,43 @@ const total = challenges.length;
       <div class="wrap">
         <div class="footer-grid">
           <div class="footer-brand">
-            <a class="brand" href={base}>Learmux<span class="dot">.</span></a>
-            <p>A quiet place to learn Termux and the Linux command line, one flag at a time.</p>
+            <a class="brand" href={base}>
+              <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="2" y="3.5" width="20" height="17" rx="3.5" stroke="#20d65a" stroke-width="1.8"></rect>
+                <path d="M6.6 10.2l2.6 2.1-2.6 2.1" stroke="#20d65a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M11.8 14.6h5.2" stroke="#eef1f5" stroke-width="1.8" stroke-linecap="round"></path>
+              </svg>
+              <span>Lear<span class="accent">mux</span></span>
+            </a>
+            <p>{site.tagline}</p>
+            <div class="social">
+              {social.map((s) => (
+                <a href={s.href} aria-label={s.label} title={s.label} target="_blank" rel="noopener">
+                  <Icon name={s.icon as any} size={19} />
+                </a>
+              ))}
+            </div>
           </div>
+
           <div class="footer-col">
-            <h4>Learn</h4>
+            <h4>Tutorials</h4>
             <a href={`${base}learn/`}>All lessons</a>
+            <a href={`${base}categories/`}>Categories</a>
             <a href={`${base}learn/getting-started/`}>Getting started</a>
-            <a href={`${base}learn/pipes-and-redirection/`}>Pipes and redirection</a>
+            <a href={`${base}search/`}>Search</a>
           </div>
+
           <div class="footer-col">
-            <h4>Practise</h4>
-            <a href={`${base}challenges/`}>All challenges</a>
-            <a href={`${base}challenges/first-steps/`}>Your first flag</a>
-            <a href={`${base}about/`}>About Learmux</a>
+            <h4>CTF &amp; site</h4>
+            <a href={`${base}challenges/`}>Play the CTF</a>
+            <a href={`${base}about/`}>About us</a>
+            <a href={`${base}contact/`}>Contact us</a>
+            <a href={`${base}privacy/`}>Privacy policy</a>
           </div>
         </div>
+
         <div class="footer-base">
-          <span>© {new Date().getFullYear()} Learmux · MIT licensed</span>
+          <span>© {new Date().getFullYear()} {site.name}. Released under the MIT licence.</span>
           <span class="mono">built with Astro &amp; TypeScript</span>
         </div>
       </div>
@@ -163,12 +199,18 @@ const total = challenges.length;
           const slug = elm.getAttribute('data-challenge-slug');
           elm.classList.toggle('is-solved', slug ? solved.has(slug) : false);
         });
-        const chip = document.querySelector('[data-progress-chip]');
-        if (chip) chip.textContent = `${solved.size} / ${chip.getAttribute('data-total')} captured`;
-        const drawerProgress = document.querySelector('[data-drawer-progress]');
-        if (drawerProgress) {
-          drawerProgress.textContent = `${solved.size} of ${drawerProgress.getAttribute('data-total')} flags captured`;
-        }
+        const total = document.body.dataset.totalChallenges;
+        document.querySelectorAll('[data-progress-chip]').forEach((el) => {
+          const t = el.getAttribute('data-total') || total || '0';
+          el.textContent = `${solved.size} / ${t} captured`;
+        });
+        document.querySelectorAll('[data-drawer-progress]').forEach((el) => {
+          el.textContent = `${solved.size} of ${el.getAttribute('data-total')} flags captured`;
+        });
+        document.querySelectorAll('[data-progress-bar]').forEach((el) => {
+          const t = Number(el.getAttribute('data-total')) || 1;
+          (el as HTMLElement).style.width = `${Math.round((solved.size / t) * 100)}%`;
+        });
       }
 
       function initMenu() {
@@ -189,7 +231,6 @@ const total = challenges.length;
           document.body.classList.add('menu-open');
           window.requestAnimationFrame(() => focusables()[0]?.focus());
         };
-
         const close = (returnFocus = true) => {
           drawer.dataset.open = 'false';
           toggle.setAttribute('aria-expanded', 'false');
