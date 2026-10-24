@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Icon from '../../components/Icon.astro';
 import '../../styles/tools.css';
-import { tools, toolBySlug, categoryById } from '../../data/tools';
+import { tools, categoryById, displayCommand } from '../../data/tools';
 
 export function getStaticPaths() {
   return tools.map((tool) => ({ params: { slug: tool.slug }, props: { tool } }));
@@ -11,7 +11,8 @@ export function getStaticPaths() {
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const { tool } = Astro.props;
 const category = categoryById(tool.category);
-const related = tools.filter((t) => t.category === tool.category && t.slug !== tool.slug).slice(0, 4);
+const related = tools.filter((t) => t.category === tool.category && t.slug !== tool.slug).slice(0, 5);
+const projectName = tool.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 ---
 
 <BaseLayout title={tool.name} description={`${tool.name} — ${tool.tagline}`}>
@@ -19,18 +20,19 @@ const related = tools.filter((t) => t.category === tool.category && t.slug !== t
     <nav class="crumbs" aria-label="Breadcrumb">
       <a href={base}>Home</a><span class="sep">›</span>
       <a href={`${base}tools/`}>Tools</a><span class="sep">›</span>
-      {category && <><span>{category.name}</span><span class="sep">›</span></>}
+      {category && <><a href={`${base}tools/?cat=${category.id}`}>{category.name}</a><span class="sep">›</span></>}
       <span>{tool.name}</span>
     </nav>
 
     <header class="tool-hero">
       <span class="tool-hero__logo">
-        <img src={`${base}logos/${tool.slug}.svg`} width="44" height="44" alt="" />
+        <img src={`${base}logos/${tool.slug}.svg`} width="46" height="46" alt="" />
       </span>
       <div class="tool-hero__copy">
         <h1>{tool.name}</h1>
         <p class="lede">{tool.tagline}</p>
         <div class="chip-row">
+          <code class="chip chip--bin">{tool.bin}</code>
           {category && <a class="chip chip--link" href={`${base}tools/?cat=${category.id}`}>{category.name}</a>}
           {tool.license && <span class="chip">{tool.license}</span>}
         </div>
@@ -46,25 +48,47 @@ const related = tools.filter((t) => t.category === tool.category && t.slug !== t
 
         {tool.install && (
           <section>
-            <h2>Install</h2>
-            <p class="muted">Get it into Termux with one command:</p>
-            <div class="cmd-block">
-              <code>{tool.install}</code>
-            </div>
+            <h2>Install it</h2>
+            <div class="cmd-block"><code>{tool.install}</code></div>
+            <p class="muted" style="margin-top:0.6rem;font-size:0.85rem">
+              Run this inside Termux. If the package is already present, <code>pkg</code> will say so and
+              do nothing.
+            </p>
           </section>
         )}
 
         <section>
           <h2>Commands worth knowing</h2>
+          <p class="muted" style="margin-bottom:0.9rem">
+            {tool.commands.length} of the invocations you will actually reach for, with what each one is for.
+          </p>
           <div class="cmd-table">
             {tool.commands.map((c) => (
               <div class="cmd-row">
-                <code>{c.cmd ?? `${tool.bin ?? tool.name.toLowerCase()} ${c.args ?? ''}`.trim()}</code>
+                <code>{displayCommand(tool, c.args)}</code>
                 <span>{c.what}</span>
               </div>
             ))}
           </div>
         </section>
+
+        {tool.example && (
+          <section>
+            <h2>Worked example</h2>
+            <p class="muted" style="margin-bottom:0.9rem">
+              Run <code>{displayCommand(tool, tool.example.args)}</code> and this is what you should see.
+            </p>
+            <div class="example">
+              <div class="example__bar">
+                <span class="example__dot"></span><span class="example__dot"></span><span class="example__dot"></span>
+                <span class="example__label">termux</span>
+              </div>
+              <pre class="example__pre"><span class="example__prompt">$ {displayCommand(tool, tool.example.args)}</span>
+{tool.example.out}</pre>
+            </div>
+            {tool.example.note && <p class="example__note">{tool.example.note}</p>}
+          </section>
+        )}
 
         <section>
           <h2>Developed by</h2>
@@ -84,11 +108,12 @@ const related = tools.filter((t) => t.category === tool.category && t.slug !== t
         <div class="fact-card">
           <h2 class="fact-card__title">At a glance</h2>
           <dl class="fact-list">
+            <div><dt>Command</dt><dd><code>{tool.bin}</code></dd></div>
             <div><dt>Category</dt><dd>{category?.name ?? tool.category}</dd></div>
             <div><dt>Developer</dt><dd>{tool.developer}</dd></div>
             {tool.license && <div><dt>Licence</dt><dd>{tool.license}</dd></div>}
             {tool.install && <div><dt>Install</dt><dd><code>{tool.install}</code></dd></div>}
-            <div><dt>Project</dt><dd><a href={tool.url} target="_blank" rel="noopener">{tool.url.replace(/^https?:\/\//, '').replace(/\/$/, '')}</a></dd></div>
+            <div><dt>Project</dt><dd><a href={tool.url} target="_blank" rel="noopener">{projectName}</a></dd></div>
           </dl>
         </div>
 
@@ -112,7 +137,7 @@ const related = tools.filter((t) => t.category === tool.category && t.slug !== t
     </div>
 
     <div class="actions" style="margin-top:2rem">
-      <a class="btn btn--outline" href={`${base}tools/`}>All tools</a>
+      <a class="btn btn--outline" href={`${base}tools/`}>All {tools.length} tools</a>
       <a class="btn btn--green" href={`${base}challenges/`}>Practise with the CTF</a>
     </div>
   </div>
