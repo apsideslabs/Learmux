@@ -13,7 +13,7 @@ tags: [security, logs, detection]
 
 import Callout from '../../components/Callout.astro';
 
-In this lesson you will read a log file the way a defender does. You will count failed logins, find the noisiest source, spot a burst of attempts, and trace the one successful login that followed. This matters because a log is a record of what actually happened on your machine, and most trouble leaves a trace in it long before you notice anything else.
+In this lesson you will read a log file the way a defender does. You will count failed logins and find the noisiest source. You will spot a burst of attempts, then trace the one successful login that followed. This matters, because a log is a record of what actually happened on your machine. Most trouble leaves a trace in it long before you notice anything else.
 
 ## What you'll be able to do
 
@@ -25,7 +25,7 @@ In this lesson you will read a log file the way a defender does. You will count 
 
 ## Step 1: Get a log to work with
 
-A log is plain text, one line per event. The lines below are a sample of an auth-style log. Create a file called `auth.log` in your home directory and paste these lines into it so you have something to practise on. Each line has a timestamp, a user, a source address and a result. The addresses come from ranges set aside for examples, so none of them are real hosts.
+A log is plain text, one line per event. The lines below are a sample of an auth-style log. Create a file called `auth.log` in your home directory. Paste these lines into it so you have something to practise on. Each line has a timestamp, a user, a source address and a result. The addresses come from ranges set aside for examples. None of them are real hosts.
 
 ```text
 2026-03-10T03:12:01Z user=root src=198.51.100.7 result=fail
@@ -57,7 +57,7 @@ $ tail -n 3 auth.log
 2026-03-10T19:40:12Z user=mira src=203.0.113.14 result=ok
 ```
 
-The newest events sit at the bottom. Reading them first tells you what happened most recently, which is usually what you care about.
+The newest events sit at the bottom. Read them first to see what happened most recently. That is usually what you care about.
 
 <Callout type="tip" title="Learn normal first">
 You can only spot abnormal once you know what normal looks like. On a real system, watch your logs on a quiet day before you try to judge a busy one.
@@ -65,7 +65,7 @@ You can only spot abnormal once you know what normal looks like. On a real syste
 
 ## Step 2: Count failures per source
 
-The first useful question is which sources are failing, and how often. The pipeline below filters to failed lines, keeps only the source field, sorts the values, and lets `uniq -c` count how many times each one repeats. The final `sort -nr` puts the biggest count on top.
+The first useful question is which sources are failing, and how often. The pipeline below filters to failed lines. It keeps only the source field, then sorts the values. `uniq -c` counts how many times each one repeats. The final `sort -nr` puts the biggest count on top.
 
 ```bash
 $ grep 'result=fail' auth.log | cut -d' ' -f3 | sort | uniq -c | sort -nr
@@ -74,7 +74,7 @@ $ grep 'result=fail' auth.log | cut -d' ' -f3 | sort | uniq -c | sort -nr
       1 src=192.0.2.55
 ```
 
-Read the count first, then the value. The source `203.0.113.14` has six failures, more than the other two put together. The `cut -d' ' -f3` is what keeps only the third field, the source, so the counting is per source and not per line.
+Read the count first, then the value. The source `203.0.113.14` has six failures, more than the other two put together. The `cut -d' ' -f3` keeps only the third field, the source. That makes the counting per source, not per line.
 
 If you only want the total number of failures, skip the counting and ask `grep` directly.
 
@@ -83,7 +83,7 @@ $ grep -c 'result=fail' auth.log
 9
 ```
 
-Nine failures across eleven lines. Two lines are successes, so every other line is a failed attempt. Knowing the totals gives you a feel for how noisy a day was before you dig into who was noisy.
+Nine failures across eleven lines. Two lines are successes. Every other line is a failed attempt. The totals give you a feel for how noisy the day was. Then you can dig into who was noisy.
 
 ## Step 3: Find the top talker
 
@@ -94,11 +94,11 @@ $ grep 'result=fail' auth.log | cut -d' ' -f3 | sort | uniq -c | sort -nr | head
       6 src=203.0.113.14
 ```
 
-If the top count is far larger than the rest, that source deserves a closer look. A source with one or two failures is often a person mistyping a password. A source with dozens is worth reading the surrounding lines for.
+If the top count is far larger than the rest, that source deserves a closer look. A source with one or two failures is often a person mistyping a password. A source with dozens is worth reading around.
 
 ## Step 4: Spot a burst in a time window
 
-A burst is many attempts packed into a short time. Here the six failures for `mira` all land within the same minute, `08:14`. Grepping on that time prefix pulls out the window.
+A burst is many attempts packed into a short time. Here the six failures for `mira` all land within the same minute, `08:14`. Grep on that time prefix to pull out the window.
 
 ```bash
 $ grep '08:14:0' auth.log
@@ -111,11 +111,11 @@ $ grep '08:14:0' auth.log
 2026-03-10T08:14:09Z user=mira src=203.0.113.14 result=ok
 ```
 
-Six failures, one second apart, all from the same source. That rhythm is a machine trying again, not a person typing. And look at the last line: after the run of failures there is a success.
+Six failures, one second apart, all from the same source. That rhythm is a machine trying again, not a person typing. Now look at the last line. After the run of failures comes a success.
 
 ## Step 5: Find the success after the failures
 
-The line that should worry you most is a success that arrives right after a run of failures. Use `grep -n` so each match is printed with its line number, which places it in the file.
+The line that should worry you most is a success right after a run of failures. Use `grep -n` so each match is printed with its line number. That places it in the file.
 
 ```bash
 $ grep -n 'result=ok' auth.log
@@ -123,13 +123,13 @@ $ grep -n 'result=ok' auth.log
 11:2026-03-10T19:40:12Z user=mira src=203.0.113.14 result=ok
 ```
 
-The success on line 9 sits two seconds after the sixth failure on line 8, from the same source. That pattern, many failures then a success, is what a guessed password looks like in a log. The later success on line 11 is in a different hour and reads like ordinary use.
+The success on line 9 sits two seconds after the sixth failure on line 8, from the same source. Many failures, then a success. That pattern is what a guessed password looks like in a log. The later success on line 11 is in a different hour and reads like ordinary use.
 
 <Callout type="warning" title="Logs are evidence, not proof">
 A burst of failures does not always mean a break-in. It can be a broken script or a forgotten old password. Use the log to ask a question, then check the account before you decide anything.
 </Callout>
 
-A log by itself changes nothing. When you spot a burst and a following success, the next moves are the same every time. Check whether the account is one you recognise. If the success was not you, change that account's password and add a second factor. If one source is hammering you, block it or stop the service it is reaching. Then keep the log, because a record of the event is worth more than a memory of it.
+A log by itself changes nothing. When you spot a burst and a following success, the next moves are the same every time. Check whether the account is one you recognise. If the success was not you, change that account's password and add a second factor. If one source is hammering you, block it or stop the service it is reaching. Then keep the log. A record of the event is worth more than a memory of it.
 
 ## Quick reference
 
