@@ -3,57 +3,104 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 import PostRow from '../components/PostRow.astro';
 import Icon from '../components/Icon.astro';
-import { challenges, categories, totalPoints } from '../lib/challenges';
-import { recentTutorials } from '../lib/tutorials';
+import { challenges, totalPoints } from '../lib/challenges';
+import { trackGroups, recentTutorials, allTutorials } from '../lib/tutorials';
+import { course } from '../lib/curriculum';
 import { social } from '../lib/site';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const groups = await trackGroups();
+const lessons = await allTutorials();
 const recent = await recentTutorials();
 const [lead, ...rest] = recent;
 const featured = rest.slice(0, 2);
-const feed = rest.slice(2);
-const cats = categories();
+const feed = rest.slice(2, 8);
 ---
 
 <BaseLayout>
-  <section class="wrap section">
-    <div class="section-label"><span>Featured</span></div>
-    {lead && <div style="margin-bottom:1.1rem"><ArticleCard entry={lead} variant="hero" /></div>}
+  <section class="wrap hero">
+    <div class="hero__copy">
+      <p class="eyebrow">Termux · Linux · Security</p>
+      <h1>Learn the command line by using it.</h1>
+      <p class="lede">
+        {course.summary}
+      </p>
+      <div class="actions">
+        <a class="btn btn--green" href={`${base}course/`}>Start the course</a>
+        <a class="btn btn--outline" href={`${base}challenges/`}>Play the CTF</a>
+      </div>
+      <p class="hero__facts">
+        {groups.length} tracks · {lessons.length} lessons · {challenges.length} challenges ·
+        {course.timeEstimate} · no account needed
+      </p>
+    </div>
+  </section>
+
+  <section class="wrap section--tight">
+    <div class="section-label"><span>The path</span></div>
+    <div class="path-grid">
+      {groups.map((g) => (
+        <a class="path-card" href={`${base}course/${g.track.id}/`}>
+          <span class="path-card__num">{String(g.track.number).padStart(2, '0')}</span>
+          <span class="path-card__title">{g.track.title}</span>
+          <span class="path-card__tag">{g.track.tagline}</span>
+          <span class="path-card__meta">{g.lessons.length} lessons · {g.track.level}</span>
+          <span class="path-card__go">Open track <Icon name="chevron" size={14} /></span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="wrap section--tight">
+    <div class="section-label"><span>Featured lessons</span></div>
+    {lead && <div style="margin-bottom:1rem"><ArticleCard entry={lead} variant="hero" /></div>}
     <div class="cards cards--2">
       {featured.map((t) => <ArticleCard entry={t} />)}
     </div>
   </section>
 
-  <section class="wrap">
-    <div class="section-label"><span>Recent posts</span></div>
+  <section class="wrap section--tight">
+    <div class="section-label"><span>Latest lessons</span></div>
     <div class="posts">
       {feed.map((t) => <PostRow entry={t} />)}
     </div>
-  </section>
-
-  <section class="wrap section">
-    <div class="ctf-panel">
-      <h2>Learmux CTF</h2>
-      <p>Terminal-based challenges. Find the flags and complete the challenge.</p>
-      <div class="ctf-meta">
-        <span>{challenges.length} challenges</span>
-        <span>{totalPoints} points</span>
-        <span>{cats.length} topics</span>
-      </div>
-      <a class="btn btn--green btn--lg" href={`${base}challenges/`}>Play CTF</a>
+    <div class="actions" style="margin-top:1.4rem">
+      <a class="btn btn--outline" href={`${base}course/`}>See the whole course</a>
     </div>
   </section>
 
   <section class="wrap section--tight">
-    <div class="soft-panel">
-      <h2>Download Termux</h2>
-      <p class="muted" style="max-width:60ch">
-        Termux is a free terminal emulator and Linux environment for Android — no root required.
-        Install it, then work through the lessons on your phone.
+    <div class="ctf-panel">
+      <h2>Learmux CTF</h2>
+      <p>
+        {challenges.length} terminal challenges across {new Set(challenges.map((c) => c.category)).size} topics.
+        Each one opens a sandbox with its own filesystem — find the flag and complete the challenge.
       </p>
+      <div class="ctf-meta">
+        <span data-progress-chip data-total={challenges.length}>0 / {challenges.length} captured</span>
+        <span>{totalPoints} points</span>
+      </div>
+      <div class="progress-line" style="background:#2a2a33">
+        <span data-progress-bar data-total={challenges.length}></span>
+      </div>
+      <a class="btn btn--green" href={`${base}challenges/`}>Play CTF</a>
+    </div>
+  </section>
+
+  <section class="wrap section--tight">
+    <div class="download">
+      <div>
+        <h2>Download Termux</h2>
+        <p>
+          Termux is a free terminal emulator and Linux environment for Android — no root required.
+          Install it from F-Droid, then work through the course on your phone.
+        </p>
+      </div>
       <div class="actions">
-        <a class="btn btn--navy" href="https://f-droid.org/en/packages/com.termux/" target="_blank" rel="noopener">Get it on F-Droid</a>
-        <a class="btn btn--outline" href="https://play.google.com/store/apps/details" target="_blank" rel="noopener">Google Play</a>
+        <a class="btn btn--green" href="https://f-droid.org/en/packages/com.termux/" target="_blank" rel="noopener">
+          Get it on F-Droid
+        </a>
+        <a class="btn btn--outline" href={`${base}learn/getting-started/`}>Read the setup lesson</a>
       </div>
     </div>
   </section>
