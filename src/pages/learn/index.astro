@@ -1,49 +1,41 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
+import ArticleCard from '../../components/ArticleCard.astro';
+import { allTutorials, categoryGroups } from '../../lib/tutorials';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
-const tutorials = (await getCollection('tutorials')).sort(
-  (a, b) => a.data.order - b.data.order || a.data.title.localeCompare(b.data.title)
-);
+const tutorials = await allTutorials();
+const groups = await categoryGroups();
 ---
 
 <BaseLayout
-  title="Lessons"
+  title="Course"
   description="Short, plain-language lessons on Termux, the Linux command line, permissions, networking, encoding and shell scripting."
 >
   <div class="wrap">
-    <header class="section--tight" style="padding-bottom:0">
-      <h1>Lessons</h1>
+    <header class="section">
+      <h1>Course</h1>
       <p class="lede">
-        {tutorials.length} short reads that pair with the challenges. Each one covers a handful of commands
-        and points you at something to practise.
+        {tutorials.length} short lessons that pair with the challenges. Read one, then go and use it.
       </p>
+      <div class="chip-row" style="margin-top:1rem">
+        {groups.map((g) => (
+          <a class="chip" href={`${base}category/${g.slug}/`}>{g.name} · {g.items.length}</a>
+        ))}
+      </div>
     </header>
 
-    <section class="section--tight">
-      <div class="rows">
-        {tutorials.map((t) => (
-          <a class="row" href={`${base}learn/${t.id}/`}>
-            <span>
-              <span class="row__title">{t.data.title}</span>
-              <span class="row__meta">{t.data.description}</span>
-            </span>
-            <span class="row__side">
-              <span class="chip">{t.data.level}</span>
-              <svg class="row__chev" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-              </svg>
-            </span>
-          </a>
-        ))}
+    <section>
+      <div class="section-label"><span>All lessons</span></div>
+      <div class="cards cards--3">
+        {tutorials.map((t) => <ArticleCard entry={t} />)}
       </div>
     </section>
 
     <section class="section--tight">
-      <div class="card" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1.2rem">
+      <div class="soft-panel" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem">
         <p class="mb-0 muted">Reading is good. Doing is better — the challenges are where it sticks.</p>
-        <a class="btn btn--primary" href={`${base}challenges/`}>Open the challenges</a>
+        <a class="btn btn--green" href={`${base}challenges/`}>Play the CTF</a>
       </div>
     </section>
   </div>
