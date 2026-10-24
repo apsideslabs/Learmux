@@ -1,0 +1,2 @@
+    example: {
+      args: '. -name "*.log"',
