@@ -4,37 +4,24 @@
  * Decorative by default (aria-hidden); pass a `title` for a standalone icon.
  */
 interface Props {
-  name: 'search' | 'chevron' | 'close' | 'user' | 'calendar' | 'youtube' | 'instagram' | 'github' | 'facebook' | 'arrow' | 'info' | 'warning' | 'tip' | 'menu';
+  name: 'search' | 'chevron' | 'close' | 'user' | 'calendar' | 'github' | 'arrow' | 'info' | 'warning' | 'tip';
   size?: number;
   title?: string;
 }
 const { name, size = 20, title } = Astro.props;
-const dim = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none' } as const;
+const dim = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' } as const;
 ---
 
-<svg
-  {...dim}
-  xmlns="http://www.w3.org/2000/svg"
-  role={title ? 'img' : undefined}
-  aria-hidden={title ? undefined : 'true'}
-  aria-label={title}
-  stroke="currentColor"
-  stroke-width="1.8"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  {name === 'search' && (<><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4 4" /></>)}
-  {name === 'chevron' && <path d="M9.5 6l6 6-6 6" />}
-  {name === 'close' && (<><path d="M6 6l12 12" /><path d="M18 6L6 18" /></>)}
-  {name === 'user' && (<><circle cx="12" cy="8.5" r="3.6" /><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0" /></>)}
-  {name === 'calendar' && (<><rect x="3.5" y="5" width="17" height="15.5" rx="2" /><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5" /></>)}
-  {name === 'youtube' && (<><rect x="2.5" y="5.5" width="19" height="13" rx="3.5" /><path d="M10.2 9.6l4.8 2.9-4.8 2.9z" fill="currentColor" stroke="none" /></>)}
-  {name === 'instagram' && (<><rect x="3.5" y="3.5" width="17" height="17" rx="5" /><circle cx="12" cy="12" r="3.6" /><circle cx="16.9" cy="7.1" r="0.9" fill="currentColor" stroke="none" /></>)}
-  {name === 'github' && (<><path d="M9 19c-4 1.2-4-2-5.5-2.6" /><path d="M15 21v-3.2c0-1 .1-1.4-.5-2 2.3-.3 4.5-1.2 4.5-5.2a4 4 0 0 0-1.1-2.8 3.7 3.7 0 0 0-.1-2.8s-.9-.3-3 1.1a10 10 0 0 0-5 0C7.7 4.7 6.8 5 6.8 5a3.7 3.7 0 0 0-.1 2.8A4 4 0 0 0 5.5 10.6c0 4 2.2 4.9 4.5 5.2-.6.6-.6 1.2-.5 2V21" /></>)}
-  {name === 'facebook' && <path d="M14.5 8.5H16V5.8h-1.8c-2 0-3.2 1.3-3.2 3.3v1.6H9v2.7h2v7.3h2.8v-7.3h2.1l.4-2.7h-2.5V9.4c0-.6.3-.9.7-.9z" fill="currentColor" stroke="none" />}
-  {name === 'arrow' && <path d="M5 12h13M13 7l5 5-5 5" />}
-  {name === 'menu' && <path d="M4 7h16M4 12h16M4 17h16" />}
-  {name === 'info' && (<><circle cx="12" cy="12" r="9" /><path d="M12 11v5.5" /><circle cx="12" cy="7.8" r="0.9" fill="currentColor" stroke="none" /></>)}
-  {name === 'warning' && (<><path d="M12 3.8l8.5 15H3.5z" /><path d="M12 10v4" /><circle cx="12" cy="16.6" r="0.9" fill="currentColor" stroke="none" /></>)}
-  {name === 'tip' && (<><circle cx="12" cy="12" r="9" /><path d="M8.5 12.4l2.4 2.4 4.6-5" /></>)}
+<svg {...dim} aria-hidden={title ? undefined : 'true'} role={title ? 'img' : undefined}>
+  {title && <title>{title}</title>}
+  {name === 'search' && (<><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8" /><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></>)}
+  {name === 'chevron' && (<path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />)}
+  {name === 'arrow' && (<path d="M5 12h13m-5-6l6 6-6 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />)}
+  {name === 'close' && (<path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />)}
+  {name === 'user' && (<><circle cx="12" cy="8.5" r="3.6" stroke="currentColor" stroke-width="1.7" /><path d="M4.8 19.5c1.4-3.1 4.1-4.6 7.2-4.6s5.8 1.5 7.2 4.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></>)}
+  {name === 'calendar' && (<><rect x="3.8" y="5.2" width="16.4" height="14.6" rx="2.4" stroke="currentColor" stroke-width="1.7" /><path d="M3.8 9.6h16.4M8.4 3.6v3.2M15.6 3.6v3.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></>)}
+  {name === 'github' && (<path d="M9.2 19.2c-3.5 1-3.5-1.8-4.9-2.2m9.8 4.4v-3.3c0-.9.1-1.3-.4-1.8 2.2-.3 4.5-1.1 4.5-5 0-1.1-.4-2-1-2.7.1-.3.4-1.3-.1-2.7 0 0-.8-.3-2.7 1a9.3 9.3 0 0 0-4.8 0c-1.9-1.3-2.7-1-2.7-1-.5 1.4-.2 2.4-.1 2.7a3.9 3.9 0 0 0-1 2.7c0 3.9 2.3 4.7 4.5 5-.3.3-.6.8-.6 1.5v3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />)}
+  {name === 'info' && (<><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7" /><path d="M12 11v5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /><circle cx="12" cy="7.9" r="1.05" fill="currentColor" /></>)}
+  {name === 'warning' && (<><path d="M12 4.6l7.6 13.2H4.4L12 4.6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /><path d="M12 10v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /><circle cx="12" cy="16.4" r="1.05" fill="currentColor" /></>)}
+  {name === 'tip' && (<><path d="M9.2 17.6h5.6M10 20.4h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><path d="M12 3.6a5.6 5.6 0 0 0-3.3 10.1c.5.4.8 1 .8 1.6h5a2.4 2.4 0 0 1 .8-1.6A5.6 5.6 0 0 0 12 3.6z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /></>)}
 </svg>
