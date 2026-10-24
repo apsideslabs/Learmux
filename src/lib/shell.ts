@@ -77,6 +77,7 @@ export interface ShellOptions {
   overrides?: Record<string, string>;
   flag?: string;
   hints?: string[];
+  solutions?: string[];
   validation?: ValidationRule[];
 }
 
@@ -107,6 +108,8 @@ export class Shell {
   overrides: Record<string, string>;
   flag?: string;
   hints: string[];
+  /** Binaries this challenge expects, for a challenge-aware `help`. */
+  helpTopics: string[];
   validation: ValidationRule[];
   history: string[] = [];
   hintIndex = 0;
@@ -137,6 +140,8 @@ export class Shell {
     this.overrides = opts.overrides ?? {};
     this.flag = opts.flag;
     this.hints = opts.hints ?? [];
+    // the binaries the challenge expects, for a challenge-aware `help`
+    this.helpTopics = [...new Set((opts.solutions ?? []).map((s) => s.trim().split(/\s+/)[0]).filter(Boolean))];
     this.validation = opts.validation ?? [];
     this.log.cwd = opts.cwd;
   }
@@ -296,6 +301,7 @@ export class Shell {
         record: (kind, value) => {
           if (kind === 'read') this.log.reads.add(value);
         },
+        helpTopics: this.helpTopics,
       });
       // an explicit correct flag submission also completes the challenge
       if (name === 'submit' && (res.code ?? 0) === 0) this.submittedCorrect = true;
