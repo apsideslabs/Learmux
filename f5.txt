@@ -1,0 +1,9 @@
+
+- Read a full HTTP response, headers and all, with curl.
+- Tell what a 200, 301, 404 or 500 status code means.
+- Send request headers and a POST body.
+- Save a response to a file and pretty-print its JSON.
+
+## Step 1: A request and its response
+
+HTTP is a request and a response. The request says what you want, and the response says what happened and carries the data. A request has a method such as GET, a path, a set of headers, and sometimes a body. The response has a status line, its own headers, and a body.
