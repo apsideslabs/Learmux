@@ -1,0 +1,9 @@
+  {
+    slug: 'curl',
+    name: 'curl',
+    category: 'transfer',
+    tagline: 'Make an HTTP request and print the reply.',
+    about: 'The Swiss army knife of transferring data by URL.',
+    developer: 'Daniel Stenberg and the curl project',
+    license: 'curl licence (MIT-like)',
+    url: 'https://curl.se/',
