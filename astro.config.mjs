@@ -34,8 +34,8 @@ export default defineConfig({
   markdown: {
     remarkPlugins: [remarkBaseLinks],
     shikiConfig: {
-      theme: 'github-dark-dimmed',
-      wrap: true,
+      theme: 'github-light',
+      wrap: false,
     },
   },
   output: 'static',
