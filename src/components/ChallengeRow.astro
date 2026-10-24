@@ -1,0 +1,32 @@
+---
+import type { ChallengeMeta } from '../lib/types';
+
+interface Props {
+  challenge: ChallengeMeta;
+  index?: number;
+}
+
+const { challenge, index } = Astro.props;
+const diffClass = { Easy: 'chip--easy', Medium: 'chip--medium', Hard: 'chip--hard' }[challenge.difficulty];
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+---
+
+<a
+  class="row"
+  href={`${base}challenges/${challenge.slug}/`}
+  data-challenge-slug={challenge.slug}
+>
+  <span>
+    <span class="row__title">{challenge.title}</span>
+    <span class="row__meta">
+      {challenge.category} · {challenge.difficulty} · {challenge.points} points
+    </span>
+  </span>
+  <span class="row__side">
+    <span class={`chip ${diffClass}`} data-solved-only>Captured</span>
+    <span class="chip chip--mono">{String(index ?? challenge.points).padStart(2, '0')}</span>
+    <svg class="row__chev" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+  </span>
+</a>
