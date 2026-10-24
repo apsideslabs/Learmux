@@ -1,0 +1,153 @@
+---
+title: "Safe habits and privacy"
+description: "What your shell leaves behind, clearing history, storage permissions, and how public Wi-Fi changes your risk."
+excerpt: "Anything you type or paste into a terminal can be written down, so plan for it being read later."
+category: "Security"
+author: "The Study Cipher"
+date: "2026-03-21"
+order: 23
+track: "security"
+level: "Intermediate"
+tags: [security, privacy]
+---
+
+import Callout from '../../components/Callout.astro';
+
+In this lesson you will look at what your own work leaves behind. You will read your shell history, remove one command from it, check how Termux reaches shared storage, and think clearly about public Wi-Fi and app permissions. This matters because the quiet risk on a phone is not a dramatic attack. It is a secret left in a file, a command left in history, or a habit that assumes nobody is watching.
+
+## What you'll be able to do
+
+- Read your shell history and understand that it is a file like any other.
+- Remove a single command from history without wiping the rest.
+- Set up and read shared storage, and know which files other apps can reach.
+- Explain what a VPN does and does not fix on a public network.
+- Check the permissions an app has been granted.
+
+## Step 1: See what you leave behind
+
+Every command you type is written to a history file in your home directory. That is useful for retyping, and it is also a record. Print it with `history`.
+
+```bash
+$ history
+  1  pkg update
+  2  ls -la
+  3  ssh-keygen -t ed25519 -C "phone key"
+  4  cat ~/.ssh/id_ed25519.pub
+  5  export API_TOKEN=example-token-not-a-real-value
+  6  history
+```
+
+Look at line 5. A secret typed on the command line is now sitting in a plain text file, readable by anything that can read your home directory. The safe habit is to never type a secret as part of a command. Put it in a file with tight permissions, or let a tool read it from the environment without you echoing it.
+
+History has a limit, usually a few thousand lines, and it is written out when the shell closes. That means a secret can survive in the file across many sessions, long after you have forgotten typing it.
+
+<Callout type="tip" title="Assume it is recorded">
+Treat anything you type or paste into a terminal as recorded. Shells, editors and tools all keep history, buffers or logs. If a value must stay secret, keep it out of the command line entirely.
+</Callout>
+
+## Step 2: Clear a single command from history
+
+You do not need to wipe everything. To drop one entry, pass its number to `history -d`. Use the number shown in the left column.
+
+```bash
+$ history -d 5
+(no output)
+$ history
+  1  pkg update
+  2  ls -la
+  3  ssh-keygen -t ed25519 -C "phone key"
+  4  cat ~/.ssh/id_ed25519.pub
+  5  history
+```
+
+Line 5 is gone and the list has closed up. Remember that the file on disk is only rewritten when the shell exits, so if you are being careful, close the session cleanly after removing the entry.
+
+```bash
+$ cat ~/.bash_history
+pkg update
+ls -la
+ssh-keygen -t ed25519 -C "phone key"
+cat ~/.ssh/id_ed25519.pub
+```
+
+The file itself holds no secret line any more. This is why the habit in Step 1 matters more than the cleanup: it is easier to avoid recording a secret than to chase it afterwards.
+
+Count the lines to see how much is stored.
+
+```bash
+$ wc -l ~/.bash_history
+4 /data/data/com.termux/files/home/.bash_history
+```
+
+Four lines remain, and none of them is the secret. On a long-running setup this number grows, which is another reason to keep secrets off the command line in the first place.
+
+## Step 3: Check permissions on shared storage
+
+Termux keeps its own files in a private area. To reach your phone's shared storage, such as Downloads and photos, you set up links with `termux-setup-storage`. Run it and accept the permission prompt.
+
+```bash
+$ termux-setup-storage
+(no output in the terminal; your phone shows a storage permission prompt)
+```
+
+Once granted, a `storage` directory appears in your home with links to the shared areas.
+
+```bash
+$ ls ~/storage
+dcim  downloads  music  movies  pictures  shared
+```
+
+Those links point into shared storage, which other apps on the phone can also read. Check where `shared` leads.
+
+```bash
+$ ls -la ~/storage/shared
+lrwxrwxrwx 1 u0_a231 u0_a231 24 Mar 10 09:10 /data/data/com.termux/files/home/storage/shared -> /storage/emulated/0
+```
+
+The `l` at the front marks a symbolic link, and the arrow shows the real location. Everything under that shared area is broadly reachable by other apps. Keep secrets in your private home directory, not in shared storage.
+
+If you want to see the target without the link formatting, `readlink` prints where a link points.
+
+```bash
+$ readlink ~/storage/shared
+/storage/emulated/0
+```
+
+That is the top of your phone's shared storage. Anything you copy there, such as a backup or an exported key, is visible to other apps that hold the storage permission.
+
+## Step 4: Rethink public Wi-Fi
+
+On your home network you know who runs the router. On a cafe or airport network you do not. Someone on the same network can see which services you connect to and can try to interfere with traffic that is not protected. The protection that matters most is already built in: use HTTPS sites and apps, which encrypt your traffic end to end.
+
+A VPN moves the problem rather than removing it. It creates an encrypted tunnel from your phone to the VPN provider, so the local network sees only that tunnel. That helps against a snooping network. It does not stop malware, it does not make you anonymous, and it does not protect an app that ignores the tunnel or a site that was already unencrypted. It also hands your traffic to the VPN provider, so you are trusting them instead. Use a VPN when you need to trust a network you do not control, and rely on HTTPS everywhere else.
+
+<Callout type="warning" title="A VPN is not a shield">
+Do not treat a VPN as a fix for every risk. It shifts who can see your traffic. It does not fix a weak password, a leaked key, or an app you granted too much.
+</Callout>
+
+## Step 5: Check an app's permissions
+
+Every app on your phone asks for permissions, and each one is a way in. Open Android settings, go to Apps, pick an app and read its permissions. Ask a simple question for each: does this app need this to do its job? A torch app does not need your contacts. A game does not need your microphone. When an app asks for more than its purpose explains, deny it or remove the app. Do this now and then, because permissions accumulate over time.
+
+A permission you granted months ago is easy to forget. Review the list once in a while, especially after installing something new, and take back anything that no longer fits what the app does. The goal is not to grant nothing. It is to grant only what the app needs to work.
+
+Privacy on a phone is mostly a set of small choices made before the risky moment. Keep secrets out of the command line, keep them out of shared storage, and know which apps can reach what. None of it takes special tools. It takes the habit of asking where a value will end up once you type it.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `history` | Prints your recent commands with numbers |
+| `history -d 5` | Removes entry number 5 from history |
+| `cat ~/.bash_history` | Prints the history file on disk |
+| `wc -l ~/.bash_history` | Counts the lines stored in the history file |
+| `termux-setup-storage` | Links shared storage into your home directory |
+| `ls ~/storage` | Lists the shared storage links |
+| `ls -la ~/storage/shared` | Shows where the shared link points |
+| `readlink ~/storage/shared` | Prints the target a link points to |
+
+## Next steps
+
+- [Hardening your Termux setup](/learn/hardening-your-termux/) tightens the permissions and listeners around the habits from this lesson.
+- [Passwords, keys and secrets](/learn/passwords-and-keys/) covers keeping secrets out of the places covered here.
+- [Encoding and hashes](/learn/encoding-and-hashes/) explains how text is turned into the forms you have been reading.
