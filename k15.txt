@@ -1,0 +1,16 @@
+location: /api/people/42
+content-length: 45
+```
+
+The -o option sent the body to people.json, so only the headers printed here. The server answered with a 201, which means a new record was created.
+
+## Step 4: Read the JSON reply
+
+The reply body is JSON, which is text with a fixed shape. Look at the raw file first:
+
+```
+cat people.json
+```
+
+```
+{"id": 42, "name": "ada", "created": true}
