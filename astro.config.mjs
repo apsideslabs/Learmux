@@ -33,6 +33,9 @@ export default defineConfig({
   integrations: [mdx(), sitemap()],
   markdown: {
     remarkPlugins: [remarkBaseLinks],
+    // SmartyPants turns `--delete` into `—delete`, which is wrong on a site
+    // that documents command-line flags.
+    smartypants: false,
     shikiConfig: {
       theme: 'github-light',
       wrap: false,
