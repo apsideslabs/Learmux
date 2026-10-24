@@ -1,0 +1,221 @@
+---
+title: "Project: a terminal dashboard"
+description: "Build a shell script that prints a compact terminal dashboard of disk, memory, battery, packages, and the current time zone."
+excerpt: "Print a compact terminal dashboard with disk, memory, battery, packages, and the current time zone."
+category: "Projects"
+author: "The Study Cipher"
+date: "2026-04-05"
+order: 26
+track: "projects"
+level: "Advanced"
+tags: [project, scripting, shell]
+---
+
+import Callout from '../../components/Callout.astro';
+
+You are going to write a script that prints a small dashboard when you open Termux: the date, how long the phone has been up, disk and memory use, battery if the device reports it, how many packages you have installed, and a local line that works with no network at all.
+
+## What you'll be able to do
+
+- Lay out aligned text with `echo` and `printf`.
+- Feed one command's output into another with command substitution.
+- Read disk and memory figures from `df` and `free`.
+- Detect whether a file exists before reading it, so the script copes with a phone that has no battery sensor.
+- Branch on a flag with a `case` statement.
+
+## What you are building
+
+A script called `dash.sh` that prints a fixed set of sections, each separated by a rule. Run it plain for the full dashboard, or pass `--brief` for a shorter one.
+
+```text
+$ sh dash.sh
+Termux dashboard
+Saturday 24 October 2026
+uptime:3 days
+----------------------------------
+Disk
+  18G used of 51G (37%)
+```
+
+## Step 1: The header
+
+Start with a title, the full date, and the uptime. The raw `uptime` line has extra words, so trim it with `sed` to the part after `up` and before the first comma.
+
+```sh
+$ echo "$(date '+%A %d %B %Y')"
+Saturday 24 October 2026
+$ echo "uptime:$(uptime | sed 's/.*up //; s/,.*//')"
+uptime:3 days
+```
+
+The format string `%A %d %B %Y` gives the weekday, day, month name, and year. Everything inside `$(...)` runs first, and its output drops into the surrounding string.
+
+## Step 2: Disk usage
+
+`df -h` lists the filesystems with human-readable sizes. `tail -n +2` drops the header line, and `awk` picks out the used size, the total, and the percentage.
+
+```sh
+$ df -h / | tail -n +2 | awk '{printf "  %s used of %s (%s)\n", $3, $2, $5}'
+  18G used of 51G (37%)
+```
+
+<Callout type="tip">
+`printf` takes a format string and a list of values. `%s` is a placeholder filled in order by the arguments that follow, so this one line builds the whole sentence from three columns of `df` output.
+</Callout>
+
+## Step 3: Memory
+
+`free -h` prints a memory table with a header row and a `Mem:` row. Match the `Mem:` row and print the used and total columns. If `free` is missing on your install, add it with `pkg install procps`.
+
+```sh
+$ free -h | awk '/^Mem:/ {printf "  %s used of %s\n", $3, $2}'
+  2.1G used of 5.8G
+```
+
+## Step 4: Battery, if it exists
+
+Not every phone exposes a battery to Termux. The capacity is a plain number in a file under the power supply tree, so test that the file is readable first.
+
+```sh
+BAT=/sys/class/power_supply/BAT0/capacity
+if [ -r "$BAT" ]; then
+  echo "  $(cat "$BAT")%"
+else
+  echo "  not available"
+fi
+```
+
+<Callout type="warning">
+The battery path is a device detail. Do not assume the file is there: an unguarded `cat` on a missing path prints an error and returns a non-zero status. The `if [ -r ... ]` guard is what keeps the rest of the dashboard running on a device without it.
+</Callout>
+
+## Step 5: Count the installed packages
+
+The count differs between a Debian-style system and Termux, so check which tool is present with `command -v`. `dpkg-query` lists every package name with no spacing and `wc -c` counts the characters, which equals the number of packages. On Termux, `pkg list-installed` prints one line per package and `wc -l` counts them.
+
+```sh
+$ if command -v dpkg-query >/dev/null 2>&1; then dpkg-query -f '.' -W | wc -c | tr -d ' '; else pkg list-installed | wc -l | tr -d ' '; fi
+312
+```
+
+## Step 6: The offline local line
+
+The last section replaces a weather line with something that always works: the time zone and the current time, both from `date`. No network is involved, so the dashboard never hangs waiting for a reply.
+
+```sh
+$ echo "  timezone $(date +%Z)"; echo "  now      $(date '+%H:%M')"
+  timezone IST
+  now      21:40
+```
+
+## Step 7: The `--brief` flag and the finished script
+
+Put the sections into functions, then choose which to print with a `case` statement. `case` compares a value against several patterns and runs the block for the first match. The empty pattern `""` matches no argument at all, and `*` catches anything else.
+
+```sh
+#!/bin/sh
+# dash.sh — a compact terminal dashboard. Usage: sh dash.sh [--brief]
+
+BRIEF=0
+case "$1" in
+  --brief) BRIEF=1 ;;
+  "")      BRIEF=0 ;;
+  *)       echo "usage: dash.sh [--brief]" >&2; exit 2 ;;
+esac
+
+rule() { echo "----------------------------------"; }
+show_disk() {
+  echo "Disk"
+  df -h / | tail -n +2 | awk '{printf "  %s used of %s (%s)\n", $3, $2, $5}'
+}
+show_memory() {
+  echo "Memory"
+  free -h | awk '/^Mem:/ {printf "  %s used of %s\n", $3, $2}'
+}
+show_battery() {
+  BAT=/sys/class/power_supply/BAT0/capacity
+  if [ -r "$BAT" ]; then
+    echo "Battery"; echo "  $(cat "$BAT")%"
+  else
+    echo "Battery"; echo "  not available"
+  fi
+}
+show_packages() {
+  echo "Packages"
+  if command -v dpkg-query >/dev/null 2>&1; then
+    echo "  $(dpkg-query -f '.' -W | wc -c | tr -d ' ') installed"
+  elif command -v pkg >/dev/null 2>&1; then
+    echo "  $(pkg list-installed | wc -l | tr -d ' ') installed"
+  else
+    echo "  unknown"
+  fi
+}
+show_local() {
+  echo "Local"
+  echo "  timezone $(date +%Z)"
+  echo "  now      $(date '+%H:%M')"
+}
+
+echo "Termux dashboard"
+echo "$(date '+%A %d %B %Y')"
+echo "uptime:$(uptime | sed 's/.*up //; s/,.*//')"
+rule
+if [ "$BRIEF" -eq 1 ]; then
+  show_disk; show_memory; show_local
+else
+  show_disk; rule; show_memory; rule; show_battery; rule; show_packages; rule; show_local
+fi
+```
+
+Run it plain for the full dashboard.
+
+```sh
+$ sh dash.sh
+Termux dashboard
+Saturday 24 October 2026
+uptime:3 days
+----------------------------------
+Disk
+  18G used of 51G (37%)
+----------------------------------
+Memory
+  2.1G used of 5.8G
+----------------------------------
+Battery
+  76%
+----------------------------------
+Packages
+  312 installed
+----------------------------------
+Local
+  timezone IST
+  now      21:40
+```
+
+An unknown flag falls through to the `*` pattern and exits with status `2`.
+
+```sh
+$ sh dash.sh --wat; echo "exit=$?"
+usage: dash.sh [--brief]
+exit=2
+```
+
+## Quick reference
+
+| Command or syntax | What it does |
+| --- | --- |
+| `date '+%A %d %B %Y'` | Prints the weekday, day, month name, and year. |
+| `date +%Z` | Prints the time zone abbreviation. |
+| `df -h /` | Lists the root filesystem with human-readable sizes. |
+| `free -h` | Prints the memory table with human-readable sizes. |
+| `printf "fmt" a b` | Prints `fmt` with `%s` replaced by each argument. |
+| `[ -r file ]` | True when the file exists and is readable. |
+| `command -v name` | Prints the path of a command, or nothing if absent. |
+| `case "$1" in ... esac` | Runs the block matching the first pattern. |
+
+## Where to take it next
+
+- Add a `--watch` mode that redraws the dashboard every few seconds with a `while` loop and `sleep`, clearing the screen with `clear` between passes.
+- Colour the disk and memory lines with `tput` when the percentage passes a threshold, so a nearly full phone stands out.
+
+Read [Command substitution](/learn/command-substitution/) for the `$(...)` pattern, and [Shell scripting basics](/learn/shell-scripting-basics/) for functions and `case`.
