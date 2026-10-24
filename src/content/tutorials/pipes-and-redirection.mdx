@@ -1,85 +1,221 @@
 ---
 title: "Pipes and redirection"
-description: "Connect commands together with the pipe, save output with redirection, and slice text with cut, sort and sed."
-excerpt: "Connect commands with the pipe, save output with redirection, and slice text with cut, sort and sed."
+description: "Send one command's output into another with a pipe, and into files with redirection on Termux."
+excerpt: "Chain commands together with pipes, and send their output into files with redirection."
 category: "Pipes"
 author: "The Study Cipher"
 date: "2026-01-21"
 order: 4
-level: Intermediate
-tags: [pipes, cut, sed, redirection]
-updated: "2026-01"
+level: Beginner
+tags: [pipes, redirection]
 ---
 
-## The pipe: small tools, composed
+import Callout from '../../components/Callout.astro';
 
-Each command-line tool does one thing well. The pipe, `|`, is how you combine them: the output of
-the command on the left becomes the input of the command on the right.
+Every command reads something and writes something. Pipes and redirection let you control both ends, so one command's output can feed straight into the next. This is where the terminal beats any app, because you build a small tool out of parts that already exist.
 
-```bash
-cat users.txt | grep admin
-ls -l | wc -l
-cat access.log | grep " 500 " | head -n 5
+## What you'll be able to do
+
+- Send one command's output into another with a pipe.
+- Chain two and three commands into a single line.
+- Write output into a file with `>` and append with `>>`.
+- Hide error messages with `2>/dev/null`.
+- Pick columns, sort, count and edit text with `cut`, `sort`, `uniq` and `sed`.
+
+## Step 1: Make a file to work with
+
+This writes a small access log. It uses redirection, which this lesson covers below, so read it for now as "put the text between the markers into access.log". There is no output, and the prompt returns.
+
+```
+$ cd ~
+$ cat > access.log << 'EOF'
+10.0.0.4 GET /index.html 200
+10.0.0.7 GET /about.html 200
+10.0.0.4 POST /login 302
+10.0.0.9 GET /missing.html 404
+10.0.0.7 GET /index.html 200
+10.0.0.4 GET /index.html 200
+EOF
 ```
 
-You can chain as many as you like. Read it left to right as a sentence: "take the file, keep the
-admin lines, show the first field."
+Each line has four parts: a client address, a method, a path, and a status code.
 
-## Redirection: where does output go?
+## Step 2: What a pipe is
 
-By default output goes to your screen. You can send it to a file instead:
+The pipe symbol `|` takes the output of the command on its left and feeds it to the command on its right. First, a count with no pipe.
 
-```bash
-echo "hello" > greeting.txt    # create or overwrite
-echo "world" >> greeting.txt   # append
-ls -l > listing.txt            # save a listing
+```
+$ wc -l access.log
+6 access.log
 ```
 
-- `>` overwrites the file (be careful — it does not ask).
-- `>>` appends.
+Now the same count, by piping `cat` into `wc`.
 
-There is also `2>` for error output. `command 2>/dev/null` throws errors away — handy when you are
-searching `/` as a normal user.
-
-## Slicing text with cut
-
-`cut` pulls out columns. Most log and config formats are separated by a delimiter (a colon, a space,
-a comma):
-
-```bash
-cut -d: -f1 users.txt     # field 1, split on ":"
-cut -d: -f3 users.txt     # field 3
-cut -d: -f1,7 users.txt   # fields 1 and 7
+```
+$ cat access.log | wc -l
+6
 ```
 
-A passwd-style line like `admin:x:1000:1000:Admin:/home/admin:/bin/bash` is colon-separated, so
-`-f3` is the UID and `-f7` is the login shell.
+`cat` prints the file, the pipe hands that text to `wc`, and `wc` counts the lines. The number is the same, but `wc` never saw a file name, so it prints only the count.
 
-## Sorting and deduplicating
+<Callout type="tip" title="Read a pipeline left to right">
+A pipeline is a sentence. Data enters on the left, passes through each command in turn, and leaves on the right.
+</Callout>
 
-```bash
-sort names.txt           # alphabetical
-sort -n numbers.txt      # numeric
-sort -u names.txt        # sorted and unique
-sort names.txt | uniq -c # count occurrences of adjacent duplicates
+## Step 3: Chaining commands
+
+`cut` picks one field from every line. `-d ' '` sets the space as the separator, and `-f1` asks for the first field, the client address.
+
+```
+$ cut -d ' ' -f1 access.log
+10.0.0.4
+10.0.0.7
+10.0.0.4
+10.0.0.9
+10.0.0.7
+10.0.0.4
 ```
 
-## Search and replace with sed
+Now chain three. `sort` groups identical addresses, and `uniq -c` collapses each group and counts it.
 
-```bash
-sed 's/old/new/' file.txt      # replace first match per line
-sed 's/old/new/g' file.txt     # replace all matches
+```
+$ cut -d ' ' -f1 access.log | sort | uniq -c
+      3 10.0.0.4
+      2 10.0.0.7
+      1 10.0.0.9
 ```
 
-## Putting it together
+`uniq` only compares neighbours, which is why `sort` must come first. Add `sort -n` to order the results by the count.
 
-This is the shape of a real one-liner — find a line, take a field, decode it:
-
-```bash
-grep flag_blob capture.log | cut -d" " -f4 | base64 -d
+```
+$ cut -d ' ' -f1 access.log | sort | uniq -c | sort -n
+      1 10.0.0.9
+      2 10.0.0.7
+      3 10.0.0.4
 ```
 
-## Practise
+Four commands, one line, and a ranked list of your busiest clients.
 
-- [Pipe Dreams](/challenges/pipe-dreams/) — chain `cat`, `grep` and `cut`.
-- [The Final Boss](/challenges/final-boss/) — grep, cut and base64 in one pipeline.
+## Step 4: Writing output to files
+
+A single `>` sends a command's output into a file, replacing whatever was there before. Two `>>` append instead, adding to the end of the file.
+
+```
+$ echo "first line" > demo.txt
+$ echo "second line" >> demo.txt
+$ cat demo.txt
+first line
+second line
+```
+
+<Callout type="warning" title="A single arrow overwrites">
+`>` replaces the whole file with no warning. Use `>>` when you mean to add, and `>` only when you mean to start the file again.
+</Callout>
+
+## Step 5: Hiding errors
+
+Commands write errors to a second stream, separate from normal output. You can see it when a command fails.
+
+```
+$ ls no-such-file
+ls: cannot access 'no-such-file': No such file or directory
+```
+
+The `2>` redirects that error stream, numbered 2, into a file. The file `/dev/null` throws away anything sent to it.
+
+```
+$ ls no-such-file 2>/dev/null
+```
+
+Nothing is printed now. This is useful when you search widely and expect harmless errors.
+
+```
+$ find ~ -name "*.log" 2>/dev/null
+/data/data/com.termux/files/home/app.log
+```
+
+## Step 6: Sorting and counting numbers
+
+`sort` puts lines in order, but by default it compares them as text, so `10` comes before `2`. Add `-n` to sort by numeric value instead.
+
+```
+$ printf '10\n2\n1\n30\n2\n' > numbers.txt
+$ sort -n numbers.txt
+1
+2
+2
+10
+30
+```
+
+Add `-u` to drop duplicate lines as well.
+
+```
+$ sort -n -u numbers.txt
+1
+2
+10
+30
+```
+
+## Step 7: Editing text with sed
+
+`sed` edits a stream of text. The form `s/old/new/g` replaces text, and the trailing `g` means every match on a line.
+
+```
+$ sed 's/line/LINE/g' demo.txt
+first LINE
+second LINE
+```
+
+Leave off the `g` and only the first match on each line changes.
+
+```
+$ sed 's/line/LINE/' demo.txt
+first LINE
+second line
+```
+
+`sed` prints its result to the screen. It does not change the file unless you redirect the output somewhere.
+
+## Step 8: A realistic one-liner
+
+Which pages were requested, and how often? Chain `cut`, `sort`, `uniq -c` and `sort -n` on the third field, the path.
+
+```
+$ cut -d ' ' -f3 access.log | sort | uniq -c | sort -n
+      1 /about.html
+      1 /login
+      1 /missing.html
+      3 /index.html
+```
+
+Read it from the top. One request each for two pages, one failed request, and three hits on the home page.
+
+Now find every failed request. `grep` keeps the lines with a `404`, and `cut` shows only the path.
+
+```
+$ grep "404" access.log | cut -d ' ' -f3
+/missing.html
+```
+
+That is the shape of the whole lesson. Small commands, joined by pipes, answering a real question.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `A \| B` | Feed the output of A into B |
+| `cut -d DELIM -f N FILE` | Print field N, split on the delimiter |
+| `sort FILE` | Sort lines as text |
+| `sort -n FILE` | Sort lines as numbers |
+| `sort -u FILE` | Sort and drop duplicates |
+| `uniq -c` | Count runs of identical adjacent lines |
+| `sed 's/OLD/NEW/g' FILE` | Replace every match in a stream |
+| `CMD > FILE` | Write output to a file, replacing it |
+| `CMD >> FILE` | Append output to a file |
+| `CMD 2>/dev/null` | Discard error messages |
+
+## Next steps
+
+You now have the core of the command line. Put the whole set to work in a real investigation with [Logs Never Lie](/challenges/logs-never-lie/). To look up a command you half remember, revisit [Reading and searching text](/learn/reading-and-searching-text/). And if paths still trip you up, refresh [Navigating the filesystem](/learn/navigating-the-filesystem/).
