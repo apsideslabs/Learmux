@@ -1,41 +1,40 @@
 # Learmux
 
-> Learn Termux and the Linux command line by breaking in.
+> A cybersecurity tutorial publication for Termux and the Linux command line.
 
-Learmux is a hands-on learning platform for **Termux** (Android's terminal and Linux environment) and
-the command line more broadly. It pairs short written tutorials with an **interactive
-capture-the-flag terminal** that runs entirely in the browser: pick a challenge, get dropped into a
-shell with its own filesystem, and hunt for a `TERMUX{...}` flag.
+Learmux is a learning site built around two things: short written lessons, and an
+**interactive capture-the-flag terminal** that runs entirely in the browser. Pick a challenge, get
+dropped into a shell with its own filesystem, and find the flag.
 
-There is no backend. The whole thing builds to static files you can host anywhere.
+No backend. The whole thing builds to static files.
 
 **Live site:** https://apsideslabs.github.io/Learmux/
 
 ---
 
-## Features
+## What's here
 
-- **Interactive CTF terminal** — a playable shell for every challenge, with tab-completion, command
-  history, pipes and redirection.
-- **TypeScript engine** — an explicit tokeniser, a virtual filesystem and a deterministic shell, so
-  challenge state is completely predictable (same input, same output).
-- **Custom CSS, mobile-first** — a hand-written design system and terminal component with deliberate
-  handling of the on-screen keyboard, scrolling and the prompt line.
-- **Markdown / MDX tutorials** — lessons are content files; drop one in and it appears in the index,
-  the router and the sitemap.
-- **Challenges as JSON** — all 20 challenges (filesystems, flags, hints) live in a single JSON file.
-  No database needed for the prototype.
-- **Progress tracking** — captured flags are remembered in `localStorage`, so your score survives a
-  refresh.
+- **Editorial homepage** — featured tutorial cards with landscape thumbnails, category labels over
+  each thumbnail, a Recent Posts feed, a CTF promotional panel, a Download Termux section and social
+  links.
+- **Article template** — breadcrumb (`Home › Category › Title`), author and date byline, and a body
+  that supports headings, inline code, code blocks, callouts and responsive images.
+- **Category and search pages** — every lesson grouped by topic, plus a compact client-side search.
+- **Interactive CTF terminal** — a simulated shell with command history, pipes, redirection, hints
+  and a progress indicator. Nothing you type ever reaches a real shell.
+- **20 challenges** across 13 topics, defined as JSON.
+- **Explicit challenge validation** — completion is decided by authored rules, not by scanning
+  output for a flag string.
+- **Responsive navigation drawer** — the spec's link set, focus management, Escape to close.
 
 ## The stack
 
 | Layer | Choice | Why |
 | --- | --- | --- |
-| Site & content | **Astro** | Static output, file-based routing, first-class MDX, great SEO |
-| Interactivity | **TypeScript** (vanilla island) | Precise control, no framework overhead, tiny bundle |
-| Styling | **Custom CSS** | Total control over the look and the mobile terminal |
-| Lessons | **Markdown / MDX** | Easy to write and maintain |
+| Framework | **Astro** | Static output, file-based routing, first-class MDX |
+| Language | **TypeScript** | The CTF engine: parser, virtual filesystem, shell |
+| Styling | **Custom CSS** | No framework; total control of the interface and terminal |
+| Articles | **Markdown / MDX** | Easy to write and maintain |
 | Challenges | **JSON** | Data-driven; swappable for a database later |
 | Hosting | **GitHub Pages** | Free, static, deployed from GitHub Actions |
 
@@ -43,122 +42,102 @@ There is no backend. The whole thing builds to static files you can host anywher
 
 ```
 Learmux/
-├── astro.config.mjs            # Astro config (MDX, sitemap, Shiki)
+├── astro.config.mjs             # Astro config (MDX, sitemap, Shiki, base-path links)
 ├── src/
-│   ├── content.config.ts       # tutorials content collection
-│   ├── content/tutorials/*.mdx # the lessons
-│   ├── data/challenges.json    # 20 challenge definitions (generated)
+│   ├── content.config.ts        # tutorial collection schema
+│   ├── content/tutorials/*.mdx  # the lessons
+│   ├── data/challenges.json     # 20 challenge definitions (generated)
 │   ├── lib/
-│   │   ├── types.ts            # core types
-│   │   ├── fs.ts               # virtual filesystem
-│   │   ├── shell.ts            # tokeniser + pipeline executor
-│   │   ├── commands.ts         # the command set
-│   │   ├── hash.ts             # pure-JS SHA-256
-│   │   ├── challenges.ts       # challenge loader
-│   │   ├── progress.ts         # localStorage progress
-│   │   ├── md.ts               # tiny markdown renderer for briefings
-│   │   └── terminal.ts         # the terminal DOM island
-│   ├── components/             # Terminal, ChallengeCard
-│   ├── layouts/BaseLayout.astro
-│   ├── pages/                  # index, learn, challenges, about, 404
-│   └── styles/                 # global.css, terminal.css
+│   │   ├── types.ts             # core types + validation rule types
+│   │   ├── fs.ts                # virtual filesystem
+│   │   ├── shell.ts             # tokeniser, pipeline executor, rule evaluation
+│   │   ├── commands.ts          # the command set
+│   │   ├── hash.ts              # pure-JS SHA-256
+│   │   ├── challenges.ts        # challenge loader
+│   │   ├── tutorials.ts         # lesson helpers (sorting, categories, dates)
+│   │   ├── site.ts              # brand, nav and social config
+│   │   ├── progress.ts          # localStorage progress
+│   │   ├── md.ts                # small markdown renderer for briefings
+│   │   └── terminal.ts          # the terminal DOM island
+│   ├── components/              # Icon, ArticleCard, PostRow, Callout, Terminal, ChallengeRow
+│   ├── layouts/BaseLayout.astro # header, drawer, footer
+│   ├── pages/                   # home, learn, article, categories, category, search,
+│   │                            # challenges, challenge, about, contact, privacy, 404
+│   └── styles/                  # global.css, terminal.css
 ├── scripts/
-│   ├── generate-challenges.mjs # authors src/data/challenges.json
-│   ├── test-engine.ts          # engine smoke tests
-│   └── run-tests.mjs           # bundles + runs the tests
-└── public/                     # favicon, _headers
+│   ├── generate-challenges.mjs  # authors src/data/challenges.json (incl. validation rules)
+│   ├── generate-thumbs.mjs      # draws the original SVG thumbnails
+│   ├── test-engine.ts           # engine smoke tests
+│   └── run-tests.mjs
+└── public/thumbs/*.svg          # generated, locally-stored artwork
 ```
 
 ## Getting started
 
 ```bash
-npm install          # or: pnpm install
-npm run dev          # http://localhost:4321
-npm run build        # static output in dist/
-npm run preview      # preview the production build locally
+npm install
+npm run dev              # http://localhost:4321
+npm run build            # static output in dist/
+npm run preview          # preview the production build
+npm test                 # check every challenge is solvable
+npm run generate         # rebuild src/data/challenges.json
+npm run generate:thumbs  # redraw the SVG thumbnails
 ```
 
 ## How the sandbox works
 
-A challenge declares a virtual filesystem as JSON. When you open it, the engine deep-clones that tree
-into a `VirtualFS`, seeds a `Shell` with the challenge's working directory, user, host and flag, and
+A challenge declares a virtual filesystem as JSON. Opening it deep-clones that tree into a
+`VirtualFS`, seeds a `Shell` with the challenge's working directory, user, host, hints and rules, and
 you are in.
 
 Your keystrokes are tokenised explicitly (quotes, `|`, `>`, `>>`, `;`), split into statements, split
 into pipeline stages, and each stage is dispatched to a command. Commands are pure functions of
 `(filesystem, argv, stdin)`. Commands that would touch a network or the device — `nmap`, `curl`,
-`pkg`, `ps`, `ifconfig` — read **authored output** from the challenge's `overrides` map, so nothing
-depends on the host and the result is always the same.
+`pkg`, `ps` — return **authored output** from the challenge's `overrides` map, so nothing depends on
+the host.
 
-Flags are detected two ways: if a command's output contains the flag string, the challenge is marked
-solved; you can also type `submit TERMUX{...}`.
+### Challenge validation
 
-## Authoring challenges
-
-Challenge definitions are generated by a script so that hashes, base64, ROT13 and reversals stay
-correct:
-
-```bash
-npm run generate     # rewrites src/data/challenges.json
-```
-
-Edit `scripts/generate-challenges.mjs`, run it, and the new challenge appears in the index, the
-terminal route and the progress totals automatically. A challenge is:
+Completion is decided by **explicit, authored rules** stored with each challenge, evaluated against a
+log of what the player actually did:
 
 ```jsonc
-{
-  "id": "c21",
-  "slug": "my-challenge",
-  "title": "My Challenge",
-  "category": "Text",
-  "difficulty": "Easy",
-  "points": 10,
-  "summary": "One-line teaser.",
-  "briefing": "Markdown shown above the terminal.",
-  "objective": "What the player must do.",
-  "flag": "TERMUX{my_flag}",
-  "hints": ["A nudge.", "A bigger nudge."],
-  "starters": ["ls", "cat file.txt"],
-  "cwd": "/data/data/com.termux/files/home",
-  "user": "u0_a0",
-  "host": "localhost",
-  "fs": { "type": "dir", "children": { } }
-}
+"validation": [
+  { "type": "command", "pattern": "\\bgrep\\b" },
+  { "type": "output",  "pattern": "TERMUX\\{logs_never_lie\\}" }
+]
 ```
 
-## Testing
+Rule types: `read` (a path was read), `command` (a command line matched a regex), `output`
+(accumulated output matched a regex) and `cwd` (the player moved into a directory). A challenge is
+solved when every rule matches. Submitting the correct flag with `submit FLAG{...}` also completes it.
 
-```bash
-npm test
-```
+So in the logs challenge, `cat access.log` does **not** complete it — the rule requires that `grep`
+was used. That is the difference between an explicit rule and "the output contained the flag".
 
-The smoke test bundles the engine with esbuild and checks that **every challenge is solvable** with
-its documented commands, plus shell features (pipes, redirection, history), a known SHA-256 vector,
-and the `submit` command.
+## Authoring
+
+Edit `scripts/generate-challenges.mjs`, then `npm run generate`. New challenges appear in the index,
+the routes and the progress totals automatically. Lessons are just MDX files in
+`src/content/tutorials/` with `category`, `author`, `date` and `excerpt` frontmatter.
 
 ## Deployment
 
-The site is a static build, and it is currently deployed to **GitHub Pages** at
-<https://apsideslabs.github.io/Learmux/>.
+Deployed to **GitHub Pages** by `.github/workflows/deploy.yml`: on every push to `main` it installs
+dependencies, builds, and publishes `dist/`. Because the site is served from `/Learmux/`,
+`astro.config.mjs` sets `site` and `base`, and root-absolute links in Markdown are rewritten by a
+small remark plugin.
 
-Deployment is automated by `.github/workflows/deploy.yml`: on every push to `main` it installs
-dependencies, runs `npm run build`, uploads `dist/` as a Pages artifact, and publishes it. Pages is
-configured with `build_type: workflow`.
+Any static host works: `npm run build`, then serve `dist/`.
 
-Because the site is served from the `/Learmux/` subpath, `astro.config.mjs` sets `site` and `base`,
-and root-absolute links in Markdown/MDX are rewritten with a small remark plugin. If you fork this
-under a different name, update `site` and `base` there.
+## Notes
 
-Any other static host works too — build with `npm run build` and serve `dist/`. For Cloudflare
-Pages, set the build command to `npm run build` and the output directory to `dist` (and remove the
-`base` from `astro.config.mjs`, or set it to your project's path).
+- This is an original implementation with its own branding and assets. The visual language follows a
+  tutorial-publication layout; the site's own stack is documented above and nothing here claims to
+  describe any other site's internals.
+- Flags live in the client-side data, so a determined reader could find them early. That is fine for
+  teaching; the next step would be moving challenge checks behind an API.
 
-## Notes & limitations
-
-This is a **learning prototype**. Flags live in the client-side JSON, so a determined player could
-read them ahead of time — fine for teaching, not for a real competition. The next step would be
-moving challenge definitions and flag verification behind an API with accounts and a leaderboard.
-
-## License
+## Licence
 
 MIT — see [LICENSE](./LICENSE).
