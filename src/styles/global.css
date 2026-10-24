@@ -427,6 +427,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 /* ── article cards ─────────────────────────────────────────────────────── */
 .cards {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
   grid-template-columns: 1fr;
 }
@@ -1108,7 +1109,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 .next-track a > svg { margin-left: auto; color: var(--muted); }
 
 /* ── homepage path grid ────────────────────────────────────────────────── */
-.path-grid { display: grid; gap: var(--sp-4); }
+.path-grid { display: grid; gap: var(--sp-4); grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 640px) { .path-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1000px) { .path-grid { grid-template-columns: repeat(3, 1fr); } }
 
@@ -1343,4 +1344,13 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   /* footer */
   .footer-base { font-size: 0.78rem; }
   .studio__mark { height: 17px; }
+}
+
+/* Long command lines wrap on a phone instead of scrolling sideways. */
+@media (max-width: 640px) {
+  .prose pre,
+  .prose code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
 }
