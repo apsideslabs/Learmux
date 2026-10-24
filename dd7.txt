@@ -1,0 +1,27 @@
+Server:         192.168.1.1
+Address:        192.168.1.1#53
+www.example.com canonical name = example.com.
+Name:   example.com
+Address: 93.184.216.34
+```
+
+The line reading canonical name is the CNAME. When a service moves, the operator changes the address and leaves the name alone, so you share a name and never hard-code an address.
+
+## Step 5: Reverse lookups
+
+A reverse lookup goes the other way. You give dig an address and it asks for the name. Use the -x option for this:
+
+```
+dig -x 93.184.216.34
+```
+
+```
+; <<>> DiG 9.18.28 <<>> -x 93.184.216.34
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 41044
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;34.216.184.93.in-addr.arpa.     IN      PTR
+
+;; ANSWER SECTION:
