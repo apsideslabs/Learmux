@@ -13,7 +13,7 @@ tags: [filesystem, paths]
 
 import Callout from '../../components/Callout.astro';
 
-A filesystem is a tree of directories, and every file sits somewhere on it. In this lesson you learn how to name any spot on that tree, move to it, and build and search your own branches. This turns the terminal from a mystery into a place you know.
+A filesystem is a tree of directories, and every file sits somewhere on it. Here you learn to name any spot on that tree and move to it. You also build your own branches and search them. The terminal stops being a mystery and becomes a place you know.
 
 ## What you'll be able to do
 
@@ -25,7 +25,7 @@ A filesystem is a tree of directories, and every file sits somewhere on it. In t
 
 ## Step 1: Absolute and relative paths
 
-An absolute path starts at the root, written as a forward slash, and spells out the whole route. A relative path starts from where you are now.
+An absolute path starts at the root, written as a forward slash, and spells out the whole route. A relative path starts from where you are.
 
 ```
 $ cd /data/data/com.termux/files/home/projects
@@ -33,7 +33,7 @@ $ pwd
 /data/data/com.termux/files/home/projects
 ```
 
-Now move with a relative path. This one names a directory next to you, with no leading slash.
+Move next with a relative path. This one names a directory next to you, with no leading slash.
 
 ```
 $ cd notes
@@ -43,7 +43,7 @@ $ pwd
 
 ## Step 2: The dots and the tilde
 
-A single dot `.` means the directory you are in. Two dots `..` mean the directory one level up.
+A single dot `.` means the directory you are in. Two dots `..` mean the one a level up.
 
 ```
 $ cd ..
@@ -59,7 +59,7 @@ $ pwd
 /data/data/com.termux/files/home
 ```
 
-There is also `cd -`, which returns you to the previous directory and prints where it took you.
+There is also `cd -`. It returns you to the previous directory and prints where it took you.
 
 ```
 $ cd ~/projects
@@ -73,7 +73,7 @@ $ cd -
 
 ## Step 3: Reading a long listing
 
-A plain `ls` gives you names. Add `-l` for a long listing with the details.
+A plain `ls` gives you names only. Add `-l` for a long listing with the details.
 
 ```
 $ cd ~
@@ -84,7 +84,7 @@ total 4
 -rw------- 1 u0_a123 u0_a123 26 Jan 12 09:15 todo.txt
 ```
 
-Read the line left to right. `-rw-------` is the permission string, where the leading dash means a plain file. The `1` is the link count. Then the owner and group, both `u0_a123` here. Then the size in bytes, `26`. Then the date, then the name.
+Read the line from left to right. `-rw-------` is the permission string, where the leading dash means a plain file. The `1` is the link count. Then come the owner and group, both `u0_a123` here. Then the size in bytes, `26`. Then the date, then the name.
 
 Add `-h` to make sizes human readable, so large files show as kilobytes or megabytes.
 
@@ -96,7 +96,7 @@ total 26M
 ...
 ```
 
-That listing is abridged. The sizes now read as `35K` and `111K` rather than long byte counts. Add `-a` to include hidden files, and `-R` to list subdirectories as well.
+That listing is abridged. The sizes now read as `35K` and `111K` rather than long byte counts. Add `-a` to include hidden files, or `-R` to list subdirectories as well.
 
 ```
 $ ls -R projects
@@ -113,7 +113,7 @@ Add `-R` only on a small tree. On a large directory it prints thousands of lines
 
 ## Step 4: Making directories
 
-`mkdir` makes a directory. With `-p` it creates every missing directory in the path, and it stays quiet if the directory already exists.
+`mkdir` makes a directory. With `-p` it creates every missing directory in the path. It stays quiet if the directory already exists.
 
 ```
 $ mkdir -p work/logs/2026
@@ -127,7 +127,7 @@ work/logs:
 work/logs/2026:
 ```
 
-Without `-p`, `mkdir work/logs/2026` would fail, because `work/logs` did not exist yet.
+Without `-p`, `mkdir work/logs/2026` would fail. The path `work/logs` did not exist yet.
 
 ## Step 5: Finding files
 
@@ -195,4 +195,4 @@ $ tree ~
 
 ## Next steps
 
-Now that you can reach any file, learn to read what is inside it in [Reading and searching text](/learn/reading-and-searching-text/). To link commands together and save their output, continue to [Pipes and redirection](/learn/pipes-and-redirection/). For practice with real files, try [Logs Never Lie](/challenges/logs-never-lie/).
+Now that you can reach any file, learn to read what sits inside it in [Reading and searching text](/learn/reading-and-searching-text/). To join commands and save their output, continue to [Pipes and redirection](/learn/pipes-and-redirection/). For practice with real files, try [Logs Never Lie](/challenges/logs-never-lie/).
