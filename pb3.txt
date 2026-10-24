@@ -1,4 +1,0 @@
-    logo: 'curl',
-    install: 'pkg install curl',
-    commands: [
-      { cmd: 'curl -i', what: 'Show the status line and headers, then the body' },

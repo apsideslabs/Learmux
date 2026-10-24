@@ -1,5 +1,0 @@
-  },
-  {
-    slug: 'wget',
-    name: 'wget',
-    category: 'transfer',

@@ -1,2 +1,0 @@
-      { cmd: 'curl -i', what: 'Show the status line and headers, then the body' },
-      { cmd: 'curl -I', what: 'Ask for the headers only' },
