@@ -1,0 +1,14 @@
+34.216.184.93.in-addr.arpa. 3600 IN     PTR     example.com.
+```
+
+The name under QUESTION is the address written backwards with in-addr.arpa on the end, which is how the reverse tree is organised. Not every address has a name, and when there is none the answer section is empty.
+
+<Callout type="warning" title="DNS is a common target">
+DNS is a frequent target for attackers. A resolver you do not control can be tampered with, so a name can point somewhere you did not intend. Changing your DNS provider also changes who can see the names you look up and when. That is a privacy decision, not a speed setting, so choose a resolver you are willing to trust.
+</Callout>
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| getprop net.dns1 | Prints the first DNS resolver your phone uses |
