@@ -2,85 +2,111 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { challenges, categories, totalPoints } from '../lib/challenges';
 
-const cats = categories();
-const commandCount = 50;
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const cats = categories();
 ---
 
 <BaseLayout
   title="About"
-  description="What Learmux is, how it is built (Astro + TypeScript + MDX + JSON), and how to run and deploy it."
+  description="What Learmux is, how it is built, and how the sandbox works under the hood."
 >
-  <div class="wrap prose">
-    <h1>About Learmux</h1>
-    <p>
-      Learmux is a small, self-contained learning platform for <strong>Termux</strong> — the terminal
-      emulator and Linux environment for Android — and for the Linux command line more broadly. It pairs
-      short written tutorials with an interactive capture-the-flag terminal, so you can read about
-      <code>grep</code> and then immediately use it to pull a flag out of a noisy log.
-    </p>
+  <div class="wrap">
+    <header class="section--tight" style="padding-bottom:0">
+      <h1>About Learmux</h1>
+      <p class="lede">
+        A small, self-contained place to learn Termux — Android's terminal and Linux environment — and the
+        command line in general.
+      </p>
+    </header>
 
-    <h2>How it is built</h2>
-    <p>Every layer was chosen to keep the project explainable and cheap to run:</p>
-    <ul>
-      <li><strong>Astro</strong> renders the site statically: pages, tutorials, navigation, SEO and the sitemap. No server to maintain.</li>
-      <li><strong>TypeScript</strong> powers the CTF engine — an explicit command parser, a virtual filesystem, and a deterministic shell that tracks flags, hints and progress.</li>
-      <li><strong>Custom CSS</strong> (no framework) gives the mobile-first interface and the terminal its own look, including on-screen-keyboard handling.</li>
-      <li><strong>Markdown / MDX</strong> holds the tutorials, so lessons are just content files.</li>
-      <li><strong>JSON</strong> holds the {challenges.length} challenge definitions — filesystems, flags and hints — with no database required for the prototype.</li>
-    </ul>
+    <section class="section--tight">
+      <div class="split split--aside">
+        <div><h2>Why it exists</h2></div>
+        <div class="prose measure">
+          <p>
+            Termux puts a real shell in your pocket, but most tutorials stop at listing commands. Learmux
+            pairs a short written lesson with a challenge that makes you use it. You read about
+            <code>grep</code>, then you pull a flag out of a noisy log with it.
+          </p>
+          <p>
+            Everything is designed for a phone first, because that is where Termux lives. It works just as
+            well on a laptop.
+          </p>
+        </div>
+      </div>
+    </section>
 
-    <h2>By the numbers</h2>
-    <div class="stats">
-      <div class="stat"><span class="n">{challenges.length}</span><span class="l">challenges</span></div>
-      <div class="stat"><span class="n">{totalPoints}</span><span class="l">points</span></div>
-      <div class="stat"><span class="n">{cats.length}</span><span class="l">categories</span></div>
-      <div class="stat"><span class="n">{commandCount}+</span><span class="l">shell commands</span></div>
-    </div>
+    <section class="section--tight">
+      <div class="split split--aside">
+        <div><h2>How the sandbox works</h2></div>
+        <div class="prose measure">
+          <p>
+            There is no operating system behind the terminal. Each challenge declares a virtual filesystem,
+            and your keystrokes are parsed by an explicit tokeniser and pipeline executor. The same command
+            always produces the same result, and resetting a challenge simply restores the original files.
+          </p>
+          <p>
+            Commands that would normally touch a network or the device — <code>nmap</code>, <code>curl</code>,
+            <code>pkg</code>, <code>ps</code> — return output written specifically for that challenge, so
+            nothing depends on a server.
+          </p>
+          <blockquote>
+            This is a learning prototype. Flags live in the client-side data, so a determined reader could
+            find them early. That is fine for teaching; the next step would be moving challenge checks
+            behind an API.
+          </blockquote>
+        </div>
+      </div>
+    </section>
 
-    <h2>How the sandbox works</h2>
-    <p>
-      There is no real operating system behind the terminal. A challenge seeds a virtual filesystem, and
-      your keystrokes are parsed by an explicit tokeniser and pipeline executor. That means the state is
-      completely predictable: the same command always produces the same result, and resetting a challenge
-      simply restores the seed. Commands that would touch a network or the device — <code>nmap</code>,
-      <code>curl</code>, <code>pkg</code>, <code>ps</code> — return authored output defined per challenge,
-      so nothing depends on the host.
-    </p>
-    <blockquote>
-      Note: this is a learning prototype. Flags live in the client-side JSON, so a determined player could
-      read them ahead of time. That is fine for teaching — the next step would be moving challenge
-      definitions and flag checks behind an API.
-    </blockquote>
+    <section class="section--tight">
+      <div class="stats">
+        <div class="stat"><span class="n">{challenges.length}</span><span class="l">challenges</span></div>
+        <div class="stat"><span class="n">{totalPoints}</span><span class="l">points</span></div>
+        <div class="stat"><span class="n">{cats.length}</span><span class="l">topics</span></div>
+        <div class="stat"><span class="n">50+</span><span class="l">shell commands</span></div>
+      </div>
+    </section>
 
-    <h2>Roadmap</h2>
-    <ul>
-      <li>Accounts and a server-side leaderboard (swap the JSON store for a database).</li>
-      <li>Authoring UI so non-developers can add challenges.</li>
-      <li>More categories: scripting, process inspection, file forensics, package management.</li>
-      <li>Optional real sandboxing (WASM shell) for advanced challenges.</li>
-    </ul>
+    <section class="section--tight">
+      <div class="split split--aside">
+        <div><h2>How it is built</h2></div>
+        <div class="prose measure">
+          <ul>
+            <li><strong>Astro</strong> renders the site to static files — pages, lessons, navigation and the sitemap.</li>
+            <li><strong>TypeScript</strong> powers the terminal: an explicit command parser, a virtual filesystem and a deterministic shell.</li>
+            <li><strong>Hand-written CSS</strong> — no framework — gives the mobile-first interface and the terminal its own character.</li>
+            <li><strong>Markdown</strong> holds the lessons, so adding one is just adding a file.</li>
+            <li><strong>JSON</strong> holds the challenge definitions, with no database needed.</li>
+          </ul>
+          <p class="mb-0">
+            The source is on <a href="https://github.com/apsideslabs/Learmux" rel="noopener">GitHub</a> under
+            the MIT licence.
+          </p>
+        </div>
+      </div>
+    </section>
 
-    <h2>Run it locally</h2>
-    <pre><code>npm install
+    <section class="section--tight">
+      <div class="split split--aside">
+        <div><h2>Run it yourself</h2></div>
+        <div class="prose measure">
+          <pre><code>npm install
 npm run dev      # http://localhost:4321
 npm run build    # static output in dist/
-npm run preview  # preview the production build</code></pre>
-    <p>
-      To regenerate the challenge JSON from the authoring script:
-      <code>node scripts/generate-challenges.mjs</code>.
-    </p>
+npm test         # check every challenge is solvable</code></pre>
+        </div>
+      </div>
+    </section>
 
-    <h2>Deploy</h2>
-    <p>
-      The build output is fully static, which makes Cloudflare Pages a natural host: connect the
-      repository, set the build command to <code>npm run build</code> and the output directory to
-      <code>dist</code>. Any static host works the same way.
-    </p>
-
-    <div class="hero-actions">
-      <a class="btn btn--primary" href={`${base}challenges/`}>Start a challenge →</a>
-      <a class="btn btn--ghost" href={`${base}learn/`}>Browse tutorials</a>
-    </div>
+    <section class="section--tight">
+      <div class="card card--pad-lg" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1.5rem">
+        <div>
+          <h2 style="margin-bottom:0.3rem">Start with challenge 01</h2>
+          <p class="muted mb-0">Two commands, one flag, about a minute.</p>
+        </div>
+        <a class="btn btn--primary" href={`${base}challenges/first-steps/`}>Open it</a>
+      </div>
+    </section>
   </div>
 </BaseLayout>
