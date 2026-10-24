@@ -1,0 +1,188 @@
+---
+title: "Scheduling work with cron"
+description: "Use crontab to run a command on a schedule, read the five time fields, and send each run's output to a log you can check."
+excerpt: "Let the phone run your commands on a timer, even while you sleep."
+category: "Automation"
+author: "The Study Cipher"
+date: "2026-02-14"
+order: 13
+track: "practice"
+level: "Intermediate"
+tags: [cron, automation]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Cron runs commands for you on a schedule. Instead of remembering to make a backup each evening, you write the job once and cron fires it at the times you choose. This lesson sets up a daily job and shows you how to read back what happened.
+
+## What you'll be able to do
+
+- List the jobs you have scheduled with `crontab -l`.
+- Read the five time fields in a cron line.
+- Add a daily job with `crontab -e`.
+- Send a job's output to a log file so you can see what it did.
+- Use absolute paths, because cron runs with a small environment.
+
+## Step 1: See your current jobs
+
+Each user has one crontab, a table of scheduled jobs. `crontab -l` lists it.
+
+```bash
+crontab -l
+```
+
+```text
+no crontab for u0_a123
+```
+
+That message means you have none yet, which is normal on a fresh Termux install.
+
+<Callout type="warning" title="Cron is not running yet">
+Termux does not start cron by default. Install it and switch the service on before any job will fire.
+</Callout>
+
+Install the cron package and the service manager.
+
+```bash
+pkg install cronie termux-services
+```
+
+```text
+Reading package lists... Done
+Building dependency tree... Done
+The following NEW packages will be installed:
+  cronie termux-services
+0 upgraded, 2 newly installed, 0 to remove.
+```
+
+Then enable the cron service. It prints nothing on success.
+
+```bash
+sv-enable crond
+```
+
+```text
+
+```
+
+## Step 2: Read the five time fields
+
+A cron line is five time fields followed by the command to run. The fields are minute, hour, day of the month, month, and day of the week, in that order. A star means every value.
+
+```text
+30 7 * * * command
+```
+
+Read that as minute 30, hour 7, every day of the month, every month, every day of the week. In plain words, 07:30 every morning.
+
+Here are the field ranges:
+
+- Minute: 0 to 59
+- Hour: 0 to 23
+- Day of the month: 1 to 31
+- Month: 1 to 12
+- Day of the week: 0 to 6, where 0 is Sunday
+
+A star in the day of the week field means every day, which is what you want for a daily job.
+
+## Step 3: Add a daily job
+
+`crontab -e` opens your crontab in an editor. On Termux that editor is `vi` unless you have set `EDITOR` to something else.
+
+```bash
+crontab -e
+```
+
+```text
+
+```
+
+The editor opens with an empty buffer. Type your job as a single line, then save and quit. This one runs a backup script at 07:30 every day.
+
+```text
+30 7 * * * /data/data/com.termux/files/home/bin/backup.sh
+```
+
+Now list the crontab again to confirm it was saved.
+
+```bash
+crontab -l
+```
+
+```text
+30 7 * * * /data/data/com.termux/files/home/bin/backup.sh
+```
+
+The job is registered. Cron will run it at the next 07:30.
+
+## Step 4: Send output to a log
+
+A job that runs in the background has nowhere to print. Any output it produces is either mailed away or lost. Send it to a file instead, so you can read it later. Redirect both normal output and errors.
+
+```text
+30 7 * * * /data/data/com.termux/files/home/bin/backup.sh >> /data/data/com.termux/files/home/backup.log 2>&1
+```
+
+The `>>` appends normal output to the log. The `2>&1` sends error output to the same place, so nothing slips past. Read the log whenever you want to check on a run.
+
+```bash
+tail -n 5 /data/data/com.termux/files/home/backup.log
+```
+
+```text
+Backup started at 07:30
+Copied 42 files
+Archive written to backup-2026-01-31.tar.gz
+Backup finished at 07:31
+```
+
+<Callout type="tip" title="Test it by hand first">
+Before you schedule a command, run it once in your terminal with the exact path you plan to use. If it works by hand, you know the command is right and any later failure is about the schedule or the environment, not the command itself.
+</Callout>
+
+## Step 5: Use absolute paths
+
+Cron does not read your shell startup files, so it runs with a minimal `PATH`, often only the system directories. A command like `backup.sh` or `python` may not be found, even though it works when you type it yourself.
+
+The fix is to write the full path to everything. Compare the two lines. The first depends on `PATH` being set up for it.
+
+```text
+30 7 * * * backup.sh
+```
+
+The second names the script outright, so `PATH` does not matter.
+
+```text
+30 7 * * * /data/data/com.termux/files/home/bin/backup.sh
+```
+
+The same rule applies inside the script. If it calls `python`, `tar` or `curl`, give each one its full path, or set `PATH` at the top of the script.
+
+```bash
+export PATH=/data/data/com.termux/files/usr/bin:$PATH
+```
+
+```text
+
+```
+
+Set `PATH` inside the script itself, not in your crontab, so the script works the same whether cron runs it or you do.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `crontab -l` | List your scheduled jobs |
+| `crontab -e` | Edit your crontab in an editor |
+| `crontab -r` | Remove your whole crontab |
+| `30 7 * * * cmd` | Run `cmd` at 07:30 every day |
+| `0 * * * * cmd` | Run `cmd` at the start of every hour |
+| `cmd >> log 2>&1` | Append output and errors to a log file |
+| `sv-enable crond` | Start the cron service in Termux |
+| `tail -n 5 log` | Read the last five lines of a log |
+
+## Next steps
+
+- [Environment variables and PATH](/learn/environment-and-variables/) to understand the minimal environment cron provides.
+- [Archives and compression](/learn/archives-and-compression/) to make the archive your daily job creates.
+- [Shell scripting basics](/learn/shell-scripting-basics/) to wrap several steps into one script for cron to run.
