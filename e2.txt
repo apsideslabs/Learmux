@@ -1,0 +1,53 @@
+```
+Server:         192.168.1.1
+Address:        192.168.1.1#53
+www.example.com canonical name = example.com.
+Name:   example.com
+Address: 93.184.216.34
+```
+
+The line reading canonical name is the CNAME. When a service moves, the operator changes the address and leaves the name alone, so you share a name and never hard-code an address.
+
+## Step 5: Reverse lookups
+
+A reverse lookup goes the other way. You give dig an address and it asks for the name. Use the -x option for this:
+
+```
+dig -x 93.184.216.34
+```
+
+```
+; <<>> DiG 9.18.28 <<>> -x 93.184.216.34
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 41044
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;34.216.184.93.in-addr.arpa.     IN      PTR
+
+;; ANSWER SECTION:
+34.216.184.93.in-addr.arpa. 3600 IN     PTR     example.com.
+```
+
+The name under QUESTION is the address written backwards with in-addr.arpa on the end, which is how the reverse tree is organised. Not every address has a name, and when there is none the answer section is empty.
+
+<Callout type="warning" title="DNS is a common target">
+DNS is a frequent target for attackers. A resolver you do not control can be tampered with, so a name can point somewhere you did not intend. Changing your DNS provider also changes who can see the names you look up and when. That is a privacy decision, not a speed setting, so choose a resolver you are willing to trust.
+</Callout>
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `getprop net.dns1` | Prints the DNS resolver your phone uses |
+| `dig NAME A` | Asks for the IPv4 address of a name |
+| `dig NAME AAAA` | Asks for the IPv6 address |
+| `dig NAME MX` | Asks for the mail servers of a domain |
+| `dig NAME TXT` | Asks for the text records |
+| `dig -x ADDRESS` | Asks for the name behind an address |
+
+## Next steps
+
+- [HTTP and APIs from the shell](/learn/http-and-apis-from-the-shell/) shows what you send once a name resolves.
+- [Moving files between machines](/learn/transferring-files/) covers copying data to a host by name.
+- [Fetch the Flag](/challenges/fetch-the-flag/) puts these lookups to work.
