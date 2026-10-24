@@ -7,7 +7,7 @@ export const shellProcessTools: Tool[] = [
     category: 'shell',
     tagline: 'The default login shell on Termux and most Linux systems',
     about:
-      'Bash is the Bourne Again Shell, the command interpreter you land in when you open a terminal. It reads your commands, runs them, and connects them together with pipes and redirection. Reach for it whenever you need a script that behaves the same way on almost any Linux box.',
+      'Bash is the Bourne Again Shell, the interpreter you land in when you open a terminal. It reads your commands, runs them, and joins them with pipes and redirection. Scripts you write in it behave the same way on almost any Linux box.',
     developer: 'Free Software Foundation',
     license: 'GPL-3.0-or-later',
     url: 'https://www.gnu.org/software/bash/',
@@ -17,23 +17,23 @@ export const shellProcessTools: Tool[] = [
     commands: [
       {
         args: 'script.sh',
-        what: 'Run a saved script file in a fresh shell, which is how you test automation before trusting it on important files',
+        what: 'Run a saved script in a fresh shell. Test your automation before trusting it with important files.',
       },
       {
         args: '-c "ls | wc -l"',
-        what: 'Run a short command string directly without opening an interactive session, which is handy inside other scripts and one-off checks',
+        what: 'Run a short command string without an interactive session. Handy inside other scripts and one-off checks.',
       },
       {
         args: '-n script.sh',
-        what: 'Parse a script and report syntax errors without executing anything, so you can catch typos safely',
+        what: 'Parse a script and report syntax errors. Nothing executes, so typos surface safely.',
       },
       {
         args: '-x script.sh',
-        what: 'Trace every command as it runs by printing each line before it executes, the fastest way to find where a script goes wrong',
+        what: 'Trace every command, printing each line before it runs. The fastest way to find where a script goes wrong.',
       },
       {
         args: '--version',
-        what: 'Print the shell version so you know which features are available on this device',
+        what: 'Print the shell version. Confirms which features this device supports.',
       },
     ],
     example: {
@@ -47,9 +47,9 @@ Deploy finished in 2.4s`,
     slug: 'zsh',
     name: 'Zsh',
     category: 'shell',
-    tagline: 'A powerful shell with spelling correction and rich tab completion',
+    tagline: 'Extended Bourne-style shell with smart completion and globbing',
     about:
-      'Zsh is an extended Bourne-style shell that adds smarter completion, globbing and prompt customisation. Many people prefer it over Bash for interactive work because it guesses what you mean and lets you theme the prompt. On Termux you install it, then start it once to set up its files.',
+      'Zsh is an extended Bourne-style shell with smarter completion, globbing and prompt customisation. Many people prefer it over Bash for interactive work. On Termux, install it and start it once to set up its files.',
     developer: 'Zsh Development Group',
     url: 'https://www.zsh.org/',
     bin: 'zsh',
@@ -58,23 +58,23 @@ Deploy finished in 2.4s`,
     commands: [
       {
         args: '',
-        what: 'Start an interactive session in this shell; your current session stays untouched until you exit back to the parent shell',
+        what: 'Start an interactive session. Your current shell stays untouched until you exit back to it.',
       },
       {
         args: '-l',
-        what: 'Start as a login shell so it reads your profile files and sets up the environment the way a fresh terminal would',
+        what: 'Start as a login shell. It reads your profile files and sets up the environment a fresh terminal would.',
       },
       {
         args: '-f',
-        what: 'Start without reading any startup files, which isolates a problem to your configuration rather than the shell itself',
+        what: 'Start without reading any startup files. This isolates a problem to your configuration, not the shell.',
       },
       {
         args: '-n setup',
-        what: 'Check a script for syntax errors and exit without running a single line of it',
+        what: 'Check a script for syntax errors. Not one line runs.',
       },
       {
         args: '--version',
-        what: 'Print the installed version so you can confirm which release and feature set you have',
+        what: 'Print the installed version. Confirms which release and feature set you have.',
       },
     ],
     example: {
@@ -90,7 +90,7 @@ c`,
     category: 'shell',
     tagline: 'Keep sessions alive and split one terminal into many panes',
     about:
-      'tmux is a terminal multiplexer: it runs a session in the background so your work survives a dropped connection, and it lets you split the screen into windows and panes. It is the standard way to keep long jobs running on a phone you might close at any moment.',
+      'tmux is a terminal multiplexer. It runs a session in the background so your work survives a dropped connection, and it splits the screen into windows and panes. Long jobs keep running on a phone you might close at any moment.',
     developer: 'Nicholas Marriott',
     license: 'ISC',
     url: 'https://github.com/tmux/tmux',
@@ -100,27 +100,27 @@ c`,
     commands: [
       {
         args: 'new -s work',
-        what: 'Create a named session so you can detach from it and reattach later without losing what was running',
+        what: 'Create a named session. Detach from it now, reattach later, and lose nothing that was running.',
       },
       {
         args: 'attach -t work',
-        what: 'Reconnect to a session you detached from earlier, restoring every window and pane exactly as you left them',
+        what: 'Reconnect to a session you detached earlier. Every window and pane returns as you left it.',
       },
       {
         args: 'ls',
-        what: 'List all running sessions with their names and how long they have been up, so you can pick the right one to rejoin',
+        what: 'List running sessions with names and uptime. Pick the right one to rejoin.',
       },
       {
         args: 'new-window -n logs',
-        what: 'Add another window inside the current session and give it a name, keeping related work together but out of the way',
+        what: 'Add another window inside the current session and name it. Related work stays together, out of the way.',
       },
       {
         args: 'split-window -h',
-        what: 'Divide the current window into two side-by-side panes so you can watch output while typing in the other',
+        what: 'Split the current window into two side-by-side panes. Watch output in one while you type in the other.',
       },
       {
         args: 'kill-session -t work',
-        what: 'End a session and everything running inside it once you are finished with that piece of work',
+        what: 'End a session and everything inside it once that piece of work is done.',
       },
     ],
     example: {
@@ -136,7 +136,7 @@ logs: 2 windows (created Sat Oct 24 10:41:52 2026)`,
     category: 'shell',
     tagline: 'A veteran terminal multiplexer for detaching and resuming sessions',
     about:
-      'GNU Screen was the original terminal multiplexer, letting you detach a session and come back to it later, even after logging out. It is lighter and more widely preinstalled than newer alternatives, so it is a dependable fallback. Use it to protect a long download or build from a flaky connection.',
+      'GNU Screen was the original terminal multiplexer. Detach a session and return to it later, even after logging out. Lighter and more widely preinstalled than newer alternatives, it protects a long download or build from a flaky connection.',
     developer: 'GNU Project',
     license: 'GPL-3.0-or-later',
     url: 'https://www.gnu.org/software/screen/',
@@ -146,23 +146,23 @@ logs: 2 windows (created Sat Oct 24 10:41:52 2026)`,
     commands: [
       {
         args: '-S build',
-        what: 'Start a new named session so you can find and reattach to it by name later',
+        what: 'Start a new named session. Find and reattach to it by name later.',
       },
       {
         args: '-r build',
-        what: 'Reattach to a session that is still running in the background after you disconnected',
+        what: 'Reattach to a session still running in the background after you disconnected.',
       },
       {
         args: '-ls',
-        what: 'List the sessions that currently exist along with whether each one is attached or detached',
+        what: 'List the sessions that exist. Shows whether each is attached or detached.',
       },
       {
         args: '-d -r build',
-        what: 'Force a detached session to reattach here, which rescues it when another terminal is stuck holding it open',
+        what: 'Force a detached session to reattach here. Rescues it when another terminal is stuck holding it open.',
       },
       {
         args: '-dmS job build-all.sh',
-        what: 'Start a session detached and run a command inside it, so the job keeps going after you close the terminal',
+        what: 'Start a session detached and run a command inside it. The job keeps going after you close the terminal.',
       },
     ],
   },
@@ -172,7 +172,7 @@ logs: 2 windows (created Sat Oct 24 10:41:52 2026)`,
     category: 'shell',
     tagline: 'A modern terminal workspace with built-in layouts and hints',
     about:
-      'Zellij is a newer terminal multiplexer that shows its keybindings on screen and supports shareable layout files. It aims to be friendlier for newcomers than older tools while still handling panes, tabs and detaching. Try it if you like the idea of sessions but find the default keybindings hard to remember.',
+      'Zellij is a newer terminal multiplexer. It shows its keybindings on screen and supports shareable layout files. Friendlier for newcomers than older tools, it still handles panes, tabs and detaching. Try it if you like sessions but find default keybindings hard to remember.',
     developer: 'Zellij contributors',
     license: 'MIT',
     url: 'https://zellij.dev/',
@@ -182,23 +182,23 @@ logs: 2 windows (created Sat Oct 24 10:41:52 2026)`,
     commands: [
       {
         args: '',
-        what: 'Start a new workspace with the default layout and an on-screen hint bar showing the keys you can press',
+        what: 'Start a new workspace with the default layout. An on-screen hint bar shows the keys you can press.',
       },
       {
         args: '-s work',
-        what: 'Give the new session a name so you can list and attach to it later',
+        what: 'Give the new session a name. List and attach to it later.',
       },
       {
         args: 'attach work',
-        what: 'Rejoin a session you left running in the background, restoring its tabs and panes',
+        what: 'Rejoin a session you left running in the background. Its tabs and panes return.',
       },
       {
         args: 'list-sessions',
-        what: 'Show every session currently alive with its name and how long it has existed',
+        what: 'Show every live session with its name and age.',
       },
       {
         args: 'setup --check',
-        what: 'Inspect the environment and report whether anything needed for full terminal support is missing',
+        what: 'Inspect the environment. Reports whether anything needed for full terminal support is missing.',
       },
     ],
     example: {
@@ -214,7 +214,7 @@ scratch [Created 3d ago]`,
     category: 'shell',
     tagline: 'Friendly wrappers and a status bar around a terminal multiplexer',
     about:
-      'Byobu is a set of profiles and keybindings layered over a multiplexer such as tmux or screen, plus a status line showing load, battery and notifications. It is designed so the common actions are one keypress away. Use it if you want sessions and a useful status bar without learning every raw command.',
+      'Byobu is a set of profiles and keybindings layered over a multiplexer such as tmux or screen. It adds a status line showing load, battery and notifications. Common actions are one keypress away.',
     developer: 'Dustin Kirkland',
     license: 'GPL-3.0-or-later',
     url: 'https://www.byobu.org/',
@@ -224,23 +224,23 @@ scratch [Created 3d ago]`,
     commands: [
       {
         args: '',
-        what: 'Launch a new managed session with the status bar enabled at the bottom of the screen',
+        what: 'Launch a new managed session. The status bar appears at the bottom of the screen.',
       },
       {
         args: 'new-session -s work',
-        what: 'Start a named session so you can return to it by name later',
+        what: 'Start a named session. Return to it by name later.',
       },
       {
         args: 'attach -t work',
-        what: 'Reattach to a session you detached earlier without recreating any of its windows',
+        what: 'Reattach to a session you detached earlier. No windows are recreated.',
       },
       {
         args: 'list-sessions',
-        what: 'Show the sessions that exist so you can choose which one to rejoin',
+        what: 'Show the sessions that exist. Choose which one to rejoin.',
       },
       {
         args: 'kill-session -t work',
-        what: 'Close a named session and everything running inside it when that work is done',
+        what: 'Close a named session and everything inside it when that work is done.',
       },
     ],
     example: {
@@ -256,7 +256,7 @@ logs: 3 windows (created Sat Oct 24 10:41:52 2026)`,
     category: 'shell',
     tagline: 'Interactive fuzzy finder you can pipe anything into',
     about:
-      'fzf turns a list of lines into a searchable menu you can filter by typing. Pipe history, file names or any command output into it and pick a line interactively. It is the quickest way to add fuzzy selection to your own shell functions.',
+      'fzf turns a list of lines into a searchable menu you can filter by typing. Pipe history, file names or any command output into it, then pick a line. It is the quickest way to add fuzzy selection to your own shell functions.',
     developer: 'Junegunn Choi',
     license: 'MIT',
     url: 'https://github.com/junegunn/fzf',
@@ -266,23 +266,23 @@ logs: 3 windows (created Sat Oct 24 10:41:52 2026)`,
     commands: [
       {
         args: '',
-        what: 'Read lines from standard input and let you filter them interactively; the chosen line is printed so it can be fed into the next command',
+        what: 'Read lines from standard input and filter them interactively. The chosen line is printed, ready for the next command.',
       },
       {
         args: '--height 40%',
-        what: 'Open the picker in a panel instead of taking over the whole screen, so the surrounding context stays visible',
+        what: 'Open the picker in a panel instead of taking over the whole screen. Surrounding context stays visible.',
       },
       {
         args: '--multi',
-        what: 'Allow selecting several lines at once with the tab key, which is useful when you want to act on a batch of files',
+        what: 'Select several lines at once with the tab key. Useful when you want to act on a batch of files.',
       },
       {
         args: '--preview "cat {}"',
-        what: 'Show a live preview of the highlighted item beside the list so you can inspect it before choosing',
+        what: 'Show a live preview of the highlighted item beside the list. Inspect it before choosing.',
       },
       {
         args: '--bind ctrl-a:select-all',
-        what: 'Add a custom key binding so one keystroke selects every entry in the current filtered list',
+        what: 'Add a custom key binding. One keystroke selects every entry in the filtered list.',
       },
     ],
     example: {
@@ -298,7 +298,7 @@ logs: 3 windows (created Sat Oct 24 10:41:52 2026)`,
     category: 'shell',
     tagline: 'Jump to directories by typing part of their name',
     about:
-      'Zoxide remembers the directories you visit and ranks them by how often and how recently you use them. Instead of typing a long path, you type a fragment and it takes you to the best match. Set it up once and navigation across a deep folder tree becomes a few keystrokes.',
+      'Zoxide remembers the directories you visit and ranks them by how often and how recently you use them. Type a fragment instead of a long path, and it takes you to the best match. Set it up once and a deep folder tree becomes a few keystrokes.',
     developer: "Ajeet D'Souza",
     license: 'MIT',
     url: 'https://github.com/ajeetdsouza/zoxide',
@@ -308,23 +308,23 @@ logs: 3 windows (created Sat Oct 24 10:41:52 2026)`,
     commands: [
       {
         args: 'init',
-        what: 'Print the shell snippet that hooks the directory jumper into your session; you add it to your startup file once',
+        what: 'Print the shell snippet that hooks the directory jumper into your session. Add it to your startup file once.',
       },
       {
         args: 'add /sdcard/Download',
-        what: 'Record a directory in the database manually so it is available to jump to even before you have visited it',
+        what: 'Record a directory in the database by hand. It becomes available to jump to before you have visited it.',
       },
       {
         args: 'query',
-        what: 'List the directories that have been learned, ranked so you can see which one the jumper will pick first',
+        what: 'List the learned directories in rank order. See which one the jumper will pick first.',
       },
       {
         args: 'query -l notes',
-        what: 'Show every remembered directory whose path contains the given text, so you can pick the exact one',
+        what: 'Show every remembered directory whose path contains the given text. Pick the exact one.',
       },
       {
         args: 'remove /sdcard/Download',
-        what: 'Forget a directory that you no longer want suggested',
+        what: 'Forget a directory you no longer want suggested.',
       },
     ],
     example: {
@@ -340,7 +340,7 @@ logs: 3 windows (created Sat Oct 24 10:41:52 2026)`,
     category: 'shell',
     tagline: 'Community cheat sheets that show the common uses of a command',
     about:
-      'tldr shows short, example-driven help pages for command-line tools, written by the community. Where a manual page lists every option, tldr gives you the handful of invocations people actually use. Reach for it when you have forgotten the common flags for something.',
+      'tldr shows short, example-driven help pages for command-line tools, written by the community. A manual page lists every option; tldr gives you the handful of invocations people actually use. Reach for it when the common flags have slipped your mind.',
     developer: 'tldr-pages contributors',
     url: 'https://tldr.sh/',
     bin: 'tldr',
@@ -349,23 +349,23 @@ logs: 3 windows (created Sat Oct 24 10:41:52 2026)`,
     commands: [
       {
         args: 'tar',
-        what: 'Show the common uses of the tar archiver, including how to create and unpack archives',
+        what: 'Show the common uses of the tar archiver. Covers creating and unpacking archives.',
       },
       {
         args: '-u tar',
-        what: 'Update the cached pages from the community repository before reading, so you get the latest examples',
+        what: 'Update the cached pages from the community repository before reading. You get the latest examples.',
       },
       {
         args: '-l',
-        what: 'List every page that is currently cached locally so you can see what is available offline',
+        what: 'List every page cached locally. See what is available offline.',
       },
       {
         args: '-p',
-        what: 'Render the page for the current platform only, hiding examples that do not apply to this system',
+        what: 'Render the page for the current platform only. Hides examples that do not apply here.',
       },
       {
         args: '-L en tar',
-        what: 'Read the page in a specific language when translations are available',
+        what: 'Read the page in a specific language when translations are available.',
       },
     ],
     example: {
@@ -384,7 +384,7 @@ logs: 3 windows (created Sat Oct 24 10:41:52 2026)`,
     category: 'process',
     tagline: 'List running processes with their resource use',
     about:
-      'ps prints a snapshot of the processes on the system, showing their identifiers, owners and resource consumption. It is the go-to command for a quick, scriptable look at what is running right now. Unlike a live monitor it exits immediately, which makes it easy to pipe into other tools.',
+      'ps prints a snapshot of the processes on the system, with their identifiers, owners and resource consumption. It is the go-to command for a quick, scriptable look at what is running right now. Unlike a live monitor it exits immediately, so it pipes easily into other tools.',
     developer: 'procps-ng project',
     license: 'GPL-2.0-or-later',
     url: 'https://gitlab.com/procps-ng/procps',
@@ -394,27 +394,27 @@ logs: 3 windows (created Sat Oct 24 10:41:52 2026)`,
     commands: [
       {
         args: 'aux',
-        what: 'Show every process on the system with its full command line and memory usage, the quickest way to spot something running that should not be',
+        what: 'Show every process with its full command line and memory use. The quickest way to spot something running that should not be.',
       },
       {
         args: '-e',
-        what: 'List all running processes on the machine, one per line, when you want a plain system-wide view',
+        what: 'List all running processes, one per line. A plain system-wide view.',
       },
       {
         args: 'u 4321',
-        what: 'Show detailed information for a single process identifier, including its owner and processor time',
+        what: 'Show detailed information for a single process identifier. Includes its owner and processor time.',
       },
       {
         args: 'aux --sort=-%mem',
-        what: 'Sort the full listing by memory so the heaviest consumers sit at the top',
+        what: 'Sort the full listing by memory. The heaviest consumers rise to the top.',
       },
       {
         args: '-o pid,comm,%cpu,%mem',
-        what: 'Choose exactly which columns appear, so the output stays narrow and easy to read inside a script',
+        what: 'Choose exactly which columns appear. Output stays narrow and easy to read inside a script.',
       },
       {
         args: 'axjf',
-        what: 'Display the process hierarchy as a tree so you can see which parent spawned which child',
+        what: 'Display the process hierarchy as a tree. See which parent spawned which child.',
       },
     ],
     example: {
@@ -430,7 +430,7 @@ root       201  0.0  0.4  123456  7890 ?     Ss   09:00   0:00 init`,
     category: 'process',
     tagline: 'Live view of CPU and memory with the busiest processes',
     about:
-      'top refreshes a full-screen table every couple of seconds showing overall load and the processes using the most processor time. It is present on nearly every Unix-like system, so it is the reliable choice when nothing fancier is installed. Watch it to catch a runaway task as it happens.',
+      'top refreshes a full-screen table every couple of seconds, showing overall load and the processes using the most processor time. Present on nearly every Unix-like system, it is the reliable choice when nothing fancier is installed. Watch it to catch a runaway task as it happens.',
     developer: 'procps-ng project',
     license: 'GPL-2.0-or-later',
     url: 'https://gitlab.com/procps-ng/procps',
@@ -440,27 +440,27 @@ root       201  0.0  0.4  123456  7890 ?     Ss   09:00   0:00 init`,
     commands: [
       {
         args: '',
-        what: 'Open the live monitor with a default refresh interval and a summary of load, memory and the busiest tasks',
+        what: 'Open the live monitor with a default refresh interval. Shows a summary of load, memory and the busiest tasks.',
       },
       {
         args: '-d 1',
-        what: 'Refresh once a second instead of the default few seconds, which makes short spikes easier to catch',
+        what: 'Refresh once a second instead of every few. Short spikes become easier to catch.',
       },
       {
         args: '-b -n 1',
-        what: 'Print a single snapshot in plain text and exit, which is what you want when saving output to a file',
+        what: 'Print a single snapshot in plain text and exit. The right choice when saving output to a file.',
       },
       {
         args: '-o %MEM',
-        what: 'Order the task list by memory use rather than processor time',
+        what: 'Order the task list by memory use rather than processor time.',
       },
       {
         args: '-p 4321',
-        what: 'Restrict the view to a single process identifier so you can watch one task without noise',
+        what: 'Restrict the view to a single process identifier. Watch one task without noise.',
       },
       {
         args: '-u u0_a123',
-        what: 'Show only the processes owned by one user, keeping the list short on a busy system',
+        what: 'Show only the processes owned by one user. Keeps the list short on a busy system.',
       },
     ],
     example: {
@@ -478,7 +478,7 @@ Swap:  1024M total,   120M used,   904M free
     category: 'process',
     tagline: 'Colourful interactive process viewer with scrolling and shortcuts',
     about:
-      'htop is an interactive process viewer that shows load, memory and a scrollable list of tasks with colour coding. You can sort, search and send signals without leaving the interface. It is friendlier than a bare monitor and worth installing on a phone for a readable overview.',
+      'htop is an interactive process viewer with load and memory bars and a scrollable list of tasks, colour coded. Sort, search and send signals without leaving the interface. It is friendlier than a bare monitor and worth installing on a phone for a readable overview.',
     developer: 'Hisham Muhammad and contributors',
     license: 'GPL-2.0-or-later',
     url: 'https://htop.dev/',
@@ -488,27 +488,27 @@ Swap:  1024M total,   120M used,   904M free
     commands: [
       {
         args: '',
-        what: 'Open the interactive viewer with bars for load and memory and a sortable list of tasks below',
+        what: 'Open the interactive viewer. Bars for load and memory sit above a sortable list of tasks.',
       },
       {
         args: '-u u0_a123',
-        what: 'Show only tasks belonging to one user, which trims the list on a shared system',
+        what: 'Show only tasks belonging to one user. Trims the list on a shared system.',
       },
       {
         args: '-s PERCENT_MEM',
-        what: 'Start with the list sorted by memory use instead of processor time',
+        what: 'Start with the list sorted by memory use instead of processor time.',
       },
       {
         args: '-d 5',
-        what: 'Set the refresh delay in tenths of a second, so a larger number slows the updates down',
+        what: 'Set the refresh delay in tenths of a second. A larger number slows the updates down.',
       },
       {
         args: '-t',
-        what: 'Display the process tree so parent and child tasks are grouped together',
+        what: 'Display the process tree. Parent and child tasks are grouped together.',
       },
       {
         args: '-C',
-        what: 'Run in monochrome, which helps when colours render badly over a remote connection',
+        what: 'Run in monochrome. Helps when colours render badly over a remote connection.',
       },
     ],
     example: {
@@ -525,7 +525,7 @@ Swap:  1024M total,   120M used,   904M free
     category: 'process',
     tagline: 'Rich resource monitor with graphs for CPU, memory and network',
     about:
-      'btop is a resource monitor that draws live graphs for processor, memory, disk and network activity alongside a list of tasks. It is visually detailed and themeable, and it runs well in a modern terminal. Use it when you want the whole picture of what the device is doing at a glance.',
+      'btop is a resource monitor that draws live graphs for processor, memory, disk and network activity alongside a list of tasks. It is visually detailed and themeable, and it runs well in a modern terminal. Use it for the whole picture of what the device is doing at a glance.',
     developer: 'Aristocratos',
     license: 'Apache-2.0',
     url: 'https://github.com/aristocratos/btop',
@@ -535,23 +535,23 @@ Swap:  1024M total,   120M used,   904M free
     commands: [
       {
         args: '',
-        what: 'Open the full dashboard with live graphs for processor, memory, disk and network',
+        what: 'Open the full dashboard with live graphs for processor, memory, disk and network.',
       },
       {
         args: '--utf-force',
-        what: 'Force the use of Unicode drawing characters when the terminal does not advertise support, so the graphs render properly',
+        what: 'Force Unicode drawing characters when the terminal does not advertise support. The graphs render properly.',
       },
       {
         args: '--preset 0',
-        what: 'Start with a particular layout preset instead of your saved configuration',
+        what: 'Start with a particular layout preset instead of your saved configuration.',
       },
       {
         args: '--tty',
-        what: 'Run in a low-resolution mode suited to a plain console where advanced drawing is unavailable',
+        what: 'Run in a low-resolution mode for a plain console where advanced drawing is unavailable.',
       },
       {
         args: '--low-color',
-        what: 'Reduce the number of colours used, which suits terminals with a limited palette',
+        what: 'Reduce the number of colours used. Suits terminals with a limited palette.',
       },
     ],
     example: {
@@ -568,7 +568,7 @@ Proc 1 running, 186 sleeping`,
     category: 'process',
     tagline: 'Modern replacement for ps with colour and sensible defaults',
     about:
-      'procs is a process viewer written in Rust that replaces the classic listing with colour-coded, human-readable columns. It shows the tree by default, understands simple filters, and prints a layout that is easy to scan. Use it when you want a nicer default view than a traditional snapshot.',
+      'procs is a process viewer written in Rust. It replaces the classic listing with colour-coded, human-readable columns, shows the tree by default, and understands simple filters. Use it when you want a nicer default view than a traditional snapshot.',
     developer: 'dalance',
     license: 'MIT',
     url: 'https://github.com/dalance/procs',
@@ -578,27 +578,27 @@ Proc 1 running, 186 sleeping`,
     commands: [
       {
         args: '',
-        what: 'List processes with colour, showing the command, user and resource use in readable columns',
+        what: 'List processes with colour. Command, user and resource use appear in readable columns.',
       },
       {
         args: '--tree',
-        what: 'Draw the parent and child relationships as a tree so you can follow what spawned what',
+        what: 'Draw parent and child relationships as a tree. Follow what spawned what.',
       },
       {
         args: '--sortd cpu',
-        what: 'Order the list by processor use with the heaviest first',
+        what: 'Order the list by processor use, heaviest first.',
       },
       {
         args: 'firefox',
-        what: 'Filter the list to rows matching the given text, which narrows a long list to the tasks you care about',
+        what: 'Filter the list to rows matching the given text. Narrows a long list to the tasks you care about.',
       },
       {
         args: '--watch',
-        what: 'Refresh the display continuously instead of printing once, giving a lightweight live view',
+        what: 'Refresh the display continuously instead of printing once. A lightweight live view.',
       },
       {
         args: '--insert 4321',
-        what: 'Include only the processes you name, so a fixed set stays visible while others are hidden',
+        what: 'Include only the processes you name. A fixed set stays visible while others are hidden.',
       },
     ],
     example: {
@@ -625,27 +625,27 @@ Proc 1 running, 186 sleeping`,
     commands: [
       {
         args: '4321',
-        what: 'Send the default polite termination signal to a process by its identifier, giving it a chance to clean up',
+        what: 'Send the default polite termination signal to a process by its identifier. It gets a chance to clean up.',
       },
       {
         args: '-9 4321',
-        what: 'Force a process to end immediately when it ignores the polite request, at the cost of skipping cleanup',
+        what: 'Force a process to end immediately when it ignores the polite request. Cleanup is skipped.',
       },
       {
         args: '-l',
-        what: 'List the names and numbers of every available signal so you can pick the right one',
+        what: 'List the names and numbers of every available signal. Pick the right one.',
       },
       {
         args: '-HUP 4321',
-        what: 'Ask a process to reload its configuration without stopping, which many background services support',
+        what: 'Ask a process to reload its configuration without stopping. Many background services support this.',
       },
       {
         args: '-STOP 4321',
-        what: 'Pause a running process in place so it can be resumed later with the continue signal',
+        what: 'Pause a running process in place. Resume it later with the continue signal.',
       },
       {
         args: '-0 4321',
-        what: 'Check whether a process exists and whether you are allowed to signal it, without actually sending anything',
+        what: 'Check whether a process exists and whether you are allowed to signal it. Nothing is actually sent.',
       },
     ],
   },
@@ -655,7 +655,7 @@ Proc 1 running, 186 sleeping`,
     category: 'process',
     tagline: 'Trace the system calls a program makes',
     about:
-      'strace records the system calls and signals a program makes as it runs, showing each request and its result. It is the tool you reach for when a command fails with a confusing message and you need to see which file or socket it actually touched. It can also attach to a process that is already running.',
+      'strace records the system calls and signals a program makes as it runs, showing each request and its result. Reach for it when a command fails with a confusing message and you need to see which file or socket it actually touched. It can also attach to a process that is already running.',
     developer: 'strace project',
     url: 'https://strace.io/',
     bin: 'strace',
@@ -664,27 +664,27 @@ Proc 1 running, 186 sleeping`,
     commands: [
       {
         args: 'ls /sdcard',
-        what: 'Run a command and print every system call it makes, so you can see exactly which files it opens',
+        what: 'Run a command and print every system call it makes. You see exactly which files it opens.',
       },
       {
         args: '-p 4321',
-        what: 'Attach to a process that is already running and follow its calls without restarting it',
+        what: 'Attach to a process already running and follow its calls. No restart needed.',
       },
       {
         args: '-f',
-        what: 'Follow child processes created by the target, which matters for programs that spawn helpers',
+        what: 'Follow child processes created by the target. Matters for programs that spawn helpers.',
       },
       {
         args: '-e trace=openat',
-        what: 'Show only the calls that open files, cutting the noise down to the part you care about',
+        what: 'Show only the calls that open files. Cuts the noise down to the part you care about.',
       },
       {
         args: '-c ls',
-        what: 'Summarise calls by count and time instead of printing each one, giving a quick performance overview',
+        what: 'Summarise calls by count and time instead of printing each one. A quick performance overview.',
       },
       {
         args: '-o calls.txt ls',
-        what: 'Write the trace to a file so a long or fast run can be read afterwards',
+        what: 'Write the trace to a file. A long or fast run can be read afterwards.',
       },
     ],
     example: {
@@ -710,27 +710,27 @@ openat(AT_FDCWD, "/sdcard/Download", O_RDONLY|O_NONBLOCK|O_DIRECTORY) = 4`,
     commands: [
       {
         args: '/sdcard',
-        what: 'Scan a directory tree and show the biggest items first, then let you step into any folder to see what fills it',
+        what: 'Scan a directory tree and show the biggest items first. Step into any folder to see what fills it.',
       },
       {
         args: '-x',
-        what: 'Stay on the one filesystem and skip mounted volumes, so external storage is not counted by accident',
+        what: 'Stay on one filesystem and skip mounted volumes. External storage is not counted by accident.',
       },
       {
         args: '-e',
-        what: 'Show apparent sizes rather than disk usage, which is more accurate when files are sparse or compressed',
+        what: 'Show apparent sizes rather than disk usage. More accurate when files are sparse or compressed.',
       },
       {
         args: '--exclude "*.zip"',
-        what: 'Skip files matching a pattern so archives you do not intend to remove stay out of the totals',
+        what: 'Skip files matching a pattern. Archives you do not intend to remove stay out of the totals.',
       },
       {
         args: '-o report.json /sdcard',
-        what: 'Save the scan to a file so it can be reopened or compared later without walking the tree again',
+        what: 'Save the scan to a file. Reopen or compare it later without walking the tree again.',
       },
       {
         args: '-f report.json',
-        what: 'Open a previously saved scan for browsing instead of scanning the disk again',
+        what: 'Open a previously saved scan for browsing instead of scanning the disk again.',
       },
     ],
     example: {
@@ -746,7 +746,7 @@ openat(AT_FDCWD, "/sdcard/Download", O_RDONLY|O_NONBLOCK|O_DIRECTORY) = 4`,
     category: 'monitor',
     tagline: 'Colourful table of mounted filesystems and free space',
     about:
-      'duf is a disk usage viewer that replaces the plain filesystem listing with a colour-coded table showing size, used, available and mount point. It groups and sorts the results so real storage stands out from virtual filesystems. It is the readable way to answer how much space is left.',
+      'duf is a disk usage viewer that replaces the plain filesystem listing with a colour-coded table showing size, used, available and mount point. It groups and sorts the results so real storage stands out from virtual filesystems. Use it to answer how much space is left.',
     developer: 'Christian Muehlhaeuser',
     license: 'MIT',
     url: 'https://github.com/muesli/duf',
@@ -756,27 +756,27 @@ openat(AT_FDCWD, "/sdcard/Download", O_RDONLY|O_NONBLOCK|O_DIRECTORY) = 4`,
     commands: [
       {
         args: '',
-        what: 'Show a table of mounted filesystems with size, usage and mount point, sorted so the fullest are easy to find',
+        what: 'Show a table of mounted filesystems with size, usage and mount point. The fullest are easy to find.',
       },
       {
         args: '-only local',
-        what: 'Restrict the table to local devices and hide network and virtual mounts that only add clutter',
+        what: 'Restrict the table to local devices. Network and virtual mounts that only add clutter are hidden.',
       },
       {
         args: '-hide-fs tmpfs',
-        what: 'Hide filesystems of a given type so temporary in-memory mounts drop out of the report',
+        what: 'Hide filesystems of a given type. Temporary in-memory mounts drop out of the report.',
       },
       {
         args: '-sort size',
-        what: 'Order the table by total size so the largest devices appear first',
+        what: 'Order the table by total size. The largest devices appear first.',
       },
       {
         args: '--output json',
-        what: 'Emit the data as JSON so it can be parsed by another program rather than read by eye',
+        what: 'Emit the data as JSON. Another program can parse it rather than you reading it by eye.',
       },
       {
         args: '-hide-mountpoints /proc,/sys',
-        what: 'Exclude specific mount points so system directories stay out of the listing',
+        what: 'Exclude specific mount points. System directories stay out of the listing.',
       },
     ],
     example: {
@@ -793,7 +793,7 @@ openat(AT_FDCWD, "/sdcard/Download", O_RDONLY|O_NONBLOCK|O_DIRECTORY) = 4`,
     category: 'monitor',
     tagline: 'Show which directories are using the most space',
     about:
-      'dust is a disk usage tool that prints a tree of directories with bar charts of their sizes, sorted largest first. It gives you an instant answer to what is filling a folder without any navigation. It works well as a one-shot alternative to an interactive browser.',
+      'dust is a disk usage tool that prints a tree of directories with bar charts of their sizes, sorted largest first. It gives you an instant answer to what is filling a folder, with no navigation. Works well as a one-shot alternative to an interactive browser.',
     developer: 'bootandy',
     license: 'Apache-2.0',
     url: 'https://github.com/bootandy/dust',
@@ -803,27 +803,27 @@ openat(AT_FDCWD, "/sdcard/Download", O_RDONLY|O_NONBLOCK|O_DIRECTORY) = 4`,
     commands: [
       {
         args: '',
-        what: 'Print the current directory as a tree of sizes with bars, largest entries first',
+        what: 'Print the current directory as a tree of sizes with bars, largest entries first.',
       },
       {
         args: '-d 2',
-        what: 'Limit the tree to a chosen depth so the output stays short and readable',
+        what: 'Limit the tree to a chosen depth. Output stays short and readable.',
       },
       {
         args: '-n 20',
-        what: 'Show only the twenty largest items so the noise at the bottom is trimmed',
+        what: 'Show only the twenty largest items. Noise at the bottom is trimmed.',
       },
       {
         args: '/sdcard',
-        what: 'Measure a specific directory rather than the one you are standing in',
+        what: 'Measure a specific directory rather than the one you are standing in.',
       },
       {
         args: '-s',
-        what: 'Print only the grand total for the directory without the per-entry breakdown',
+        what: 'Print only the grand total for the directory, without the per-entry breakdown.',
       },
       {
         args: '-X /proc',
-        what: 'Exclude a directory from the walk, which is useful for skipping system trees that report odd sizes',
+        what: 'Exclude a directory from the walk. Useful for skipping system trees that report odd sizes.',
       },
     ],
     example: {
@@ -840,7 +840,7 @@ openat(AT_FDCWD, "/sdcard/Download", O_RDONLY|O_NONBLOCK|O_DIRECTORY) = 4`,
     category: 'monitor',
     tagline: 'Report how much memory is used, available and cached',
     about:
-      'free prints a snapshot of physical and swap memory, splitting it into used, available and cached amounts. It answers whether the device is genuinely short of memory or merely caching files. Run it with a human-readable flag to get sizes you can read at a glance.',
+      'free prints a snapshot of physical and swap memory, split into used, available and cached amounts. It answers whether the device is genuinely short of memory or merely caching files. Run it with a human-readable flag for sizes you can read at a glance.',
     developer: 'procps-ng project',
     license: 'GPL-2.0-or-later',
     url: 'https://gitlab.com/procps-ng/procps',
@@ -850,23 +850,23 @@ openat(AT_FDCWD, "/sdcard/Download", O_RDONLY|O_NONBLOCK|O_DIRECTORY) = 4`,
     commands: [
       {
         args: '-h',
-        what: 'Show memory amounts with human-readable units so you do not have to count digits',
+        what: 'Show memory amounts with human-readable units. No counting digits.',
       },
       {
         args: '-m',
-        what: 'Report everything in mebibytes, which keeps the numbers comparable across runs',
+        what: 'Report everything in mebibytes. The numbers stay comparable across runs.',
       },
       {
         args: '-t',
-        what: 'Add a totals line combining memory and swap, useful for a one-line summary',
+        what: 'Add a totals line combining memory and swap. Useful for a one-line summary.',
       },
       {
         args: '-s 2',
-        what: 'Repeat the report every two seconds so you can watch memory rise and fall',
+        what: 'Repeat the report every two seconds. Watch memory rise and fall.',
       },
       {
         args: '-w',
-        what: 'Separate the cached and buffer columns so you can see how much memory the kernel is holding aside',
+        what: 'Separate the cached and buffer columns. You see how much memory the kernel is holding aside.',
       },
     ],
     example: {
@@ -882,7 +882,7 @@ Swap:          1.0Gi       120Mi       904Mi`,
     category: 'monitor',
     tagline: 'Show how long the device has been running and the load average',
     about:
-      'uptime prints the current time, how long the system has been up, how many users are logged in and the one, five and fifteen minute load averages. The load figures tell you whether the device is keeping up with its work. It is a one-line health check you can drop into any script.',
+      'uptime prints the current time, how long the system has been up, how many users are logged in, and the one, five and fifteen minute load averages. The load figures tell you whether the device is keeping up with its work. A one-line health check you can drop into any script.',
     developer: 'procps-ng project',
     license: 'GPL-2.0-or-later',
     url: 'https://gitlab.com/procps-ng/procps',
@@ -892,23 +892,23 @@ Swap:          1.0Gi       120Mi       904Mi`,
     commands: [
       {
         args: '',
-        what: 'Print the time, how long the system has been running, the user count and the load averages in one line',
+        what: 'Print the time, uptime, user count and load averages in one line.',
       },
       {
         args: '-p',
-        what: 'Show only how long the system has been running in a friendly form, which is easier to quote',
+        what: 'Show only how long the system has been running, in a friendly form. Easier to quote.',
       },
       {
         args: '-s',
-        what: 'Print the date and time the system last started, useful for correlating with log entries',
+        what: 'Print the date and time the system last started. Useful for correlating with log entries.',
       },
       {
         args: '--help',
-        what: 'Print the available options and a short description of each when you have forgotten them',
+        what: 'Print the available options with a short description of each.',
       },
       {
         args: '-V',
-        what: 'Print the program version so you can confirm which release is installed',
+        what: 'Print the program version. Confirms which release is installed.',
       },
     ],
   },
@@ -927,27 +927,27 @@ Swap:          1.0Gi       120Mi       904Mi`,
     commands: [
       {
         args: '-i',
-        what: 'List only network sockets, showing which process holds each connection and its state',
+        what: 'List only network sockets. Each connection shows the process holding it and its state.',
       },
       {
         args: '-i :8022',
-        what: 'Narrow the socket list to one port so you can see who is listening or connected there',
+        what: 'Narrow the socket list to one port. See who is listening or connected there.',
       },
       {
         args: '/sdcard/Download/report.pdf',
-        what: 'Show which processes have a particular file open, which explains a file that refuses to delete',
+        what: 'Show which processes have a particular file open. Explains a file that refuses to delete.',
       },
       {
         args: '-p 4321',
-        what: 'List everything a single process has open, giving a picture of its files and sockets',
+        what: 'List everything a single process has open. A picture of its files and sockets.',
       },
       {
         args: '-u u0_a123',
-        what: "Restrict the listing to one user's processes so the output stays manageable",
+        what: "Restrict the listing to one user's processes. Output stays manageable.",
       },
       {
         args: '+D /sdcard/Download',
-        what: 'Recursively list open files under a directory, which is useful for finding what is holding a folder busy',
+        what: 'Recursively list open files under a directory. Useful for finding what is holding a folder busy.',
       },
     ],
     example: {
