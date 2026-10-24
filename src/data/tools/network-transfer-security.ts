@@ -24,7 +24,7 @@ export const networkTransferSecurityTools: Tool[] = [
     example: {
       args: '-sV -p 22,80 192.168.1.10',
       out: 'PORT   STATE SERVICE VERSION\n22/tcp open  ssh     OpenSSH 9.3p1\n80/tcp open  http    nginx 1.24.0\nService detection performed.',
-      note: 'names the software and release behind each open port'
+      note: 'This names the software and release behind each open port.'
     }
   },
   {
