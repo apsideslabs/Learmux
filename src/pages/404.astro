@@ -1,15 +1,16 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 ---
 
-<BaseLayout title="Page not found" description="That page does not exist on Learmux." noindex>
-  <div class="wrap center" style="padding-block:4rem">
-    <p class="mono muted">bash: cd: no such file or directory</p>
-    <h1>404</h1>
-    <p class="muted">That page does not exist — but the terminal is always open.</p>
-    <div class="hero-actions" style="justify-content:center">
-      <a class="btn btn--primary" href={`${base}challenges/`}>Go to challenges →</a>
+<BaseLayout title="Page not found" description="That page does not exist." noindex>
+  <div class="wrap section">
+    <p class="eyebrow mono">404</p>
+    <h1 style="max-width:16ch">That page isn't here.</h1>
+    <p class="lede">It may have moved, or the link may be wrong. The terminal is still open, though.</p>
+    <div class="actions" style="margin-top:1.6rem">
+      <a class="btn btn--primary" href={`${base}challenges/`}>Go to the challenges</a>
       <a class="btn btn--ghost" href={base}>Back home</a>
     </div>
   </div>
