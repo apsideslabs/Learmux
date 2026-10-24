@@ -1,0 +1,161 @@
+---
+title: "Moving files between machines"
+description: "Copy a file or a whole directory to another host with scp and rsync, and preview the change before it happens."
+excerpt: "Learn to copy files to another host with scp and rsync, and preview every change first."
+category: "Remote"
+author: "The Study Cipher"
+date: "2026-03-01"
+order: 18
+track: "networking"
+level: "Intermediate"
+tags: [scp, rsync, transfer]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Sooner or later you need a file that is on another machine, or you need to send one there. scp copies over an encrypted connection, and rsync does the same job while sending only what has changed. In this lesson you will copy a file both ways, copy a directory, and use rsync to preview a transfer before you run it.
+
+## What you'll be able to do
+
+- Copy a file to another host, and copy one back.
+- Copy a whole directory with scp -r.
+- Use rsync to send only the parts that differ.
+- Preview a transfer with a dry run before you commit.
+- Understand the trailing-slash rule and the risk of --delete.
+
+## Step 1: Copy a file to a host
+
+scp copies files over SSH, so both ends must be reachable and you need an account on the far side. The pattern is scp source destination, and a destination that contains a colon is a remote path. This sends a local file to your home directory on the host:
+
+```
+scp notes.txt ada@example.com:~/
+```
+
+```
+notes.txt                                100% 2048     2.0KB/s   00:01
+```
+
+The part before the colon is user@host, and the part after it is the path on that host. The tilde means the home directory.
+
+## Step 2: Copy a file back
+
+The same command works in reverse. Put the remote path first and the local path second. A single dot means the current directory:
+
+```
+scp ada@example.com:~/report.txt .
+```
+
+```
+report.txt                               100% 8192     4.0KB/s   00:02
+```
+
+The file lands in the directory you are in. Nothing is removed from the host, because scp only reads it.
+
+## Step 3: Copy a directory
+
+To copy a directory and everything inside it, add -r for recursive:
+
+```
+scp -r notes ada@example.com:~/
+```
+
+```
+notes.txt                                100% 2048     2.0KB/s   00:01
+notes/draft.md                           100% 1024     1.0KB/s   00:01
+notes/final.md                           100% 3072     3.0KB/s   00:01
+```
+
+Each file is listed as it moves. On a slow link this is where a big directory starts to hurt, because scp sends every file again each time you run it.
+
+<Callout type="tip" title="Confirm the host once">
+The first time you connect, scp asks you to confirm the host key. Check it against a value you trust before you accept, and never accept a key you cannot check.
+</Callout>
+
+## Step 4: Send only the difference with rsync
+
+rsync does the same job, but it compares the two sides first and sends only what differs. That makes a second run far cheaper than the first. It is not always installed, so add it if needed:
+
+```
+pkg install rsync
+```
+
+```
+Checking availability of current mirror: ok
+Reading package lists... Done
+Setting up rsync (3.3.0) ...
+```
+
+The -a flag keeps permissions and times and recurses, and -v prints what it does:
+
+```
+rsync -av notes/ ada@example.com:~/notes/
+```
+
+```
+sending incremental file list
+./
+draft.md
+final.md
+notes.txt
+
+sent 4,120 bytes  received 92 bytes  2,808.00 bytes/sec
+total size is 6,144  speedup is 2.19
+```
+
+The line reading sending incremental file list is the key idea. Only the names below it were sent. Run it a second time and that list is empty, because nothing changed.
+
+For rsync the slash at the end of the source matters. notes/ means the contents of the directory, and notes means the directory itself. Watch what the second form produces:
+
+```
+rsync -av --dry-run notes ada@example.com:~/backup/
+```
+
+```
+sending incremental file list
+notes/
+notes/draft.md
+notes/final.md
+notes/notes.txt
+```
+
+With no trailing slash the directory name is carried across, so the files land one level deeper under backup. With the slash, the contents go straight into the destination.
+
+## Step 5: Preview before you copy
+
+rsync can show you exactly what it would do without doing it. Add --dry-run, often written -n:
+
+```
+rsync -av --dry-run notes/ ada@example.com:~/notes/
+```
+
+```
+sending incremental file list
+./
+
+sent 120 bytes  received 12 bytes  264.00 bytes/sec
+total size is 6,144  speedup is 51.20 (DRY RUN)
+```
+
+Nothing moved. The list is empty, so the destination already matches. This is the safe way to check a command before you run it for real.
+
+<Callout type="warning" title="--delete removes files on the far side">
+The --delete option makes the destination match the source exactly, which means files present only on the destination are removed. Always run the same command with --dry-run first and read the list of deletions. Check that the source path and the trailing slash are what you intend before you drop the dry run, because a wrong path plus --delete can remove files you meant to keep.
+</Callout>
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| scp file user@host:path | Copies a local file to a host |
+| scp user@host:path . | Copies a file from a host to here |
+| scp -r dir user@host:path | Copies a directory and its contents |
+| rsync -av src/ user@host:dest/ | Copies only what differs, keeping details |
+| rsync -av --dry-run src/ user@host:dest/ | Shows what would move, without moving it |
+| rsync src/ dest/ | Copies the contents of src into dest |
+| rsync src dest/ | Copies the src folder itself into dest |
+
+## Next steps
+
+- [SSH and remote work](/learn/ssh-and-remote-work/) covers logging in and running commands on a host.
+- [HTTP and APIs from the shell](/learn/http-and-apis-from-the-shell/) shows the other way data moves over the network.
+- [DNS and addresses](/learn/dns-and-addresses/) explains how the host name is resolved.
