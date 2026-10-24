@@ -1,0 +1,232 @@
+---
+title: "SSH and remote work"
+description: "Generate an SSH key, connect to a server, copy files with scp, and run sshd on your Termux phone."
+excerpt: "Log in to another machine from your phone and move files over a secure link."
+category: "Remote"
+author: "The Study Cipher"
+date: "2026-02-24"
+order: 11
+level: Intermediate
+tags: [ssh, keys, scp]
+---
+
+import Callout from '../../components/Callout.astro';
+
+SSH lets you log in to another computer from your phone and run commands there as if you were sitting in front of it. It also moves files over an encrypted link. In this lesson you make a key pair, connect to a server, copy files with `scp`, and run the SSH server on the phone itself.
+
+## What you'll be able to do
+
+- Create an SSH key pair with `ssh-keygen`.
+- Copy your public key to a server and log in without a password.
+- Read the host-key prompt and check the fingerprint.
+- Move files in both directions with `scp`.
+- Run `sshd` on Termux so your phone can be reached.
+
+## Step 1 — Generate a key pair
+
+A key pair is two files. The private key stays on your phone and the public key goes to the server. Generate one with `ssh-keygen`. The `-t ed25519` option picks a modern key type and `-C` adds a label.
+
+```sh
+ssh-keygen -t ed25519 -C "you@phone"
+```
+
+```
+Generating public/private ed25519 key pair.
+Enter file in which to save the key (/data/data/com.termux/files/home/.ssh/id_ed25519): 
+Created directory '/data/data/com.termux/files/home/.ssh'.
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /data/data/com.termux/files/home/.ssh/id_ed25519
+Your public key has been saved in /data/data/com.termux/files/home/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:9Xk2ab7Q1m0pLr4T6vWc8dYe3nJf5gH2kM1sR0qU7oQ you@phone
+The key's randomart image is:
++--[ED25519 256]--+
+|        .o+      |
+|       oE..      |
+|      . +.       |
+|       . ..      |
++----[SHA256]-----+
+```
+
+Set a passphrase. It protects the private key if the phone is lost. The public key is safe to share.
+
+```sh
+cat ~/.ssh/id_ed25519.pub
+```
+
+```
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExAmPlEkEyMaTeRiAlHeRe you@phone
+```
+
+<Callout type="warning" title="Guard the private key">
+Never send the private key anywhere. It is the file with no `.pub` on the end. Only the `.pub` file goes to a server.
+</Callout>
+
+## Step 2 — Copy the public key and log in
+
+The `ssh-copy-id` command appends your public key to the server account in one step.
+
+```sh
+ssh-copy-id user@example.com
+```
+
+```
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'user@example.com'"
+```
+
+Now you log in with `ssh` and no password prompt.
+
+```sh
+ssh user@example.com
+```
+
+```
+Welcome to example.com
+Last login: Tue Feb 24 09:00:00 2026 from 203.0.113.10
+user@example.com:~$ 
+```
+
+If you have no `ssh-copy-id`, you can paste the public key into the server account yourself.
+
+## Step 3 — Check the host fingerprint
+
+The first time you connect, SSH shows the server's host-key fingerprint and asks you to trust it. This is the one moment a man-in-the-middle could trick you, so check the fingerprint against one the server's admin has published.
+
+```sh
+ssh user@example.com
+```
+
+```
+The authenticity of host 'example.com (203.0.113.10)' can't be established.
+ED25519 key fingerprint is SHA256:9Xk2ab7Q1m0pLr4T6vWc8dYe3nJf5gH2kM1sR0qU7oQ.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'example.com' (ED25519) to the list of known hosts.
+```
+
+If the fingerprint ever changes without warning, stop and ask. The server's keys may have been replaced, or the connection may be intercepted.
+
+<Callout type="tip" title="Compare the fingerprint">
+An admin can print the server's fingerprint with `ssh-keygen -lf` on the host key file. Compare that string, character for character, with the one you were shown.
+</Callout>
+
+## Step 4 — Move files with scp
+
+The `scp` command copies a file over the same secure link. The last argument is the destination, which can be a remote path written as `user@host:/path`.
+
+```sh
+scp notes.txt user@example.com:/home/user/
+```
+
+```
+notes.txt                                    100%  412     8.2KB/s   00:00
+```
+
+Copy in the other direction by putting the remote path first.
+
+```sh
+scp user@example.com:/home/user/report.pdf .
+```
+
+```
+report.pdf                                   100% 20480    25.1KB/s   00:00
+```
+
+The dot at the end means the current folder. Add `-r` to copy a whole directory.
+
+## Step 5 — Run sshd on your phone
+
+Termux can run an SSH server, so you can reach your phone from a laptop on the same network. First check your username and start the server.
+
+```sh
+whoami
+```
+
+```
+u0_a123
+```
+
+The server needs host keys before it starts. The first attempt tells you so.
+
+```sh
+sshd
+```
+
+```
+sshd: no hostkeys available -- exiting.
+```
+
+Generate them, then start it again.
+
+```sh
+ssh-keygen -A
+```
+
+```
+ssh-keygen: generating new host keys: RSA ECDSA ED25519
+```
+
+```sh
+sshd
+```
+
+```
+sshd: server listening on port 8022
+```
+
+Termux uses port 8022 by default. From your laptop, connect with that port and your phone's address.
+
+```sh
+ssh -p 8022 u0_a123@192.168.1.50
+```
+
+```
+u0_a123@192.168.1.50's password: 
+Welcome to Termux!
+```
+
+<Callout type="warning" title="Keep the private key safe">
+Set a passphrase on your key and check its permissions. Only you should be able to read it.
+</Callout>
+
+```sh
+chmod 600 ~/.ssh/id_ed25519
+```
+
+```
+```
+
+```sh
+ls -l ~/.ssh/id_ed25519
+```
+
+```
+-rw------- 1 u0_a123 u0_a123 411 Feb 24 09:00 /data/data/com.termux/files/home/.ssh/id_ed25519
+```
+
+The `-rw-------` permissions mean only your account can read or write the file.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `ssh-keygen -t ed25519 -C "you@phone"` | Creates a new key pair |
+| `cat ~/.ssh/id_ed25519.pub` | Prints the public key to copy to a server |
+| `ssh-copy-id user@host` | Installs your public key on the server |
+| `ssh user@host` | Logs in to a remote machine |
+| `ssh -p 8022 user@host` | Logs in on a non-default port |
+| `scp file user@host:/path` | Copies a file to a remote machine |
+| `scp user@host:/path .` | Copies a file from a remote machine |
+| `ssh-keygen -A` | Generates host keys for the local SSH server |
+| `sshd` | Starts the SSH server |
+| `chmod 600 ~/.ssh/id_ed25519` | Restricts the private key to your account |
+
+## Next steps
+
+- [Shell config and aliases](/learn/shell-config-and-aliases/) to shorten the commands you type.
+- [Processes and jobs](/learn/processes-and-jobs/) to keep the server running in the background.
+- [Managing packages in Termux](/learn/managing-packages/) to install the OpenSSH tools.
