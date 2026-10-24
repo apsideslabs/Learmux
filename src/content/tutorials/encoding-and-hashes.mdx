@@ -13,7 +13,7 @@ tags: [encoding, hashes]
 
 import Callout from '../../components/Callout.astro';
 
-Encoding changes how data is written down. Encryption hides data so only a key holder can read it. Beginners mix the two up, and that mistake leads people to store passwords in base64 thinking they are safe. This lesson shows you how to encode and decode with common tools, how to look inside a file, and how to check that a download arrived intact.
+Encoding changes how data is written down. Encryption hides data so only a key holder can read it. Beginners mix the two up. That mistake is how people end up storing passwords in base64 and calling them safe. This lesson shows you how to encode and decode with common tools. You will also look inside a file, and check that a download arrived intact.
 
 ## What you'll be able to do
 
@@ -26,9 +26,9 @@ Encoding changes how data is written down. Encryption hides data so only a key h
 
 ## Step 1: Encoding is not encryption
 
-Encoding is a public, reversible rule for turning bytes into text. Anyone can reverse it without a key. Base64 exists so that binary data can travel through systems that only carry text, such as email bodies and configuration files.
+Encoding is a public rule, and it reverses cleanly. Anyone can undo it without a key. Base64 exists so binary data can travel through systems that only carry text. Email bodies and configuration files are common examples.
 
-Encryption is different. It uses a secret key, and without that key the data should be unreadable. Base64 gives you no secrecy at all. If you encode a password with base64 and someone finds it, they decode it in one command.
+Encryption is different. It uses a secret key. Without that key, the data should stay unreadable. Base64 gives you no secrecy at all. Encode a password with it, and anyone who finds the string decodes it in one command.
 
 ## Step 2: Encode text with base64
 
@@ -56,7 +56,7 @@ echo "aGVsbG8gdGVybXV4Cg==" | base64 -d
 hello termux
 ```
 
-You get the original text back. This round trip needs no key, which is the whole point. Anyone holding the encoded string can read the message.
+You get the original text back. This round trip needs no key. Anyone holding the encoded string can read the message.
 
 ## Step 4: Encode and decode a file
 
@@ -90,7 +90,7 @@ Never store a password, an API key or a token in base64 and call it protected. D
 
 ## Step 5: Apply ROT13 with tr
 
-ROT13 shifts each letter thirteen places through the alphabet. It is a substitution cipher with no key, and it only changes letters. The `tr` command does the shift by mapping one set of characters to another.
+ROT13 shifts each letter thirteen places through the alphabet. It is a substitution cipher with no key, and it only touches letters. The `tr` command does the shift by mapping one set of characters onto another.
 
 ```bash
 echo "Hello" | tr 'A-Za-z' 'N-ZA-Mn-za-m'
@@ -124,7 +124,7 @@ echo "termux" | xxd
 00000000: 7465 726d 7578 0a                       termux.
 ```
 
-The first column is the offset in the file. The middle is the hex bytes. The last column is the ASCII view, where each byte that is a printable character is shown as itself and everything else as a dot. Here `0a` is the newline, shown as a dot.
+The first column is the offset in the file. The middle holds the hex bytes. The last column is the ASCII view. A printable character shows as itself. Everything else shows as a dot. Here `0a` is the newline, so it appears as a dot.
 
 `hexdump -C` prints the same idea in a slightly different layout.
 
@@ -136,7 +136,7 @@ echo "termux" | hexdump -C
 00000000  74 65 72 6d 75 78 0a                              |termux.|
 ```
 
-The bytes are one per column, and the ASCII view sits between two pipe characters. Reading the ASCII column is the fastest way to confirm that a file really is text and not something else.
+The bytes run one per column, and the ASCII view sits between two pipe characters. Reading that column is the quickest way to confirm a file is really text and not something else.
 
 <Callout type="tip" title="Spot a file type by its first bytes">
 The first few bytes of a file often identify its type. A PNG starts with the bytes for the letters PNG, and a ZIP archive starts with `PK`. Run `xxd` on a file you cannot open and read the ASCII column.
@@ -144,7 +144,7 @@ The first few bytes of a file often identify its type. A PNG starts with the byt
 
 ## Step 7: Pull text out of a binary with strings
 
-`strings` scans a file and prints every run of printable characters at least four long. This is how you find hidden messages, version numbers and paths inside a binary. Build a small file with text mixed with null bytes.
+`strings` scans a file and prints every run of printable characters at least four long. That is how you find hidden messages, version numbers and paths inside a binary. Build a small file with text mixed with null bytes.
 
 ```bash
 printf 'PNG\x00data\x00Author Ada\x00' > img.bin
@@ -191,13 +191,13 @@ sha256sum sample.txt
 728791eed6b294866d81946d22e93c145d87c0b9384a44023684a797fda689d6  sample.txt
 ```
 
-Two files that differ by a single character produce two hashes that share nothing. This is how you check a download. The site you downloaded from publishes the expected hash, you run `sha256sum` on your copy, and if the two strings match the file arrived intact. If they differ, the file was corrupted or tampered with.
+Two files that differ by one character produce two hashes that share nothing. This is how you check a download. The site you downloaded from publishes the expected hash. Run `sha256sum` on your copy. If the two strings match, the file arrived intact. If they differ, it was corrupted or tampered with.
 
 ## Step 9: Why a hash is one-way
 
-A hash is designed to run in one direction only. You can turn any file into its hash in an instant, but you cannot turn a hash back into the file. There is no key and no undo. This is why a website can store the hash of your password and check a login by hashing what you type and comparing the two hashes, without ever keeping your password.
+A hash runs in one direction only. You can turn any file into its hash in an instant. You cannot turn a hash back into the file. There is no key and no undo. This is why a website can store the hash of your password. To check a login it hashes what you type and compares the two hashes. It never keeps your password.
 
-Because the output is fixed in length, many different inputs could in theory produce the same hash. A good hash makes finding such a pair impractical. That property, plus the one-way direction, is what makes hashes useful for integrity checks and password storage.
+The output is fixed in length, so many different inputs could in theory produce the same hash. A good hash makes finding such a pair impractical. That property, plus the one-way direction, is what makes hashes useful for integrity checks and password storage.
 
 ## Quick reference
 
@@ -218,4 +218,4 @@ Because the output is fixed in length, many different inputs could in theory pro
 - [Managing packages](/learn/managing-packages/) to install the tools used in this lesson.
 - [File permissions](/learn/file-permissions/) to lock down a file that holds something private.
 
-If either `xxd` or `hexdump` is missing, run `pkg search xxd` and `pkg search hexdump` to find the package that provides it, then install that package with `pkg install`.
+If either `xxd` or `hexdump` is missing, run `pkg search xxd` and `pkg search hexdump`. That finds the package which provides it. Install it with `pkg install`.
