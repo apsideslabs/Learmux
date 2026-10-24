@@ -1,6 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import Icon from '../../components/Icon.astro';
 import { getCollection, render } from 'astro:content';
+import { allTutorials, categorySlug, formatDate } from '../../lib/tutorials';
 
 export async function getStaticPaths() {
   const tutorials = await getCollection('tutorials');
@@ -10,36 +13,52 @@ export async function getStaticPaths() {
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const { entry } = Astro.props;
 const { Content } = await render(entry);
-const { title, description, level, tags, updated } = entry.data;
+const { title, description, category, author, date, level, tags } = entry.data;
 
-const ordered = (await getCollection('tutorials')).sort((a, b) => a.data.order - b.data.order);
-const pos = ordered.findIndex((t) => t.id === entry.id);
-const next = ordered[pos + 1];
+const all = await allTutorials();
+const related = all
+  .filter((t) => t.id !== entry.id && t.data.category === category)
+  .slice(0, 3);
+const fill = related.length ? related : all.filter((t) => t.id !== entry.id).slice(0, 3);
 ---
 
 <BaseLayout title={title} description={description}>
   <div class="wrap">
     <nav class="crumbs" aria-label="Breadcrumb">
-      <a href={`${base}learn/`}>Lessons</a> / <span>{title}</span>
+      <a href={base}>Home</a>
+      <span class="sep">›</span>
+      <a href={`${base}category/${categorySlug(category)}/`}>{category}</a>
+      <span class="sep">›</span>
+      <span>{title}</span>
     </nav>
 
-    <article class="prose">
+    <article>
       <header class="article-head">
-        <div class="chip-row" style="margin-bottom:1rem">
-          <span class="chip chip--easy">{level}</span>
-          {tags.map((tag) => <span class="chip">{tag}</span>)}
-          {updated && <span class="chip chip--mono">updated {updated}</span>}
-        </div>
         <h1>{title}</h1>
-        <p class="lede">{description}</p>
+        <div class="byline">
+          <span class="who"><Icon name="user" size={15} />{author}</span>
+          <span class="when"><Icon name="calendar" size={15} />{formatDate(date)}</span>
+          <span class="chip chip--easy">{level}</span>
+        </div>
       </header>
 
-      <Content />
+      <hr class="rule" style="margin:0 0 1.6rem" />
+
+      <div class="prose">
+        <Content />
+      </div>
     </article>
 
-    <div class="section-head" style="margin-top:3rem">
-      <a class="btn btn--ghost" href={`${base}learn/`}>All lessons</a>
-      {next && <a class="btn btn--primary" href={`${base}learn/${next.id}/`}>Next: {next.data.title}</a>}
+    <section class="related">
+      <div class="section-label"><span>Related articles</span></div>
+      <div class="cards cards--3">
+        {fill.map((t) => <ArticleCard entry={t} />)}
+      </div>
+    </section>
+
+    <div class="actions" style="margin-top:2rem">
+      <a class="btn btn--outline" href={`${base}learn/`}>All lessons</a>
+      <a class="btn btn--green" href={`${base}challenges/`}>Practise in the CTF</a>
     </div>
   </div>
 </BaseLayout>
