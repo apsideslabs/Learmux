@@ -2,11 +2,11 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 import PostRow from '../components/PostRow.astro';
+import Terminal from '../components/Terminal.astro';
 import Icon from '../components/Icon.astro';
 import { challenges, totalPoints } from '../lib/challenges';
 import { trackGroups, recentTutorials, allTutorials } from '../lib/tutorials';
 import { course } from '../lib/curriculum';
-import { social } from '../lib/site';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const groups = await trackGroups();
@@ -15,15 +15,29 @@ const recent = await recentTutorials();
 const [lead, ...rest] = recent;
 const featured = rest.slice(0, 2);
 const feed = rest.slice(2, 8);
+
+const demo = challenges.find((c) => c.slug === 'first-steps') ?? challenges[0];
+const topics = new Set(challenges.map((c) => c.category)).size;
+
+const outcomes = [
+  'Find your way around a Linux filesystem and pull what you need out of a file.',
+  'Write a small script, run it on a schedule, and process a large file without opening it.',
+  'Explain what happens when you open a page, and read an HTTP response by hand.',
+  'Check a file against its hash and spot the entries in a log that do not belong.',
+  'Build three working tools of your own: a backup script, a log analyser, a dashboard.',
+  'Keep your own device updated, tidy and locked down.',
+];
 ---
 
 <BaseLayout>
+  <!-- ── hero: the promise, then the product itself ─────────────────────── -->
   <section class="wrap hero">
     <div class="hero__copy">
       <p class="eyebrow">Termux · Linux · Security</p>
       <h1>Learn the command line by using it.</h1>
       <p class="lede">
-        {course.summary}
+        A complete, ordered course for Android's Termux. Read a short lesson, then prove it in a real
+        terminal where every challenge has a flag to find.
       </p>
       <div class="actions">
         <a class="btn btn--green" href={`${base}course/`}>Start the course</a>
@@ -34,23 +48,67 @@ const feed = rest.slice(2, 8);
         {course.timeEstimate} · no account needed
       </p>
     </div>
-  </section>
 
-  <section class="wrap section--tight">
-    <div class="section-label"><span>The path</span></div>
-    <div class="path-grid">
-      {groups.map((g) => (
-        <a class="path-card" href={`${base}course/${g.track.id}/`}>
-          <span class="path-card__num">{String(g.track.number).padStart(2, '0')}</span>
-          <span class="path-card__title">{g.track.title}</span>
-          <span class="path-card__tag">{g.track.tagline}</span>
-          <span class="path-card__meta">{g.lessons.length} lessons · {g.track.level}</span>
-          <span class="path-card__go">Open track <Icon name="chevron" size={14} /></span>
-        </a>
-      ))}
+    <div class="hero__demo">
+      <p class="hero__demo-label">Live sandbox — type in it</p>
+      <Terminal challenge={demo} compact />
+      <p class="hero__demo-note">
+        Challenge 01 of {challenges.length} · <a href={`${base}challenges/`}>see all challenges</a>
+      </p>
     </div>
   </section>
 
+  <!-- ── claim, then proof ──────────────────────────────────────────────── -->
+  <section class="wrap section--tight">
+    <div class="outcomes">
+      <div class="outcomes__intro">
+        <h2>What you will be able to do</h2>
+        <p class="muted">
+          Not a tour of commands. By the end of the five tracks you can sit down at a Linux prompt and
+          get something done.
+        </p>
+      </div>
+      <ul class="outcomes__list">
+        {outcomes.map((o) => <li>{o}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── the curriculum ─────────────────────────────────────────────────── -->
+  <section class="wrap section--tight">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">The path</p>
+        <h2>Five tracks, in order</h2>
+      </div>
+      <p class="section-head__meta">
+        {groups.length} tracks · {lessons.length} lessons · {course.timeEstimate}
+      </p>
+    </div>
+
+    <div class="path-grid">
+      {groups.map((g) => (
+        <a class="path-card" href={`${base}course/${g.track.id}/`}>
+          <span class="path-card__top">
+            <span class="path-card__num">{String(g.track.number).padStart(2, '0')}</span>
+            <span class="path-card__level">{g.track.level}</span>
+          </span>
+          <span class="path-card__title">{g.track.title}</span>
+          <span class="path-card__tag">{g.track.tagline}</span>
+          <span class="path-card__first">Starts with {g.lessons[0].data.title}</span>
+          <span class="path-card__go">
+            {g.lessons.length} lessons <Icon name="arrow" size={14} />
+          </span>
+        </a>
+      ))}
+    </div>
+
+    <div class="actions" style="margin-top:1.5rem">
+      <a class="btn btn--outline" href={`${base}course/`}>See the full curriculum</a>
+    </div>
+  </section>
+
+  <!-- ── featured lessons ───────────────────────────────────────────────── -->
   <section class="wrap section--tight">
     <div class="section-label"><span>Featured lessons</span></div>
     {lead && <div style="margin-bottom:1rem"><ArticleCard entry={lead} variant="hero" /></div>}
@@ -59,21 +117,23 @@ const feed = rest.slice(2, 8);
     </div>
   </section>
 
+  <!-- ── latest ─────────────────────────────────────────────────────────── -->
   <section class="wrap section--tight">
     <div class="section-label"><span>Latest lessons</span></div>
     <div class="posts">
       {feed.map((t) => <PostRow entry={t} />)}
     </div>
     <div class="actions" style="margin-top:1.4rem">
-      <a class="btn btn--outline" href={`${base}course/`}>See the whole course</a>
+      <a class="btn btn--outline" href={`${base}learn/`}>All {lessons.length} lessons</a>
     </div>
   </section>
 
+  <!-- ── the second way in: practise ────────────────────────────────────── -->
   <section class="wrap section--tight">
     <div class="ctf-panel">
       <h2>Learmux CTF</h2>
       <p>
-        {challenges.length} terminal challenges across {new Set(challenges.map((c) => c.category)).size} topics.
+        {challenges.length} terminal challenges across {topics} topics, worth {totalPoints} points.
         Each one opens a sandbox with its own filesystem — find the flag and complete the challenge.
       </p>
       <div class="ctf-meta">
@@ -87,6 +147,7 @@ const feed = rest.slice(2, 8);
     </div>
   </section>
 
+  <!-- ── the prerequisite ───────────────────────────────────────────────── -->
   <section class="wrap section--tight">
     <div class="download">
       <div>
@@ -102,17 +163,6 @@ const feed = rest.slice(2, 8);
         </a>
         <a class="btn btn--outline" href={`${base}learn/getting-started/`}>Read the setup lesson</a>
       </div>
-    </div>
-  </section>
-
-  <section class="wrap section--tight">
-    <div class="section-label"><span>Follow</span></div>
-    <div class="social">
-      {social.map((s) => (
-        <a href={s.href} aria-label={s.label} title={s.label} target="_blank" rel="noopener">
-          <Icon name={s.icon as any} size={19} />
-        </a>
-      ))}
     </div>
   </section>
 </BaseLayout>
