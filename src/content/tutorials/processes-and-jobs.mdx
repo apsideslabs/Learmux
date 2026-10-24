@@ -1,0 +1,211 @@
+---
+title: "Processes and jobs"
+description: "See what is running with ps and top, stop programs with kill, and manage background jobs in Termux."
+excerpt: "Find what is running, stop it cleanly, and keep long tasks in the background."
+category: "Processes"
+author: "The Study Cipher"
+date: "2026-02-19"
+order: 10
+level: Intermediate
+tags: [processes, jobs, signals]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Every command you run becomes a process, a running copy of a program with its own number. When something hangs or drains the battery, you need to find it and stop it. In this lesson you list processes, read their resource use, stop them with the right signal, and move long tasks into the background.
+
+## What you'll be able to do
+
+- See which programs are running and how much memory and CPU they use.
+- Stop a process and choose between SIGTERM and SIGKILL.
+- Run a command in the background and bring it back to the foreground.
+- List and manage jobs with `jobs`, `fg` and `bg`.
+- Understand why a password typed on the command line is visible to others.
+
+## Step 1 — What a process is
+
+When you run a command, the kernel starts a process for it. Each process has a process ID, or PID, and a parent. The shell you type into is itself a process. The `ps` command lists the processes attached to your terminal.
+
+```sh
+ps
+```
+
+```
+  PID TTY          TIME CMD
+ 5234 pts/0    00:00:00 bash
+ 5487 pts/0    00:00:00 ps
+```
+
+The shell is PID 5234. The `ps` you ran is 5487, and it disappears the moment it finishes.
+
+## Step 2 — List everything and watch it with top
+
+`ps aux` shows every process on the device, not only yours, with the user, CPU and memory columns.
+
+```sh
+ps aux
+```
+
+```
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+u0_a123   5234  0.0  0.4  22144  4096 pts/0    S    10:01   0:00 bash
+u0_a123   5487  0.0  0.1  10240  2048 pts/0    R    10:05   0:00 ps aux
+```
+
+The `%CPU` and `%MEM` columns are the share of the processor and memory a process is using. The `STAT` column shows the state: `R` means running, `S` means sleeping and waiting.
+
+For a live view, use `top`. It refreshes on its own until you press `q`.
+
+```sh
+top
+```
+
+```
+Tasks: 2 total,   1 running,   1 sleeping
+Mem:   3.7G total,  2.1G used,  1.6G free
+PID USER      PR  NI    VIRT    RES  %CPU  %MEM     TIME+ COMMAND
+5234 u0_a123  20   0   22144   4096   0.3   0.1   0:00.12 bash
+5487 u0_a123  20   0   10240   2048   0.0   0.1   0:00.00 top
+```
+
+<Callout type="tip" title="Sort the list">
+Inside `top`, press `M` to sort by memory and `P` to sort by CPU. Press `q` to leave.
+</Callout>
+
+## Step 3 — Stop a process with kill
+
+The `kill` command sends a signal to a process by PID. The default signal is SIGTERM, which asks the program to shut down and lets it save its work first.
+
+```sh
+kill 5234
+```
+
+```
+```
+
+The process is gone once it handles the signal.
+
+```sh
+ps -p 5234
+```
+
+```
+  PID TTY          TIME CMD
+```
+
+Only the header prints, which means no process has that PID now.
+
+Sometimes a program ignores SIGTERM. Suppose PID 6100 will not stop. SIGKILL ends it at once and cannot be caught, so the program gets no chance to clean up.
+
+```sh
+kill -KILL 6100
+```
+
+```
+```
+
+<Callout type="warning" title="Try SIGTERM first">
+Reach for SIGKILL, also written `kill -9`, only when SIGTERM fails. A killed program cannot close files or flush data, so you can lose work.
+</Callout>
+
+## Step 4 — Background jobs
+
+A long command holds your terminal until it finishes. Add `&` to send it to the background and get your prompt back at once. The shell prints the job number and the PID.
+
+```sh
+sleep 300 &
+```
+
+```
+[1] 6001
+```
+
+The `jobs` command lists what is running in the background of this shell.
+
+```sh
+jobs
+```
+
+```
+[1]+  Running                 sleep 300 &
+```
+
+To bring a job back to the foreground, use `fg`. It takes over the terminal until you stop it.
+
+```sh
+fg
+```
+
+```
+sleep 300
+```
+
+Press `Ctrl-C` to end it. If you started a job in the foreground and want to keep it running, press `Ctrl-Z` to pause it, then send it back with `bg`.
+
+```sh
+sleep 300
+```
+
+```
+^Z
+[1]+  Stopped                 sleep 300
+```
+
+```sh
+bg
+```
+
+```
+[1]+ sleep 300 &
+```
+
+```sh
+jobs
+```
+
+```
+[1]+  Running                 sleep 300 &
+```
+
+## Step 5 — Why command-line secrets are visible
+
+Any user on the device can read every command line through `ps aux`. If you pass a password as an option, it is on show for as long as the program runs.
+
+```sh
+sshpass -p hunter2 ssh user@example.com
+```
+
+```
+```
+
+While that runs, another session sees the whole line, password included.
+
+```sh
+ps aux | grep sshpass
+```
+
+```
+u0_a123   6110  0.0  0.2  12345  2048 pts/0    S    10:10   0:00 sshpass -p hunter2 ssh user@example.com
+```
+
+That is a real leak. Prefer a tool that asks for the password at a prompt, or reads it from a file only you can open, or takes it from an environment variable.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `ps` | Lists processes on your terminal |
+| `ps aux` | Lists every process with user, CPU and memory |
+| `top` | Shows a live, refreshing list of processes |
+| `kill PID` | Sends SIGTERM to ask a process to stop |
+| `kill -KILL PID` | Ends a process at once, with no cleanup |
+| `command &` | Runs a command in the background |
+| `jobs` | Lists background jobs in this shell |
+| `fg` | Brings a job to the foreground |
+| `bg` | Resumes a stopped job in the background |
+
+## Next steps
+
+- [Shell scripting basics](/learn/shell-scripting-basics/) to wrap long commands in a script.
+- [SSH and remote work](/learn/ssh-and-remote-work/) to run commands on another machine.
+- [Managing packages in Termux](/learn/managing-packages/) to install the tools you use most.
