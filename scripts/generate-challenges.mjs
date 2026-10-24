@@ -152,8 +152,8 @@ add({
     '- `cat <file>` prints a file to the screen.\n\n' +
     'List the directory, find the interesting file, and read it.',
   flag: 'TERMUX{hello_world}',
-  hints: ['Run `ls` on its own.', 'Then run `cat welcome.txt`.'],
-  starters: ['ls', 'cat welcome.txt'],
+  hints: ['Start by listing what is in your home directory.', 'There is a text file with a greeting in it. Print the contents of that file.'],
+  solutions: ['ls', 'cat welcome.txt'],
   fs: termuxRoot({
     'welcome.txt': f('Welcome to Learmux!\nYour first flag is: TERMUX{hello_world}\n'),
     'readme.md': f('# Termux\nA terminal emulator and Linux environment for Android.\n'),
@@ -174,8 +174,8 @@ add({
     'On Unix-like systems a leading dot marks a file as hidden, so `ls` will not show it by default. ' +
     'Use `ls -a` to list *all* entries, then `cat` the one that looks suspicious.',
   flag: 'TERMUX{hidden_in_plain_sight}',
-  hints: ['`ls` skips dotfiles.', '`ls -a` shows them, including `.secret`'],
-  starters: ['ls -a', 'cat .secret'],
+  hints: ['A plain listing leaves out files whose names begin with a dot.', 'Add the flag that shows those files, then read the one you find.'],
+  solutions: ['ls -a', 'cat .secret'],
   fs: termuxRoot({
     '.secret': f('You found me. TERMUX{hidden_in_plain_sight}\n'),
     'notes.txt': f('Remember to check for dotfiles next time.\n'),
@@ -184,6 +184,55 @@ add({
 });
 
 // 03 ─────────────────────────────────────────────────────────────────────────
+add({
+  id: 'c05',
+  slug: 'logs-never-lie',
+  title: 'Logs Never Lie',
+  category: 'Text',
+  difficulty: 'Easy',
+  points: 15,
+  summary: 'A flag is buried in a noisy access log. Grep it out.',
+  objective: 'Search access.log for the flag.',
+  briefing:
+    '`grep <pattern> <file>` prints only the lines that match. The log is hundreds of lines of noise, ' +
+    'but the flag starts with `TERMUX{`. Search for that.',
+  flag: 'TERMUX{logs_never_lie}',
+  hints: ['The log is long. Search it rather than reading it.', 'Look for the word TERMUX inside access.log.'],
+  solutions: ['grep TERMUX access.log'],
+  fs: termuxRoot({
+    'access.log': f(
+      Array.from({ length: 60 }, (_, i) =>
+        `10.0.0.${(i % 200) + 1} - - [01/Jan/2026:00:${String(i % 60).padStart(2, '0')}:00] "GET /page/${i} HTTP/1.1" 200 ${100 + i}`
+      )
+        .concat('10.0.0.42 - - [01/Jan/2026:00:59:59] "GET /flag HTTP/1.1" 200 42 "TERMUX{logs_never_lie}"')
+        .concat(Array.from({ length: 20 }, (_, i) => `10.0.0.${i} - - [01/Jan/2026:01:00:00] "GET /health HTTP/1.1" 200 2`))
+        .join('\n') + '\n'
+    ),
+  }),
+});
+
+// 06 ─────────────────────────────────────────────────────────────────────────
+add({
+  id: 'c08',
+  slug: 'decode-me',
+  title: 'Decode Me',
+  category: 'Encoding',
+  difficulty: 'Easy',
+  points: 15,
+  summary: 'Base64 is an encoding, not encryption. Decode it.',
+  objective: 'Decode encoded.txt to reveal the flag.',
+  briefing:
+    'Base64 turns binary into printable text. It is trivially reversible:\n\n' +
+    '```\nbase64 -d encoded.txt\n```',
+  flag: 'TERMUX{decode_me}',
+  hints: ['The file holds encoded text, not readable text.', 'It is base64. The same tool encodes and decodes.'],
+  solutions: ['base64 -d encoded.txt'],
+  fs: termuxRoot({
+    'encoded.txt': f(b64('TERMUX{decode_me}') + '\n'),
+  }),
+});
+
+// 09 ─────────────────────────────────────────────────────────────────────────
 add({
   id: 'c03',
   slug: 'follow-the-trail',
@@ -198,8 +247,8 @@ add({
     '```\nfind . -name flag.txt\n```\n\n' +
     'Then `cat` the path it prints.',
   flag: 'TERMUX{follow_the_trail}',
-  hints: ['`find . -name flag.txt` searches everything below you.', '`cd` and `ls` work too if you prefer.'],
-  starters: ['find . -name flag.txt', 'cat projects/android/scripts/backup/flag.txt'],
+  hints: ['The file is not in your current directory. Search the whole tree.', 'Look for a file named flag.txt anywhere below your home directory.'],
+  solutions: ['find . -name flag.txt', 'cat projects/android/scripts/backup/flag.txt'],
   fs: termuxRoot({
     projects: d({
       android: d({
@@ -231,8 +280,8 @@ add({
     'A file that is `rw-rw-rw-` (octal `666`) can be written by *anyone*. That is a classic security smell.\n\n' +
     'List the directory in long form and find the file that is too permissive.',
   flag: 'TERMUX{world_writable}',
-  hints: ['`ls -l` prints the modes.', 'Look for `-rw-rw-rw-`. That is the odd one out.'],
-  starters: ['ls -l', 'cat shared.ini'],
+  hints: ['You need the permission string for each file.', 'A long listing prints them. Find the file that everyone can write to.'],
+  solutions: ['ls -l', 'cat shared.ini'],
   fs: termuxRoot({
     'config.cfg': f('debug = false\n', '644'),
     'shared.ini': f('everyone can write here: TERMUX{world_writable}\n', '666'),
@@ -242,205 +291,6 @@ add({
 });
 
 // 05 ─────────────────────────────────────────────────────────────────────────
-add({
-  id: 'c05',
-  slug: 'logs-never-lie',
-  title: 'Logs Never Lie',
-  category: 'Text',
-  difficulty: 'Easy',
-  points: 15,
-  summary: 'A flag is buried in a noisy access log. Grep it out.',
-  objective: 'Search access.log for the flag.',
-  briefing:
-    '`grep <pattern> <file>` prints only the lines that match. The log is hundreds of lines of noise, ' +
-    'but the flag starts with `TERMUX{`. Search for that.',
-  flag: 'TERMUX{logs_never_lie}',
-  hints: ['`grep TERMUX access.log`', 'Add `-n` to see line numbers.'],
-  starters: ['grep TERMUX access.log'],
-  fs: termuxRoot({
-    'access.log': f(
-      Array.from({ length: 60 }, (_, i) =>
-        `10.0.0.${(i % 200) + 1} - - [01/Jan/2026:00:${String(i % 60).padStart(2, '0')}:00] "GET /page/${i} HTTP/1.1" 200 ${100 + i}`
-      )
-        .concat('10.0.0.42 - - [01/Jan/2026:00:59:59] "GET /flag HTTP/1.1" 200 42 "TERMUX{logs_never_lie}"')
-        .concat(Array.from({ length: 20 }, (_, i) => `10.0.0.${i} - - [01/Jan/2026:01:00:00] "GET /health HTTP/1.1" 200 2`))
-        .join('\n') + '\n'
-    ),
-  }),
-});
-
-// 06 ─────────────────────────────────────────────────────────────────────────
-add({
-  id: 'c06',
-  slug: 'case-insensitive',
-  title: 'Case Insensitive',
-  category: 'Text',
-  difficulty: 'Easy',
-  points: 15,
-  summary: 'Match a pattern regardless of letter case.',
-  objective: 'Find the line containing the flag without worrying about case.',
-  briefing:
-    'The flag is in `notes.txt`, but the author wrote surrounding text in mixed case. ' +
-    '`grep -i` ignores case, so `grep -i termux notes.txt` will find `TERMUX{...}` too.',
-  flag: 'TERMUX{case_insensitive}',
-  hints: ['`grep -i termux notes.txt`', 'The `-i` flag means case-insensitive.'],
-  starters: ['grep -i termux notes.txt'],
-  fs: termuxRoot({
-    'notes.txt': f(
-      'Meeting notes\n' +
-        'TODO: clean up the TErMuX build\n' +
-        'remember the flag is TERMUX{case_insensitive}\n' +
-        'ask Priya about the deploy\n'
-    ),
-  }),
-});
-
-// 07 ─────────────────────────────────────────────────────────────────────────
-add({
-  id: 'c07',
-  slug: 'pipe-dreams',
-  title: 'Pipe Dreams',
-  category: 'Pipes',
-  difficulty: 'Medium',
-  points: 25,
-  summary: 'Chain commands together with the pipe operator.',
-  objective: 'Extract the third field of the admin line in users.txt.',
-  briefing:
-    'The pipe `|` sends the output of one command into the next. ' +
-    'A passwd-style file is colon-separated; `cut -d: -f3` prints the third field.\n\n' +
-    '```\ncat users.txt | grep admin | cut -d: -f3\n```',
-  flag: 'TERMUX{pipe_dreams}',
-  hints: ['`grep admin users.txt` narrows it down.', '`cut -d: -f3` prints field 3.'],
-  starters: ['cat users.txt | grep admin | cut -d: -f3'],
-  fs: termuxRoot({
-    'users.txt': f(
-      'root:x:0:0:root:/root:/bin/bash\n' +
-        'daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n' +
-        'guest:x:1001:1001:Guest:/home/guest:/bin/sh\n' +
-        'admin:x:TERMUX{pipe_dreams}:admin:/home/admin:/bin/bash\n' +
-        'sync:x:4:65534:sync:/bin:/bin/sync\n'
-    ),
-  }),
-});
-
-// 08 ─────────────────────────────────────────────────────────────────────────
-add({
-  id: 'c08',
-  slug: 'decode-me',
-  title: 'Decode Me',
-  category: 'Encoding',
-  difficulty: 'Easy',
-  points: 15,
-  summary: 'Base64 is an encoding, not encryption. Decode it.',
-  objective: 'Decode encoded.txt to reveal the flag.',
-  briefing:
-    'Base64 turns binary into printable text. It is trivially reversible:\n\n' +
-    '```\nbase64 -d encoded.txt\n```',
-  flag: 'TERMUX{decode_me}',
-  hints: ['The `-d` flag decodes instead of encodes.'],
-  starters: ['base64 -d encoded.txt'],
-  fs: termuxRoot({
-    'encoded.txt': f(b64('TERMUX{decode_me}') + '\n'),
-  }),
-});
-
-// 09 ─────────────────────────────────────────────────────────────────────────
-add({
-  id: 'c09',
-  slug: 'rot13-is-weak',
-  title: 'ROT13 Is Weak',
-  category: 'Encoding',
-  difficulty: 'Easy',
-  points: 15,
-  summary: 'A Caesar cipher with a shift of 13. Undo it.',
-  objective: 'Decode cipher.txt to reveal the flag.',
-  briefing:
-    'ROT13 rotates every letter 13 places. It is its own inverse. The Learmux shell ships a helper:\n\n' +
-    '```\nrot13 cipher.txt\n```',
-  flag: 'TERMUX{rot13_is_weak}',
-  hints: ['`rot13 cipher.txt`', 'Applying it twice returns the original.'],
-  starters: ['rot13 cipher.txt'],
-  fs: termuxRoot({
-    'cipher.txt': f('The secret is ' + rot13('TERMUX{rot13_is_weak}') + '\n'),
-  }),
-});
-
-// 10 ─────────────────────────────────────────────────────────────────────────
-add({
-  id: 'c10',
-  slug: 'hex-on-the-wire',
-  title: 'Hex on the Wire',
-  category: 'Encoding',
-  difficulty: 'Medium',
-  points: 20,
-  summary: 'Inspect raw bytes with a hex dump.',
-  objective: 'Hex-dump data.bin and read the flag from the ASCII column.',
-  briefing:
-    '`xxd` prints each byte as hex, with the printable characters shown on the right. ' +
-    'Even when a file looks like gibberish, the ASCII column often gives it away:\n\n' +
-    '```\nxxd data.bin\n```',
-  flag: 'TERMUX{hex_on_the_wire}',
-  hints: ['The right-hand column of `xxd` shows printable characters.', '`strings data.bin` pulls the flag out in one piece.'],
-  starters: ['xxd data.bin', 'strings data.bin'],
-  fs: termuxRoot({
-    'data.bin': f('\u0000\u0001\u0002TERMUX{hex_on_the_wire}\u0003\u0004\u0005'),
-  }),
-});
-
-// 11 ─────────────────────────────────────────────────────────────────────────
-add({
-  id: 'c11',
-  slug: 'integrity-matters',
-  title: 'Integrity Matters',
-  category: 'Hashing',
-  difficulty: 'Medium',
-  points: 25,
-  summary: 'Two backups look identical. A checksum tells them apart.',
-  objective: 'Find which file matches the digest in checksum.txt, then read it.',
-  briefing:
-    'A SHA-256 digest is a fingerprint for file contents. `checksum.txt` records the digest of the *genuine* ' +
-    'file. Compute the digest of both candidates with `sha256sum` and compare.',
-  flag: 'TERMUX{integrity_matters}',
-  hints: ['`sha256sum backup_a.txt backup_b.txt`', 'The file whose digest matches checksum.txt is the real one.'],
-  starters: ['sha256sum backup_a.txt backup_b.txt', 'cat checksum.txt', 'cat backup_a.txt'],
-  fs: (() => {
-    const real = 'genuine backup\nTERMUX{integrity_matters}\n';
-    const fake = 'genuine backup\nTERMUX{1ntegr1ty_m4tt3rs}\n';
-    return termuxRoot({
-      'backup_a.txt': f(real),
-      'backup_b.txt': f(fake),
-      'checksum.txt': f(`${sha256(real)}  backup_a.txt\n`),
-    });
-  })(),
-});
-
-// 12 ─────────────────────────────────────────────────────────────────────────
-add({
-  id: 'c12',
-  slug: 'environment-leak',
-  title: 'Environment Leak',
-  category: 'Environment',
-  difficulty: 'Easy',
-  points: 15,
-  summary: 'Secrets are often left behind in environment variables.',
-  objective: 'Inspect the environment and find the leaked secret.',
-  briefing:
-    'Environment variables are handed to every process a shell starts. That makes them a common place for ' +
-    'secrets to leak. Print them with `env` (or `printenv`).',
-  flag: 'TERMUX{env_vars_leak}',
-  hints: ['`env` prints every variable.', '`printenv SECRET_FLAG` prints just one.'],
-  starters: ['env'],
-  env: {
-    SECRET_FLAG: 'TERMUX{env_vars_leak}',
-    API_KEY: 'demo_api_key_placeholder',
-    PREFIX: PREFIX,
-  },
-  fs: termuxRoot({
-    '.env.example': f('API_KEY=\nSECRET_FLAG=\n'),
-  }),
-});
-
-// 13 ─────────────────────────────────────────────────────────────────────────
 add({
   id: 'c13',
   slug: 'process-hunt',
@@ -454,8 +304,8 @@ add({
     'On real systems, `ps` shows the full command line of every process, including secrets people pass as ' +
     'arguments by mistake. Run `ps` here and read carefully.',
   flag: 'TERMUX{process_hunt}',
-  hints: ['`ps` lists processes.', 'One process passes a `--token`.'],
-  starters: ['ps'],
+  hints: ['Something running on this machine has the flag in its command line.', 'List processes with their full command line, not just the program name.'],
+  solutions: ['ps'],
   overrides: {
     ps:
       '  PID TTY          TIME CMD\n' +
@@ -467,62 +317,6 @@ add({
 });
 
 // 14 ─────────────────────────────────────────────────────────────────────────
-add({
-  id: 'c14',
-  slug: 'package-cache',
-  title: 'Package Cache',
-  category: 'Termux',
-  difficulty: 'Medium',
-  points: 20,
-  summary: 'A suspicious package is installed. List packages and read its metadata.',
-  objective: 'List the installed packages and find the flag in the metadata.',
-  briefing:
-    'Termux uses `pkg` to manage software. Listing installed packages can reveal unexpected or malicious tools:\n\n' +
-    '```\npkg list-installed\n```',
-  flag: 'TERMUX{package_cache}',
-  hints: ['`pkg list-installed` prints the package set.', 'The flag is in the description of `termux-flagutils`.'],
-  starters: ['pkg list-installed'],
-  overrides: {
-    pkg:
-      'Listing installed packages ...\n' +
-      'bash\ncoreutils\ngit\nnmap\nopenssh\npython\ntermux-flagutils (description: "extracts flags; secret TERMUX{package_cache}")\n',
-  },
-  fs: termuxRoot({}),
-});
-
-// 15 ─────────────────────────────────────────────────────────────────────────
-add({
-  id: 'c15',
-  slug: 'user-accounts',
-  title: 'User Accounts',
-  category: 'System',
-  difficulty: 'Easy',
-  points: 15,
-  summary: 'Read the account database and find an unusual user.',
-  objective: 'Read the account database at /etc/accounts and find the flag in a user record.',
-  briefing:
-    '`/etc/accounts` lists user accounts as colon-separated records: ' +
-    '`name:password:uid:gid:GECOS:home:shell`. Read it with `cat`.',
-  flag: 'TERMUX{user_accounts}',
-  hints: ['`cat /etc/accounts`', 'One GECOS field holds the flag.'],
-  starters: ['cat /etc/accounts'],
-  fs: termuxRoot(
-    {},
-    {
-      etc: d({
-        accounts: f(
-          'root:x:0:0:root:/root:/bin/bash\n' +
-            'daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n' +
-            'termux:x:10000:10000:TERMUX{user_accounts}:/data/data/com.termux/files/home:/bin/bash\n' +
-            'nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\n'
-        ),
-        shadow: f('root:!:19000:0:99999:7:::\n'),
-      }),
-    }
-  ),
-});
-
-// 16 ─────────────────────────────────────────────────────────────────────────
 add({
   id: 'c16',
   slug: 'network-recon',
@@ -536,8 +330,8 @@ add({
     '`nmap` maps open ports and, with service detection, reads the banner each service returns. ' +
     'Banners are a classic information leak.\n\n```\nnmap -sV 127.0.0.1\n```',
   flag: 'TERMUX{network_recon}',
-  hints: ['`nmap 127.0.0.1`', 'Look at the banner for port 1337.'],
-  starters: ['nmap 127.0.0.1'],
+  hints: ['Scan the local machine and read whatever answers.', 'Run nmap against 127.0.0.1 and look at the banner on the unusual port.'],
+  solutions: ['nmap 127.0.0.1'],
   overrides: {
     nmap:
       'Starting Nmap 7.94 ( https://nmap.org )\n' +
@@ -553,28 +347,60 @@ add({
 
 // 17 ─────────────────────────────────────────────────────────────────────────
 add({
-  id: 'c17',
-  slug: 'fetch-the-flag',
-  title: 'Fetch the Flag',
-  category: 'Networking',
+  id: 'c11',
+  slug: 'integrity-matters',
+  title: 'Integrity Matters',
+  category: 'Hashing',
   difficulty: 'Medium',
-  points: 20,
-  summary: 'Pull a flag down from a web endpoint.',
-  objective: 'Use curl to fetch http://challenge.local/flag and read the response.',
+  points: 25,
+  summary: 'Two backups look identical. A checksum tells them apart.',
+  objective: 'Find which file matches the digest in checksum.txt, then read it.',
   briefing:
-    '`curl <url>` prints the body of an HTTP response to the terminal. Fetch the challenge endpoint:\n\n' +
-    '```\ncurl http://challenge.local/flag\n```',
-  flag: 'TERMUX{fetched_from_web}',
-  hints: ["Use curl against the challenge endpoint.", "wget can also download the file."],
-  starters: ["curl http://challenge.local/flag"],
-  overrides: {
-    curl: '{"status":"ok","flag":"TERMUX{fetched_from_web}"}\n',
-    wget: "Connecting to challenge.local...\nHTTP request sent, awaiting response... 200 OK\nTERMUX{fetched_from_web}\n",
-  },
-  fs: termuxRoot({}),
+    'A SHA-256 digest is a fingerprint for file contents. `checksum.txt` records the digest of the *genuine* ' +
+    'file. Compute the digest of both candidates with `sha256sum` and compare.',
+  flag: 'TERMUX{integrity_matters}',
+  hints: ['Two files, one digest. Work out which file the digest belongs to.', 'Hash both files, compare the digests with checksum.txt, then read the match.'],
+  solutions: ['sha256sum backup_a.txt backup_b.txt', 'cat checksum.txt', 'cat backup_a.txt'],
+  fs: (() => {
+    const real = 'genuine backup\nTERMUX{integrity_matters}\n';
+    const fake = 'genuine backup\nTERMUX{1ntegr1ty_m4tt3rs}\n';
+    return termuxRoot({
+      'backup_a.txt': f(real),
+      'backup_b.txt': f(fake),
+      'checksum.txt': f(`${sha256(real)}  backup_a.txt\n`),
+    });
+  })(),
 });
 
-// 18 ─────────────────────────────────────────────────────────────────────────
+// 12 ─────────────────────────────────────────────────────────────────────────
+add({
+  id: 'c07',
+  slug: 'pipe-dreams',
+  title: 'Pipe Dreams',
+  category: 'Pipes',
+  difficulty: 'Medium',
+  points: 25,
+  summary: 'Chain commands together with the pipe operator.',
+  objective: 'Extract the third field of the admin line in users.txt.',
+  briefing:
+    'The pipe `|` sends the output of one command into the next. ' +
+    'A passwd-style file is colon-separated; `cut -d: -f3` prints the third field.\n\n' +
+    '```\ncat users.txt | grep admin | cut -d: -f3\n```',
+  flag: 'TERMUX{pipe_dreams}',
+  hints: ['The line you want is the one for admin.', 'Narrow the file to that line, then print the third colon-separated field.'],
+  solutions: ['cat users.txt | grep admin | cut -d: -f3'],
+  fs: termuxRoot({
+    'users.txt': f(
+      'root:x:0:0:root:/root:/bin/bash\n' +
+        'daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n' +
+        'guest:x:1001:1001:Guest:/home/guest:/bin/sh\n' +
+        'admin:x:TERMUX{pipe_dreams}:admin:/home/admin:/bin/bash\n' +
+        'sync:x:4:65534:sync:/bin:/bin/sync\n'
+    ),
+  }),
+});
+
+// 08 ─────────────────────────────────────────────────────────────────────────
 add({
   id: 'c18',
   slug: 'buried-strings',
@@ -588,8 +414,8 @@ add({
     '`strings` pulls out runs of printable characters from any file. It is the first thing a forensics ' +
     'analyst runs on an unknown blob:\n\n```\nstrings firmware.bin\n```',
   flag: 'TERMUX{buried_strings}',
-  hints: ['`strings firmware.bin`', 'The flag is one of several printable runs.'],
-  starters: ['strings firmware.bin'],
+  hints: ['A binary can hide readable text inside it.', 'One tool pulls printable runs out of a binary. Run it on firmware.bin.'],
+  solutions: ['strings firmware.bin'],
   fs: termuxRoot({
     'firmware.bin': f(
       '\u0000\u0001\u0002BIN\u0000init\u0000\u0000config=TERMUX{buried_strings}\u0000\u0000v2.4.1\u0000\u0000'
@@ -598,27 +424,6 @@ add({
 });
 
 // 19 ─────────────────────────────────────────────────────────────────────────
-add({
-  id: 'c19',
-  slug: 'reverse-engineering',
-  title: 'Reverse Engineering',
-  category: 'Encoding',
-  difficulty: 'Easy',
-  points: 15,
-  summary: 'A file holds the flag written backwards.',
-  objective: 'Reverse the characters in reversed.txt to read the flag.',
-  briefing:
-    'Not every obfuscation is cryptography. `rev` reverses each line. Perfect for text stored backwards:\n\n' +
-    '```\nrev reversed.txt\n```',
-  flag: 'TERMUX{reverse_engineering}',
-  hints: ['`rev reversed.txt`', '`cat` then read it right-to-left also works.'],
-  starters: ['rev reversed.txt'],
-  fs: termuxRoot({
-    'reversed.txt': f(rev('TERMUX{reverse_engineering}') + '\n'),
-  }),
-});
-
-// 20 ─────────────────────────────────────────────────────────────────────────
 add({
   id: 'c20',
   slug: 'final-boss',
@@ -633,8 +438,8 @@ add({
     '```\ngrep flag_blob capture.log | cut -d" " -f4 | base64 -d\n```\n\n' +
     'Breaking it down: `grep` finds the line, `cut` takes the fourth field, `base64 -d` decodes it.',
   flag: 'TERMUX{final_boss}',
-  hints: ['Find the line with `flag_blob`.', 'The blob is the fourth whitespace-separated field.'],
-  starters: ['grep flag_blob capture.log', 'grep flag_blob capture.log | cut -d" " -f4 | base64 -d'],
+  hints: ['One line of the capture holds an encoded blob.', 'Find the line mentioning flag_blob, then decode what follows it.'],
+  solutions: ['grep flag_blob capture.log', 'grep flag_blob capture.log | cut -d" " -f4 | base64 -d'],
   fs: (() => {
     const blob = b64('TERMUX{final_boss}');
     const lines = [];
