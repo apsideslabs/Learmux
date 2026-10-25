@@ -1,0 +1,94 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import '../../styles/practice.css';
+import Mcq from '../../components/Mcq.astro';
+import OutputTask from '../../components/OutputTask.astro';
+import { allSets, findSet } from '../../data/practice';
+
+export function getStaticPaths() {
+  return allSets().map((s) => ({ params: { slug: s.slug }, props: { set: s } }));
+}
+
+const { set } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+
+const sets = allSets();
+const i = sets.findIndex((s) => s.slug === set.slug);
+const prev = i > 0 ? sets[i - 1] : undefined;
+const next = i < sets.length - 1 ? sets[i + 1] : undefined;
+
+const lessonUrl = `${base}learn/${set.topic}/`;
+---
+
+<BaseLayout
+  title={`${set.title} · Test yourself`}
+  description={set.summary}
+>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span>
+      <a href={`${base}practice/`}>Test yourself</a><span class="sep">›</span>
+      <span>{set.title}</span>
+    </nav>
+
+    <header class="section--tight">
+      <h1>{set.title}</h1>
+      <p class="lede">{set.intro}</p>
+      <div class="chip-row">
+        <span class="chip">{set.questions.length} question{set.questions.length === 1 ? '' : 's'}</span>
+        {set.tasks.length > 0 && (
+          <span class="chip chip--easy">{set.tasks.length} task{set.tasks.length === 1 ? '' : 's'}</span>
+        )}
+        <a class="chip chip--link" href={lessonUrl}>Read the lesson</a>
+      </div>
+    </header>
+
+    <section>
+      <h2>Questions</h2>
+      <p>
+        Each one is marked as you go, and the explanation arrives straight after, which is
+        the part worth reading.
+      </p>
+      <Mcq questions={set.questions} setSlug={set.slug} />
+    </section>
+
+    {set.tasks.length > 0 && (
+      <section>
+        <h2>Tasks</h2>
+        <p>
+          These need your own device. Run the command in Termux, then paste what it printed.
+          The marking looks at what the output means, so spacing, version numbers and
+          ordering do not matter. If you have not installed anything yet, the
+          <a href={lessonUrl}>lesson</a> covers the setup.
+        </p>
+        {set.tasks.map((task) => <OutputTask task={task} setSlug={set.slug} />)}
+      </section>
+    )}
+
+    <div class="ctf-note">
+      <strong>Marking your own work</strong>
+      Both halves of this are checked in your browser, with no server involved, so nothing
+      stops you from pasting output you did not run. The tasks are written so that the
+      easiest way to pass one is to actually do it and read the result, which is the whole
+      intention.
+    </div>
+
+    <nav class="ctf-pager" aria-label="Set navigation">
+      {prev ? (
+        <a href={`${base}practice/${prev.slug}/`}>← {prev.title}</a>
+      ) : (
+        <span>← nothing before this one</span>
+      )}
+      {next ? (
+        <a href={`${base}practice/${next.slug}/`}>{next.title} →</a>
+      ) : (
+        <span>nothing after this one →</span>
+      )}
+    </nav>
+
+    <p style="margin-top:var(--sp-4)">
+      <a class="btn" href={`${base}practice/`}>All sets</a>
+      <a class="btn" href={lessonUrl}>Read the lesson</a>
+    </p>
+  </div>
+</BaseLayout>
