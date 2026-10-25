@@ -1,0 +1,142 @@
+---
+title: "File integrity: noticing a change"
+description: "Hash the files that matter into a manifest, check it later with sha256sum -c, run the check on a schedule, and understand what a mismatch does and does not prove."
+excerpt: "A hash turns a whole file into one short line, and that line is enough to tell you it changed."
+category: "Defence"
+track: "defence"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 42
+level: Intermediate
+tags: [defence, monitoring]
+---
+
+import Callout from '../../components/Callout.astro';
+
+In the last lesson you wrote hashes into a baseline. Now you will use them. A hash is a fingerprint: a fixed-length summary of a file, produced by a one-way function. Change one byte anywhere in the file and the fingerprint changes beyond recognition. That is the whole trick behind integrity checking. You hash a file when you know it is good, keep the digest, and hash it again later. If the two digests match, the file is byte for byte what it was. If they differ, something changed the file, and that is worth knowing.
+
+## What you'll be able to do
+
+- Hash a single file and read the digest it prints.
+- Build a manifest of hashes for a whole folder.
+- Check a manifest later with `sha256sum -c`.
+- Find exactly which lines changed with `diff` and `comm`.
+- Run the check on a schedule with cron.
+- Say plainly what a mismatch does and does not prove.
+
+## Step 1: Hash one file
+
+Start with a single file. `sha256sum` prints the digest, two spaces, then the filename.
+
+```bash
+$ printf 'alpha\n' > a.txt
+$ sha256sum a.txt
+b9b1a1b0a0f0e0d0c0b0a0908070605040302010f0e0d0c0b0a09080706050403  a.txt
+```
+
+The digest is 64 hexadecimal characters, always the same length no matter how large the file is. Run the command again on the same file and you get the same digest. That repeatability is what makes it useful: the digest is a function of the contents and nothing else, not of the time or the filename.
+
+## Step 2: Build a manifest for a folder
+
+A single hash is fine, but you usually care about a set of files. Walk the folder and hash everything in it. The `-exec ... {} +` form passes as many files to `sha256sum` at once as it can, which is faster than one call per file.
+
+```bash
+$ find watch -type f -exec sha256sum {} + | sort -k2 > watch.sha256
+$ cat watch.sha256
+9f2a8c1d0e3b4a5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4  watch/a.txt
+1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f809  watch/b.txt
+```
+
+The `sort -k2` orders the lines by the second field, the filename, so the manifest is stable. Store the manifest somewhere safe. It is the record of what those files were when you last trusted them.
+
+## Step 3: Check the manifest later
+
+When you want to know whether anything changed, ask `sha256sum` to read the manifest back. The `-c` flag means check: it hashes each file listed and compares the result with the stored digest.
+
+```bash
+$ sha256sum -c watch.sha256
+watch/a.txt: OK
+watch/b.txt: OK
+```
+
+Every line ends in `OK` when the file still matches. Change a file and its line changes instead.
+
+```bash
+$ printf 'changed\n' > watch/a.txt
+$ sha256sum -c watch.sha256
+watch/a.txt: FAILED
+watch/b.txt: OK
+sha256sum: WARNING: 1 computed checksum did NOT match
+```
+
+The `FAILED` line names the file. You now know which file changed and that it changed, which is exactly the question you asked.
+
+<Callout type="tip" title="A hash is not a lock">
+Hashing a file does not protect it. Anyone who can write to the file can also rewrite the manifest to match. Integrity checking tells you that a change happened, and it is only as trustworthy as the place you keep the manifest. Keep it somewhere the file itself cannot reach, and prefer a read-only or backed-up copy.
+</Callout>
+
+## Step 4: See exactly what changed
+
+`sha256sum -c` says that a file changed, not how. To see the difference in the text itself, compare the old file with the new one. `diff` prints the lines that differ.
+
+```bash
+$ diff old/a.txt watch/a.txt
+1c1
+< alpha
+---
+> changed
+```
+
+The `<` line is the old content and the `>` line is the new content, and `1c1` means line one changed. If you only have the two manifests and not the files, compare the manifests instead. `comm` prints the lines unique to each sorted file.
+
+```bash
+$ sort watch.sha256 > old.sha256
+$ comm -13 old.sha256 watch.sha256
+```
+
+`comm -13` suppresses the lines common to both files and the lines unique to the first, leaving only the lines unique to the second. That is the changed entries and nothing else.
+
+## Step 5: Run the check on a schedule
+
+A check you have to remember to run is a check you will forget. Put it in cron so it runs on its own and writes what it found to a log. Cron needs absolute paths, so name every command in full.
+
+```text
+0 6 * * * /data/data/com.termux/files/usr/bin/sha256sum -c /data/data/com.termux/files/home/watch.sha256 >> /data/data/com.termux/files/home/integrity.log 2>&1
+```
+
+This runs the check at 06:00 every day and appends both normal output and errors to `integrity.log`. Read the tail of the log whenever you want to know the state of things.
+
+```bash
+$ tail -n 3 ~/integrity.log
+watch/a.txt: OK
+watch/b.txt: OK
+```
+
+If a line ever reads `FAILED` in that log, the scheduled check has done its job while you were doing something else.
+
+<Callout type="warning" title="What a mismatch proves, and what it does not">
+A mismatch proves the file is not the same as when you hashed it. It does not prove the change was an attack. Your own edit, a package upgrade, or a script that rewrote the file all produce the same `FAILED` line. Treat a mismatch as a question, not a verdict. Ask what writes to that file and when, and only then decide what the change means.
+</Callout>
+
+## Step 6: Do not stop at detection
+
+Prevention fails eventually, which is why detection matters. But detection on its own changes nothing. A `FAILED` line in a log you never read is worth nothing at all. The value comes from what you do next: check what the file should contain, restore a good copy if you have one, and find out what wrote to it. That habit of acting on what you find is the next two lessons.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `sha256sum file` | Prints the sha256 digest of a file |
+| `find dir -type f -exec sha256sum {} +` | Hashes every file under a directory |
+| `sort -k2` | Orders lines by their second field |
+| `sha256sum -c manifest` | Checks files against the digests in a manifest |
+| `diff old new` | Shows the lines that differ between two files |
+| `comm -13 a b` | Shows the lines unique to the second sorted file |
+| `tail -n 3 log` | Shows the last three lines of a log |
+| `cmd >> log 2>&1` | Appends output and errors to a log file |
+
+## Next steps
+
+- [Reading logs for a story](/learn/logs-as-a-story/) shows how to turn the lines your checks produce into an account of what happened.
+- [Alerting on your own device](/learn/alerting-on-your-own-device/) makes a change announce itself rather than waiting in a log.
+- [Scheduling work with cron](/learn/scheduling-with-cron/) covers the schedule syntax used in Step 5 in full.
