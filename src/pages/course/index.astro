@@ -1,92 +1,161 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Icon from '../../components/Icon.astro';
-import { course } from '../../lib/curriculum';
 import { trackGroups, allTutorials } from '../../lib/tutorials';
+import { course, tracks } from '../../lib/curriculum';
 import { challenges, totalPoints } from '../../lib/challenges';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const groups = await trackGroups();
 const lessons = await allTutorials();
+
+const hours = Math.round((lessons.length * 20) / 60);
+const setCount = 52; // one per lesson; asserted by the content validator
 ---
 
 <BaseLayout
-  title="Course"
-  description={course.summary}
+  title="The course"
+  description={`${tracks.length} tracks and ${lessons.length} lessons, from opening a prompt for the first time to assessing your own systems and writing up what you find. All of it on an Android phone, offline, with no root.`}
 >
   <div class="wrap">
-    <nav class="crumbs" aria-label="Breadcrumb">
-      <a href={base}>Home</a><span class="sep">›</span><span>Course</span>
-    </nav>
-
-    <header style="margin-bottom:1.6rem">
-      <p class="eyebrow">The course</p>
+    <header class="course-hero">
+      <p class="course-hero__eyebrow">The course</p>
       <h1>{course.title}</h1>
       <p class="lede">{course.summary}</p>
+
+      <div class="course-stats">
+        <div class="fact"><span class="n">{tracks.length}</span><span class="l">tracks</span></div>
+        <div class="fact"><span class="n">{lessons.length}</span><span class="l">lessons</span></div>
+        <div class="fact"><span class="n">{setCount}</span><span class="l">practice sets</span></div>
+        <div class="fact"><span class="n">{challenges.length}</span><span class="l">challenges</span></div>
+        <div class="fact"><span class="n">~{hours}h</span><span class="l">at 20 min a lesson</span></div>
+      </div>
     </header>
 
-    <div class="course-facts">
-      <div class="fact"><span class="n">{groups.length}</span><span class="l">tracks</span></div>
-      <div class="fact"><span class="n">{lessons.length}</span><span class="l">lessons</span></div>
-      <div class="fact"><span class="n">{challenges.length}</span><span class="l">challenges</span></div>
-      <div class="fact"><span class="n">{course.timeEstimate}</span><span class="l">at ~20 min a lesson</span></div>
-    </div>
-
-    <div class="course-intro">
-      <div>
+    <section class="course-about">
+      <div class="course-about__col">
         <h2>Who it is for</h2>
         <p>{course.audience}</p>
+      </div>
+      <div class="course-about__col">
         <h2>What you need</h2>
         <p>{course.requirements}</p>
       </div>
-      <div class="soft-panel">
-        <h2 style="font-size:1.02rem;margin-top:0">What you will be able to do</h2>
-        <p class="mb-0" style="font-size:0.94rem">{course.outcome}</p>
+      <div class="course-about__col">
+        <h2>What you will be able to do</h2>
+        <p>{course.outcome}</p>
       </div>
-    </div>
+    </section>
 
-    <div class="section-label" style="margin-top:2.4rem"><span>The path</span></div>
+    <section>
+      <h2>How it is put together</h2>
+      <p>
+        The tracks run in order, and each one assumes the one before it. Every lesson takes
+        about twenty minutes and ends with something you can do rather than something you
+        have read. After each lesson there is a practice set: a few questions that explain
+        the reasoning, and a task where you run a real command on your own phone and paste
+        what it printed.
+      </p>
+      <p>
+        Nothing needs a laptop, a server, or root. Everything runs in Termux on the phone in
+        your pocket, and nothing in the course requires a network connection. The later
+        tracks are self-contained, so if you already work at a prompt you can start at the
+        one that matches what you know.
+      </p>
+    </section>
 
-    {groups.map((group) => (
-      <section class="track" style="margin-top:1.6rem">
-        <div class="track__head">
-          <span class="track__num">{group.track.number}</span>
-          <div>
-            <h2 style="margin:0">
-              <a href={`${base}course/${group.track.id}/`}>{group.track.title}</a>
-            </h2>
-            <p class="track__tag">{group.track.tagline}</p>
+    <div class="section-label"><span>The path</span></div>
+    <p class="course-hint">Open a track to see its lessons.</p>
+
+    {groups.map((group, gi) => {
+      const open = gi === 0;
+      const id = `track-${group.track.id}`;
+      return (
+        <section class="track track--fold" data-fold>
+          <div class="track__head">
+            <button
+              class="track__toggle"
+              type="button"
+              data-fold-toggle
+              aria-expanded={open ? 'true' : 'false'}
+              aria-controls={id}
+            >
+              <span class="track__num">{String(group.track.number).padStart(2, '0')}</span>
+              <span class="track__title">
+                <span class="track__name">{group.track.title}</span>
+                <span class="track__tag">{group.track.tagline}</span>
+              </span>
+              <span class="track__meta">
+                <span class="chip">{group.lessons.length} lessons</span>
+                <span class="chip chip--mono">{group.track.level}</span>
+                <span class="track__chev" aria-hidden="true"><Icon name="chevron" size={16} /></span>
+              </span>
+            </button>
           </div>
-          <span class="chip">{group.lessons.length} lessons</span>
-        </div>
-        <p class="track__desc">{group.track.description}</p>
-        <div class="rows">
-          {group.lessons.map((l) => (
-            <a class="row" href={`${base}learn/${l.id}/`}>
-              <span>
-                <span class="row__title">{l.data.title}</span>
-                <span class="row__meta">{l.data.excerpt}</span>
-              </span>
-              <span class="row__side">
-                <span class="chip chip--mono">{l.data.level}</span>
-                <Icon name="chevron" size={15} />
-              </span>
+
+          <div class="track__body" id={id} hidden={!open}>
+            <p class="track__desc">{group.track.description}</p>
+            <p class="track__outcome">
+              <strong>When you finish this track</strong> {group.track.outcome}
+            </p>
+            <p class="track__prereq"><strong>Before it</strong> {group.track.prereq}</p>
+
+            <div class="rows">
+              {group.lessons.map((l) => (
+                <a class="row" href={`${base}learn/${l.id}/`}>
+                  <span>
+                    <span class="row__title">{l.data.title}</span>
+                    <span class="row__meta">{l.data.excerpt}</span>
+                  </span>
+                  <span class="row__side">
+                    <span class="chip chip--mono">{l.data.level}</span>
+                    <Icon name="chevron" size={15} />
+                  </span>
+                </a>
+              ))}
+            </div>
+
+            <a class="track__link" href={`${base}course/${group.track.id}/`}>
+              About this track <Icon name="chevron" size={14} />
             </a>
-          ))}
-        </div>
-        <a class="track__link" href={`${base}course/${group.track.id}/`}>
-          About this track <Icon name="chevron" size={14} />
-        </a>
-      </section>
-    ))}
+          </div>
+        </section>
+      );
+    })}
 
     <section class="ctf-panel" style="margin-top:2.6rem">
       <h2>Practise as you go</h2>
       <p>
-        Every track pairs with challenges. {challenges.length} terminal challenges, {totalPoints} points,
-        all playable in the browser.
+        Every lesson has a practice set with the reasoning explained, and there are
+        {' '}{challenges.length} terminal challenges worth {totalPoints} points to play in the
+        browser as you go. When you want the real thing, the Termux CTF puts the same ideas
+        on your own device.
       </p>
-      <a class="btn btn--green" href={`${base}challenges/`}>Play CTF</a>
+      <p>
+        <a class="btn btn--green" href={`${base}practice/`}>Test yourself</a>
+        <a class="btn" href={`${base}challenges/`}>Play CTF</a>
+        <a class="btn" href={`${base}ctf/`}>Termux CTF</a>
+      </p>
     </section>
   </div>
+
+  <script>
+    // The path is ten tracks deep now, so each one opens on demand rather than
+    // printing fifty-two lessons at once.
+    function initFolds() {
+      document.querySelectorAll<HTMLElement>('[data-fold]').forEach((fold) => {
+        const btn = fold.querySelector<HTMLButtonElement>('[data-fold-toggle]');
+        const panel = fold.querySelector<HTMLElement>('.track__body');
+        if (!btn || !panel || btn.dataset.bound) return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', () => {
+          const open = btn.getAttribute('aria-expanded') === 'true';
+          btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+          panel.hidden = open;
+        });
+      });
+    }
+    initFolds();
+    document.addEventListener('astro:page-load', initFolds);
+  </script>
 </BaseLayout>
