@@ -2,12 +2,22 @@
  * Grading for output-submission tasks.
  *
  * The point of a rule is to describe what a correct answer means, not what it
- * looks like. A learner's `nmap` output will differ from anyone else's in the
- * version string, the latency, the ordering and the host name, so matching on
- * those would be useless. Matching on "a port line marked open" is not.
+ * looks like. A learner's `ls -l` output will differ from anyone else's in the
+ * owner name, the size, the timestamp and the ordering, so matching on those
+ * would be useless. Matching on "a line that starts with a permission string"
+ * is not.
  *
- * Every rule must pass. Each is reported on its own, because a near miss is
- * the most useful thing this can tell someone.
+ * Two things make this more forgiving than a naive string comparison, and both
+ * came from real failures:
+ *
+ *   The paste is normalised first. Terminal output copied on a phone often
+ *   arrives indented, because a clipboard, a notes app or a chat window added
+ *   leading whitespace. Anchored rules used to fail all at once on that, which
+ *   told the learner nothing. See `normalise`.
+ *
+ *   A paste that matches nothing is reported differently from a paste that
+ *   nearly matches. "This does not look like that command's output" is a much
+ *   more useful thing to say than a list of three failed rules.
  */
 
 import type { OutputRule, OutputTask } from '../data/practice/types';
@@ -20,6 +30,35 @@ export interface RuleResult {
 export interface GradeResult {
   passed: boolean;
   results: RuleResult[];
+  /** How many lines were read, after normalising. */
+  lines: number;
+  /** True when nothing matched at all, which usually means the wrong paste. */
+  nothingMatched: boolean;
+}
+
+/**
+ * Prepare a paste for grading.
+ *
+ * Line endings are unified, trailing whitespace is dropped, and the block is
+ * dedented by its common leading prefix. Dedenting rather than stripping every
+ * line matters: `uniq -c` output has meaningful leading spaces on each row, and
+ * removing all of them would still leave the relative alignment intact, but
+ * stripping a common prefix preserves the shape of the whole block.
+ */
+export function normalise(text: string): string {
+  const lines = text
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .map((line) => line.replace(/\s+$/, ''));
+
+  const indents = lines
+    .filter((line) => line.trim().length > 0)
+    .map((line) => line.match(/^[ \t]*/)?.[0].length ?? 0);
+
+  const common = indents.length > 0 ? Math.min(...indents) : 0;
+  if (common === 0) return lines.join('\n');
+
+  return lines.map((line) => line.slice(common)).join('\n');
 }
 
 /** Build a regular expression, or null if the pattern is not usable. */
@@ -58,15 +97,22 @@ export function checkRule(text: string, rule: OutputRule): boolean {
   }
 }
 
-export function gradeOutput(text: string, task: OutputTask): GradeResult {
+export function gradeOutput(rawText: string, task: OutputTask): GradeResult {
+  const text = normalise(rawText);
   const results = task.rules.map((rule) => ({ label: rule.label, ok: checkRule(text, rule) }));
-  return { passed: results.length > 0 && results.every((r) => r.ok), results };
+  const passed = results.length > 0 && results.every((r) => r.ok);
+
+  return {
+    passed,
+    results,
+    lines: text.split('\n').filter((l) => l.trim().length > 0).length,
+    // If not one rule matched, the paste is probably from something else
+    // entirely, which is worth saying plainly.
+    nothingMatched: !passed && results.every((r) => !r.ok),
+  };
 }
 
-/**
- * A cheap sanity check before grading, so an empty or obviously wrong paste
- * gets a useful message rather than a list of failed rules.
- */
+/** A cheap sanity check before grading, so an empty paste gets a useful message. */
 export function looksEmpty(text: string): boolean {
   return text.trim().length < 4;
 }
