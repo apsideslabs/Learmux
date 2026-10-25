@@ -1,0 +1,374 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import '../../styles/utilities.css';
+import { utilityBySlug, otherUtilities } from '../../data/utilities';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const u = utilityBySlug('subnet')!;
+const others = otherUtilities('subnet');
+---
+
+<BaseLayout
+  title="Subnet calculator"
+  description="Work out the network, broadcast address, host range and host count from a CIDR prefix, for IPv4 and IPv6, with the binary and a subnet split."
+>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span>
+      <a href={`${base}utilities/`}>Utilities</a><span class="sep">›</span>
+      <span>Subnet calculator</span>
+    </nav>
+
+    <header class="util-hero">
+      <h1>Subnet calculator</h1>
+      <p class="lede">
+        What a prefix actually means: which addresses are in it, which are usable, and why
+        a /31 behaves nothing like a /30. The binary is shown, because a subnet mask stops
+        being mysterious the moment you look at the bits.
+      </p>
+    </header>
+
+    <div class="util-panel">
+      <div class="util-panel__head">
+        <h2 class="util-panel__title">Address</h2>
+        <div class="util-toggles" role="group" aria-label="Version">
+          <button class="util-toggle" type="button" data-version="v4" aria-pressed="true">IPv4</button>
+          <button class="util-toggle" type="button" data-version="v6" aria-pressed="false">IPv6</button>
+        </div>
+      </div>
+
+      <div class="util-panel__body">
+        <div class="util-row">
+          <label class="util-field" style="flex:2 1 20rem">
+            <span class="util-label" id="addrLabel">Address with prefix</span>
+            <input class="util-input" id="cidr" type="text" spellcheck="false" value="192.168.1.10/24" placeholder="192.168.1.10/24" />
+          </label>
+          <label class="util-field util-field--narrow">
+            <span class="util-label">Or a mask</span>
+            <input class="util-input" id="mask" type="text" spellcheck="false" placeholder="255.255.255.0" />
+          </label>
+        </div>
+
+        <div class="util-msg util-msg--bad" id="error" hidden>
+          <Icon name="warning" size={16} />
+          <span></span>
+        </div>
+
+        <div id="v4out">
+          <div class="util-out-head">
+            <h3>The network</h3>
+            <span class="util-cell__k" id="classLabel"></span>
+          </div>
+          <div class="util-grid" id="v4grid"></div>
+
+          <div class="util-out-head">
+            <h3>In binary</h3>
+          </div>
+          <div class="util-out util-out--term" id="v4binary"></div>
+
+          <div class="util-out-head">
+            <h3>Split it further</h3>
+            <span class="util-cell__k" id="splitLabel"></span>
+          </div>
+          <div class="util-row" style="margin-top:0.5rem">
+            <label class="util-field util-field--narrow">
+              <span class="util-label">New prefix</span>
+              <input class="util-input" id="splitPrefix" type="number" min="1" max="32" value="26" />
+            </label>
+            <div class="util-field" style="flex:0 0 auto;align-self:flex-end">
+              <button class="util-btn" id="split" type="button"><Icon name="network" size={15} /> Split</button>
+            </div>
+          </div>
+          <div id="splitOut"></div>
+
+          <div class="util-out-head">
+            <h3>Is an address in this network?</h3>
+          </div>
+          <label class="util-field" style="flex:1 1 100%;margin-top:0.4rem">
+            <span class="util-label">Address to test</span>
+            <input class="util-input" id="testAddr" type="text" spellcheck="false" placeholder="192.168.1.200" />
+          </label>
+          <div class="util-msg" id="containsMsg">
+            <Icon name="info" size={16} />
+            <span>Type an address to check whether it falls inside the network above.</span>
+          </div>
+        </div>
+
+        <div id="v6out" hidden>
+          <div class="util-out-head">
+            <h3>The address</h3>
+            <span class="util-cell__k" id="v6type"></span>
+          </div>
+          <div class="util-grid" id="v6grid"></div>
+          <div class="util-out-head">
+            <h3>In binary</h3>
+          </div>
+          <div class="util-out util-out--term" id="v6binary" style="font-size:0.76rem"></div>
+        </div>
+      </div>
+    </div>
+
+    <section>
+      <h2>What this is actually doing</h2>
+      <p>
+        An IPv4 address is 32 bits. A prefix length says how many of those bits are fixed for
+        the network and how many are left for hosts. A /24 fixes the first 24 and leaves 8,
+        which is 2 to the 8, which is 256 addresses. Everything else on this page follows from
+        that one idea.
+      </p>
+      <p>
+        The network address is the one with every host bit set to zero, and the broadcast
+        address is the one with every host bit set to one. Neither can be given to a machine,
+        which is why a /24 has 256 addresses but only 254 you can actually use. The exception
+        is worth knowing: a /31 has no room to reserve anything, so under RFC 3021 both of its
+        two addresses are usable, which is exactly what you want on a point-to-point link
+        between two routers. A /32 is a single address, and it is both the network and the
+        host.
+      </p>
+      <p>
+        The subnet mask is the same information written out in full, and it is the reason a
+        mask like <code>255.240.0.0</code> looks arbitrary until you write it in binary. It is
+        twelve ones followed by twenty zeros. A mask that is not a run of ones followed by a
+        run of zeros is not a valid mask, and this tool will tell you so rather than silently
+        accepting it.
+      </p>
+      <p>
+        IPv6 works the same way with 128 bits instead of 32, and two shorthands. A run of
+        zero groups can be replaced by <code>::</code>, once per address, and leading zeros in
+        a group are dropped. So <code>2001:0db8:0000:0000:0000:0000:0000:0001</code> and
+        <code>2001:db8::1</code> are the same address written two ways, which is a genuinely
+        common source of confusion when you are comparing two things that look different.
+      </p>
+    </section>
+
+    <div class="util-build">
+      <div class="util-build__copy">
+        <h2>Build it yourself</h2>
+        <p>
+          The same calculator with Python's <code>ipaddress</code> module, which does all of
+          this properly, plus the bit arithmetic by hand for when you are on a machine without
+          Python.
+        </p>
+      </div>
+      <a class="btn btn--green" href={`${base}learn/${u.lesson}/`}>Read the lesson</a>
+    </div>
+
+    <section>
+      <h2>Other utilities</h2>
+      <div class="util-cards">
+        {others.map((o) => (
+          <section class="util-card">
+            <div class="util-card__head">
+              <span class="util-card__icon"><Icon name={o.icon} size={18} /></span>
+              <h2><a href={`${base}utilities/${o.slug}/`}>{o.name}</a></h2>
+            </div>
+            <p class="util-card__desc">{o.tagline}</p>
+            <div class="util-card__links">
+              <a class="is-tool" href={`${base}utilities/${o.slug}/`}>Open <Icon name="arrow" size={13} /></a>
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <script>
+    import { compute, computeIpv6, splitSubnets, contains } from '../../lib/utilities/subnet';
+
+    function initSubnetTool() {
+      const panel = document.querySelector('.util-panel');
+      if (!panel || (panel as HTMLElement).dataset.bound) return;
+      (panel as HTMLElement).dataset.bound = '1';
+
+      const $ = <T extends HTMLElement>(sel: string) => panel.querySelector(sel) as T;
+      const cidr = $('#cidr') as HTMLInputElement;
+      const mask = $('#mask') as HTMLInputElement;
+      const errorBox = $('#error');
+      const errorText = errorBox.querySelector('span') as HTMLElement;
+      const v4out = $('#v4out');
+      const v6out = $('#v6out');
+      const addrLabel = $('#addrLabel');
+
+      let version: 'v4' | 'v6' = 'v4';
+
+      const EXAMPLES: Record<'v4' | 'v6', string> = {
+        v4: '192.168.1.10/24',
+        v6: '2001:db8::1/64',
+      };
+
+      panel.querySelectorAll<HTMLElement>('[data-version]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          version = btn.dataset.version as 'v4' | 'v6';
+          panel.querySelectorAll<HTMLElement>('[data-version]').forEach((b) =>
+            b.setAttribute('aria-pressed', String(b === btn)),
+          );
+          v4out.hidden = version !== 'v4';
+          v6out.hidden = version !== 'v6';
+          addrLabel.textContent = version === 'v4' ? 'Address with prefix' : 'Address with prefix (up to /128)';
+          mask.disabled = version === 'v6';
+          (mask.closest('.util-field') as HTMLElement).style.opacity = version === 'v6' ? '0.45' : '1';
+          if (!cidr.value.includes('/')) cidr.value = EXAMPLES[version];
+          run();
+        });
+      });
+
+      [cidr, mask].forEach((el) => el.addEventListener('input', run));
+      $('#split').addEventListener('click', runSplit);
+      $('#testAddr').addEventListener('input', runContains);
+
+      function showError(message: string) {
+        errorBox.hidden = false;
+        errorText.textContent = message;
+      }
+      const clearError = () => {
+        errorBox.hidden = true;
+      };
+
+      function run() {
+        if (version === 'v6') return runV6();
+
+        const result = compute(cidr.value, mask.value);
+        if (!result.ok) {
+          showError(result.error ?? 'That could not be read.');
+          $('#v4grid').innerHTML = '';
+          $('#v4binary').textContent = '';
+          $('#classLabel').textContent = '';
+          return;
+        }
+        clearError();
+
+        const cells: [string, string][] = [
+          ['Network address', result.network!],
+          ['Broadcast address', result.broadcast!],
+          ['Netmask', result.netmask!],
+          ['Wildcard mask', result.wildcard!],
+          ['First usable host', result.firstHost!],
+          ['Last usable host', result.lastHost!],
+          ['Total addresses', result.totalAddresses!.toLocaleString('en-GB')],
+          ['Usable hosts', result.usableHosts!.toLocaleString('en-GB')],
+        ];
+        $('#v4grid').innerHTML = cells
+          .map(
+            ([k, v]) =>
+              `<div class="util-cell"><span class="util-cell__k">${k}</span><span class="util-cell__v">${v}</span></div>`,
+          )
+          .join('');
+
+        $('#classLabel').textContent = result.klass ? `${result.klass.name} · /${result.prefix}` : `/${result.prefix}`;
+
+        const binary = $('#v4binary');
+        binary.textContent =
+          `address  ${result.binary!.address}\n` +
+          `netmask  ${result.binary!.netmask}\n` +
+          `network  ${result.binary!.network}`;
+
+        const special = result.ranges ?? [];
+        if (special.length > 0) {
+          binary.textContent += `\n\n${special.map((r) => `${r.name}: ${r.cidr} — ${r.note}`).join('\n')}`;
+        }
+        if (result.specialNote) {
+          binary.textContent += `\n\n${result.specialNote}`;
+        }
+
+        const splitInput = $('#splitPrefix') as HTMLInputElement;
+        splitInput.min = String(result.prefix! + 1);
+        if (Number(splitInput.value) <= result.prefix!) {
+          splitInput.value = String(Math.min(32, result.prefix! + 2));
+        }
+        $('#splitLabel').textContent = `from /${result.prefix}`;
+        $('#splitOut').innerHTML = '';
+
+        runContains();
+      }
+
+      function runSplit() {
+        if (version === 'v6') {
+          $('#splitOut').innerHTML =
+            '<div class="util-msg util-msg--warn"><span>Splitting is only offered for IPv4 here. The IPv6 case is arithmetic on 128 bits rather than 32, and the lesson covers it with Python.</span></div>';
+          return;
+        }
+        const prefix = Number(($('#splitPrefix') as HTMLInputElement).value);
+        const result = splitSubnets(cidr.value, prefix);
+        const out = $('#splitOut');
+        if ('error' in result) {
+          out.innerHTML = `<div class="util-msg util-msg--bad"><span>${result.error}</span></div>`;
+          return;
+        }
+        const rows = result.shown
+          .map(
+            (s, i) =>
+              `<tr><td>${i + 1}</td><td>${s.network}</td><td>${s.broadcast}</td><td>${s.firstHost}</td><td>${s.lastHost}</td></tr>`,
+          )
+          .join('');
+        out.innerHTML = `
+          <p class="util-cell__k" style="margin:0.8rem 0 0.4rem">${result.total.toLocaleString('en-GB')} subnets of /${result.prefix}${
+            result.truncated ? ` · showing the first ${result.shown.length}` : ''
+          }</p>
+          <div style="overflow-x:auto">
+            <table class="ctf-table" style="margin:0">
+              <thead><tr><th>#</th><th>Network</th><th>Broadcast</th><th>First host</th><th>Last host</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>`;
+      }
+
+      function runContains() {
+        if (version === 'v6') return;
+        const addr = ($('#testAddr') as HTMLInputElement).value.trim();
+        const msg = $('#containsMsg');
+        if (addr === '') {
+          msg.className = 'util-msg';
+          msg.innerHTML =
+            '<span>Type an address to check whether it falls inside the network above.</span>';
+          return;
+        }
+        const result = contains(cidr.value, addr);
+        if (typeof result !== 'boolean') {
+          msg.className = 'util-msg util-msg--bad';
+          msg.innerHTML = `<span>${result.error}</span>`;
+          return;
+        }
+        msg.className = result ? 'util-msg util-msg--ok' : 'util-msg util-msg--warn';
+        msg.innerHTML = result
+          ? `<span><strong>Inside.</strong> ${addr} falls within this network.</span>`
+          : `<span><strong>Outside.</strong> ${addr} is not part of this network.</span>`;
+      }
+
+      function runV6() {
+        const result = computeIpv6(cidr.value);
+        if (!result.ok) {
+          showError(result.error ?? 'That could not be read.');
+          $('#v6grid').innerHTML = '';
+          $('#v6binary').textContent = '';
+          $('#v6type').textContent = '';
+          return;
+        }
+        clearError();
+        const cells: [string, string][] = [
+          ['Compressed', result.compressed!],
+          ['Fully expanded', result.expanded!],
+          ['Prefix', `/${result.prefix}`],
+          ['First address', result.first!],
+          ['Last address', result.last!],
+          ['Addresses in the block', result.count!],
+        ];
+        $('#v6grid').innerHTML = cells
+          .map(
+            ([k, v]) =>
+              `<div class="util-cell"><span class="util-cell__k">${k}</span><span class="util-cell__v">${v}</span></div>`,
+          )
+          .join('');
+        $('#v6type').textContent = result.type ? result.type.name : '';
+        $('#v6binary').textContent =
+          (result.binary ?? '').replace(/(.{64})/g, '$1\n').trim() +
+          (result.type ? `\n\n${result.type.name}: ${result.type.note}` : '');
+      }
+
+      run();
+    }
+
+    initSubnetTool();
+    document.addEventListener('astro:page-load', initSubnetTool);
+  </script>
+</BaseLayout>
