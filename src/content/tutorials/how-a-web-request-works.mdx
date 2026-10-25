@@ -1,0 +1,246 @@
+---
+title: "How a web request is handled"
+description: "Trace one HTTP request from the socket to the response, then find and fix the first bug a small server can have."
+excerpt: "Follow a single request end to end, then close the flaw in the path it carries."
+category: "Web"
+track: "websecurity"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 31
+level: Intermediate
+tags: [web, security]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Every page load and every API call is one HTTP request going out and one response coming back. Almost every bug in this track lives in the parts of that request the client controls, so first you have to see the request. In this lesson you will write a server that prints the raw bytes it receives, then a small file server, and find the first flaw in it: the path in the request line is used as a file path with no check.
+
+<Callout type="warning" title="Only attack your own server">
+Every example in this track runs on `127.0.0.1`, the loopback address that only reaches your own phone. You write the server, you start it, and you attack it. Never point these commands at a system you do not own or do not have written permission to test. Doing so is against the terms of most services and is a criminal offence in many countries.
+</Callout>
+
+## What you'll be able to do
+
+- See the exact text of an HTTP request with a small socket server.
+- Read a request line, its headers and its body.
+- Run a server on `127.0.0.1` and talk to it with `curl`.
+- Exploit a path that escapes the web root, then close it.
+
+## Step 1: See the request as bytes
+
+A request is just text sent over a socket. This server accepts one connection and prints whatever arrives. Write it as `rawview.py`.
+
+```python
+# rawview.py: show the exact bytes of an HTTP request
+import socket
+
+HOST, PORT = "127.0.0.1", 8000
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server.bind((HOST, PORT))
+server.listen(1)
+print("listening on", HOST, PORT)
+
+conn, addr = server.accept()
+data = conn.recv(4096)
+print("--- raw request from", addr[0], "---")
+print(data.decode("utf-8", "replace"))
+
+body = b"hello from the server\n"
+conn.sendall(
+    b"HTTP/1.1 200 OK\r\n"
+    b"Content-Type: text/plain\r\n"
+    b"Content-Length: " + str(len(body)).encode() + b"\r\n"
+    b"\r\n" + body
+)
+conn.close()
+server.close()
+```
+
+Run it in one Termux session.
+
+```bash
+python3 rawview.py
+```
+
+```text
+listening on 127.0.0.1 8000
+```
+
+It now waits. Open a second Termux session (swipe in from the left edge and choose new session) and send a request.
+
+```bash
+curl -i -H "User-Agent: termux-demo/1.0" http://127.0.0.1:8000/hello
+```
+
+```text
+HTTP/1.1 200 OK
+Content-Type: text/plain
+Content-Length: 22
+
+hello from the server
+```
+
+Back in the first session, the server has printed what it received.
+
+```text
+--- raw request from 127.0.0.1 ---
+GET /hello HTTP/1.1
+Host: 127.0.0.1:8000
+Accept: */*
+User-Agent: termux-demo/1.0
+```
+
+The first line is the request line: the method `GET`, the path `/hello`, and the version `HTTP/1.1`. Each line after it is a header, a name, a colon and a value. The `User-Agent` is the one you set; `Host` and `Accept` were added by `curl`. A blank line ends the headers, and a body may follow. Every character on that screen came from the client. The server chose none of it.
+
+## Step 2: A server that acts on the path
+
+Now write a server that does something useful with the path. This one maps a request path to a file under `~/webroot`. Write it as `webserver.py`.
+
+```python
+# webserver.py: a deliberately flawed file server
+import http.server
+import socketserver
+import os
+
+ROOT = os.path.expanduser("~/webroot")
+socketserver.TCPServer.allow_reuse_address = True
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        # FLAW: the request path is used as a file path with no check
+        path = os.path.join(ROOT, self.path.lstrip("/"))
+        try:
+            with open(path, "rb") as f:
+                body = f.read()
+        except OSError:
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b"not found\n")
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, fmt, *args):
+        print("request:", self.requestline)
+
+with socketserver.TCPServer(("127.0.0.1", 8000), Handler) as httpd:
+    print("serving", ROOT, "on http://127.0.0.1:8000")
+    httpd.serve_forever()
+```
+
+Create the web root, a file inside it, and a file outside it.
+
+```bash
+mkdir -p ~/webroot
+printf 'public file\n' > ~/webroot/index.txt
+printf 'top secret\n' > ~/secret.txt
+```
+
+Start the server in the first session.
+
+```bash
+python3 webserver.py
+```
+
+```text
+serving /data/data/com.termux/files/home/webroot on http://127.0.0.1:8000
+```
+
+In the second session, ask for the public file.
+
+```bash
+curl -s http://127.0.0.1:8000/index.txt
+```
+
+```text
+public file
+```
+
+That is what the server is for. The path `/index.txt` was joined to the web root and the file came back. Look at how it joins them: `os.path.join(ROOT, self.path.lstrip("/"))`. The path is taken as it arrived, and nothing checks where it ends up.
+
+## Step 3: The first bug, the path escapes the root
+
+`curl` tidies a path that contains `..` before it sends it, which would hide the bug. The `--path-as-is` option stops that tidy-up, so you send exactly what you mean.
+
+```bash
+curl -s --path-as-is http://127.0.0.1:8000/../secret.txt
+```
+
+```text
+top secret
+```
+
+The server read `~/secret.txt`, which sits one directory above the web root. The path `/../secret.txt` was joined to the root to make `~/webroot/../secret.txt`, and that is the same file as `~/secret.txt`. Nothing stopped it. This is a path traversal: the request path is data you do not control, and using it as a file path without a check is the whole bug.
+
+The encoded form `%2e%2e` does not work here, because `http.server` hands you the path as it arrived and `%2e%2e` is not a directory name. That is why a blocklist of `..` is fragile and a check on the resolved path is not.
+
+## Step 4: Fix it
+
+The fix is to resolve the path first, then refuse anything that does not sit inside the root. Change the `ROOT` line so it resolves once at start-up:
+
+```python
+ROOT = os.path.realpath(os.path.expanduser("~/webroot"))
+```
+
+Then replace the first lines of `do_GET` with this check.
+
+```python
+    def do_GET(self):
+        # FIX: normalise the path, then refuse anything outside the root
+        path = os.path.realpath(os.path.join(ROOT, self.path.lstrip("/")))
+        if path != ROOT and not path.startswith(ROOT + os.sep):
+            self.send_response(403)
+            self.end_headers()
+            self.wfile.write(b"forbidden\n")
+            return
+        # ...the rest of the method is unchanged
+```
+
+`os.path.realpath` follows every `..` and every symbolic link and returns the true file on disk. Comparing that result against the root catches traversal whether it was written as `..`, as a link, or as something more inventive. The check is on the resolved path, not on the text of the request.
+
+## Step 5: Attack it again
+
+Restart the server and send the same request.
+
+```bash
+curl -s --path-as-is http://127.0.0.1:8000/../secret.txt
+```
+
+```text
+forbidden
+```
+
+Then confirm the ordinary request still works.
+
+```bash
+curl -s http://127.0.0.1:8000/index.txt
+```
+
+```text
+public file
+```
+
+The bad request is refused and the good one is not. That is the shape of every fix in this track: the hostile input is stopped, the legitimate input still passes.
+
+## Quick reference
+
+A request line is the method, the path and the version, in that order. The headers that
+follow are all set by whoever sent the request, so none of them can be trusted. The raw
+viewer prints the bytes of one request so you can see that for yourself, and the ordinary
+curl call shows the response headers alongside the body.
+
+The fix comes down to two ideas. Resolving a path with the realpath call turns every step
+up and every symbolic link into the true file on disk. Comparing that result against the
+web root, rather than trusting the text of the request, is what confines the server to the
+directory it was meant to serve.
+
+## Next steps
+
+- [Input you do not control](/learn/untrusted-input/) takes this further: why every part of a request is hostile until it has been checked.
+- [HTTP and APIs from the shell](/learn/http-and-apis-from-the-shell/) is the request and response by hand that this lesson builds on.
+- [Networking basics](/learn/networking-basics/) covers the addresses and ports a server listens on.
