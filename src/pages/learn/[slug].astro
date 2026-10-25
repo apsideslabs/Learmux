@@ -1,7 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import '../../styles/practice.css';
 import ArticleCard from '../../components/ArticleCard.astro';
 import Icon from '../../components/Icon.astro';
+import { findSet } from '../../data/practice';
 import { getCollection, render } from 'astro:content';
 import { allTutorials, categorySlug, formatDate, neighbours, positionInTrack, trackOf } from '../../lib/tutorials';
 
@@ -18,6 +20,23 @@ const { title, description, category, author, date, level, tags } = entry.data;
 const track = trackOf(entry);
 const pos = await positionInTrack(entry);
 const { prev, next } = await neighbours(entry);
+
+// Some lessons have a practice set. The slug of the set is the lesson id, so
+// there is no second mapping to keep in step.
+const practiceSet = findSet(entry.id);
+
+// Built here rather than in the markup, so the commas and spaces land where
+// they should instead of wherever the newlines happen to fall.
+const practiceLine = practiceSet
+  ? [
+      `${practiceSet.questions.length} question${practiceSet.questions.length === 1 ? '' : 's'}`,
+      practiceSet.tasks.length > 0
+        ? `${practiceSet.tasks.length} task${practiceSet.tasks.length === 1 ? '' : 's'} where you run a real command`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(' and ') + ', with the reasoning explained either way.'
+  : '';
 
 // Related: the rest of this track, minus the current lesson.
 const all = await allTutorials();
@@ -55,6 +74,16 @@ const related = all.filter((l) => l.data.track === entry.data.track && l.id !== 
       <div class="prose">
         <Content />
       </div>
+
+      {practiceSet && (
+        <div class="practice-cta">
+          <div class="practice-cta__body">
+            <h2>Test yourself on this</h2>
+            <p>{practiceLine}</p>
+          </div>
+          <a class="btn btn--green" href={`${base}practice/${practiceSet.slug}/`}>Start</a>
+        </div>
+      )}
 
       <nav class="pager" aria-label="Lesson navigation">
         {prev
