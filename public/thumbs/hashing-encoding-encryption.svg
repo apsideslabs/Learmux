@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" role="img">
+  <rect width="1200" height="675" fill="#101419"/>
+  <rect x="0" y="0" width="1200" height="8" fill="#e0559a"/>
+
+  <rect x="84" y="104" width="1032" height="467" rx="10" fill="#0b0e12" stroke="#232a33" stroke-width="2"/>
+  <path d="M84 114 a10 10 0 0 1 10 -10 h1012 a10 10 0 0 1 10 10 v48 h-1032 z" fill="#161c23"/>
+
+  <circle cx="118" cy="133" r="7" fill="#e0559a"/>
+  <circle cx="146" cy="133" r="7" fill="#333d47"/>
+  <circle cx="174" cy="133" r="7" fill="#333d47"/>
+
+  <text x="132" y="292" font-family="'JetBrains Mono', 'DejaVu Sans Mono', monospace" font-size="50" fill="#eef1f5">$ sha256sum msg.txt</text><text x="132" y="384" font-family="'JetBrains Mono', 'DejaVu Sans Mono', monospace" font-size="50" fill="#8b95a3">a1b2c3…  msg.txt</text><text x="132" y="476" font-family="'JetBrains Mono', 'DejaVu Sans Mono', monospace" font-size="50" fill="#eef1f5">$ base64 msg.txt</text>
+</svg>
