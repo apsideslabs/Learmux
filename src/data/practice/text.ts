@@ -71,7 +71,7 @@ export const textSets: PracticeSet[] = [
         id: 'txt-t1',
         title: 'Find only the errors',
         prompt:
-          'Run the command below. It writes a small log file and then searches it, showing the line numbers of the matches. Paste what the search prints.',
+          'This writes a small log file and then searches it, showing the line numbers of the matches rather than the whole file.',
         command:
           'printf "INFO start\\nERROR disk full\\nINFO retry\\nERROR timeout\\n" > ~/app.log; grep -n ERROR ~/app.log',
         hint: 'You should get two lines, and neither of them should be an INFO line.',
@@ -152,7 +152,7 @@ export const textSets: PracticeSet[] = [
         id: 'pipe-t1',
         title: 'Count and rank the busiest address',
         prompt:
-          'Run the command below. It writes a small access log, pulls the first column out of it, sorts the addresses, counts the repeats, and orders the result. Paste the final table.',
+          'This writes a small access log, pulls the first column out of it, sorts the addresses, counts the repeats, and orders the result.',
         command:
           'printf "10.0.0.2 - - GET /index.html\\n10.0.0.1 - - GET /about.html\\n10.0.0.2 - - GET /index.html\\n10.0.0.3 - - GET /index.html\\n10.0.0.2 - - GET /about.html\\n" > ~/access.log; cut -d " " -f1 ~/access.log | sort | uniq -c | sort -n',
         hint: 'Three lines should come out, each with a count in front of an address.',
@@ -233,7 +233,7 @@ export const textSets: PracticeSet[] = [
         id: 'enc-t1',
         title: 'Produce and read a digest',
         prompt:
-          'Run the command below. It writes a small file, then hashes it. Paste the output.',
+          'This writes a small file, then hashes it. One line comes back.',
         command: 'printf "learnt\\n" > ~/note.txt; sha256sum ~/note.txt',
         hint: 'One line, two columns: a long string of characters, then the file name.',
         expects:
