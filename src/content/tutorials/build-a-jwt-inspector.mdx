@@ -1,0 +1,216 @@
+---
+title: "Build a JWT inspector"
+description: "Build a token decoder on your phone: split a JWT on its dots, decode the base64url segments, pretty-print the payload with jq, and verify the signature with openssl."
+excerpt: "Split a token, decode its base64url parts, read the claims with jq, and check the signature, all from the shell."
+category: "Utilities"
+track: "utilities"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 49
+level: Intermediate
+tags: [utilities, tokens]
+---
+
+import Callout from '../../components/Callout.astro';
+
+This lesson builds the same token decoder as the [JWT inspector](/utilities/jwt/), so you can do the whole job from the shell without opening it. By the end you will be able to split a token into its three parts, decode the header and the payload with no key at all, pretty-print the claims with `jq`, and verify an HS256 signature by hand with `openssl`. You will also see what an `alg: none` token looks like, and why decoding is not verification. Everything runs offline in Termux, with no root and no network.
+
+## What you'll be able to do
+
+- Name the three parts of a JWT and say what each one carries.
+- Split a token on its dots with `cut`.
+- Decode a base64url segment with `tr`, a padding loop and `base64 -d`.
+- Pretty-print the payload with `jq`.
+- Recompute an HS256 signature with `openssl` and compare it.
+- Explain what an `alg: none` token is and why a verifier must not trust the header.
+
+## Step 1: What a token is made of
+
+A JSON Web Token is three blocks of text joined by dots. The first is the header, the second is the payload, the third is the signature. The first two are base64url-encoded JSON. Base64url is base64 with two changes: `+` becomes `-`, `/` becomes `_`, and the trailing `=` padding is dropped, so the text can travel inside a URL or a cookie without escaping. The signature is base64url too.
+
+Here is a real HS256 token. Write it into a file so the commands stay short.
+
+```bash
+printf '%s\n' 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1pcmEiLCJhZG1pbiI6ZmFsc2UsImlhdCI6MTc1MDAwMDAwMH0.LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY' > token.txt
+```
+
+It was signed with the secret `termux-demo-secret`, which you will use again in Step 6. Nothing so far needs a key: the header and payload are only encoded.
+
+## Step 2: Split it on the dots
+
+`cut` with a dot as the delimiter pulls out each part: `-d` sets the delimiter and `-f` picks the field.
+
+```bash
+cut -d. -f1 token.txt
+```
+
+```text
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+```
+
+```bash
+cut -d. -f2 token.txt
+```
+
+```text
+eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1pcmEiLCJhZG1pbiI6ZmFsc2UsImlhdCI6MTc1MDAwMDAwMH0
+```
+
+```bash
+cut -d. -f3 token.txt
+```
+
+```text
+LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+```
+
+Field one is the header, field two is the payload, field three is the signature. If a token is malformed and a field is missing, `cut` returns whatever it finds, so a token with no signature shows an empty third field rather than an error.
+
+## Step 3: Decode a base64url segment
+
+The header decodes with a straight pipeline. `tr` maps the two base64url characters back to their base64 forms, then `base64 -d` decodes the result.
+
+```bash
+cut -d. -f1 token.txt | tr '_-' '/+' | base64 -d
+```
+
+```text
+{"alg":"HS256","typ":"JWT"}
+```
+
+That is the header. It names the algorithm, HS256, which is HMAC with SHA-256. The header segment is 36 characters, a multiple of four, so it decodes cleanly. The payload is a different length, which matters. Try it.
+
+```bash
+seg=$(cut -d. -f2 token.txt | tr '_-' '/+')
+while [ $(( ${#seg} % 4 )) -ne 0 ]; do seg="$seg="; done
+printf '%s' "$seg" | base64 -d
+```
+
+```text
+{"sub":"1234567890","name":"Mira","admin":false,"iat":1750000000}
+```
+
+The loop appends `=` until the length is a multiple of four, which is exactly the padding base64url removed. The payload segment is 87 characters, a remainder of three, so one `=` is added. Without it, `base64 -d` still prints the JSON but tacks `base64: invalid input` onto the end of the line and exits non-zero. The header needed no padding, as its length already divided by four. `${#seg}` is the length of the string, and the arithmetic works in sh as well as bash.
+
+## Step 4: Pretty-print the payload with jq
+
+The raw JSON is one dense line. `jq` reads it and prints it indented, one claim per line. Install it first.
+
+```bash
+pkg install jq
+```
+
+Then pipe the decoded payload into `jq`.
+
+```bash
+seg=$(cut -d. -f2 token.txt | tr '_-' '/+')
+while [ $(( ${#seg} % 4 )) -ne 0 ]; do seg="$seg="; done
+printf '%s' "$seg" | base64 -d | jq .
+```
+
+```text
+{
+  "sub": "1234567890",
+  "name": "Mira",
+  "admin": false,
+  "iat": 1750000000
+}
+```
+
+The `.` filter means the whole document. To pick out one claim, `jq -r .name` prints `Mira` with the quotes removed; `-r` is raw output, which is what you want when the value feeds another command.
+
+## Step 5: Decoding needs no key
+
+Everything so far used no secret at all. The payload is only encoded, not encrypted, so anyone holding the token can read every claim inside it. A token carrying a user id, a role or an email shows that information to whoever holds it, including anyone who intercepts it. The signature does not hide the contents. It only proves who wrote them.
+
+That is why a token should never carry a password, a card number, or anything you would not write on a postcard. Read any token you are handed and treat every claim as public.
+
+## Step 6: Verify the signature for real
+
+The third part is a signature over the first two, and it is the only part that protects anything. For HS256 the signature is an HMAC of the string `header.payload` using the shared secret. It is not decoded but recomputed and compared. Build the signing input, hash it, and encode the result as base64url.
+
+```bash
+SECRET='termux-demo-secret'
+signing_input=$(cut -d. -f1,2 token.txt)
+given=$(cut -d. -f3 token.txt)
+calc=$(printf '%s' "$signing_input" | openssl dgst -sha256 -hmac "$SECRET" -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+echo "given: $given"
+echo "calc:  $calc"
+[ "$given" = "$calc" ] && echo "signature valid" || echo "signature invalid"
+```
+
+```text
+given: LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+calc:  LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+signature valid
+```
+
+Walk through it. `cut -d. -f1,2` gives the header and payload joined by a dot, which is the exact text that was signed. `openssl dgst -sha256 -hmac "$SECRET"` computes the HMAC, and `-binary` stops it printing hex, so the raw digest bytes come out. `openssl base64 -A` encodes those bytes on one line, and the two `tr` calls turn base64 into base64url. Then it is a plain string comparison. Now run the same thing with the wrong secret.
+
+```bash
+calc=$(printf '%s' "$signing_input" | openssl dgst -sha256 -hmac 'wrong-secret' -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+echo "calc:  $calc"
+[ "$given" = "$calc" ] && echo "signature valid" || echo "signature invalid"
+```
+
+```text
+calc:  QauPL9ocpuG2nKKT-0o14VaogXNciiIQ-f_foQ4Mmh0
+signature invalid
+```
+
+One wrong character in the secret gives a completely different signature. Only someone who knows the secret can produce one that matches.
+
+<Callout type="warning" title="The signing input must be exact">
+The HMAC is over the header and payload as they arrived, character for character. Decode the header and re-encode it and the bytes differ, so the signature fails even though the token is genuine. Sign the original text, not your cleaned-up copy.
+</Callout>
+
+## Step 7: A token that says alg none
+
+The header is part of the token, and the token is what an attacker controls. A well-known attack sets the algorithm to `none`, which means there is no signature at all. Write one and look at it.
+
+```bash
+printf '%s\n' 'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1pcmEiLCJhZG1pbiI6dHJ1ZX0.' > none.txt
+seg=$(cut -d. -f1 none.txt | tr '_-' '/+')
+while [ $(( ${#seg} % 4 )) -ne 0 ]; do seg="$seg="; done
+printf '%s' "$seg" | base64 -d
+```
+
+```text
+{"alg":"none","typ":"JWT"}
+```
+
+This header is 35 characters, so it needs one `=` of padding, by the same rule. The header asks for `none`, and the third field is empty.
+
+```bash
+cut -d. -f3 none.txt
+```
+
+```text
+```
+
+The payload claims `admin` is true. A verifier that reads the algorithm from the header, sees `none`, and then decides no signature is needed would accept this forged token as valid. That is the whole attack. The fix is short and firm: the verifier chooses the algorithm it expects and rejects any token whose header asks for anything else, `none` above all. The token never gets a vote on how it is checked.
+
+## Step 8: Decoding is not verification
+
+The lesson to carry away is one line: reading a token is not the same as trusting it. Splitting and decoding prove nothing about who wrote the token, because anyone can write those parts. Only the signature check in Step 6 proves anything, and only when the verifier fixed the algorithm and holds the right secret. An inspector that shows the claims is a useful window, not a gate. Never accept a token just because it decoded cleanly.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `cut -d. -f1 token.txt` | Prints the header segment |
+| `cut -d. -f2 token.txt` | Prints the payload segment |
+| `cut -d. -f3 token.txt` | Prints the signature segment |
+| `tr '_-' '/+'` | Turns base64url characters back into base64 |
+| `base64 -d` | Decodes a base64 segment to its bytes |
+| `pkg install jq` | Installs the jq JSON tool |
+| `... \| jq .` | Pretty-prints the decoded payload |
+| `openssl dgst -sha256 -hmac "$secret" -binary` | Computes the HS256 HMAC of the signing input |
+| `openssl base64 -A` | Encodes the raw digest on a single line |
+| `tr '+/' '-_'` then `tr -d '='` | Converts base64 into base64url |
+
+## Next steps
+
+- [Encoding and hashes](/learn/encoding-and-hashes/) covers base64 and why encoding is not encryption.
+- [Signing and verifying](/learn/signing-and-verifying/) goes further into signatures and how to check them with public keys.
+- [HTTP and APIs from the shell](/learn/http-and-apis-from-the-shell/) shows where tokens like these turn up in a request.
