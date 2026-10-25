@@ -1,7 +1,7 @@
 ---
 title: "Addresses in Python"
-description: "Work out networks, masks, host counts and subnets with the ipaddress module, by placing pieces into blanks."
-excerpt: "The ipaddress module does the bit arithmetic for you, including the /31 case most calculators get wrong."
+description: "Work out networks, masks, host counts and subnets in whole programs built from blanks, with the ipaddress module."
+excerpt: "Six complete programs, including the /31 that most calculators get wrong and the one call that will exhaust your memory."
 category: "Python"
 track: "python"
 author: "The Study Cipher"
@@ -14,127 +14,171 @@ tags: [python, interactive]
 import PyCell from '../../components/PyCell.astro';
 import PyBlanks from '../../components/PyBlanks.astro';
 
-Subnetting is bit arithmetic, and bit arithmetic done by hand on a phone is a way to make mistakes. Python ships a module that does all of it, correctly, including the two cases people get wrong: a `/31` and a `/32`.
+Subnetting is bit arithmetic, and bit arithmetic done by hand on a phone is a way to make mistakes. Python ships a module that does all of it, including the two cases people get wrong: a `/31` and a `/32`.
 
-Every box below starts with the pieces placed for you. Turn that off once the shapes are familiar.
+Each program below is six to nine lines with a few gaps. Fill them, press Run, and read the figures.
 
 ## What you'll be able to do
 
-- Build a network from an address and a prefix.
-- Read the netmask, the broadcast address and the host count off it.
-- Split a network into smaller ones.
+- Build a network from an address and a prefix, and read three figures off it.
+- Tell the block size apart from the usable host count.
+- Split a network into smaller ones and read the first and last.
 - Handle a `/31` and a `/32` the way the RFCs actually say.
+- Recognise the one call that will exhaust memory on a large block.
 
-## Step 1: Make a network
+## Step 1: Three figures off one network
 
 An address on its own is not a network. You need the prefix, and you need to tell the module what to do when the address has host bits set.
 
 <PyBlanks
-  title="A network from an address"
+  title="Network, mask, broadcast"
   scaffold={`import ipaddress
 
 net = ipaddress.ip_network("192.168.1.42/24", @1)
-print(net)`}
-  pieces={['strict=True', 'strict=False', 'relaxed=True']}
-  answers={[1]}
-  expect="192.168.1.0/24"
-  hint="By default the module refuses an address with host bits set. You want it to accept one."/>
 
-`192.168.1.42/24` is an address, not a network, because `.42` is a host bit. With `strict=True`, which is the default, the module raises `ValueError: 192.168.1.42/24 has host bits set`. With `strict=False` it works out the network the address belongs to: `192.168.1.0/24`.
+print(net)
+print(net.@2)
+print(net.@3)`}
+  pieces={['strict=False', 'netmask', 'broadcast_address', 'strict=True', 'network_address']}
+  answers={[0, 1, 2]}
+  expect={`192.168.1.0/24
+255.255.255.0
+192.168.1.255`}
+  hint="One gap lets the module accept an address with host bits set. The other two read the mask and the top address."
+/>
 
-## Step 2: The mask
+Seven lines, three figures. `192.168.1.42/24` is an address, not a network, because `.42` is a host bit. With `strict=True`, which is the default, the module raises `ValueError: 192.168.1.42/24 has host bits set`. With `strict=False` it works out which network you meant.
 
-The netmask is the prefix written out in full.
+Note that `print(net)` shows the prefix as well: `192.168.1.0/24`, not `192.168.1.0`. The prefix is part of what a network is.
+
+## Step 2: Block size and host count are different numbers
+
+Two figures that people quote interchangeably and should not.
 
 <PyBlanks
-  title="The netmask"
+  title="Block size and usable hosts"
   scaffold={`import ipaddress
 
 net = ipaddress.ip_network("192.168.1.42/24", strict=False)
-print(net.@1)`}
-  pieces={['broadcast_address', 'netmask', 'num_addresses']}
-  answers={[1]}
-  expect="255.255.255.0"
-  hint="You want the mask itself, not a count and not the last address."/>
 
-Twenty-four ones followed by eight zeros. `net.prefixlen` gives you the `24` back, and `net.hostmask` gives the inverse, `0.0.0.255`, which is the wildcard mask you meet in firewall rules.
+print("block", @1)
+print("usable", @2)`}
+  pieces={['len(list(net.hosts()))', 'net.num_addresses', 'net.prefixlen']}
+  answers={[1, 0]}
+  expect={`block 256
+usable 254`}
+  hint="One gap is the size of the block. The other is the addresses a machine can be given."
+/>
 
-## Step 3: The broadcast address
+256 addresses in the block, 254 of them usable, because the network address and the broadcast address cannot be given to a machine. `net.prefixlen` would print 24, which is the prefix rather than a count.
 
-The last address in the block has every host bit set.
+## Step 3: Split it up and read the ends
 
-<PyBlanks
-  title="The broadcast address"
-  scaffold={`import ipaddress
-
-net = ipaddress.ip_network("192.168.1.42/24", strict=False)
-print(net.@1)`}
-  pieces={['network_address', 'broadcast_address', 'hostmask']}
-  answers={[1]}
-  expect="192.168.1.255"
-  hint="The highest address in the block."/>
-
-`net.network_address` is the other end, `192.168.1.0`. Those two are the addresses a host cannot have, which is why the usable count is two lower than the block size.
-
-## Step 4: How many hosts
-
-Counting them is where the module earns its keep, because it knows the special cases.
-
-<PyBlanks
-  title="Usable hosts"
-  scaffold={`import ipaddress
-
-net = ipaddress.ip_network("192.168.1.42/24", strict=False)
-print(len(list(net.@1())))`}
-  pieces={['subnets', 'hosts', 'addresses']}
-  answers={[1]}
-  expect="254"
-  hint="Which method hands you the addresses a machine can actually be given?"/>
-
-254. The block holds 256 addresses, and the network and broadcast addresses are not among them. `net.num_addresses` is 256, which is the number people quote when they mean the block size rather than the host count.
-
-## Step 5: Split it up
-
-`subnets` cuts a network into smaller ones of a given prefix.
+`subnets` cuts a network into smaller ones. This program asks for four `/26` blocks and shows you the first and the last.
 
 <PyBlanks
   title="Four /26 blocks"
   scaffold={`import ipaddress
 
-net = ipaddress.ip_network("192.168.1.42/24", strict=False)
-print(len(list(net.@1(new_prefix=26))))`}
-  pieces={['subnets', 'hosts', 'supernet']}
-  answers={[0]}
-  expect="4"
-  hint="Going from /24 to /26 borrows two more bits, so the count goes up by four."/>
+net = ipaddress.ip_network("192.168.1.0/24")
 
-A `/24` holds four `/26` blocks, each with 64 addresses. Going the other way, `supernet`, gives you the larger block a network sits inside. Borrowing bits doubles the count for every bit you take, which is the one piece of arithmetic worth holding in your head.
+blocks = list(net.@1(new_prefix=26))
 
-## Step 6: The case most calculators get wrong
+print(len(blocks))
+print(@2)
+print(@3)`}
+  pieces={['blocks[-1]', 'subnets', 'blocks[0]', 'hosts']}
+  answers={[1, 2, 0]}
+  expect={`4
+192.168.1.0/26
+192.168.1.192/26`}
+  hint="One gap makes the smaller blocks. The other two read the first and the last out of the list."
+/>
+
+Nine lines. A `/24` holds four `/26` blocks, each with 64 addresses. `blocks[0]` is the first and `blocks[-1]` is the last, because a negative index counts back from the end.
+
+Borrowing bits doubles the count for every bit you take: one bit gives two blocks, two bits give four. That is the one piece of arithmetic worth holding in your head.
+
+## Step 4: The two cases most calculators get wrong
 
 A `/31` has two addresses and **both** are usable, because there is no room to reserve a network or a broadcast address. RFC 3021 defines this for point-to-point links.
 
 <PyBlanks
-  title="Both usable"
+  title="A /31 and a /32"
   scaffold={`import ipaddress
 
-net = ipaddress.ip_network("10.0.0.4/31")
-print(len(list(net.@1())))`}
-  pieces={['hosts', 'subnets']}
-  answers={[0]}
-  expect="2"
-  hint="The module already knows the RFC. Just ask it for the hosts."/>
+link = ipaddress.ip_network("10.0.0.4/31")
+single = ipaddress.ip_network("192.0.2.9/32")
 
-Two, not zero. Plenty of subnet calculators subtract two from a `/31` and cheerfully report that no host can be given an address, which is wrong. The module gets it right because it follows the RFC rather than the folk rule.
+print("link hosts", @1)
+print("single hosts", @2)
+print("single is", @3)`}
+  pieces={['len(list(single.hosts()))', 'single.network_address', 'len(list(link.hosts()))']}
+  answers={[2, 0, 1]}
+  expect={`link hosts 2
+single hosts 1
+single is 192.0.2.9`}
+  hint="Ask each network for its hosts, then print the one address the /32 has."
+/>
+
+Eight lines, and the first figure is 2, not 0. Plenty of subnet calculators subtract two from a `/31` and report that no host can be given an address, which is wrong. The module follows the RFC rather than the folk rule.
+
+The `/32` is a single address, and it is both the network and the host, which is why the last line prints the same address twice over.
+
+## Step 5: A function that describes any network
+
+Now put it together: a function that takes a CIDR and returns a sentence, called in a loop.
+
+<PyBlanks
+  title="Describe a network"
+  scaffold={`import ipaddress
+
+def describe(cidr):
+    net = ipaddress.ip_network(cidr, strict=False)
+    return f"{net} has {len(list(net.hosts()))} hosts"
+
+for cidr in ["192.168.1.0/24", "192.168.1.0/26"]:
+    print(@1)`}
+  pieces={['describe(cidr)', 'net', 'cidr']}
+  answers={[0]}
+  expect={`192.168.1.0/24 has 254 hosts
+192.168.1.0/26 has 62 hosts`}
+  hint="Call the function with the loop variable."
+/>
+
+Nine lines, one gap, and two different answers from the same function. That is what a function is for: write the logic once, call it for each value.
+
+**A warning worth knowing.** That `len(list(net.hosts()))` is fine for a `/24`, which builds 254 addresses, and it will exhaust memory on a `10.0.0.0/8`, which tries to build sixteen million of them at once. For a big block use arithmetic instead: `net.num_addresses - 2`. The lesson here is that a call which works on your test network can fail on a real one.
+
+## Step 6: A mask instead of a prefix
+
+People write `255.255.255.0` as often as they write `/24`. The module takes either.
+
+<PyBlanks
+  title="A dotted mask"
+  scaffold={`import ipaddress
+
+net = ipaddress.ip_network("192.168.1.42/255.255.255.0", strict=False)
+
+print(net)
+print(@1)`}
+  pieces={['net.prefixlen', 'net.num_addresses', 'net.netmask']}
+  answers={[0]}
+  expect={`192.168.1.0/24
+24`}
+  hint="The second line should show the prefix length that mask is worth."
+/>
+
+Six lines, and `net.prefixlen` gives you `24` back from a dotted mask. The module also rejects a mask that is not a run of ones followed by zeros, which is a check worth having.
 
 ## Step 7: Type one yourself
 
-Print the network that `10.1.2.3/8` belongs to, and then the broadcast address of that network.
+Print the network that `10.1.2.3/8` belongs to, then its broadcast address, one per line.
 
 <PyCell
   title="A /8 network"
-  expect="10.0.0.0/8
-10.255.255.255"
+  expect={`10.0.0.0/8
+10.255.255.255`}
   hint="Use ip_network with strict=False, then print the network and its broadcast_address on two lines."
   code={`import ipaddress
 
@@ -145,6 +189,8 @@ net = ipaddress.ip_network("10.1.2.3/8", strict=False)
 print(net)
 print(net.broadcast_address)`}
 />
+
+Do not add `len(list(net.hosts()))` to this one. A `/8` holds sixteen million addresses, and building the list will fail.
 
 ## Step 8: A mistake to find
 
@@ -171,12 +217,14 @@ print(ipaddress.ip_network("192.168.1.42/24", strict=False))`}
 | `ip_network("10.0.0.0/8")` | a network, strict by default |
 | `strict=False` | accept an address with host bits set |
 | `net.netmask` | the mask in full, `255.255.255.0` |
-| `net.hostmask` | the inverse, `0.0.0.255` |
+| `net.prefixlen` | the prefix as a number, `24` |
 | `net.network_address` | the lowest address |
 | `net.broadcast_address` | the highest address |
-| `net.num_addresses` | the block size |
+| `net.num_addresses` | the block size, `256` |
 | `net.hosts()` | the addresses a machine can be given |
 | `net.subnets(new_prefix=26)` | smaller blocks inside it |
+| `blocks[-1]` | the last item of a list |
+| `net.num_addresses - 2` | the host count without building a list |
 | a `/31` | two usable addresses, per RFC 3021 |
 
 ## Next steps
