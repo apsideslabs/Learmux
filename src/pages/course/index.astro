@@ -4,13 +4,16 @@ import Icon from '../../components/Icon.astro';
 import { trackGroups, allTutorials } from '../../lib/tutorials';
 import { course, tracks } from '../../lib/curriculum';
 import { challenges, totalPoints } from '../../lib/challenges';
+import { practiceSets } from '../../data/practice';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const groups = await trackGroups();
 const lessons = await allTutorials();
 
 const hours = Math.round((lessons.length * 20) / 60);
-const setCount = 52; // one per lesson; asserted by the content validator
+// Derived, not written down: a hardcoded count goes stale the moment a lesson
+// is added, and the validator already asserts there is one set per lesson.
+const setCount = practiceSets.length;
 ---
 
 <BaseLayout
