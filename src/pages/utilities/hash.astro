@@ -1,0 +1,292 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import '../../styles/utilities.css';
+import { utilityBySlug, otherUtilities } from '../../data/utilities';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const u = utilityBySlug('hash')!;
+const others = otherUtilities('hash');
+---
+
+<BaseLayout
+  title="Hash"
+  description="Compute MD5, SHA-1, SHA-256, SHA-384 and SHA-512 digests of text or a file, and check a file against a published hash."
+>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span>
+      <a href={`${base}utilities/`}>Utilities</a><span class="sep">›</span>
+      <span>Hash</span>
+    </nav>
+
+    <header class="util-hero">
+      <h1>Hash</h1>
+      <p class="lede">
+        All five algorithms at once, over text or a file, so you can see the lengths side by
+        side and check a download against the hash somebody published. Two of these five are
+        broken, and the page says which and why.
+      </p>
+    </header>
+
+    <div class="util-panel">
+      <div class="util-panel__head">
+        <h2 class="util-panel__title">Input</h2>
+        <div class="util-toggles" role="group" aria-label="Input source">
+          <button class="util-toggle" type="button" data-src="text" aria-pressed="true">Text</button>
+          <button class="util-toggle" type="button" data-src="file" aria-pressed="false">File</button>
+        </div>
+      </div>
+
+      <div class="util-panel__body">
+        <div data-pane="text">
+          <label class="util-field" style="flex:1 1 100%">
+            <span class="util-label">Text to hash</span>
+            <textarea class="util-textarea" id="text" spellcheck="false" placeholder="Type or paste here. It hashes as you type.">The quick brown fox jumps over the lazy dog</textarea>
+          </label>
+        </div>
+
+        <div data-pane="file" hidden>
+          <label class="util-field" style="flex:1 1 100%">
+            <span class="util-label">File</span>
+            <input class="util-input" id="file" type="file" />
+          </label>
+          <p class="util-msg" style="margin-top:0.8rem">
+            <Icon name="info" size={16} />
+            <span>
+              The file is read in your browser and never uploaded, because there is no server
+              to upload it to. This page is a static file.
+            </span>
+          </p>
+        </div>
+
+        <div class="util-out-head">
+          <h3>Digests</h3>
+          <span class="util-cell__k" id="sizeLabel"></span>
+        </div>
+        <div class="util-grid" id="digests"></div>
+
+        <div class="util-out-head">
+          <h3>Check against a published hash</h3>
+        </div>
+        <label class="util-field" style="flex:1 1 100%;margin-top:0.4rem">
+          <span class="util-label">Paste the hash you were given</span>
+          <input class="util-input" id="expected" type="text" spellcheck="false" placeholder="e.g. 9e107d9d372bb6826bd81d3542a419d6" />
+        </label>
+        <div class="util-msg" id="compare">
+          <Icon name="info" size={16} />
+          <span>Paste a hash and this says which algorithm produced it, and whether it matches.</span>
+        </div>
+      </div>
+    </div>
+
+    <section>
+      <h2>What this is actually doing</h2>
+      <p>
+        A hash takes any amount of input and produces a fixed-size output. The same input
+        always gives the same output, a tiny change gives a completely different output, and
+        you cannot go backwards from the output to the input. That last property is what makes
+        it useful for storing passwords and for checking that a file arrived intact.
+      </p>
+      <p>
+        Length is the quickest way to tell which algorithm produced a digest you are looking
+        at. MD5 is 32 hexadecimal characters, SHA-1 is 40, SHA-256 is 64, SHA-384 is 96 and
+        SHA-512 is 128. That is why a "hash" you find in the wild is usually identifiable on
+        sight.
+      </p>
+      <p>
+        MD5 and SHA-1 are both in this tool and both marked broken, which is not a
+        contradiction. They are broken for collision resistance, meaning somebody can
+        construct two different inputs with the same digest, which is fatal for signatures and
+        certificates. They are still perfectly good at detecting an accidental corruption,
+        which is what an MD5 checksum on an old download page was always for. The line to hold
+        is this: never use either of them for anything new, and never trust either of them to
+        prove that a file is what it claims to be when somebody has a reason to lie.
+      </p>
+      <p>
+        One thing a hash does not do is prove where something came from. If an attacker can
+        change the file, they can change the published hash on the same page. That is the
+        problem signatures solve, and it is why a download page over plain HTTP telling you a
+        SHA-256 value is not actually telling you very much.
+      </p>
+    </section>
+
+    <div class="util-build">
+      <div class="util-build__copy">
+        <h2>Build it yourself</h2>
+        <p>
+          The same thing with <code>sha256sum</code>, <code>openssl dgst</code> and a
+          comparison that fails loudly, plus what a checksum file is and how to verify one you
+          were sent.
+        </p>
+      </div>
+      <a class="btn btn--green" href={`${base}learn/${u.lesson}/`}>Read the lesson</a>
+    </div>
+
+    <section>
+      <h2>Other utilities</h2>
+      <div class="util-cards">
+        {others.map((o) => (
+          <section class="util-card">
+            <div class="util-card__head">
+              <span class="util-card__icon"><Icon name={o.icon} size={18} /></span>
+              <h2><a href={`${base}utilities/${o.slug}/`}>{o.name}</a></h2>
+            </div>
+            <p class="util-card__desc">{o.tagline}</p>
+            <div class="util-card__links">
+              <a class="is-tool" href={`${base}utilities/${o.slug}/`}>Open <Icon name="arrow" size={13} /></a>
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <script>
+    import {
+      hashText,
+      hashBlob,
+      HASH_ALGORITHMS,
+      HASH_STANDING,
+      guessAlgorithm,
+      type HashAlgorithm,
+    } from '../../lib/utilities/hashing';
+
+    function initHashTool() {
+      const panel = document.querySelector('.util-panel');
+      if (!panel || (panel as HTMLElement).dataset.bound) return;
+      (panel as HTMLElement).dataset.bound = '1';
+
+      const $ = <T extends HTMLElement>(sel: string) => panel.querySelector(sel) as T;
+      const textArea = $('#text') as HTMLTextAreaElement;
+      const fileInput = $('#file') as HTMLInputElement;
+      const digests = $('#digests');
+      const sizeLabel = $('#sizeLabel');
+      const expected = $('#expected') as HTMLInputElement;
+      const compare = $('#compare');
+
+      let source: 'text' | 'file' = 'text';
+      let current: Partial<Record<HashAlgorithm, string>> = {};
+      let currentBytes = 0;
+
+      // Build the result rows once; the values are filled in on each run.
+      digests.innerHTML = HASH_ALGORITHMS.map((alg) => {
+        const s = HASH_STANDING[alg];
+        return `
+          <div class="util-cell${s.risky ? ' util-cell--flag' : ''}">
+            <span class="util-cell__k">${alg} · ${s.status}</span>
+            <span class="util-cell__v" data-digest="${alg}">…</span>
+            <div class="util-actions" style="margin-top:0.5rem">
+              <button class="util-btn" type="button" data-copy-alg="${alg}" style="padding:0.25rem 0.55rem;font-size:0.76rem">Copy</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      panel.querySelectorAll<HTMLElement>('[data-src]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          source = btn.dataset.src as 'text' | 'file';
+          panel.querySelectorAll<HTMLElement>('[data-src]').forEach((b) =>
+            b.setAttribute('aria-pressed', String(b === btn)),
+          );
+          (panel.querySelector('[data-pane="text"]') as HTMLElement).hidden = source !== 'text';
+          (panel.querySelector('[data-pane="file"]') as HTMLElement).hidden = source !== 'file';
+          run();
+        });
+      });
+
+      digests.querySelectorAll<HTMLElement>('[data-copy-alg]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const alg = btn.dataset.copyAlg as HashAlgorithm;
+          const value = current[alg];
+          if (!value) return;
+          try {
+            await navigator.clipboard.writeText(value);
+          } catch {
+            const ta = document.createElement('textarea');
+            ta.value = value;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+          }
+          const original = btn.textContent;
+          btn.textContent = 'Copied';
+          window.setTimeout(() => {
+            btn.textContent = original;
+          }, 1100);
+        });
+      });
+
+      textArea.addEventListener('input', run);
+      fileInput.addEventListener('change', run);
+      expected.addEventListener('input', checkExpected);
+
+      async function run() {
+        current = {};
+        try {
+          if (source === 'file') {
+            const file = fileInput.files?.[0];
+            if (!file) {
+              currentBytes = 0;
+              sizeLabel.textContent = 'No file chosen';
+              for (const alg of HASH_ALGORITHMS) setDigest(alg, '…');
+              checkExpected();
+              return;
+            }
+            currentBytes = file.size;
+            sizeLabel.textContent = `${file.name} · ${file.size.toLocaleString('en-GB')} bytes`;
+            const results = await Promise.all(HASH_ALGORITHMS.map((alg) => hashBlob(alg, file)));
+            HASH_ALGORITHMS.forEach((alg, i) => {
+              current[alg] = results[i].hex;
+              setDigest(alg, results[i].hex);
+            });
+          } else {
+            const value = textArea.value;
+            currentBytes = new TextEncoder().encode(value).length;
+            sizeLabel.textContent = `${currentBytes.toLocaleString('en-GB')} byte${currentBytes === 1 ? '' : 's'} of UTF-8`;
+            const results = await Promise.all(HASH_ALGORITHMS.map((alg) => hashText(alg, value)));
+            HASH_ALGORITHMS.forEach((alg, i) => {
+              current[alg] = results[i].hex;
+              setDigest(alg, results[i].hex);
+            });
+          }
+        } catch {
+          sizeLabel.textContent = 'Could not read that input';
+        }
+        checkExpected();
+      }
+
+      function setDigest(alg: HashAlgorithm, value: string) {
+        const el = digests.querySelector(`[data-digest="${alg}"]`);
+        if (el) el.textContent = value;
+      }
+
+      function checkExpected() {
+        const want = expected.value.trim().toLowerCase().replace(/[\s:]/g, '');
+        if (want === '') {
+          compare.className = 'util-msg';
+          compare.innerHTML =
+            '<span>Paste a hash and this says which algorithm produced it, and whether it matches.</span>';
+          return;
+        }
+        const guess = guessAlgorithm(want);
+        const match = HASH_ALGORITHMS.find((alg) => current[alg] === want);
+
+        if (match) {
+          compare.className = 'util-msg util-msg--ok';
+          compare.innerHTML = `<span><strong>Match.</strong> That is the ${match} digest of this input. The file or text is byte for byte what it should be.</span>`;
+          return;
+        }
+
+        compare.className = 'util-msg util-msg--bad';
+        const who = guess ? `That looks like a ${guess} digest` : 'That is not a digest length this tool knows';
+        compare.innerHTML = `<span><strong>No match.</strong> ${who}, and it is not the digest of this input. Either the input differs, or the hash you were given is for something else.</span>`;
+      }
+
+      run();
+    }
+
+    initHashTool();
+    document.addEventListener('astro:page-load', initHashTool);
+  </script>
+</BaseLayout>
