@@ -1,7 +1,7 @@
 ---
 title: "Build a hash and checksum tool"
-description: "Build the checksum workflow on your phone: hash files with sha256sum, write a SHA256SUMS file, check it with sha256sum -c, and compare digests in a script."
-excerpt: "Hash files, record the digests, check them later with sha256sum -c, and learn what a matching digest really proves."
+description: "Build hashtool.sh on your phone, one small step at a time: hash a file or standard input, choose the algorithm with --algo, save the digests with --write, and check a checksum file with --check. The whole script is at the end."
+excerpt: "Grow a one-line sha256sum into a real checksum tool, step by step, then copy the finished script."
 category: "Utilities"
 track: "utilities"
 author: "The Study Cipher"
@@ -13,30 +13,25 @@ tags: [utilities, hashing]
 
 import Callout from '../../components/Callout.astro';
 
-This lesson builds the same checksum workflow as the [hash and checksum tool](/utilities/hash/), so you can do the whole job from the shell without opening it. By the end you will be able to hash a single file, hash a folder full of files in one command, write those digests into a checksum file, check that file later to find out what changed, and say plainly what a matching digest does and does not prove. Every command here runs offline in Termux as an ordinary app, with no root.
+In this lesson you build `hashtool.sh`, a checksum tool for your phone. You start with a single `sha256sum` command and grow it, one small step at a time, until it can hash a file or standard input, choose its algorithm with `--algo`, save the digests with `--write`, and check a checksum file with `--check`. Each step shows the whole file as it stands and the real output it prints, so you can run it after every step. The finished program sits in [The whole script](#the-whole-script) at the end: copy that one block into a file and you have the working tool. If you would rather use the tool than build it, the [hash and checksum tool](/utilities/hash/) does the same job in the browser. Everything here runs offline in Termux as an ordinary app, with no root.
 
 ## What you'll be able to do
 
 - Hash one file and read the digest it prints.
-- Hash several files in a single command.
-- Write a checksum file with a shell redirect.
-- Check a checksum file with `sha256sum -c` and read the OK and FAILED lines.
-- Compare two digests in a script with `[ "$a" = "$b" ]`.
-- Use `openssl dgst`, `shasum -a 256`, `md5sum` and `sha1sum`.
+- Put the work in a script that takes a filename argument.
+- Choose SHA-256, SHA-1, MD5 or `openssl` with a `--algo` option.
+- Hash several files in one run and print one line per file.
+- Write a checksum file with `--write` and check it later with `--check`.
+- Read standard input when no file is given.
 - Explain why a digest from the same place as the file proves nothing, and what a signature adds.
 
-## Step 1: Hash one file
+## Step 1: Hash one file with sha256sum
 
-Make two small files to work with. `printf` writes exactly the text you give it, so the digests below will match the ones you get.
+Make two small files to work with. `printf` writes exactly the text you give it, so the digests below will match yours. Then hash the first file with `sha256sum`, which is already on the phone.
 
 ```bash
 printf 'alpha\n' > a.txt
 printf 'bravo\n' > b.txt
-```
-
-Hash the first one with `sha256sum`.
-
-```bash
 sha256sum a.txt
 ```
 
@@ -44,29 +39,171 @@ sha256sum a.txt
 b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060  a.txt
 ```
 
-The line has two parts. First the digest: sixty-four hexadecimal characters, always that length no matter how large the file is. Then two spaces and the filename. The digest is a function of the file's contents and nothing else, so hash the same file again and you get the same sixty-four characters. Change one byte and the whole digest changes. That is what makes it useful as a fingerprint.
+The line has two parts. First the digest: sixty-four hexadecimal characters, always that length no matter how large the file is. Then two spaces and the filename. The digest is a function of the file contents and nothing else, so hash the same file again and you get the same sixty-four characters, and change one byte and every one of them changes.
 
-## Step 2: Hash several files at once
+## Step 2: Wrap it in a script that takes a filename
 
-Give `sha256sum` more than one name and it prints one line per file.
+Typing `sha256sum` each time is fine until you want your own defaults, so put the work in a file. Create `hashtool.sh` with a shebang line and one command that hashes the file named as the first argument.
 
 ```bash
-sha256sum a.txt b.txt
+#!/bin/sh
+sha256sum "$1"
+```
+
+Run it by naming the file after the script.
+
+```bash
+sh hashtool.sh a.txt
+```
+
+```text
+b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060  a.txt
+```
+
+`$1` is the first argument. Keep the quotes around it: `"$1"` passes the name as one word, so a filename with a space stays a single name. The `#!/bin/sh` line tells the system to run the file with `sh`, which is the shell every phone has.
+
+## Step 3: Choose the algorithm with --algo
+
+Now let the tool choose its algorithm. Add a loop that reads the arguments: `--algo` takes the next word as the algorithm name, and anything else is kept as the file. A `case` then maps the name to the command that does the work.
+
+```bash
+#!/bin/sh
+algo=sha256
+file=
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --algo) algo=$2; shift 2 ;;
+    *)      file=$1; shift ;;
+  esac
+done
+
+case "$algo" in
+  sha256)  hash_cmd=sha256sum ;;
+  sha1)    hash_cmd=sha1sum ;;
+  md5)     hash_cmd=md5sum ;;
+  openssl) hash_cmd="openssl dgst -sha256" ;;
+  *)
+    echo "hashtool: unknown algorithm: $algo" >&2
+    exit 2 ;;
+esac
+
+$hash_cmd "$file"
+```
+
+The default is `sha256`, so a bare filename still works, and `--algo` switches tools.
+
+```bash
+sh hashtool.sh a.txt
+sh hashtool.sh --algo md5 a.txt
+sh hashtool.sh --algo openssl a.txt
+```
+
+```text
+b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060  a.txt
+9f9f90dbe3e5ee1218c86b8839db1995  a.txt
+SHA2-256(a.txt)= b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060
+```
+
+The third line shows the same SHA-256 digest as the first, but written differently: `openssl dgst` prints a label and an equals sign before the digest, so its line is not yet in the two-space shape the sum tools use. You even that out in the next step. An unknown name falls through to the `case` default and stops with a clear message rather than a shell error. On MD5 and SHA-1: they are quick and fine for spotting accidental corruption, but practical collisions have been built for both, so do not use them against an attacker who might choose the file for you.
+
+## Step 4: Hash several files in one run
+
+Hash as many files as you like at once. Collect every name into `files`, then loop over them. The new `hash_line` function prints one line per file, and it rewrites the `openssl` output into the same two-space shape as the sum tools, so every line looks alike.
+
+```bash
+#!/bin/sh
+algo=sha256
+files=
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --algo) algo=$2; shift 2 ;;
+    *)      files="$files $1"; shift ;;
+  esac
+done
+
+case "$algo" in
+  sha256)  hash_cmd=sha256sum ;;
+  sha1)    hash_cmd=sha1sum ;;
+  md5)     hash_cmd=md5sum ;;
+  openssl) hash_cmd="openssl dgst -sha256" ;;
+  *) echo "hashtool: unknown algorithm: $algo" >&2; exit 2 ;;
+esac
+
+hash_line() {
+  if [ "$algo" = openssl ]; then
+    digest=$(openssl dgst -sha256 "$1" | sed 's/^.*= //')
+    printf '%s  %s\n' "$digest" "$1"
+  else
+    $hash_cmd "$1"
+  fi
+}
+
+for f in $files; do
+  hash_line "$f"
+done
+```
+
+```bash
+sh hashtool.sh a.txt b.txt
+sh hashtool.sh --algo openssl a.txt
 ```
 
 ```text
 b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060  a.txt
 5da8f23decf397b13f4f55b6fb8a61936238bfe08ed9d901132974f1beccc45c  b.txt
+b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060  a.txt
 ```
 
-The shell expands a pattern before the command runs, so `sha256sum *.txt` does the same job for every matching file. That is the quick way to hash a whole folder. To walk into subfolders as well, pair it with `find`: `find . -type f -exec sha256sum {} +`.
+Two spaces between the digest and the name is the format the check mode reads, so making every line uniform now pays off in Step 6. The `openssl` line, which used to carry a label, now looks exactly like the sum tool lines.
 
-## Step 3: Write a checksum file
+## Step 5: Save the digests with --write
 
-The output of `sha256sum` is already in the format the check mode expects, so you can save it straight to a file with a redirect.
+Add `--write` to save the digests instead of printing them. When `write_to` is set, redirect standard output to that file with `exec >`, and everything printed after that lands in the file.
 
 ```bash
-sha256sum a.txt b.txt > SHA256SUMS
+#!/bin/sh
+algo=sha256
+write_to=
+files=
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --algo)  algo=$2; shift 2 ;;
+    --write) write_to=$2; shift 2 ;;
+    *)       files="$files $1"; shift ;;
+  esac
+done
+
+case "$algo" in
+  sha256)  hash_cmd=sha256sum ;;
+  sha1)    hash_cmd=sha1sum ;;
+  md5)     hash_cmd=md5sum ;;
+  openssl) hash_cmd="openssl dgst -sha256" ;;
+  *) echo "hashtool: unknown algorithm: $algo" >&2; exit 2 ;;
+esac
+
+hash_line() {
+  if [ "$algo" = openssl ]; then
+    digest=$(openssl dgst -sha256 "$1" | sed 's/^.*= //')
+    printf '%s  %s\n' "$digest" "$1"
+  else
+    $hash_cmd "$1"
+  fi
+}
+
+if [ -n "$write_to" ]; then
+  exec > "$write_to"
+fi
+
+for f in $files; do
+  hash_line "$f"
+done
+```
+
+```bash
+sh hashtool.sh --write SHA256SUMS a.txt b.txt
 cat SHA256SUMS
 ```
 
@@ -75,14 +212,61 @@ b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060  a.txt
 5da8f23decf397b13f4f55b6fb8a61936238bfe08ed9d901132974f1beccc45c  b.txt
 ```
 
-`SHA256SUMS` is the name projects often use for this file. It is plain text: a digest, two spaces, a filename, one line per file. Keep it somewhere safe, because it is your record of what those files were when you last trusted them.
+The first command prints nothing, because its output went into the file; `cat` then shows what was saved. `SHA256SUMS` is the name projects often use for this file. It is plain text: a digest, two spaces, a filename, one line per file. Keep it somewhere safe, because it is your record of what those files were when you last trusted them.
 
-## Step 4: Check a checksum file
+## Step 6: Check a checksum file with --check
 
-The `-c` flag means check. It reads each line, hashes the file that line names, and compares the result with the digest written on the line.
+Add `--check` to verify a checksum file. Each sum tool has a `-c` flag that reads the file, hashes the files it names, and compares the results. `openssl` has no such flag, so the check uses the sum tool for the same digest, which is why the `case` now sets `sum_cmd` alongside `hash_cmd`.
 
 ```bash
-sha256sum -c SHA256SUMS
+#!/bin/sh
+algo=sha256
+write_to=
+check_file=
+files=
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --algo)  algo=$2; shift 2 ;;
+    --write) write_to=$2; shift 2 ;;
+    --check) check_file=$2; shift 2 ;;
+    *)       files="$files $1"; shift ;;
+  esac
+done
+
+case "$algo" in
+  sha256)  hash_cmd=sha256sum; sum_cmd=sha256sum ;;
+  sha1)    hash_cmd=sha1sum;   sum_cmd=sha1sum ;;
+  md5)     hash_cmd=md5sum;    sum_cmd=md5sum ;;
+  openssl) hash_cmd="openssl dgst -sha256"; sum_cmd=sha256sum ;;
+  *) echo "hashtool: unknown algorithm: $algo" >&2; exit 2 ;;
+esac
+
+hash_line() {
+  if [ "$algo" = openssl ]; then
+    digest=$(openssl dgst -sha256 "$1" | sed 's/^.*= //')
+    printf '%s  %s\n' "$digest" "$1"
+  else
+    $hash_cmd "$1"
+  fi
+}
+
+if [ -n "$check_file" ]; then
+  $sum_cmd -c "$check_file"
+  exit $?
+fi
+
+if [ -n "$write_to" ]; then
+  exec > "$write_to"
+fi
+
+for f in $files; do
+  hash_line "$f"
+done
+```
+
+```bash
+sh hashtool.sh --check SHA256SUMS
 ```
 
 ```text
@@ -90,113 +274,402 @@ a.txt: OK
 b.txt: OK
 ```
 
-Every line ends in `OK` when the file still matches what you recorded. Now change one file and check again.
+Every line ends in `OK` when the file still matches what you recorded. Change one file and check again, and that line reads `FAILED` while the others stay `OK`. The command also exits with status 1 when any line fails, so a script can test `$?` afterwards and act on it.
 
-```bash
-printf 'ALPHA\n' > a.txt
-sha256sum -c SHA256SUMS
-```
-
-```text
-a.txt: FAILED
-b.txt: OK
-sha256sum: WARNING: 1 computed checksum did NOT match
-```
-
-The `FAILED` line names the file that changed. The `WARNING` line is a summary, and it goes to standard error rather than standard output, which is why it can look out of place when you redirect the rest into a log. The command also exits with status 1 when any line fails, so a script can test `$?` afterwards and act on it. Notice that one capital letter was enough: `alpha` and `ALPHA` share no digest characters at all.
-
-<Callout type="tip" title="OK and FAILED mean exactly what they say">
-`OK` means the file is byte for byte what it was when you wrote the line. `FAILED` means it is not. Neither line says why the file changed, or who changed it, only whether it is the same as before.
+<Callout type="warning" title="OK means unchanged, not trustworthy">
+`OK` says only that the file is byte for byte what it was when the line was written. It says nothing about who wrote the file. If the file and the checksum both came from the same place, then whoever changed one could just as easily change the other to match, and the check would still print `OK`. A signature, made with the publisher's private key, is what ties a file to an author. A checksum on its own cannot.
 </Callout>
 
-## Step 5: Compare two digests in a script
+## Step 7: Read standard input when no file is given
 
-Sometimes you have two digests in variables and want to compare them yourself, rather than let `-c` do it. In POSIX sh the string test is a single equals sign.
+When you give no filename, read from standard input, so the tool drops into a pipeline. The sum tools label that input with a single dash.
 
 ```bash
-a=$(sha256sum a.txt | cut -d' ' -f1)
-b=$(sha256sum a.txt | cut -d' ' -f1)
-[ "$a" = "$b" ] && echo "match" || echo "differ"
+#!/bin/sh
+algo=sha256
+write_to=
+check_file=
+files=
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --algo)  algo=$2; shift 2 ;;
+    --write) write_to=$2; shift 2 ;;
+    --check) check_file=$2; shift 2 ;;
+    *)       files="$files $1"; shift ;;
+  esac
+done
+
+case "$algo" in
+  sha256)  hash_cmd=sha256sum; sum_cmd=sha256sum ;;
+  sha1)    hash_cmd=sha1sum;   sum_cmd=sha1sum ;;
+  md5)     hash_cmd=md5sum;    sum_cmd=md5sum ;;
+  openssl) hash_cmd="openssl dgst -sha256"; sum_cmd=sha256sum ;;
+  *) echo "hashtool: unknown algorithm: $algo" >&2; exit 2 ;;
+esac
+
+hash_line() {
+  if [ "$algo" = openssl ]; then
+    digest=$(openssl dgst -sha256 "$1" | sed 's/^.*= //')
+    printf '%s  %s\n' "$digest" "$1"
+  else
+    $hash_cmd "$1"
+  fi
+}
+
+if [ -n "$check_file" ]; then
+  $sum_cmd -c "$check_file"
+  exit $?
+fi
+
+if [ -n "$write_to" ]; then
+  exec > "$write_to"
+fi
+
+if [ -z "$files" ]; then
+  hash_line -
+else
+  for f in $files; do
+    hash_line "$f"
+  done
+fi
+```
+
+```bash
+printf 'hello\n' | sh hashtool.sh
 ```
 
 ```text
-match
+5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03  -
 ```
 
-The `==` form is a bash extension, not POSIX. Under `sh`, which is what a script with a `#!/bin/sh` line gets, it is an error.
+The `-` stands for standard input. That one line hashes those six bytes with no file in sight, which is what you want when the data is arriving from another command.
+
+## Step 8: A usage message and error handling
+
+Finish the tool with a usage message and honest errors. The loop now checks that `--algo`, `--write` and `--check` each carry a value, rejects an unknown option, and the hash loop checks that every named file exists. `-h` prints the usage text, and `--` stops option reading so a file whose name begins with a dash can still be hashed.
 
 ```bash
-sh -c '[ "x" == "x" ] && echo match'
+#!/bin/sh
+# hashtool.sh - hash files or standard input, write a checksum file, or check one.
+
+usage() {
+  cat <<'EOF'
+hashtool.sh - hash files or standard input, and check checksums
+
+Usage:
+  hashtool.sh [options] [FILE]
+
+With no FILE, reads standard input.
+
+Options:
+  -a, --algo NAME    sha256 (default), sha1, md5, or openssl
+  -w, --write FILE   write the checksums to FILE instead of the screen
+  -c, --check FILE   check the digests listed in FILE
+  -h, --help         show this message
+
+Examples:
+  hashtool.sh a.txt
+  hashtool.sh --algo md5 a.txt
+  hashtool.sh --write SHA256SUMS a.txt b.txt
+  hashtool.sh --check SHA256SUMS
+  printf 'hello\n' | hashtool.sh
+EOF
+}
+
+algo=sha256
+write_to=
+check_file=
+files=
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -a|--algo)
+      if [ $# -lt 2 ]; then echo "hashtool: --algo needs a value" >&2; exit 2; fi
+      algo=$2; shift 2 ;;
+    -w|--write)
+      if [ $# -lt 2 ]; then echo "hashtool: --write needs a value" >&2; exit 2; fi
+      write_to=$2; shift 2 ;;
+    -c|--check)
+      if [ $# -lt 2 ]; then echo "hashtool: --check needs a value" >&2; exit 2; fi
+      check_file=$2; shift 2 ;;
+    -h|--help)
+      usage; exit 0 ;;
+    --)
+      shift; break ;;
+    -*)
+      echo "hashtool: unknown option: $1" >&2
+      echo "try: hashtool.sh --help" >&2
+      exit 2 ;;
+    *)
+      files="$files $1"; shift ;;
+  esac
+done
+
+case "$algo" in
+  sha256)  hash_cmd=sha256sum; sum_cmd=sha256sum ;;
+  sha1)    hash_cmd=sha1sum;   sum_cmd=sha1sum ;;
+  md5)     hash_cmd=md5sum;    sum_cmd=md5sum ;;
+  openssl) hash_cmd=;          sum_cmd=sha256sum ;;
+  *)
+    echo "hashtool: unknown algorithm: $algo" >&2
+    echo "use one of: sha256, sha1, md5, openssl" >&2
+    exit 2 ;;
+esac
+
+# One digest line, in the two-space format the check mode expects.
+# $1 is a path, or "-" for standard input.
+hash_line() {
+  if [ "$algo" = openssl ]; then
+    if [ "$1" = "-" ]; then
+      digest=$(openssl dgst -sha256 | sed 's/^.*= //')
+    else
+      digest=$(openssl dgst -sha256 "$1" | sed 's/^.*= //')
+    fi
+    printf '%s  %s\n' "$digest" "$1"
+  else
+    $hash_cmd "$1"
+  fi
+}
+
+# Check mode: let the matching sum tool read the file and print OK or FAILED.
+if [ -n "$check_file" ]; then
+  if [ ! -f "$check_file" ]; then
+    echo "hashtool: no such checksum file: $check_file" >&2
+    exit 2
+  fi
+  $sum_cmd -c "$check_file"
+  exit $?
+fi
+
+# Write mode: send everything that follows to the checksum file.
+if [ -n "$write_to" ]; then
+  if ! ( : > "$write_to" ) 2>/dev/null; then
+    echo "hashtool: cannot write to $write_to" >&2
+    exit 2
+  fi
+  exec > "$write_to"
+fi
+
+# Hash mode: the listed files, or standard input when none are given.
+if [ -z "$files" ]; then
+  hash_line -
+else
+  for f in $files; do
+    if [ ! -f "$f" ]; then
+      echo "hashtool: no such file: $f" >&2
+      exit 2
+    fi
+    hash_line "$f"
+  done
+fi
+```
+
+```bash
+sh hashtool.sh --help
+sh hashtool.sh --bogus
+sh hashtool.sh nope.txt
+sh hashtool.sh --algo sha999 a.txt
 ```
 
 ```text
-sh: 1: [: x: unexpected operator
+hashtool.sh - hash files or standard input, and check checksums
+
+Usage:
+  hashtool.sh [options] [FILE]
+
+With no FILE, reads standard input.
+
+Options:
+  -a, --algo NAME    sha256 (default), sha1, md5, or openssl
+  -w, --write FILE   write the checksums to FILE instead of the screen
+  -c, --check FILE   check the digests listed in FILE
+  -h, --help         show this message
+
+Examples:
+  hashtool.sh a.txt
+  hashtool.sh --algo md5 a.txt
+  hashtool.sh --write SHA256SUMS a.txt b.txt
+  hashtool.sh --check SHA256SUMS
+  printf 'hello\n' | hashtool.sh
+hashtool: unknown option: --bogus
+try: hashtool.sh --help
+hashtool: no such file: nope.txt
+hashtool: unknown algorithm: sha999
+use one of: sha256, sha1, md5, openssl
 ```
 
-Write `=` and the test works in any sh. On a phone where `sh` happens to be bash the `==` line prints `match` instead, and that is the trap: the same script passes on one system and breaks on another. Stick to `=` so it runs everywhere.
+A bad option, a missing value or a missing file prints one short line to standard error and exits with status 2, never a shell error or a stack trace. The usage text names every option, so anyone who finds the script can work out what it does.
 
-## Step 6: The same digest from other tools
+## The whole script
 
-`sha256sum` is not the only way to get a SHA-256 digest. `openssl` ships with Termux and can hash a file too.
+Here is the finished file in one piece. Save it as `hashtool.sh`, or copy this block into a file of that name, and it runs exactly as it stands.
 
 ```bash
-openssl dgst -sha256 b.txt
+#!/bin/sh
+# hashtool.sh - hash files or standard input, write a checksum file, or check one.
+
+usage() {
+  cat <<'EOF'
+hashtool.sh - hash files or standard input, and check checksums
+
+Usage:
+  hashtool.sh [options] [FILE]
+
+With no FILE, reads standard input.
+
+Options:
+  -a, --algo NAME    sha256 (default), sha1, md5, or openssl
+  -w, --write FILE   write the checksums to FILE instead of the screen
+  -c, --check FILE   check the digests listed in FILE
+  -h, --help         show this message
+
+Examples:
+  hashtool.sh a.txt
+  hashtool.sh --algo md5 a.txt
+  hashtool.sh --write SHA256SUMS a.txt b.txt
+  hashtool.sh --check SHA256SUMS
+  printf 'hello\n' | hashtool.sh
+EOF
+}
+
+algo=sha256
+write_to=
+check_file=
+files=
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -a|--algo)
+      if [ $# -lt 2 ]; then echo "hashtool: --algo needs a value" >&2; exit 2; fi
+      algo=$2; shift 2 ;;
+    -w|--write)
+      if [ $# -lt 2 ]; then echo "hashtool: --write needs a value" >&2; exit 2; fi
+      write_to=$2; shift 2 ;;
+    -c|--check)
+      if [ $# -lt 2 ]; then echo "hashtool: --check needs a value" >&2; exit 2; fi
+      check_file=$2; shift 2 ;;
+    -h|--help)
+      usage; exit 0 ;;
+    --)
+      shift; break ;;
+    -*)
+      echo "hashtool: unknown option: $1" >&2
+      echo "try: hashtool.sh --help" >&2
+      exit 2 ;;
+    *)
+      files="$files $1"; shift ;;
+  esac
+done
+
+case "$algo" in
+  sha256)  hash_cmd=sha256sum; sum_cmd=sha256sum ;;
+  sha1)    hash_cmd=sha1sum;   sum_cmd=sha1sum ;;
+  md5)     hash_cmd=md5sum;    sum_cmd=md5sum ;;
+  openssl) hash_cmd=;          sum_cmd=sha256sum ;;
+  *)
+    echo "hashtool: unknown algorithm: $algo" >&2
+    echo "use one of: sha256, sha1, md5, openssl" >&2
+    exit 2 ;;
+esac
+
+# One digest line, in the two-space format the check mode expects.
+# $1 is a path, or "-" for standard input.
+hash_line() {
+  if [ "$algo" = openssl ]; then
+    if [ "$1" = "-" ]; then
+      digest=$(openssl dgst -sha256 | sed 's/^.*= //')
+    else
+      digest=$(openssl dgst -sha256 "$1" | sed 's/^.*= //')
+    fi
+    printf '%s  %s\n' "$digest" "$1"
+  else
+    $hash_cmd "$1"
+  fi
+}
+
+# Check mode: let the matching sum tool read the file and print OK or FAILED.
+if [ -n "$check_file" ]; then
+  if [ ! -f "$check_file" ]; then
+    echo "hashtool: no such checksum file: $check_file" >&2
+    exit 2
+  fi
+  $sum_cmd -c "$check_file"
+  exit $?
+fi
+
+# Write mode: send everything that follows to the checksum file.
+if [ -n "$write_to" ]; then
+  if ! ( : > "$write_to" ) 2>/dev/null; then
+    echo "hashtool: cannot write to $write_to" >&2
+    exit 2
+  fi
+  exec > "$write_to"
+fi
+
+# Hash mode: the listed files, or standard input when none are given.
+if [ -z "$files" ]; then
+  hash_line -
+else
+  for f in $files; do
+    if [ ! -f "$f" ]; then
+      echo "hashtool: no such file: $f" >&2
+      exit 2
+    fi
+    hash_line "$f"
+  done
+fi
+```
+
+## Using it
+
+Hash a single file, choose an algorithm, and read from a pipe.
+
+```bash
+sh hashtool.sh a.txt
+sh hashtool.sh --algo sha1 b.txt
+printf 'hello\n' | sh hashtool.sh
 ```
 
 ```text
-SHA2-256(b.txt)= 5da8f23decf397b13f4f55b6fb8a61936238bfe08ed9d901132974f1beccc45c
-```
-
-The digest is the same one `sha256sum` printed. On older versions of OpenSSL the label reads `SHA256` rather than `SHA2-256`; the digest itself is unchanged. The Perl-based `shasum` prints it in the familiar two-space format.
-
-```bash
-shasum -a 256 b.txt
-```
-
-```text
-5da8f23decf397b13f4f55b6fb8a61936238bfe08ed9d901132974f1beccc45c  b.txt
-```
-
-If `shasum` is missing, `pkg install perl` provides it. All three tools agree because SHA-256 is a fixed standard and every implementation produces the same result.
-
-## Step 7: md5sum and sha1sum
-
-Two older tools turn up in guides and in old checksum files.
-
-```bash
-md5sum b.txt
-sha1sum b.txt
-```
-
-```text
-df34f5f71a4e812327ac9b04538386af  b.txt
+b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060  a.txt
 bb596efe9e3023a502013767a0559a94a5eea4bc  b.txt
+5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03  -
 ```
 
-MD5 gives 32 characters and SHA-1 gives 40. Both still work as a quick check that a download did not get corrupted on the way to you. Neither is safe against an attacker. Practical collisions have been built for MD5 for years, and SHA-1 collisions are now cheap enough to matter. A collision is a second file that produces the same digest as the real one, which means someone can swap in a changed file and keep the digest looking correct. For spotting corruption, MD5 and SHA-1 are fine. For anything an adversary might tamper with, use SHA-256.
+Record the digests, check them while the files are untouched, then edit one and check again.
 
-## Step 8: What a matching digest proves, and what it does not
+```bash
+sh hashtool.sh --write SHA256SUMS a.txt b.txt
+sh hashtool.sh --check SHA256SUMS
+printf 'ALPHA\n' > a.txt
+sh hashtool.sh --check SHA256SUMS
+```
 
-Here is the part that matters most. A digest only tells you that two things are the same. It cannot tell you that the thing is trustworthy. If the file and the published digest both come from the same place, then whoever changed the file could just as easily have changed the digest to match, and `sha256sum -c` would still print `OK`. A checksum file that travels with the download it describes proves only that the download arrived intact. It says nothing at all about where that download came from or who wrote it.
+```text
+a.txt: OK
+b.txt: OK
+a.txt: FAILED
+b.txt: OK
+```
 
-A signature closes that gap. A signature is a digest of the file, encrypted with the publisher's private key. Anyone can check it with the matching public key, and only the real holder of the private key could have produced it. So a valid signature proves both that the file is unchanged and that it came from the key's owner. That is the difference a plain checksum cannot make. When a project offers a `.sig` or `.asc` file next to its checksum, that is what it is for.
+The first check reports both files unchanged. After `a.txt` is rewritten, the second check marks it `FAILED` and leaves `b.txt` as `OK`. One capital letter was enough to change every character of the digest.
 
 ## Quick reference
 
 | Command | What it does |
 | --- | --- |
-| `sha256sum FILE` | Prints the SHA-256 digest of a file |
-| `sha256sum A B` | Hashes several files, one line each |
-| `sha256sum *.txt > SHA256SUMS` | Writes a checksum file with a redirect |
-| `sha256sum -c SHA256SUMS` | Checks each file and prints OK or FAILED |
-| `[ "$a" = "$b" ]` | Compares two digests in POSIX sh |
-| `openssl dgst -sha256 FILE` | Hashes a file with OpenSSL |
-| `shasum -a 256 FILE` | Hashes a file with the Perl tool |
-| `md5sum FILE` | Prints an MD5 digest, fine for corruption only |
-| `sha1sum FILE` | Prints a SHA-1 digest, fine for corruption only |
+| `sh hashtool.sh FILE` | Hashes a file with SHA-256 |
+| `sh hashtool.sh --algo md5 FILE` | Hashes with MD5 instead |
+| `sh hashtool.sh --algo openssl FILE` | Hashes with `openssl dgst` |
+| `sh hashtool.sh A B` | Hashes several files, one line each |
+| `sh hashtool.sh --write SHA256SUMS A B` | Saves the digests to a checksum file |
+| `sh hashtool.sh --check SHA256SUMS` | Checks each file and prints OK or FAILED |
+| `printf 'text\n' \| sh hashtool.sh` | Hashes standard input |
+| `sh hashtool.sh --help` | Prints the usage message |
 
 ## Next steps
 
-- [Encoding and hashes](/learn/encoding-and-hashes/) covers base64 and the first look at what a hash is.
 - [File integrity: noticing a change](/learn/file-integrity/) turns this workflow into a manifest you check on a schedule.
 - [Signing and verifying](/learn/signing-and-verifying/) explains what a signature adds on top of a plain digest.
+- [Encoding and hashes](/learn/encoding-and-hashes/) covers base64 and the first look at what a hash is.
