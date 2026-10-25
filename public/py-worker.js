@@ -108,16 +108,18 @@ async function start() {
 
       // One namespace for the page, so cells build on each other the way
       // notebook cells do, plus a way to clear it.
+      // The import is inside the function on purpose. Referencing a module
+      // global here would break the moment that global is cleaned up, and the
+      // failure would only show on the second call, which is exactly the kind
+      // of bug that survives a happy-path test.
       py.runPython(
         [
-          'import builtins as _builtins',
-          '',
           '_user_ns = {}',
           'def _reset_user_ns():',
+          '    import builtins',
           '    _user_ns.clear()',
-          '    _user_ns["__builtins__"] = _builtins',
+          '    _user_ns["__builtins__"] = builtins',
           '_reset_user_ns()',
-          'del _builtins',
           '',
         ].join('\n'),
       );
@@ -177,14 +179,15 @@ self.onmessage = async (event) => {
       return;
     }
 
-    if (fresh) py.runPython('_reset_user_ns()');
-
     const out = [];
     const err = [];
     py.setStdout({ batched: (s) => out.push(s) });
     py.setStderr({ batched: (s) => err.push(s) });
 
     try {
+      // Inside the try, so a failure here is reported rather than leaving the
+      // page waiting for an answer that never comes.
+      if (fresh) py.runPython('_reset_user_ns()');
       const result = py.runPython(code, { globals: py.globals.get('_user_ns') });
       if (result && typeof result.destroy === 'function') result.destroy();
       post({ type: 'result', id, ok: true, stdout: out.join('\n'), stderr: err.join('\n'), ms: Date.now() - started });
