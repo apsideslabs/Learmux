@@ -1,0 +1,335 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import '../../styles/certificate.css';
+import { getCollection } from 'astro:content';
+import { tracks } from '../../lib/curriculum';
+import { site, studio } from '../../lib/site';
+import { todayIso } from '../../lib/certificate';
+
+const lessons = await getCollection('tutorials');
+const lessonsTotal = lessons.length;
+const tracksTotal = tracks.length;
+
+// The certificate counts what this browser has finished, so the page cannot
+// know the figures at build time. It ships the map from lesson to track and the
+// counts come out in the browser.
+const lessonTrack: Record<string, string> = {};
+for (const l of lessons) lessonTrack[l.id] = l.data.track ?? 'other';
+
+const today = todayIso();
+// Every link on this site is written against the base, so a relative one would
+// resolve differently once the site is served from a subpath.
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+---
+
+<BaseLayout
+  title="Your profile"
+  description="Your Learmux progress, and a certificate of completion you can put your name on and keep."
+>
+  <section class="wrap profile">
+    <header class="profile__head">
+      <p class="eyebrow">Profile</p>
+      <h1>Your progress, and your certificate</h1>
+      <p class="lede">
+        Put your name in the box and the certificate updates as you type. Nothing is sent
+        anywhere: the name stays in this browser, and the counts come from what you have
+        finished here.
+      </p>
+    </header>
+
+    <!-- The counts and the lesson-to-track map, for the script to read. -->
+    <div
+      hidden
+      data-facts
+      data-lesson-track={JSON.stringify(lessonTrack)}
+      data-total-lessons={lessonsTotal}
+      data-total-tracks={tracksTotal}
+    >
+    </div>
+
+    <div class="profile__grid">
+      <form class="profile__form" data-form autocomplete="off">
+        <div class="field">
+          <label for="cert-name">Name on the certificate</label>
+          <input
+            id="cert-name"
+            name="name"
+            type="text"
+            data-name
+            maxlength="44"
+            placeholder="Your name"
+            spellcheck="false"
+          />
+          <p class="field__hint">Up to 44 characters. It appears exactly as you type it.</p>
+        </div>
+
+        <div class="field">
+          <label for="cert-date">Date</label>
+          <input id="cert-date" name="date" type="date" data-date value={today} />
+          <p class="field__hint">Printed at the foot of the certificate.</p>
+        </div>
+
+        <div class="profile__actions">
+          <button class="btn btn--primary" type="button" data-download>
+            Download the SVG
+          </button>
+          <button class="btn" type="button" data-print>Print or save as PDF</button>
+        </div>
+
+        <p class="profile__note">
+          The SVG is vector, so it stays sharp at any size. Print gives you a PDF at A4
+          landscape, which is the size the certificate is drawn for.
+        </p>
+      </form>
+
+      <aside class="profile__stats" data-stats>
+        <h2>What counts</h2>
+        <dl class="statlist">
+          <div class="statlist__row">
+            <dt>Lessons finished</dt>
+            <dd><span data-stat-lessons>0</span> <span class="statlist__of">of {lessonsTotal}</span></dd>
+          </div>
+          <div class="statlist__row">
+            <dt>Tracks touched</dt>
+            <dd><span data-stat-tracks>0</span> <span class="statlist__of">of {tracksTotal}</span></dd>
+          </div>
+          <div class="statlist__row">
+            <dt>Checkpoints passed</dt>
+            <dd><span data-stat-checkpoints>0</span></dd>
+          </div>
+        </dl>
+        <p class="profile__note">
+          These come from this browser's storage, because there are no accounts. Clearing
+          your browsing data clears them.
+        </p>
+        <a class="profile__link" href={`${base}course/`}>Go to the course</a>
+      </aside>
+    </div>
+
+    <!-- ── the certificate ────────────────────────────────────────────────
+         Drawn at 1000 by 707, which is A4 landscape. Every figure here is a
+         real element rather than an image, so it exports as vector.
+         ─────────────────────────────────────────────────────────────────── -->
+    <figure class="cert" data-cert-wrap>
+      <svg
+        class="cert__svg"
+        data-cert
+        viewBox="0 0 1000 707"
+        width="1000"
+        height="707"
+        role="img"
+        aria-labelledby="cert-title cert-desc"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <title id="cert-title">Certificate of completion from {site.name}</title>
+        <desc id="cert-desc">
+          A certificate naming the holder as having worked through the {site.name} course in
+          Termux and the Linux command line.
+        </desc>
+
+        <rect width="1000" height="707" fill="#ffffff" />
+
+        <!-- the frame: one firm rule outside, one hairline inside -->
+        <rect x="22" y="22" width="956" height="663" fill="none" stroke="#1c1b27" stroke-width="1.6" />
+        <rect x="31" y="31" width="938" height="645" fill="none" stroke="#e7e7eb" stroke-width="1" />
+
+        <!-- a green keyline down the left edge, the only saturated thing here -->
+        <rect x="22" y="22" width="5" height="663" fill="#20d65a" />
+
+        <!-- brand -->
+        <text x="500" y="66" class="cert__brand" text-anchor="middle">{studio.name.toUpperCase()}</text>
+        <text x="500" y="88" class="cert__brand-sub" text-anchor="middle">{site.name.toUpperCase()}</text>
+
+        <!-- title -->
+        <text x="500" y="152" class="cert__title" text-anchor="middle">CERTIFICATE OF COMPLETION</text>
+        <line x1="390" y1="172" x2="610" y2="172" stroke="#20d65a" stroke-width="2" />
+
+        <text x="500" y="216" class="cert__kicker" text-anchor="middle">THIS IS TO CERTIFY THAT</text>
+
+        <!-- the recipient -->
+        <text x="500" y="278" class="cert__name" data-cert-name text-anchor="middle">Your name</text>
+        <line x1="250" y1="296" x2="750" y2="296" stroke="#e7e7eb" stroke-width="1" />
+
+        <text x="500" y="330" class="cert__claim" data-cert-headline text-anchor="middle">
+          is working through the Learmux course
+        </text>
+        <text x="500" y="352" class="cert__detail" data-cert-detail text-anchor="middle">
+          in Termux and the Linux command line.
+        </text>
+
+        <!-- date and identifier, either side of the seal -->
+        <text x="120" y="420" class="cert__label" text-anchor="start">DATE</text>
+        <text x="120" y="444" class="cert__value" data-cert-date text-anchor="start">{today}</text>
+
+        <text x="880" y="420" class="cert__label" text-anchor="end">CERTIFICATE ID</text>
+        <text x="880" y="444" class="cert__value cert__value--mono" data-cert-id text-anchor="end">
+          PENDING
+        </text>
+
+        <!-- the seal -->
+        <g class="cert__seal">
+          <circle cx="500" cy="452" r="46" fill="none" stroke="#20d65a" stroke-width="2" />
+          <circle cx="500" cy="452" r="38" fill="none" stroke="#e7e7eb" stroke-width="1" />
+          <path
+            d="M482 452 l11 11 l22 -24"
+            fill="none"
+            stroke="#1c1b27"
+            stroke-width="3.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </g>
+
+        <!-- signature -->
+        <line x1="120" y1="588" x2="330" y2="588" stroke="#cfcfda" stroke-width="1" />
+        <text x="120" y="612" class="cert__sign-name">The Study Cipher</text>
+        <text x="120" y="630" class="cert__sign-role">{studio.name}</text>
+
+        <!-- verification -->
+        <g data-cert-qr transform="translate(806 514) scale(2.4)" shape-rendering="crispEdges"></g>
+        <text x="846" y="618" class="cert__qr-label" text-anchor="middle">SCAN TO VERIFY</text>
+      </svg>
+
+      <figcaption class="cert__caption">
+        This is a record of work you did in this browser, not an accredited qualification.
+        The ID is derived from your name and the date, so it is a way to recognise this
+        document rather than proof of anything.
+      </figcaption>
+    </figure>
+  </section>
+</BaseLayout>
+
+<script>
+  import { certificateId, formatDate, claim, qrPath } from '../../lib/certificate';
+  import { solvedSlugs } from '../../lib/progress';
+
+  const NAME_KEY = 'Learmux:cert:name';
+
+  function initProfile() {
+    const svg = document.querySelector<SVGSVGElement>('[data-cert]');
+    if (!svg || svg.dataset.wired === '1') return;
+    svg.dataset.wired = '1';
+
+    const nameInput = document.querySelector<HTMLInputElement>('[data-name]');
+    const dateInput = document.querySelector<HTMLInputElement>('[data-date]');
+    if (!nameInput || !dateInput) return;
+
+    const nameEl = svg.querySelector<SVGTextElement>('[data-cert-name]');
+    const headlineEl = svg.querySelector<SVGTextElement>('[data-cert-headline]');
+    const detailEl = svg.querySelector<SVGTextElement>('[data-cert-detail]');
+    const dateEl = svg.querySelector<SVGTextElement>('[data-cert-date]');
+    const idEl = svg.querySelector<SVGTextElement>('[data-cert-id]');
+    const qrEl = svg.querySelector<SVGGElement>('[data-cert-qr]');
+    if (!nameEl || !headlineEl || !detailEl || !dateEl || !idEl || !qrEl) return;
+
+    // The counts come from the browser, so the page ships the map from lesson
+    // to track and the totals are already in the markup.
+    const facts = document.querySelector<HTMLElement>('[data-facts]');
+    const lessonTrack: Record<string, string> = JSON.parse(facts?.dataset.lessonTrack ?? '{}');
+    const lessonsTotal = Number(facts?.dataset.totalLessons ?? 0);
+    const tracksTotal = Number(facts?.dataset.totalTracks ?? 0);
+
+    const saved = localStorage.getItem(NAME_KEY);
+    if (saved) nameInput.value = saved;
+
+    let lastQr = '';
+
+    const render = async () => {
+      const name = nameInput.value.trim() || 'Your name';
+      const date = dateInput.value || '';
+
+      const solved = solvedSlugs();
+      const lessonsDone = solved.length;
+      const tracksDone = new Set(solved.map((s) => lessonTrack[s]).filter(Boolean)).size;
+
+      // counts in the sidebar
+      const set = (sel: string, v: string | number) => {
+        const el = document.querySelector(`[${sel}]`);
+        if (el) el.textContent = String(v);
+      };
+      set('data-stat-lessons', lessonsDone);
+      set('data-stat-tracks', tracksDone);
+      set('data-stat-checkpoints', solved.length);
+
+      // the certificate
+      nameEl.textContent = name;
+      const c = claim({ name, date, lessonsDone, lessonsTotal, tracksDone, tracksTotal });
+      headlineEl.textContent = c.headline;
+      detailEl.textContent = c.detail;
+      dateEl.textContent = formatDate(date);
+
+      const id = await certificateId(name, date);
+      idEl.textContent = id;
+
+      // The QR points at this page with the ID on it. Rebuilt only when the ID
+      // changes, because a QR is 500 path segments.
+      if (id !== lastQr) {
+        lastQr = id;
+        const url = `${location.origin}${location.pathname}?id=${id}`;
+        const { d } = qrPath(url);
+        qrEl.innerHTML = `<path d="${d}" fill="#1c1b27" />`;
+      }
+    };
+
+    nameInput.addEventListener('input', () => {
+      localStorage.setItem(NAME_KEY, nameInput.value);
+      void render();
+    });
+    dateInput.addEventListener('change', () => void render());
+
+    // ── export ────────────────────────────────────────────────────────────
+    const fileName = () => {
+      const n = nameInput.value.trim().replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
+      return `${n ? `Learmux-certificate-${n}` : 'Learmux-certificate'}.svg`;
+    };
+
+    document.querySelector('[data-download]')?.addEventListener('click', () => {
+      // Serialise what is on screen, so the file matches the preview exactly.
+      const clone = svg.cloneNode(true) as SVGSVGElement;
+      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      // The styles are in a stylesheet, which a standalone file will not have,
+      // so the presentation is written onto the elements as attributes.
+      inlineStyles(svg, clone);
+      const source = `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(clone)}`;
+      const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fileName();
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    });
+
+    document.querySelector('[data-print]')?.addEventListener('click', () => window.print());
+
+    void render();
+  }
+
+  /**
+   * Copy the computed presentation onto a clone.
+   *
+   * A downloaded SVG has no stylesheet beside it, so anything that came from
+   * CSS has to become an attribute or the file opens looking like plain text.
+   */
+  function inlineStyles(from: SVGSVGElement, to: SVGSVGElement) {
+    const props = [
+      'font-family', 'font-size', 'font-weight', 'letter-spacing',
+      'fill', 'stroke', 'stroke-width', 'text-anchor', 'paint-order',
+    ];
+    const sourceNodes = [from, ...from.querySelectorAll<SVGElement>('*')];
+    const targetNodes = [to, ...to.querySelectorAll<SVGElement>('*')];
+    sourceNodes.forEach((el, i) => {
+      const target = targetNodes[i];
+      if (!target) return;
+      const cs = getComputedStyle(el);
+      let style = '';
+      for (const p of props) {
+        const v = cs.getPropertyValue(p);
+        if (v && v !== 'none' || p === 'fill' && v === 'none') style += `${p}:${v};`;
+      }
+      if (style) target.setAttribute('style', style);
+    });
+  }
+
+  initProfile();
+  document.addEventListener('astro:page-load', initProfile);
+</script>
