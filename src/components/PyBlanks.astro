@@ -172,6 +172,24 @@ const lines = scaffold.split('\n').map((line) => {
       /** slot number -> index into pieces, or undefined when empty */
       const placed = new Map<number, number>();
 
+      // The switch is a difficulty setting, not a per-box choice, so it is
+      // remembered. A reader who turns the help off does not want it back on
+      // at the next box.
+      const GUIDE_KEY = 'Learmux:py:guided';
+      try {
+        const saved = localStorage.getItem(GUIDE_KEY);
+        if (saved !== null) autoplace.checked = saved === '1';
+      } catch {
+        /* storage blocked; the default stands */
+      }
+      autoplace.addEventListener('change', () => {
+        try {
+          localStorage.setItem(GUIDE_KEY, autoplace.checked ? '1' : '0');
+        } catch {
+          /* storage blocked; the switch still works for this page */
+        }
+      });
+
       if (expect && isSolved(id)) block.dataset.done = '1';
 
       const pieceOf = (slot: number) => placed.get(slot);
