@@ -9,70 +9,121 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 
 <BaseLayout
   title="How to play the Termux CTF"
-  description="The four commands you need, what each one does, and a worked example of the first challenge."
+  description="A reference for every command, a worked example from start to finish, and what to do when a flag is rejected."
 >
   <div class="wrap">
     <header class="ctf-hero">
       <h1>How to play</h1>
       <p class="lede">
-        Four commands cover almost everything. They work the same way for every
-        challenge, so once you have played one you have played them all.
+        Seven commands, and you will use four of them. They behave the same way for every
+        challenge, so the first one teaches you the whole tool. This page is the reference:
+        keep it open in another tab while you play.
       </p>
+      <div class="chip-row">
+        <span class="chip">4 core commands</span>
+        <span class="chip">3 for when you need them</span>
+        <span class="chip chip--mono">6 challenges, 120 points</span>
+      </div>
     </header>
 
     <section>
-      <h2>The four you will use constantly</h2>
-      <div class="cmd-table">
-        {coreCommands.map((c) => (
-          <div class="cmd-row">
-            <code>{c.cmd}</code>
-            <span>{c.what}</span>
-          </div>
-        ))}
-      </div>
+      <h2>Before you begin</h2>
       <p>
-        Anywhere a command takes an <code>&lt;id&gt;</code>, the number and the name both
-        work. <code>ctf start 01</code> and <code>ctf start hidden-file</code> do the same
-        thing.
+        The tool is installed once and then stays out of the way. Three things should be
+        true before you start.
       </p>
-    </section>
-
-    <section>
-      <h2>Three more, for when you need them</h2>
-      <div class="cmd-table">
-        {extraCommands.map((c) => (
-          <div class="cmd-row">
-            <code>{c.cmd}</code>
-            <span>{c.what}</span>
-          </div>
-        ))}
-      </div>
-      <p>
-        <code>ctf hint</code> reveals one hint at a time and remembers how many you have
-        seen, so asking again gives you the next one rather than starting over.
-        <code>ctf doctor</code> is the first thing to run if something behaves oddly.
-      </p>
-    </section>
-
-    <section>
-      <h2>The menu</h2>
-      <p>
-        Typing on a phone is the worst part of any terminal tool, so running
-        <code>ctf</code> with no arguments opens a menu instead of a wall of text. It is
-        the same seven commands, numbered, and it stays open until you quit.
-      </p>
+      <ol class="ctf-steps">
+        <li>
+          <strong>Termux is installed</strong>
+          <span>From F-Droid, not the Play Store, which ships a version that no longer receives updates.</span>
+        </li>
+        <li>
+          <strong>The tool is installed</strong>
+          <span>Four commands, listed on the <a href={`${base}ctf/`}>Termux CTF page</a>. The installer prints everything it is about to write and waits for you to agree.</span>
+        </li>
+        <li>
+          <strong><code>ctf</code> responds</strong>
+          <span>Run <code>ctf list</code>. If the command is not found, open a new Termux session so the shell picks up the updated search path.</span>
+        </li>
+      </ol>
       <p class="ctf-empty">
-        Piped into another command, it prints the how-to-play text instead, so scripts
-        never end up waiting for input that will not come.
+        A fresh install has no challenge files on disk. Each one is written when you start
+        it, and removed when you reset it.
       </p>
     </section>
 
     <section>
-      <h2>A whole session, start to finish</h2>
-      <p>This is the first challenge, played from beginning to end.</p>
+      <h2>Command reference</h2>
+      <p>These four are the whole game. Every challenge is played with them.</p>
+      <table class="ctf-table">
+        <thead>
+          <tr>
+            <th>Command</th>
+            <th>What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          {coreCommands.map((c) => (
+            <tr>
+              <td><code>{c.cmd}</code></td>
+              <td>{c.what}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
-      <Cmd cmd="ctf list" note="See what is there." />
+      <p>Three more exist for the moments the four above do not cover.</p>
+      <table class="ctf-table">
+        <thead>
+          <tr>
+            <th>Command</th>
+            <th>What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          {extraCommands.map((c) => (
+            <tr>
+              <td><code>{c.cmd}</code></td>
+              <td>{c.what}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
+      <h3>Arguments</h3>
+      <p>
+        Wherever a command takes an <code>&lt;id&gt;</code>, the number and the name are
+        interchangeable. <code>ctf start 01</code> and <code>ctf start hidden-file</code>
+        do the same thing, so you can use whichever is easier to type.
+      </p>
+
+      <h3>Exit codes</h3>
+      <p>
+        <code>ctf check</code> exits <code>0</code> when the flag is right and
+        <code>1</code> when it is not, so a script can branch on the result.
+        <code>ctf doctor</code> exits <code>1</code> if anything is wrong with the
+        installation. Every other command exits <code>0</code>.
+      </p>
+
+      <h3>The menu</h3>
+      <p>
+        Running <code>ctf</code> with no arguments opens a numbered menu instead of
+        printing a wall of text, because typing on a phone is the worst part of any
+        terminal tool. It is the same seven commands, and it stays open until you quit.
+        Piped into another command it prints the reference text instead, so a script never
+        ends up waiting for input that will not arrive.
+      </p>
+    </section>
+
+    <section>
+      <h2>A worked example</h2>
+      <p>
+        The first challenge, from beginning to end. Nothing here is specific to it: the
+        other five follow exactly the same shape.
+      </p>
+
+      <h3>1. See what is on offer</h3>
+      <Cmd cmd="ctf list" />
       <div class="ctf-banner">
         <pre>  ────────────────────────────────────────────────
     01   hidden-file          Easy     10 pts  open
@@ -80,9 +131,14 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
   ────────────────────────────────────────────────
     0 of 6 captured, 0 of 120 points</pre>
       </div>
+      <p>
+        The last column is the only one that changes as you play. It reads
+        <code>open</code> until you capture a challenge and <code>captured</code>
+        afterwards.
+      </p>
 
-      <Cmd cmd="ctf start 01" note="Read the briefing. It writes the files and tells you how many." />
-
+      <h3>2. Read the briefing and set it up</h3>
+      <Cmd cmd="ctf start 01" />
       <div class="ctf-banner">
         <pre>Two files were written into your home directory before you started.
 
@@ -93,18 +149,22 @@ One of the two holds your flag. The other is noise.
 
   Ready. 2 file(s) are in place in your home directory.</pre>
       </div>
-
       <p>
-        Now the part that is up to you. A plain <code>ls</code> shows nothing, which is the
-        first half of the lesson. The listing command has a flag of its own for showing
-        everything.
+        The briefing teaches the concept the challenge is testing. It deliberately stops
+        short of the answer, and it does not name the files it wrote.
       </p>
 
+      <h3>3. Find the flag</h3>
+      <p>
+        This part is yours. The briefing points at the tool, and the hint narrows the
+        search further if you want it. A plain <code>ls</code> shows nothing here, which is
+        the first half of the lesson.
+      </p>
       <Cmd cmd="ls -a" />
-      <Cmd cmd="cat .backup-52b09ac4" note="Read the file you found. The name is different on your device." />
+      <Cmd cmd="cat .backup-52b09ac4" note="The name is derived from your device, so yours will differ." />
 
-      <Cmd cmd="ctf check 01 LEARMUX&#123;...&#125;" note="Paste the flag you found. Copy buttons are everywhere in the tool." />
-
+      <h3>4. Hand it in</h3>
+      <Cmd cmd="ctf check 01 LEARMUX&#123;...&#125;" note="The tool decides. It is the only thing holding your seed." />
       <div class="ctf-banner">
         <pre>  LEARMUX&#123;3f2a91c4b7e05d18&#125;
   Correct. 01 captured, 10 points.
@@ -114,43 +174,98 @@ One of the two holds your flag. The other is noise.
     </section>
 
     <section>
-      <h2>When you get stuck</h2>
-      <ol class="ctf-steps">
-        <li>
-          <strong>Re-read the briefing</strong>
-          <span>It teaches the concept the challenge is testing. The answer is usually a step you skipped.</span>
-        </li>
-        <li>
-          <strong>Run <code>ctf start &lt;id&gt;</code> again</strong>
-          <span>It prints everything a second time without touching your progress.</span>
-        </li>
-        <li>
-          <strong>Ask for one hint</strong>
-          <span>Then go and try again. Come back for the second one only if you need it.</span>
-        </li>
-        <li>
-          <strong>Reset the challenge</strong>
-          <span>If you deleted or edited something past the point where it makes sense, <code>ctf reset &lt;id&gt;</code> puts it back.</span>
-        </li>
-      </ol>
+      <h2>What a flag looks like</h2>
       <p>
-        If a flag looks right and is rejected, check you copied all of it. A flag is
-        exactly 25 characters: <code>LEARMUX&#123;</code>, sixteen characters, and a
-        closing brace.
+        Every flag has the same shape: the word <code>LEARMUX</code>, an opening brace,
+        sixteen hexadecimal characters, and a closing brace. Twenty-five characters in
+        total. There is no whitespace inside one, and nothing about it is case-insensitive.
+      </p>
+      <div class="ctf-banner">
+        <pre>LEARMUX&#123;3f2a91c4b7e05d18&#125;
+        └──────────────┘
+        16 hex characters</pre>
+      </div>
+      <p>
+        Knowing the shape is useful when a flag is rejected. If what you copied does not
+        match, the problem is almost always a partial copy rather than a wrong answer.
       </p>
     </section>
 
     <section>
-      <h2>Where things are kept</h2>
+      <h2>When something goes wrong</h2>
+      <table class="ctf-table">
+        <thead>
+          <tr>
+            <th>Symptom</th>
+            <th>What to do</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A flag is rejected</td>
+            <td>
+              Check the shape first: twenty-five characters, no spaces, nothing missing
+              from either end. If it looks right and is still refused, it is not the flag.
+            </td>
+          </tr>
+          <tr>
+            <td>The files are not there</td>
+            <td>
+              You may have reset or edited them past the point where they make sense.
+              <code>ctf reset &lt;id&gt;</code> puts a challenge back to how it started, and
+              your captures are untouched.
+            </td>
+          </tr>
+          <tr>
+            <td>The briefing went past too fast</td>
+            <td>
+              Run <code>ctf start &lt;id&gt;</code> again. It reprints everything and changes
+              nothing, so it is always safe.
+            </td>
+          </tr>
+          <tr>
+            <td>You are stuck</td>
+            <td>
+              <code>ctf hint &lt;id&gt;</code> reveals one hint at a time and remembers how
+              many you have seen, so asking again moves you forward rather than starting
+              over.
+            </td>
+          </tr>
+          <tr>
+            <td>Something behaves oddly</td>
+            <td>
+              <code>ctf doctor</code> checks the installation and names what is wrong. Run
+              it before anything else.
+            </td>
+          </tr>
+          <tr>
+            <td><code>ctf</code> is not found</td>
+            <td>
+              Open a new Termux session so the shell reloads its search path, or run the
+              installer again. It is safe to run more than once, and your progress stays.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Where everything is kept</h2>
       <p>
-        The tool and your progress live in <code>~/.learmux</code>, and the command itself
-        is installed into <code>$PREFIX/bin</code>. Every path the tool creates is recorded
-        in a manifest as it goes, which is what lets the uninstaller remove exactly those
-        paths and nothing else.
+        The tool, your progress and your hint counts live in <code>~/.learmux</code>. The
+        command itself is installed into <code>$PREFIX/bin</code>, which is already on your
+        search path in Termux. Challenge files are written into your home directory, the
+        way any other file would be.
       </p>
-      <Cmd cmd="./uninstall.sh" note="Removes only what the tool recorded, and prints the list first." />
+      <p>
+        Every path the tool creates is recorded in a manifest as it goes. That is what
+        lets the uninstaller remove exactly those paths and nothing else, so anything you
+        put in your home directory yourself stays where it is.
+      </p>
+      <Cmd cmd="./uninstall.sh" note="Prints the full list of what it will remove, then asks." />
       <p>
         <a class="btn" href={`${base}ctf/challenges/`}>See the challenges</a>
+        <a class="btn" href={`${base}ctf/progress/`}>Show your progress here</a>
         <a class="btn" href={ctfRepo} target="_blank" rel="noopener">Read the source</a>
       </p>
     </section>
