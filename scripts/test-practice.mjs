@@ -20,7 +20,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -343,12 +343,16 @@ const SAMPLES = {
  * working directory sits inside com.termux. Running it under an ordinary
  * temporary path would test the verifier rather than the task.
  */
-function runTask(command) {
+function runTask(command, fixture) {
   const root = mkdtempSync(join(tmpdir(), 'learn-practice-'));
   const termuxFiles = join(root, 'data', 'data', 'com.termux', 'files');
   const home = join(termuxFiles, 'home');
   const prefix = join(termuxFiles, 'usr');
   mkdirSync(home, { recursive: true });
+  if (fixture) {
+    const script = extractFinalScript(fixture.lesson);
+    if (script !== null) writeFileSync(join(home, fixture.as), script, { mode: 0o755 });
+  }
   // Termux sets PREFIX to its own usr directory, and one of the tasks reads it
   mkdirSync(join(prefix, 'bin'), { recursive: true });
   try {
@@ -364,6 +368,22 @@ function runTask(command) {
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+}
+
+/**
+ * The complete program from a lesson's "The whole script" section.
+ *
+ * Returns null if the lesson has no such section, so a typo in a fixture shows
+ * up as a failed check rather than a task that silently passes on nothing.
+ */
+function extractFinalScript(lessonSlug) {
+  const file = resolve(ROOT, 'src/content/tutorials', `${lessonSlug}.mdx`);
+  if (!existsSync(file)) return null;
+  const text = readFileSync(file, 'utf8');
+  const at = text.indexOf('## The whole script');
+  if (at === -1) return null;
+  const m = /```[a-z]*\n([\s\S]*?)\n```/.exec(text.slice(at));
+  return m ? m[1] + '\n' : null;
 }
 
 const toolAvailable = (name) =>
@@ -411,8 +431,16 @@ for (const set of practiceSets) {
       continue;
     }
 
+    // A task may need the script the lesson built. runTask writes it into its
+    // own throwaway HOME first, so the command stays short and the thing under
+    // test is the program the lesson actually ships.
+    if (task.fixture && extractFinalScript(task.fixture.lesson) === null) {
+      fail(`no final code block found in lesson ${task.fixture.lesson}`);
+      continue;
+    }
+
     // No sample: run it for real.
-    const out = runTask(task.command);
+    const out = runTask(task.command, task.fixture);
     if (!out.trim()) {
       fail('the command produced no output at all', task.command);
       continue;
