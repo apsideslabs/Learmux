@@ -3,7 +3,7 @@ import '../styles/global.css';
 import '../styles/terminal.css';
 import { ClientRouter } from 'astro:transitions';
 import { challenges } from '../lib/challenges';
-import { site, studio, nav, drawerNav, type DrawerGroup, type DrawerItem } from '../lib/site';
+import { site, studio, nav, drawerNav, drawerHome, type DrawerGroup, type DrawerItem } from '../lib/site';
 import Icon from '../components/Icon.astro';
 
 interface Props {
@@ -125,6 +125,10 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
       </div>
     </header>
 
+    {/* A tap has to acknowledge itself. On a slow connection the new page can
+        take a moment, and without this the tap looks like it did nothing. */}
+    <div class="nav-progress" data-nav-progress data-active="false" data-done="false" aria-hidden="true"></div>
+
     <div class="drawer-scrim" data-drawer-scrim aria-hidden="true"></div>
 
     <div class="drawer" id="site-menu" data-drawer data-open="false" role="dialog" aria-modal="true" aria-label="Site menu">
@@ -143,6 +147,14 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
       </div>
 
       <nav aria-label="Menu">
+        <a
+          class="drawer__link drawer__link--home"
+          href={base}
+          {...(isCurrent(drawerHome) ? { 'aria-current': 'page' } : {})}
+        >
+          <span>{drawerHome.label}</span>
+        </a>
+
         {drawerNav.map((group) => {
           const gid = `drawer-group-${slugify(group.title)}`;
           const gOpen = groupHasCurrent(group);
@@ -369,6 +381,31 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
         });
       }
 
+      // Astro fires these around a view transition, so the bar tracks the real
+      // navigation rather than a guess at it.
+      function initProgressBar() {
+        const bar = document.querySelector<HTMLElement>('[data-nav-progress]');
+        if (!bar || bar.dataset.bound) return;
+        bar.dataset.bound = '1';
+
+        const start = () => {
+          bar.dataset.done = 'false';
+          bar.dataset.active = 'true';
+        };
+        const finish = () => {
+          if (bar.dataset.active !== 'true') return;
+          bar.dataset.active = 'false';
+          bar.dataset.done = 'true';
+          window.setTimeout(() => {
+            bar.dataset.done = 'false';
+          }, 420);
+        };
+
+        document.addEventListener('astro:before-preparation', start);
+        document.addEventListener('astro:after-swap', finish);
+        document.addEventListener('astro:page-load', finish);
+      }
+
       function boot() {
         document.body.classList.remove('menu-open');
         document.querySelectorAll('[data-drawer]').forEach((d) => d.setAttribute('data-open', 'false'));
@@ -378,6 +415,7 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
         });
         initMenu();
         initDrawerGroups();
+        initProgressBar();
         refreshProgress();
       }
 
