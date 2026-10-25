@@ -25,6 +25,7 @@ export const studio = {
 export const nav = [
   { href: 'course/', label: 'Course' },
   { href: 'tools/', label: 'Tools' },
+  { href: 'practice/', label: 'Test yourself' },
   { href: 'ctf/', label: 'Termux CTF', cta: true },
   { href: 'challenges/', label: 'In-browser' },
   { href: 'about/', label: 'About us' },
@@ -37,6 +38,7 @@ export const drawerNav = [
   { href: 'tools/', label: 'Tools' },
   { href: 'categories/', label: 'Categories', chevron: true },
   { href: 'learn/', label: 'All lessons' },
+  { href: 'practice/', label: 'Test yourself', tag: 'Quiz' },
   { href: 'ctf/', label: 'Termux CTF', tag: 'Real' },
   { href: 'ctf/play/', label: 'How to play' },
   { href: 'ctf/challenges/', label: 'CTF challenges' },
