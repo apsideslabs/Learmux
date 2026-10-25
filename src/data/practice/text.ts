@@ -78,8 +78,8 @@ export const textSets: PracticeSet[] = [
         expects:
           'Two lines, each starting with the line number, a colon, then the matching text: 2:ERROR disk full and 4:ERROR timeout. The line numbers are what -n adds, and they matter because they let you go straight to the place in the file. Notice that the INFO lines are absent. A search shows you matches, not the file.',
         rules: [
-          { type: 'matches', pattern: '^2:ERROR', label: 'the first match is reported with its line number' },
-          { type: 'matches', pattern: '^4:ERROR', label: 'the second match is reported with its line number' },
+          { type: 'matches', pattern: '^\\s*2:ERROR', label: 'the first match is reported with its line number' },
+          { type: 'matches', pattern: '^\\s*4:ERROR', label: 'the second match is reported with its line number' },
           { type: 'absent', pattern: 'INFO', label: 'no non-matching lines came through' },
         ],
       },
@@ -241,7 +241,7 @@ export const textSets: PracticeSet[] = [
         rules: [
           {
             type: 'matches',
-            pattern: '^[0-9a-f]{64}\\s',
+            pattern: '^\\s*[0-9a-f]{64}\\s',
             label: 'a 64 character hexadecimal digest comes first',
           },
           { type: 'contains', value: 'note.txt', label: 'the file name is reported alongside it' },
