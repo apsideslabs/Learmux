@@ -1,7 +1,7 @@
 ---
 title: "Build a permissions calculator"
-description: "Convert between the symbolic mode string that ls prints and the octal number that chmod takes, with a small script of your own."
-excerpt: "Build a converter that turns a permission string into an octal number and back, so you never guess what 2755 means."
+description: "Build a shell script that converts a Unix file mode between octal and symbolic form, handles the setuid, setgid and sticky bits, and says what each bit allows."
+excerpt: "Read a mode from stat, turn octal into rwx and back, get the special bits right, and finish with a complete script you can keep."
 category: "Utilities"
 track: "utilities"
 author: "The Study Cipher"
@@ -11,230 +11,565 @@ level: Intermediate
 tags: [utilities, permissions]
 ---
 
-import Callout from '../../components/Callout.astro';
+This lesson builds the same converter as the permissions calculator, so you can do the whole job from the shell without opening it. By the end you will have a script called `permtool.sh` that takes a mode such as `755` or `rwsr-xr-x` and prints the other form, along with a plain description of what the bits allow.
 
-A Linux permission is a number, and every number has a second spelling in letters. You have seen both: `644` on one line and `rw-r--r--` on another, the same mode written two ways. This lesson builds a small converter that moves between them, so you can read a mode you did not set and write one you did without guessing. It builds the same thing as the [permissions calculator](/utilities/permissions/) on this site, so once you have it here you can do the same work on your phone with nothing but Termux.
+You build it up a few lines at a time, running it after every step, and the finished script sits in one block at the end so you can copy the whole thing at once.
 
 ## What you'll be able to do
 
-- Read a file's mode two ways, with `ls -l` and with `stat`.
-- Explain the leading digit and the three special bits it holds.
-- Convert an octal mode to its symbolic form, and back, with a short script.
-- Set a mode with `chmod` in both the numeric and the symbolic form.
-- Audit a directory for world-writable files with `find -perm`.
-- Say why `chmod 777` is almost always the wrong answer.
+- Read a file mode with `stat` and understand the four digits.
+- Turn an octal digit into its three `rwx` characters.
+- Handle the special bits, including the difference between `s` and `S`.
+- Convert back from a symbolic string to octal.
+- Explain why `chmod 777` is almost always wrong.
 
-## Step 1: Read a mode two ways
+## Step 1: Read a mode off a file
 
-Start with a file you control. The long listing shows the symbolic mode, and `stat` can show the same mode as a number.
+Start by making a file and giving it a mode with a special bit set, so there is something interesting to look at.
 
 ```bash
-cd ~
-touch notes.txt
-chmod 640 notes.txt
-ls -l notes.txt
-stat -c '%a %n' notes.txt
+touch calc.sh
+chmod 4755 calc.sh
+stat -c '%a %n' calc.sh
 ```
 
 ```text
--rw-r----- 1 u0_a123 u0_a123 0 Oct 25 06:28 notes.txt
-640 notes.txt
+4755 calc.sh
 ```
 
-The first line is the symbolic form: read and write for the owner, read for the group, nothing for anyone else. The second line is the octal form, `640`, the same thing in one number. `stat` prints what you ask for with `-c`: `%a` is the mode in octal and `%n` is the name. Ask for `%A` too and you get both forms at once.
+Four digits, not three. The first is the special digit and the last three are owner, group and others. `ls -l` shows the same thing in the other notation.
 
 ```bash
-stat -c '%A %a %n' notes.txt
+ls -l calc.sh
 ```
 
 ```text
--rw-r----- 640 notes.txt
+-rwsr-xr-x 1 u0_a123 u0_a123 0 Oct 25 08:00 calc.sh
 ```
 
-## Step 2: The four digits and the special bits
+Ten characters. The first is the file type, a dash for a regular file, and it is not a permission at all. The next nine are the three classes, three characters each. Notice the `s` in the owner's execute position: that is the special bit from the `4`, and it is the part most converters get wrong.
 
-Most modes are three digits: owner, group, others. Each digit adds read (4), write (2) and execute (1). So `7` is read, write and execute, `6` is read and write, and `5` is read and execute.
+## Step 2: One octal digit becomes three characters
 
-A mode can carry a fourth digit in front of those three. It holds three special bits, and each one changes how a file behaves:
-
-| Digit | Bit | Name | Effect |
-| --- | --- | --- | --- |
-| 4 | setuid | set user ID | a program runs as its owner, not as you |
-| 2 | setgid | set group ID | a program runs with its group; on a directory, new files inherit the group |
-| 1 | sticky | sticky bit | on a directory, only the owner of a file may delete it |
-
-The digits add, so `2755` is setgid plus `755`, and `4755` is setuid plus `755`. You write them as one four-digit number: `chmod 4755 program`.
-
-## Step 3: Convert octal to symbolic with a script
-
-Doing that arithmetic by hand gets tiring, so build the converter. This short Python script takes octal modes as arguments and prints the symbolic form. Install Python once with `pkg install python`, and then the standard library is all you need. Nothing here touches the network.
+Each class is three bits, read, write and execute, worth four, two and one. A `case` statement turns one digit into its three characters.
 
 ```bash
-cat > ~/oct2sym.py <<'EOF'
-import sys
-for arg in sys.argv[1:]:
-    n = int(arg, 8)
-    special = (n >> 9) & 7
-    out = ''
-    for i, shift in enumerate((6, 3, 0)):
-        d = (n >> shift) & 7
-        x = d & 1
-        s = (special >> (2 - i)) & 1
-        out += 'r' if d & 4 else '-'
-        out += 'w' if d & 2 else '-'
-        if s:
-            out += ('s' if i < 2 else 't') if x else ('S' if i < 2 else 'T')
-        else:
-            out += 'x' if x else '-'
-    print(f'{arg} {out}')
+cat > step2.sh <<'EOF'
+digit_to_rwx() {
+  case "$1" in
+    0) printf '%s' '---' ;;
+    1) printf '%s' '--x' ;;
+    2) printf '%s' '-w-' ;;
+    3) printf '%s' '-wx' ;;
+    4) printf '%s' 'r--' ;;
+    5) printf '%s' 'r-x' ;;
+    6) printf '%s' 'rw-' ;;
+    7) printf '%s' 'rwx' ;;
+  esac
+}
+digit_to_rwx 5
+echo
+digit_to_rwx 7
+echo
 EOF
-python3 ~/oct2sym.py 644 755 600 4755 2755 1777
+bash step2.sh
 ```
 
 ```text
-644 rw-r--r--
-755 rwxr-xr-x
-600 rw-------
-4755 rwsr-xr-x
-2755 rwxr-sr-x
-1777 rwxrwxrwt
+r-x
+rwx
 ```
 
-The script shifts each group of three bits out of the number and prints `r`, `w` and `x` where the matching bit is set, and a dash where it is not. The special digit is read the same way, three bits higher up.
+There are only eight possible digits and each one has exactly one answer, so a lookup is both the shortest and the clearest way to write this. Adding up four and two and one gives `7`, which is why the digits never go above seven.
 
-## Step 4: The s versus S and t versus T distinction
+## Step 3: All three digits
 
-In `4755 rwsr-xr-x` the owner's execute slot holds a lowercase `s`, not an `x`. That `s` is doing two jobs at once: the execute bit is set, and so is setuid. When setuid is set but execute is not, the letter turns capital.
+A mode is three of those digits in a row. `755` is owner `7`, group `5` and others `5`.
 
 ```bash
-python3 ~/oct2sym.py 4644 1777 1666
-```
+cat > step3.sh <<'EOF'
+digit_to_rwx() {
+  case "$1" in
+    0) printf '%s' '---' ;; 1) printf '%s' '--x' ;; 2) printf '%s' '-w-' ;; 3) printf '%s' '-wx' ;;
+    4) printf '%s' 'r--' ;; 5) printf '%s' 'r-x' ;; 6) printf '%s' 'rw-' ;; 7) printf '%s' 'rwx' ;;
+  esac
+}
 
-```text
-4644 rwSr--r--
-1777 rwxrwxrwt
-1666 rw-rw-rwT
-```
-
-In `rwSr--r--` the capital `S` says setuid is on but the owner cannot execute the file, so the bit has nothing to act on. The same rule holds for setgid in the group position. For the sticky bit the letters are `t` and `T`: `rwxrwxrwt` is a sticky directory everyone can write to, which is what `/tmp` looks like, while `rw-rw-rwT` has sticky set but no execute for others. A capital letter always means the special bit is set while the matching execute bit is not.
-
-## Step 5: Set a mode in both forms
-
-The symbolic form names who you are changing (`u` for user, `g` for group, `o` for others, `a` for all three) and what you are doing (`+` to add, `-` to remove, `=` to set exactly). You can join several changes with commas.
-
-```bash
-touch script.sh
-chmod 640 script.sh
-ls -l script.sh
-chmod u+rwx,go+rx script.sh
-ls -l script.sh
-stat -c '%a %n' script.sh
-```
-
-```text
--rw-r----- 1 u0_a123 u0_a123 0 Oct 25 06:28 script.sh
--rwxr-xr-x 1 u0_a123 u0_a123 0 Oct 25 06:28 script.sh
-755 script.sh
-```
-
-The comma list `u+rwx,go+rx` gives the owner read, write and execute, and the group and others read and execute, in one command. It lands on the same mode as `chmod 755`: the symbolic form describes a change, and the numeric form is the result.
-
-<Callout type="tip" title="When the symbolic form is clearer">
-Use the symbolic form to change one thing and leave the rest alone, such as `chmod +x run.sh`. Use the numeric form to state the whole mode at once.
-</Callout>
-
-## Step 6: Read a mode string back to octal
-
-The other direction is just as useful. Give a script the symbolic form and let it print the number.
-
-```bash
-cat > ~/sym2oct.py <<'EOF'
-import sys
-def to_oct(s):
-    s = s[-9:]
-    special = 0
-    digits = []
-    for i in range(3):
-        c = s[i * 3:i * 3 + 3]
-        d = (4 if c[0] == 'r' else 0) + (2 if c[1] == 'w' else 0) + (1 if c[2] in 'xst' else 0)
-        digits.append(d)
-        if c[2] in 'sS' and i < 2:
-            special |= (4 >> i)
-        if c[2] in 'tT':
-            special |= 1
-    if special:
-        return f'{special}{digits[0]}{digits[1]}{digits[2]}'
-    return f'{digits[0]}{digits[1]}{digits[2]}'
-for arg in sys.argv[1:]:
-    print(f'{arg} {to_oct(arg)}')
+for mode in 755 640; do
+  printf '%s%s%s\n' \
+    "$(digit_to_rwx "${mode:0:1}")" \
+    "$(digit_to_rwx "${mode:1:1}")" \
+    "$(digit_to_rwx "${mode:2:1}")"
+done
 EOF
-python3 ~/sym2oct.py rw-r----- rwxr-xr-x rwsr-xr-x rwxrwxrwt rwSr--r--
+bash step3.sh
 ```
 
 ```text
-rw-r----- 640
-rwxr-xr-x 755
-rwsr-xr-x 4755
-rwxrwxrwt 1777
-rwSr--r-- 4644
+rwxr-xr-x
+rw-r-----
 ```
 
-The script takes the last nine characters, which drops the leading type letter if you copied it from `ls`. It reads each group of three into a digit, and adds the special bit back when it sees an `s`, `S`, `t` or `T`. You can now paste a mode string out of a listing and get the number, or paste a number and get the string.
+`${mode:0:1}` is shell parameter expansion: the substring starting at offset zero, one character long. So `${mode:1:1}` is the middle digit and `${mode:2:1}` is the last.
 
-## Step 7: Audit a directory with find -perm
+## Step 4: The special digit
 
-You rarely want to change one file at a time. You want to find the files that are already wrong. `find` can test permissions without changing anything. `-perm 755` matches a mode exactly. A leading `-` means every listed bit must be set, and a leading `/` means any listed bit may be set.
+A four digit mode puts the special bits in front. The digit is a sum: four for setuid, two for setgid, one for sticky.
 
 ```bash
-mkdir -p ~/audit
-touch ~/audit/a.txt ~/audit/b.sh
-chmod 777 ~/audit/a.txt
-chmod 755 ~/audit/b.sh
-find ~/audit -perm -0002
+cat > step4.sh <<'EOF'
+digit_to_rwx() {
+  case "$1" in
+    0) printf '%s' '---' ;; 1) printf '%s' '--x' ;; 2) printf '%s' '-w-' ;; 3) printf '%s' '-wx' ;;
+    4) printf '%s' 'r--' ;; 5) printf '%s' 'r-x' ;; 6) printf '%s' 'rw-' ;; 7) printf '%s' 'rwx' ;;
+  esac
+}
+
+mode=4755
+special=${mode:0:1}
+mode=${mode:1}
+
+u=$(digit_to_rwx "${mode:0:1}")
+g=$(digit_to_rwx "${mode:1:1}")
+o=$(digit_to_rwx "${mode:2:1}")
+
+printf 'special digit %s, owner %s, group %s, others %s\n' "$special" "$u" "$g" "$o"
+EOF
+bash step4.sh
 ```
 
 ```text
-/data/data/com.termux/files/home/audit/a.txt
+special digit 4, owner rwx, group r-x, others r-x
 ```
 
-`-0002` asks for files where the other-write bit is set, and only `a.txt` has it, because it was set to `777`. To catch any file with any write bit set, use `-perm /0222`, and to find a sticky directory use `-perm -1000`.
+The special digit is stripped off and remembered, then the remaining three are converted exactly as before. That is why the script checks the length first: a four character mode has a special digit, a three character one does not.
 
-<Callout type="warning" title="find reports, chmod changes">
-`find -perm` only lists. Nothing is altered until you pass the result to `chmod`, so it is safe to run while you decide what to fix.
-</Callout>
+## Step 5: s and S, t and T
 
-## Step 8: Why chmod 777 is almost always wrong
-
-Mode `777` gives read, write and execute to the owner, the group, and everyone else. On a phone, everyone else means every other app on the device. A world-writable file can be replaced by anything that can reach it, and a world-writable file on your `PATH` is worse, because a replacement command runs the next time you type its name.
+This is the part worth reading twice. The special bit has no character of its own, so it borrows the execute position. If execute is also set you get a lowercase letter. If it is not, you get a capital.
 
 ```bash
-touch open.txt
-chmod 777 open.txt
-ls -l open.txt
+cat > step5.sh <<'EOF'
+digit_to_rwx() {
+  case "$1" in
+    0) printf '%s' '---' ;; 1) printf '%s' '--x' ;; 2) printf '%s' '-w-' ;; 3) printf '%s' '-wx' ;;
+    4) printf '%s' 'r--' ;; 5) printf '%s' 'r-x' ;; 6) printf '%s' 'rw-' ;; 7) printf '%s' 'rwx' ;;
+  esac
+}
+
+apply_special() {
+  local special=$1 u=$2 g=$3 o=$4
+  if [ $(( special & 4 )) -ne 0 ]; then
+    if [ "${u:2:1}" = x ]; then u="${u:0:2}s"; else u="${u:0:2}S"; fi
+  fi
+  if [ $(( special & 2 )) -ne 0 ]; then
+    if [ "${g:2:1}" = x ]; then g="${g:0:2}s"; else g="${g:0:2}S"; fi
+  fi
+  if [ $(( special & 1 )) -ne 0 ]; then
+    if [ "${o:2:1}" = x ]; then o="${o:0:2}t"; else o="${o:0:2}T"; fi
+  fi
+  printf '%s%s%s' "$u" "$g" "$o"
+}
+
+echo "4755 -> $(apply_special 4 "$(digit_to_rwx 7)" "$(digit_to_rwx 5)" "$(digit_to_rwx 5)")"
+echo "4644 -> $(apply_special 4 "$(digit_to_rwx 6)" "$(digit_to_rwx 4)" "$(digit_to_rwx 4)")"
+echo "1777 -> $(apply_special 1 "$(digit_to_rwx 7)" "$(digit_to_rwx 7)" "$(digit_to_rwx 7)")"
+echo "1644 -> $(apply_special 1 "$(digit_to_rwx 6)" "$(digit_to_rwx 4)" "$(digit_to_rwx 4)")"
+EOF
+bash step5.sh
 ```
 
 ```text
--rwxrwxrwx 1 u0_a123 u0_a123 0 Oct 25 06:28 open.txt
+4755 -> rwsr-xr-x
+4644 -> rwSr--r--
+1777 -> rwxrwxrwt
+1644 -> rw-r--r-T
 ```
 
-There are a few honest uses: `/tmp` is `1777` because it is shared on purpose, and the sticky bit stops you deleting other people's files there. For your own files the answer is nearly always `600` for a file you keep to yourself, `644` for one others may read, `700` for a private directory and `755` for one they may enter. If you reached for `777` because something could not read or write a file, give the right class the right bit instead of opening the file to the world.
+`$(( special & 4 ))` tests whether that bit is set. The bitwise AND is the natural way to ask about one bit of a number. `4644` becomes `rwSr--r--` with a capital `S`, and that capital carries real meaning: setuid is on, but owner execute is off, so the program does not run at all. It does nothing until you add execute back. The sticky bit works the same way, with `t` and `T`.
+
+## Step 6: Back from symbolic to octal
+
+The reverse direction walks the nine characters in three groups, adding four, two and one for each letter, and watching the execute position for a special letter.
+
+```bash
+cat > step6.sh <<'EOF'
+symbolic_to_octal() {
+  local s=$1
+  if [ "${#s}" -eq 10 ]; then s=${s:1}; fi
+
+  local special=0 digits='' i grp d last
+  for i in 0 1 2; do
+    grp=${s:i*3:3}
+    d=0
+    case "${grp:0:1}" in r) d=$(( d + 4 )) ;; esac
+    case "${grp:1:1}" in w) d=$(( d + 2 )) ;; esac
+    last=${grp:2:1}
+    case "$last" in x|s|t) d=$(( d + 1 )) ;; esac
+    digits="$digits$d"
+    case "$last" in
+      s|S)
+        if [ "$i" -eq 0 ]; then special=$(( special + 4 ))
+        elif [ "$i" -eq 1 ]; then special=$(( special + 2 ))
+        fi ;;
+      t|T) special=$(( special + 1 )) ;;
+    esac
+  done
+
+  if [ "$special" -ne 0 ]; then
+    printf '%s%s' "$special" "$digits"
+  else
+    printf '%s' "$digits"
+  fi
+}
+
+for s in rwxr-xr-x rw-r--r-- rwsr-xr-x rwSr--r-- rwxrwxrwt rw-r--r-T; do
+  printf '%-12s -> %s\n' "$s" "$(symbolic_to_octal "$s")"
+done
+EOF
+bash step6.sh
+```
+
+```text
+rwxr-xr-x    -> 755
+rw-r--r--    -> 644
+rwsr-xr-x    -> 4755
+rwSr--r--    -> 4644
+rwxrwxrwt    -> 1777
+rw-r--r-T    -> 1644
+```
+
+Two details matter. A ten character string from `ls -l` has its type letter stripped first, so pasting `-rwxr-xr-x` works as well as `rwxr-xr-x`. And a lowercase `s` or `t` counts as execute while a capital does not, which is what makes the round trip in step 5 survive being reversed here.
+
+## Step 7: Say what the bits allow
+
+Numbers are not the useful output. A sentence is.
+
+```bash
+cat > step7.sh <<'EOF'
+describe_class() {
+  local label=$1 group=$2 words=''
+  case "${group:0:1}" in r) words='read' ;; esac
+  case "${group:1:1}" in w) words="${words:+$words, }write" ;; esac
+  case "${group:2:1}" in x|s|t) words="${words:+$words, }execute" ;; esac
+  if [ -z "$words" ]; then words='nothing'; fi
+  printf '  %-6s %s\n' "$label" "$words"
+}
+
+symbolic=rw-r--r--
+describe_class owner "${symbolic:0:3}"
+describe_class group "${symbolic:3:3}"
+describe_class others "${symbolic:6:3}"
+EOF
+bash step7.sh
+```
+
+```text
+  owner  read, write
+  group  read
+  others read
+```
+
+`${words:+$words, }` expands to nothing when `words` is empty and to the value plus a comma otherwise, which is how the commas land in the right places without a special case for the first one.
+
+## Step 8: Arguments, usage and errors
+
+Now wrap it up so it behaves like a real command. A script that prints a stack trace when you mistype is not finished.
+
+```bash
+cat > step8.sh <<'EOF'
+prog=${0##*/}
+mode=$1
+
+if [[ $mode =~ ^[0-7]{3,4}$ ]]; then
+  octal=$mode
+  symbolic="(octal_to_symbolic would run here)"
+elif [[ $mode =~ ^[dlbcps-]?[rwxsStT-]{9}$ ]]; then
+  octal="(symbolic_to_octal would run here)"
+  symbolic=$mode
+elif [ "$mode" = '-h' ] || [ "$mode" = '--help' ]; then
+  printf 'Usage: %s MODE\n' "$prog"
+  exit 0
+elif [[ $mode == -* ]]; then
+  printf '%s: unknown option %s\n' "$prog" "$mode" >&2
+  exit 2
+else
+  printf '%s: not a valid mode: %s\n' "$prog" "$mode" >&2
+  printf 'Give three or four octal digits, or nine symbolic characters.\n' >&2
+  exit 1
+fi
+
+printf '%s\n' "$symbolic"
+EOF
+
+bash step8.sh 999; echo "  exit $?"
+bash step8.sh -z; echo "  exit $?"
+```
+
+```text
+step8.sh: not a valid mode: 999
+Give three or four octal digits, or nine symbolic characters.
+  exit 1
+step8.sh: unknown option -z
+  exit 2
+```
+
+The order of the tests matters. The symbolic pattern has to be checked before the option test, because `-rw-r--r--` starts with a dash and would otherwise be mistaken for a flag. `>&2` sends the complaint to standard error, and a non-zero exit code is what lets another script notice something went wrong.
+
+## The whole script
+
+Save this as `permtool.sh` and make it executable with `chmod +x permtool.sh`. Nothing is left out.
+
+```bash
+#!/usr/bin/env bash
+# permtool.sh - convert a file mode between octal and symbolic form.
+
+set -u
+
+prog=${0##*/}
+
+usage() {
+  cat <<'USAGE'
+Usage: permtool.sh MODE
+       permtool.sh 755          octal to symbolic
+       permtool.sh rwxr-xr-x    symbolic to octal
+
+MODE is a three or four digit octal number, or a nine character
+symbolic string. A leading type letter from ls -l (such as - or d)
+is accepted and ignored.
+USAGE
+}
+
+# Turn one octal digit into its three rwx characters.
+digit_to_rwx() {
+  case "$1" in
+    0) printf '%s' '---' ;;
+    1) printf '%s' '--x' ;;
+    2) printf '%s' '-w-' ;;
+    3) printf '%s' '-wx' ;;
+    4) printf '%s' 'r--' ;;
+    5) printf '%s' 'r-x' ;;
+    6) printf '%s' 'rw-' ;;
+    7) printf '%s' 'rwx' ;;
+  esac
+}
+
+# Turn a three or four digit mode into the nine character symbolic string.
+octal_to_symbolic() {
+  local mode=$1 special=0
+  if [ "${#mode}" -eq 4 ]; then
+    special=${mode:0:1}
+    mode=${mode:1}
+  fi
+
+  local u g o
+  u=$(digit_to_rwx "${mode:0:1}")
+  g=$(digit_to_rwx "${mode:1:1}")
+  o=$(digit_to_rwx "${mode:2:1}")
+
+  if [ $(( special & 4 )) -ne 0 ]; then
+    if [ "${u:2:1}" = x ]; then u="${u:0:2}s"; else u="${u:0:2}S"; fi
+  fi
+  if [ $(( special & 2 )) -ne 0 ]; then
+    if [ "${g:2:1}" = x ]; then g="${g:0:2}s"; else g="${g:0:2}S"; fi
+  fi
+  if [ $(( special & 1 )) -ne 0 ]; then
+    if [ "${o:2:1}" = x ]; then o="${o:0:2}t"; else o="${o:0:2}T"; fi
+  fi
+
+  printf '%s%s%s' "$u" "$g" "$o"
+}
+
+# Turn a nine character symbolic string into the octal number.
+symbolic_to_octal() {
+  local s=$1
+  if [ "${#s}" -eq 10 ]; then s=${s:1}; fi
+
+  local special=0 digits='' i grp d last
+  for i in 0 1 2; do
+    grp=${s:i*3:3}
+    d=0
+    case "${grp:0:1}" in r) d=$(( d + 4 )) ;; esac
+    case "${grp:1:1}" in w) d=$(( d + 2 )) ;; esac
+    last=${grp:2:1}
+    case "$last" in x|s|t) d=$(( d + 1 )) ;; esac
+    digits="$digits$d"
+    case "$last" in
+      s|S)
+        if [ "$i" -eq 0 ]; then special=$(( special + 4 ))
+        elif [ "$i" -eq 1 ]; then special=$(( special + 2 ))
+        fi ;;
+      t|T) special=$(( special + 1 )) ;;
+    esac
+  done
+
+  if [ "$special" -ne 0 ]; then
+    printf '%s%s' "$special" "$digits"
+  else
+    printf '%s' "$digits"
+  fi
+}
+
+# Print what one class of the symbolic string allows, in plain words.
+describe_class() {
+  local label=$1 group=$2 words=''
+  case "${group:0:1}" in r) words='read' ;; esac
+  case "${group:1:1}" in w) words="${words:+$words, }write" ;; esac
+  case "${group:2:1}" in x|s|t) words="${words:+$words, }execute" ;; esac
+  if [ -z "$words" ]; then words='nothing'; fi
+  printf '  %-6s %s\n' "$label" "$words"
+}
+
+if [ $# -eq 0 ]; then
+  usage >&2
+  exit 2
+fi
+
+mode=$1
+if [[ $mode =~ ^[0-7]{3,4}$ ]]; then
+  octal=$mode
+  symbolic=$(octal_to_symbolic "$mode")
+elif [[ $mode =~ ^[dlbcps-]?[rwxsStT-]{9}$ ]]; then
+  octal=$(symbolic_to_octal "$mode")
+  symbolic=$(octal_to_symbolic "$octal")
+elif [ "$mode" = '-h' ] || [ "$mode" = '--help' ]; then
+  usage
+  exit 0
+elif [[ $mode == -* ]]; then
+  printf '%s: unknown option %s\n' "$prog" "$mode" >&2
+  printf 'Try %s --help for usage.\n' "$prog" >&2
+  exit 2
+else
+  printf '%s: not a valid mode: %s\n' "$prog" "$mode" >&2
+  printf 'Give three or four octal digits, or nine symbolic characters.\n' >&2
+  exit 1
+fi
+
+printf '%s\n' "$symbolic"
+describe_class owner "${symbolic:0:3}"
+describe_class group "${symbolic:3:3}"
+describe_class others "${symbolic:6:3}"
+
+case "${symbolic:2:1}" in
+  s) printf '  setuid is on, so this program runs as its owner\n' ;;
+  S) printf '  setuid is on but owner execute is off, so it does nothing\n' ;;
+esac
+case "${symbolic:5:1}" in
+  s) printf '  setgid is on, so this program runs with the file group\n' ;;
+  S) printf '  setgid is on but group execute is off, so it does nothing\n' ;;
+esac
+case "${symbolic:8:1}" in
+  t) printf '  sticky is on, so only an owner may delete files here\n' ;;
+  T) printf '  sticky is on but others execute is off, so it does nothing\n' ;;
+esac
+```
+
+## Using it
+
+An ordinary file mode:
+
+```bash
+./permtool.sh 644
+```
+
+```text
+rw-r--r--
+  owner  read, write
+  group  read
+  others read
+```
+
+The setuid case, which is the one worth recognising on sight:
+
+```bash
+./permtool.sh 4755
+```
+
+```text
+rwsr-xr-x
+  owner  read, write, execute
+  group  read, execute
+  others read, execute
+  setuid is on, so this program runs as its owner
+```
+
+The capital `S`, where the special bit is set but does nothing:
+
+```bash
+./permtool.sh 4644
+```
+
+```text
+rwSr--r--
+  owner  read, write
+  group  read
+  others read
+  setuid is on but owner execute is off, so it does nothing
+```
+
+And the sticky bit, which is what keeps `/tmp` sane:
+
+```bash
+./permtool.sh 1777
+```
+
+```text
+rwxrwxrwt
+  owner  read, write, execute
+  group  read, write, execute
+  others read, write, execute
+  sticky is on, so only an owner may delete files here
+```
+
+It reads the other notation too, so you can paste straight from `ls -l`:
+
+```bash
+./permtool.sh rwsr-xr-x
+```
+
+```text
+rwsr-xr-x
+  owner  read, write, execute
+  group  read, execute
+  others read, execute
+  setuid is on, so this program runs as its owner
+```
+
+And it complains properly rather than guessing:
+
+```bash
+./permtool.sh 999
+```
+
+```text
+permtool.sh: not a valid mode: 999
+Give three or four octal digits, or nine symbolic characters.
+```
+
+To audit a directory for files anyone can write to, pair it with `find`:
+
+```bash
+find ~/notes -perm -0002 -type f
+```
+
+That lists every file with the others-write bit set. If it prints anything, that is a finding.
 
 ## Quick reference
 
-| Command | What it does |
+| Piece | What it does |
 | --- | --- |
-| `ls -l FILE` | Show the symbolic mode string |
-| `stat -c '%a %n' FILE` | Show the mode in octal |
-| `stat -c '%A %a %n' FILE` | Show both forms at once |
-| `chmod 640 FILE` | Set the whole mode numerically |
-| `chmod u+rwx,go+rx FILE` | Set several classes with a comma list |
-| `chmod +t DIR` | Set the sticky bit on a directory |
-| `find DIR -perm -0002` | Find files with other-write set |
-| `find DIR -perm /0222` | Find files with any write bit set |
-| `find DIR -perm 755` | Find files whose mode is exactly 755 |
+| `stat -c '%a %n'` | the mode as octal, with the file name |
+| `ls -l` | the same mode as ten characters, type letter first |
+| `${mode:0:1}` | the first character of a string, and so on |
+| `$(( special & 4 ))` | true when that bit is set in the number |
+| `r` `w` `x` | worth four, two and one, so a class is never above seven |
+| `s` and `S` | setuid with execute, and setuid without it |
+| `t` and `T` | sticky with execute, and sticky without it |
+| `>&2` | send the message to standard error |
+| `find -perm -0002` | files anyone on the machine can write to |
 
 ## Next steps
 
-- [File permissions](/learn/file-permissions/) for the mode string and `chmod` from the ground up.
-- [Shell scripting basics](/learn/shell-scripting-basics/) to turn the two converter scripts into a command you can call anywhere.
-- [Hardening your Termux](/learn/hardening-your-termux/) to put `find -perm` to work on your own home directory.
+- [File permissions](/learn/file-permissions/) is the lesson this one follows on from, where the mode string is read line by line.
+- [Hardening your Termux setup](/learn/hardening-your-termux/) puts these bits to work, closing the doors that do not need to be open.
+- [Build a subnet calculator](/learn/build-a-subnet-calculator/) is the same approach applied to a different kind of arithmetic.
