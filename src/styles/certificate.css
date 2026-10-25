@@ -1,0 +1,267 @@
+/* ── the profile page and its certificate ─────────────────────────────────
+   The certificate is drawn at 1000 by 707, which is A4 landscape. Every
+   typeface here is set with a font stack that falls back to something
+   universally installed, because a downloaded SVG carries no stylesheet and no
+   webfonts: it has to look right in a viewer that has neither.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.profile { padding-block: var(--sp-6) var(--sp-8); }
+
+.profile__head { max-width: 46rem; margin-bottom: var(--sp-6); }
+.profile__head h1 { margin: var(--sp-1) 0 var(--sp-3); }
+
+.profile__grid {
+  display: grid;
+  gap: var(--sp-5);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  align-items: start;
+  margin-bottom: var(--sp-6);
+}
+@media (max-width: 860px) {
+  .profile__grid { grid-template-columns: 1fr; }
+}
+
+/* ── the form ───────────────────────────────────────────────────────────── */
+.profile__form,
+.profile__stats {
+  padding: var(--sp-4);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+}
+
+.field { margin-bottom: var(--sp-4); }
+.field label {
+  display: block;
+  margin-bottom: var(--sp-2);
+  font-family: var(--font-head);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.field input {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid #cfcfda;
+  border-radius: var(--r-sm);
+}
+.field input:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(32, 214, 90, 0.18);
+}
+.field__hint {
+  margin: var(--sp-2) 0 0;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.profile__actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-4); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.95rem;
+  font-family: var(--font-head);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--green); }
+.btn--primary { color: #06301a; background: var(--green); border-color: var(--green); }
+.btn--primary:hover { color: #fff; background: var(--green-dark); border-color: var(--green-dark); }
+
+.profile__note {
+  margin: var(--sp-3) 0 0;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.profile__link {
+  display: inline-block;
+  margin-top: var(--sp-3);
+  font-family: var(--font-head);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--blue-dark);
+}
+
+/* ── the counts ─────────────────────────────────────────────────────────── */
+.profile__stats h2 {
+  margin: 0 0 var(--sp-3);
+  font-family: var(--font-head);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.statlist { margin: 0; }
+.statlist__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.statlist__row:last-child { border-bottom: 0; }
+.statlist dt { font-size: 0.86rem; color: var(--ink); }
+.statlist dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.statlist__of { font-size: 0.78rem; font-weight: 400; color: var(--muted); }
+
+/* ── the certificate ────────────────────────────────────────────────────── */
+.cert {
+  margin: 0;
+  padding: var(--sp-4);
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+.cert__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow);
+}
+.cert__caption {
+  margin: var(--sp-3) 0 0;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 52rem;
+}
+
+/* The SVG's own type. Explicit fills and sizes, because SVG text does not
+   inherit from the document the way HTML does. */
+.cert__brand {
+  font-family: var(--font-head), 'Helvetica Neue', Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3.4px;
+  fill: #6d6d76;
+}
+.cert__brand-sub {
+  font-family: var(--font-head), 'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 7px;
+  fill: #1c1b27;
+}
+.cert__title {
+  font-family: var(--font-head), 'Helvetica Neue', Arial, sans-serif;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: 5px;
+  fill: #1c1b27;
+}
+.cert__kicker {
+  font-family: var(--font-body), 'Helvetica Neue', Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 3px;
+  fill: #6d6d76;
+}
+.cert__name {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 44px;
+  font-weight: 400;
+  fill: #1c1b27;
+}
+.cert__claim {
+  font-family: var(--font-body), 'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px;
+  fill: #20212b;
+}
+.cert__detail {
+  font-family: var(--font-body), 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  fill: #6d6d76;
+}
+.cert__label {
+  font-family: var(--font-head), 'Helvetica Neue', Arial, sans-serif;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 2.2px;
+  fill: #6d6d76;
+}
+.cert__value {
+  font-family: var(--font-body), 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  fill: #1c1b27;
+}
+.cert__value--mono {
+  font-family: var(--font-mono), ui-monospace, 'Courier New', monospace;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+}
+.cert__sign-name {
+  font-family: var(--font-head), 'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  fill: #1c1b27;
+}
+.cert__sign-role {
+  font-family: var(--font-body), 'Helvetica Neue', Arial, sans-serif;
+  font-size: 11px;
+  fill: #6d6d76;
+}
+.cert__qr-label {
+  font-family: var(--font-body), 'Helvetica Neue', Arial, sans-serif;
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  fill: #6d6d76;
+}
+
+/* ── print: the certificate and nothing else, on A4 landscape ───────────── */
+@media print {
+  @page { size: A4 landscape; margin: 0; }
+
+  header,
+  footer,
+  .drawer,
+  .nav,
+  .profile__head,
+  .profile__grid,
+  .cert__caption { display: none !important; }
+
+  html, body { background: #fff !important; }
+
+  .wrap { max-width: none; padding: 0 !important; margin: 0 !important; }
+  .profile { padding: 0 !important; }
+
+  .cert {
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    margin: 0 !important;
+  }
+  .cert__svg {
+    width: 100vw !important;
+    height: 100vh !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}
