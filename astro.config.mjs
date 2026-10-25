@@ -41,6 +41,13 @@ export default defineConfig({
       wrap: false,
     },
   },
+  // Every page is a static file, so a prefetch is just a file the browser
+  // already has by the time you tap. Without this, each tap waits for the
+  // network, which is what makes a phone feel slow.
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'viewport',
+  },
   output: 'static',
   build: {
     inlineStylesheets: 'auto',
