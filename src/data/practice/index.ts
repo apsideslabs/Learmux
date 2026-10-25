@@ -12,6 +12,12 @@ import { systemSets } from './system';
 import { environmentSets } from './environment';
 import { networkSets } from './network';
 import { securitySets } from './security';
+import { reconSets } from './recon';
+import { webSecuritySets } from './websecurity';
+import { cryptographySets } from './cryptography';
+import { defenceSets } from './defence';
+import { mindsetSets } from './mindset';
+import { professionSets } from './profession';
 
 export type { PracticeSet, McqQuestion, OutputTask, OutputRule } from './types';
 export { setSize, totalPoints } from './types';
@@ -23,6 +29,12 @@ export const practiceSets: PracticeSet[] = [
   ...environmentSets,
   ...networkSets,
   ...securitySets,
+  ...reconSets,
+  ...webSecuritySets,
+  ...cryptographySets,
+  ...defenceSets,
+  ...mindsetSets,
+  ...professionSets,
 ];
 
 export function findSet(slug: string): PracticeSet | undefined {
