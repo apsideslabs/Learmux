@@ -51,7 +51,114 @@ const { practiceSets, gradeOutput } = await import(pathToFileURL(outfile).href);
  * without -sV, a different port, different spacing.
  */
 const SAMPLES = {
+  'scan-t1': {
+    tool: 'nmap',
+    reason: 'nmap is not installed on this machine',
+    pass: [
+      {
+        name: 'a scan of four ports with none open',
+        text: [
+          'Starting Nmap 7.95 ( https://nmap.org ) at 2026-10-25 10:00 IST',
+          'Nmap scan report for localhost (127.0.0.1)',
+          'Host is up (0.000078s latency).',
+          '',
+          'PORT     STATE  SERVICE',
+          '22/tcp   closed ssh',
+          '80/tcp   closed http',
+          '443/tcp  closed https',
+          '8022/tcp closed unknown',
+          '',
+          'Nmap done: 1 IP address (1 host up) scanned in 0.09 seconds',
+        ].join('\n'),
+      },
+      {
+        name: 'a scan with sshd listening on 8022',
+        text: [
+          'Starting Nmap 7.95 ( https://nmap.org ) at 2026-10-25 10:02 IST',
+          'Nmap scan report for localhost (127.0.0.1)',
+          'Host is up (0.00012s latency).',
+          '',
+          'PORT     STATE SERVICE',
+          '22/tcp   closed ssh',
+          '8022/tcp open  ssh',
+          '',
+          'Nmap done: 1 IP address (1 host up) scanned in 0.11 seconds',
+        ].join('\n'),
+      },
+    ],
+    fail: [
+      {
+        name: 'the command was never installed',
+        why: 'the command did not run',
+        text: 'bash: nmap: command not found',
+      },
+      {
+        name: 'an empty paste',
+        why: 'nothing at all',
+        text: '   ',
+      },
+      {
+        name: 'the wrong tool entirely',
+        why: 'this is not a scan',
+        text: 'Proto Recv-Q Send-Q Local Address  Foreign Address  State\ntcp  0  0 0.0.0.0:8022  0.0.0.0:*  LISTEN',
+      },
+    ],
+  },
+
+  'ver-t1': {
+    tool: 'nmap',
+    reason: 'nmap is not installed on this machine',
+    pass: [
+      {
+        name: 'a service scan that identified the version',
+        text: [
+          'Starting Nmap 7.95 ( https://nmap.org ) at 2026-10-25 10:05 IST',
+          'Nmap scan report for localhost (127.0.0.1)',
+          'Host is up (0.000098s latency).',
+          '',
+          'PORT     STATE SERVICE VERSION',
+          '8010/tcp open  http    SimpleHTTPServer 0.6 (Python 3.12.13)',
+          '',
+          'Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .',
+          'Nmap done: 1 IP address (1 host up) scanned in 6.31 seconds',
+        ].join('\n'),
+      },
+      {
+        name: 'a service scan that could only name the service',
+        text: [
+          'Starting Nmap 7.95 ( https://nmap.org ) at 2026-10-25 10:06 IST',
+          'Nmap scan report for localhost (127.0.0.1)',
+          'Host is up (0.00011s latency).',
+          '',
+          'PORT     STATE SERVICE VERSION',
+          '8022/tcp open  ssh     OpenSSH 9.6 (protocol 2.0)',
+          '',
+          'Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .',
+          'Nmap done: 1 IP address (1 host up) scanned in 6.44 seconds',
+        ].join('\n'),
+      },
+    ],
+    fail: [
+      {
+        name: 'a scan with no service detection',
+        why: 'there is no VERSION column, so -sV did not run',
+        text: 'Starting Nmap 7.95 ( https://nmap.org ) at 2026-10-25 10:07 IST\nNmap scan report for localhost (127.0.0.1)\nHost is up.\n\nPORT     STATE SERVICE\n8022/tcp open  ssh\n\nNmap done: 1 IP address (1 host up) scanned in 0.09 seconds',
+      },
+      {
+        name: 'nmap was never installed',
+        why: 'the command did not run',
+        text: 'bash: nmap: command not found',
+      },
+      {
+        name: 'an empty paste',
+        why: 'nothing at all',
+        text: '   ',
+      },
+    ],
+  },
+
   'xfer-t1': {
+    tool: 'rsync',
     reason: 'rsync is not installed on the build machine',
     pass: [
       {
@@ -97,6 +204,7 @@ const SAMPLES = {
   },
 
   'ssh-t1': {
+    tool: 'ssh-keygen',
     reason: 'ssh-keygen is not installed on the build machine',
     pass: [
       {
@@ -147,6 +255,7 @@ const SAMPLES = {
   },
 
   'net-t1': {
+    tool: 'nmap',
     reason: 'nmap and sshd are not installed on the build machine',
     pass: [
       {
@@ -257,6 +366,9 @@ function runTask(command) {
   }
 }
 
+const toolAvailable = (name) =>
+  spawnSync('bash', ['-c', `command -v ${name} >/dev/null 2>&1`], { encoding: 'utf8' }).status === 0;
+
 let checks = 0;
 let failures = 0;
 
@@ -277,9 +389,14 @@ for (const set of practiceSets) {
   for (const task of set.tasks) {
     console.log(`\n${set.slug} / ${task.id}`);
 
+    // A sample is a fallback, not a substitute. If the tool the task needs is
+    // installed, the real command runs and the sample is ignored, so a machine
+    // that has the tool verifies the task properly and only a machine without
+    // it falls back.
     const sample = SAMPLES[task.id];
+    const toolMissing = sample ? !toolAvailable(sample.tool) : false;
 
-    if (sample) {
+    if (sample && toolMissing) {
       console.log(`  note  graded against samples: ${sample.reason}`);
       for (const c of sample.pass) {
         const r = gradeOutput(c.text, task);
