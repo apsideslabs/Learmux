@@ -14,7 +14,8 @@
     "generate:thumbs": "node scripts/generate-thumbs.mjs",
     "validate": "node scripts/validate-content.mjs",
     "validate:links": "node scripts/validate-content.mjs --links",
-    "test:validator": "node scripts/test-validator.mjs"
+    "test:validator": "node scripts/test-validator.mjs",
+    "test:practice": "node scripts/test-practice.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4",
