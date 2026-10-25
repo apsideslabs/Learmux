@@ -10,12 +10,13 @@
     "build": "astro build",
     "preview": "astro preview",
     "generate": "node scripts/generate-challenges.mjs",
-    "test": "node scripts/run-tests.mjs",
     "generate:thumbs": "node scripts/generate-thumbs.mjs",
-    "validate": "node scripts/validate-content.mjs",
-    "validate:links": "node scripts/validate-content.mjs --links",
+    "test": "node scripts/run-tests.mjs",
+    "test:utilities": "node scripts/test-utilities.mjs",
     "test:validator": "node scripts/test-validator.mjs",
-    "test:practice": "node scripts/test-practice.mjs"
+    "test:practice": "node scripts/test-practice.mjs",
+    "validate": "node scripts/validate-content.mjs",
+    "validate:links": "node scripts/validate-content.mjs --links"
   },
   "dependencies": {
     "@astrojs/mdx": "^4",
