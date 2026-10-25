@@ -1,0 +1,122 @@
+---
+title: "Common crypto mistakes"
+description: "The mistakes that break real systems: a reused nonce, ECB mode, a plain hash as a password store, decrypting before verifying, and rolling your own."
+excerpt: "Five mistakes that keep turning up, and how to spot each one before it costs you."
+category: "Cryptography"
+track: "cryptography"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 40
+level: Intermediate
+tags: [cryptography, mistakes, openssl]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Almost nothing in the real world is broken by an algorithm being weak. AES is strong and SHA-256 is strong and both have been for years. What breaks is how the pieces are put together: a value that must never repeat, repeated; a mode chosen for convenience; a hash used for a job it was never meant to do. This lesson shows each failure happening on your phone, so you can recognise the shape of the mistake in someone's code.
+
+## What you'll be able to do
+
+- Show why reusing a nonce under a stream cipher leaks the messages.
+- Show why ECB mode reveals when two blocks of plaintext are identical.
+- Explain why a fast hash is the wrong tool for storing passwords.
+- Explain why you must authenticate before you decrypt.
+- Say why you should not write your own cryptography.
+
+## Step 1: Reusing a nonce
+
+A stream cipher, and CTR mode in particular, does not encrypt the message directly. It encrypts a counter to produce a keystream, then combines that with the plaintext. The counter value must never repeat under the same key. Reuse it and the same keystream is produced twice, which is fatal.
+
+Watch it happen. Encrypt two different messages with the same key and the same initial counter.
+
+```bash
+$ printf 'the password is alpha' | openssl enc -aes-128-ctr -K 00112233445566778899aabbccddeeff -iv 00000000000000000000000000000000 -nosalt | od -An -tx1 -w16
+```
+
+```text
+ 89 8c 9e 8e 3a 68 93 53 98 98 50 f2 bf ea f0 0b
+ e5 b8 b9 a8 ea
+```
+
+```bash
+$ printf 'the password is bravo' | openssl enc -aes-128-ctr -K 00112233445566778899aabbccddeeff -iv 00000000000000000000000000000000 -nosalt | od -An -tx1 -w16
+```
+
+```text
+ 89 8c 9e 8e 3a 68 93 53 98 98 50 f2 bf ea f0 0b
+ e6 a6 a8 b6 e4
+```
+
+The first block is identical in both, and the last bytes differ. That is the leak. Because the keystream is the same, the ciphertexts agree wherever the plaintexts agree and differ only where they differ. Line the two up and you have learned which characters changed between the two messages, with no key. Guess one message and you can recover the other.
+
+The fix is not to keep the nonce secret but to ensure it never repeats under a key, which in practice means letting the library pick a random nonce and send it with the ciphertext.
+
+## Step 2: ECB mode
+
+ECB, short for electronic codebook, encrypts each block on its own, with no link to the block before it. That sounds harmless and is not, because identical plaintext blocks become identical ciphertext blocks. Encrypt two identical sixteen-byte blocks.
+
+```bash
+$ printf 'YELLOW SUBMARINEYELLOW SUBMARINE' | openssl enc -aes-128-ecb -K 00112233445566778899aabbccddeeff -nopad -nosalt | od -An -tx1 -w16
+```
+
+```text
+ b5 1d 4d 3f 89 3b a1 84 c9 04 b9 2c 18 dc ad d3
+ b5 1d 4d 3f 89 3b a1 84 c9 04 b9 2c 18 dc ad d3
+```
+
+The two lines are the same, because the two plaintext blocks were the same. Now use CBC, which chains each block to the one before it, and the pattern disappears.
+
+```bash
+$ printf 'YELLOW SUBMARINEYELLOW SUBMARINE' | openssl enc -aes-128-cbc -K 00112233445566778899aabbccddeeff -iv 00000000000000000000000000000000 -nopad -nosalt | od -An -tx1 -w16
+```
+
+```text
+ b5 1d 4d 3f 89 3b a1 84 c9 04 b9 2c 18 dc ad d3
+ c7 06 a6 3d 34 0f bf 25 bb 65 d6 32 85 31 23 75
+```
+
+This is not theoretical. Encrypt a picture with ECB and you can still see its outline, because large areas of one colour become long runs of identical blocks. Do not use ECB for anything you care about: the fault is the mode, not the cipher, and the same AES key was used above.
+
+## Step 3: A fast hash is the wrong password store
+
+The encoding and hashes lesson showed that a website can store the hash of your password and check a login without keeping it. That is true, with one condition that is easy to miss: the hash must be slow.
+
+SHA-256 is designed to be fast. A phone computes millions a second and a purpose-built rig far more, which is what an attacker wants. Given a leaked file of hashes, they try a list of common passwords and compare. A fast hash makes that search cheap.
+
+The fix is a hash built to be slow and to use memory, such as bcrypt, scrypt or Argon2. These stretch a short password into something expensive to guess, and they mix in a random salt per user, so two people with the same password get different hashes and a precomputed table is useless.
+
+<Callout type="warning" title="Two rules for password storage">
+Never store a password as a plain hash. Never store it as an encrypted value you can decrypt. Store it as a slow, salted hash from a function made for the job, and check a login by hashing again and comparing.
+</Callout>
+
+## Step 4: Decrypt before you authenticate
+
+When a system both decrypts and checks integrity, the order matters. The safe order is to check the tag first and decrypt only if it passes. The unsafe order is to decrypt first and then judge the result.
+
+The classic failure is the padding oracle. In CBC mode the last block is padded, and a decryptor that reports a padding error separately from a content error leaks information. An attacker who sends altered ciphertexts and watches for the padding error can recover the plaintext one byte at a time, with no key.
+
+The lesson generalises: if any code acts on decrypted data before it is authenticated, an attacker has a channel to manipulate. Authenticated modes such as GCM attach a tag and release no plaintext unless it checks out. Use them, and treat a failed tag as a hard stop.
+
+## Step 5: Rolling your own
+
+Use a reviewed library with a high level interface, not the raw blocks, and reach for a whole scheme rather than assembling one. A short list of things to never invent: a mode of operation, a padding scheme, a way to derive a key from a password, a way to combine a signature with a message.
+
+None of this means you should not learn how the pieces work. You have just built and broken each one by hand, which is the best way to understand them. That understanding is for judging other people's code, not for replacing a library with your own.
+
+## Quick reference
+
+| Mistake | What it breaks | The fix |
+| --- | --- | --- |
+| Reused nonce under a stream cipher | Two messages cancel, leaking the difference | A fresh random nonce per message |
+| ECB mode | Identical blocks give identical ciphertext | Use CBC, CTR or an authenticated mode |
+| A fast hash for passwords | A leaked file is cheap to search | bcrypt, scrypt or Argon2, salted |
+| Decrypt before authenticating | Padding oracles and tampering | Check the tag first |
+| Rolling your own scheme | Every invented step can fail | A reviewed library and a whole scheme |
+
+## Next steps
+
+- [Signing and verifying a file](/learn/signing-and-verifying/) shows the authentication half of the picture.
+- [Hashing, encoding and encryption are three different things](/learn/hashing-encoding-encryption/) is the vocabulary this lesson leans on.
+- [Hardening your Termux setup](/learn/hardening-your-termux/) is the habits side of the same defensive thinking.
+
+`openssl enc` warns you when you leave out `-pbkdf2`; read that warning rather than skipping it, because the tool knows when you have chosen the weaker path.
