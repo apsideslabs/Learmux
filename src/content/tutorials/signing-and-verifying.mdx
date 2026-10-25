@@ -1,0 +1,160 @@
+---
+title: "Signing and verifying a file"
+description: "Make a key with gpg, sign a file so anyone can check it came from you, verify a signature, and read what a bad signature means."
+excerpt: "A signature proves a file has not changed and came from the key holder. Sign one and check one with gpg."
+category: "Cryptography"
+track: "cryptography"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 39
+level: Intermediate
+tags: [cryptography, gpg, signing]
+---
+
+import Callout from '../../components/Callout.astro';
+
+A signature answers a different question from encryption. Encryption hides a message. A signature leaves the message in the open and attaches a proof that it came from a particular key and has not been altered since. You meet signatures constantly: every software download you check, every signed git commit, every certificate in the last lesson. This one is worth learning by hand, because the command is short and the idea is easy to see working.
+
+## What you'll be able to do
+
+- Explain why signing is not encryption, even though it uses the same kind of key pair.
+- Make a key with `gpg --gen-key`, or non-interactively with `--quick-gen-key`.
+- Sign a file with `gpg --detach-sign`.
+- Verify a signature with `gpg --verify`, and tell a good signature from a bad one.
+- Sign and verify without gpg, using `openssl dgst`.
+
+## Step 1: A signature is not encryption
+
+Both use a key pair, but they run in opposite directions and prove different things.
+
+With encryption, you use the public key to lock a message, and only the private key can open it. That keeps a secret from everyone except the key holder.
+
+With signing, you use the private key to make the signature, and anyone with the public key can check it. Nothing is hidden. The file stays readable by all. What the signature proves is that whoever holds the private key produced this exact content, because only the private key could have made a signature that the public key accepts.
+
+The key point is what a signature does and does not show. It proves the content has not changed and that a specific key made it. It does not, on its own, tell you who that key belongs to. You still need to know that the public key is really the other person's, which is the same problem the certificate chain solves in the last lesson.
+
+## Step 2: Make a key
+
+The `gpg` tool keeps keys in a keyring. To make one, run the generate command.
+
+```bash
+$ gpg --gen-key
+```
+
+It asks a few questions: which kind of key, how large, how long it should last, and your name and email, which become the user id. The defaults are sensible. Give it a passphrase when asked, because that passphrase protects the private key on disk. When it finishes, list what you have.
+
+```bash
+$ gpg --list-keys
+```
+
+```text
+pub   ed25519 2026-10-25 [SC]
+      928F808EF9065B88CCA872C45E19890AFFF0FF77
+uid           [ultimate] Learner Demo <learner@example.com>
+```
+
+The long hex string is the fingerprint, a hash of the key itself. The user id is the name and email you gave. To script the whole thing without prompts, `gpg` also takes the answers on the command line.
+
+```bash
+$ gpg --batch --pinentry-mode loopback --passphrase '' --quick-gen-key "Learner Demo <learner@example.com>" ed25519 sign 0
+```
+
+That makes an Ed25519 signing key with no passphrase and no expiry, which is convenient for a demonstration and a poor choice for a key you rely on. Use the interactive form for anything real.
+
+<Callout type="warning" title="Protect the private key">
+The private half of the pair is the ability to sign as you. Keep it behind a passphrase, and never copy it to a machine you do not trust. The public half is the opposite: publish it, because nobody can sign with it.
+</Callout>
+
+## Step 3: Sign a file
+
+Make a small file and sign it. The `--detach-sign` option keeps the signature separate from the file, so you can send both. `--armor` writes the signature as text so it survives email and chat.
+
+```bash
+$ printf 'release 1.0\n' > release.txt
+$ gpg --detach-sign --armor release.txt
+$ head -n 3 release.txt.asc
+```
+
+```text
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYIAB0WIQSSj4CO+QZbiMyocsReGYkK//D/dwUCat2GlQAKCRBeGYkK//D/
+```
+
+You now have two files: `release.txt` and `release.txt.asc`. The signature file is small and contains no copy of the message, only the proof. Hand both to the person who needs to check your work.
+
+## Step 4: Verify a signature
+
+Verification needs both files and the public key of whoever signed. On your own machine that key is already in your keyring.
+
+```bash
+$ gpg --verify release.txt.asc release.txt
+```
+
+```text
+gpg: Signature made Sun Oct 25 04:33:25 2026 UTC
+gpg:                using EDDSA key 928F808EF9065B88CCA872C45E19890AFFF0FF77
+gpg: Good signature from "Learner Demo <learner@example.com>" [ultimate]
+```
+
+`Good signature` is the line to look for. Now change one byte of the file and verify again.
+
+```bash
+$ printf 'release 2.0\n' > changed.txt
+$ gpg --verify release.txt.asc changed.txt
+```
+
+```text
+gpg: Signature made Sun Oct 25 04:33:25 2026 UTC
+gpg:                using EDDSA key 928F808EF9065B88CCA872C45E19890AFFF0FF77
+gpg: BAD signature from "Learner Demo <learner@example.com>" [ultimate]
+```
+
+The signature did not change, but the file did, and the two no longer match, so `gpg` reports `BAD signature` and exits with a non-zero status. This is the whole value of signing. If a download has been altered in transit, even by one character, the signature stops matching and the check fails.
+
+## Step 5: Sign without gpg
+
+`gpg` is the tool you will meet most often, but `openssl dgst` does the same job with a key pair you generate yourself, and it is handy in a script. Make an EC key pair, sign a file, then verify.
+
+```bash
+$ openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out sign.pem
+$ openssl pkey -in sign.pem -pubout -out sign.pub
+$ openssl dgst -sha256 -sign sign.pem -out notes.sig notes.txt
+$ openssl dgst -sha256 -verify sign.pub -signature notes.sig notes.txt
+```
+
+```text
+Verified OK
+```
+
+Point it at a file that has changed and it reports the failure plainly.
+
+```bash
+$ openssl dgst -sha256 -verify sign.pub -signature notes.sig changed.txt
+```
+
+```text
+Verification failure
+```
+
+Two tools, one idea. The signer uses the private key, the checker uses the public key, and the outcome is a yes or a no about a specific file.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `gpg --gen-key` | Makes a key pair, asking a few questions |
+| `gpg --quick-gen-key "Name <mail>" ed25519 sign 0` | Makes a key with no prompts |
+| `gpg --list-keys` | Lists the public keys in your keyring |
+| `gpg --detach-sign --armor FILE` | Writes FILE.asc, a signature separate from the file |
+| `gpg --verify FILE.asc FILE` | Checks a signature, printing Good or BAD |
+| `openssl dgst -sha256 -sign key.pem -out sig FILE` | Signs a file with an OpenSSL key |
+| `openssl dgst -sha256 -verify pub.pem -signature sig FILE` | Verifies an OpenSSL signature |
+
+## Next steps
+
+- [Common crypto mistakes](/learn/crypto-mistakes/) shows what goes wrong when signing and encryption are combined carelessly.
+- [TLS and the chain of trust](/learn/tls-and-certificates/) is the certificate version of the same proof.
+- [Passwords, keys and secrets](/learn/passwords-and-keys/) covers the keyring and the passphrase that protects it.
+
+Install `gpg` if it is missing with `pkg install gnupg`. It works offline, so generating a key and signing a file need no network at all.
