@@ -188,7 +188,11 @@ async function main() {
 
   const phrase = generatePassphrase({ words: 6, separator: '-', capitalise: false, appendNumber: false });
   eq(phrase.words.length, 6, 'the passphrase has the requested word count');
-  eq(phrase.value.split('-').length, 6, 'the separator joins them');
+  // Count the pieces by joining, not by splitting. The EFF list contains four
+  // hyphenated words (t-shirt, yo-yo, drop-down, felt-tip), so a passphrase
+  // that happens to draw one splits into more pieces than it has words. That
+  // made this check fail about once in three hundred runs.
+  eq(phrase.value, phrase.words.join('-'), 'the separator joins them');
   ok(phrase.words.every((w) => WORD_LIST.includes(w)), 'every word comes from the EFF list');
 
   // ── encoding ─────────────────────────────────────────────────────────────
