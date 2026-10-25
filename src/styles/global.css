@@ -331,21 +331,57 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 }
 .drawer__close:hover { background: var(--navy-2); }
 
-/* The drawer is grouped: a category heading, the pages inside it, and any
-   sub-pages indented under the page they belong to. The panel keeps its width
-   and its type scale; only the structure changed. */
+/* The drawer is an accordion, in three levels: a category, the pages inside
+   it, and any sub-pages under a page. Only the categories show when the menu
+   opens, and only the trail to the page you are on is already unfolded. The
+   panel keeps its width and its type scale; only the structure changed. */
 .drawer nav { display: flex; flex-direction: column; padding: 0.2rem 0 0.6rem; }
 
-.drawer__group-title {
-  margin: 0;
-  padding: 0.95rem 1.15rem 0.3rem;
+/* level one: the category, a button rather than a link */
+.drawer__cat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 50px;
+  padding: 0.3rem 1.15rem;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  text-align: left;
   font-family: var(--font-body);
-  font-size: 0.66rem;
+  font-size: 0.74rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.42);
+  color: rgba(255, 255, 255, 0.66);
 }
+.drawer__cat:hover { background: var(--navy-2); color: #fff; }
+.drawer__cat[aria-expanded='true'] { color: var(--green); }
+
+/* the chevron turns as a section opens, so the state is readable at a glance */
+.drawer__chev {
+  display: inline-flex;
+  flex: none;
+  color: currentColor;
+  transition: transform 0.18s ease;
+}
+[aria-expanded='true'] > .drawer__chev,
+[aria-expanded='true'] .drawer__chev { transform: rotate(90deg); }
+
+.drawer__panel { display: block; }
+.drawer__panel[hidden] { display: none; }
+.drawer__panel:not([hidden]) { animation: drawerIn 0.16s ease-out; }
+@keyframes drawerIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* level two: a page, or a page that also holds sub-pages */
+.drawer__row { display: flex; align-items: stretch; }
+.drawer__row .drawer__link { flex: 1; min-width: 0; }
 
 .drawer__link {
   position: relative;
@@ -358,7 +394,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   color: #fff;
   font-family: var(--font-head);
   font-weight: 600;
-  font-size: 0.98rem;
+  font-size: 0.96rem;
   text-decoration: none;
 }
 .drawer__link:hover { background: var(--navy-2); color: #fff; text-decoration: none; }
@@ -375,9 +411,25 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   background: var(--green);
 }
 
-.drawer__sub { position: relative; display: flex; flex-direction: column; }
-/* a hairline spine, so the children read as belonging to the page above */
-.drawer__sub::before {
+/* the button that opens a page's sub-pages, kept separate so the page itself
+   stays one tap away */
+.drawer__toggle {
+  flex: none;
+  width: 48px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.5);
+}
+.drawer__toggle:hover { background: var(--navy-2); color: #fff; }
+.drawer__toggle[aria-expanded='true'] { color: var(--green); }
+
+/* level three: the sub-pages, indented behind a hairline spine */
+.drawer__panel--sub { position: relative; }
+.drawer__panel--sub::before {
   content: '';
   position: absolute;
   left: 1.15rem;
@@ -408,7 +460,6 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   border-radius: 3px;
   padding: 0.14rem 0.36rem;
 }
-.drawer__link--sub .tag { font-size: 0.58rem; }
 .drawer__foot {
   margin-top: auto;
   padding: 1.1rem 1.15rem 1.4rem;
