@@ -1,0 +1,192 @@
+---
+/**
+ * An output-submission task.
+ *
+ * The learner runs a real command on their own device and pastes what it
+ * printed. It is marked against authored rules that describe what a correct
+ * answer means, not what it looks like, so any reasonable formatting passes
+ * and a wrong answer does not.
+ *
+ * Every rule is reported on its own, because a near miss is the most useful
+ * thing this can tell someone.
+ */
+import Cmd from './Cmd.astro';
+import type { OutputTask as Task } from '../data/practice/types';
+
+interface Props {
+  task: Task;
+  setSlug: string;
+}
+
+const { task, setSlug } = Astro.props;
+const fieldId = `paste-${task.id}`;
+
+// The rules travel to the browser as data so the same authored objects are
+// graded, rather than a second copy that could drift.
+const forClient = JSON.stringify({ id: task.id, rules: task.rules });
+---
+
+<div class="task" data-task data-set={setSlug} data-task-json={forClient}>
+  <h3 class="task__title">{task.title}</h3>
+  <p>{task.prompt}</p>
+
+  <Cmd cmd={task.command} />
+
+  {task.hint && (
+    <div class="task__hint">
+      <button type="button" class="btn btn--small" data-hint>Show a hint</button>
+      <p class="task__hint-text" hidden data-hint-text>{task.hint}</p>
+    </div>
+  )}
+
+  <label class="task__label" for={fieldId}>Paste the output here</label>
+  <textarea
+    id={fieldId}
+    class="task__input"
+    data-input
+    spellcheck="false"
+    autocomplete="off"
+    autocapitalize="off"
+    placeholder="Paste everything the command printed."
+  ></textarea>
+
+  <div class="task__actions">
+    <button type="button" class="btn btn--green" data-check>Check my output</button>
+    <button type="button" class="btn" data-clear>Clear</button>
+  </div>
+
+  <p class="task__feedback" hidden data-feedback aria-live="polite"></p>
+
+  <ul class="task__rules" hidden data-rules>
+    {task.rules.map((rule) => (
+      <li data-rule>{rule.label}</li>
+    ))}
+  </ul>
+
+  <div class="task__expects" hidden data-expects>
+    <span class="task__expects-label">What a good answer looks like</span>
+    <p>{task.expects}</p>
+  </div>
+</div>
+
+<script>
+  import { gradeOutput, looksEmpty } from '../lib/practice-grade';
+
+  const KEY = 'learmux-practice-tasks';
+
+  function loadStore(): Record<string, string> {
+    try {
+      return JSON.parse(localStorage.getItem(KEY) ?? '{}');
+    } catch {
+      return {};
+    }
+  }
+
+  function saveStore(store: Record<string, string>) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(store));
+    } catch {
+      /* private mode */
+    }
+  }
+
+  function showRules(task: HTMLElement, results: { label: string; ok: boolean }[] | null) {
+    const list = task.querySelector<HTMLElement>('[data-rules]');
+    if (!list) return;
+    list.hidden = false;
+    const items = [...list.querySelectorAll<HTMLLIElement>('[data-rule]')];
+    items.forEach((li, i) => {
+      const r = results?.[i];
+      li.classList.toggle('is-ok', !!r?.ok);
+      li.classList.toggle('is-bad', r ? !r.ok : false);
+      li.classList.remove('is-pending');
+    });
+  }
+
+  function check(task: HTMLElement, input: HTMLTextAreaElement) {
+    const feedback = task.querySelector<HTMLElement>('[data-feedback]');
+    const expects = task.querySelector<HTMLElement>('[data-expects]');
+    const list = task.querySelector<HTMLElement>('[data-rules]');
+
+    let parsed: { id: string; rules: unknown[] };
+    try {
+      parsed = JSON.parse(task.dataset.taskJson ?? '{}');
+    } catch {
+      return;
+    }
+
+    const text = input.value;
+
+    if (looksEmpty(text)) {
+      if (feedback) {
+        feedback.hidden = false;
+        feedback.className = 'task__feedback is-bad';
+        feedback.textContent = 'Nothing to check yet. Run the command, then paste what it printed.';
+      }
+      if (list) list.hidden = true;
+      if (expects) expects.hidden = true;
+      return;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = gradeOutput(text, parsed as any);
+    showRules(task, result.results);
+
+    if (feedback) {
+      feedback.hidden = false;
+      if (result.passed) {
+        feedback.className = 'task__feedback is-ok';
+        feedback.textContent = 'That has everything it should. Read the notes below.';
+      } else {
+        const missed = result.results.filter((r) => !r.ok).length;
+        feedback.className = 'task__feedback is-bad';
+        feedback.textContent =
+          missed === 1
+            ? 'One thing is missing. The rule that did not pass is marked below.'
+            : `${missed} things are missing. The rules that did not pass are marked below.`;
+      }
+    }
+
+    if (expects) expects.hidden = !result.passed;
+
+    const store = loadStore();
+    store[parsed.id] = result.passed ? 'pass' : 'tried';
+    saveStore(store);
+  }
+
+  function initTasks() {
+    document.querySelectorAll<HTMLElement>('[data-task]').forEach((task) => {
+      if (task.dataset.bound) return;
+      task.dataset.bound = '1';
+
+      const input = task.querySelector<HTMLTextAreaElement>('[data-input]');
+      const rules = task.querySelector<HTMLElement>('[data-rules]');
+      if (rules) {
+        rules.querySelectorAll('li').forEach((li) => li.classList.add('is-pending'));
+      }
+
+      task.querySelector<HTMLButtonElement>('[data-hint]')?.addEventListener('click', (e) => {
+        const btn = e.currentTarget as HTMLButtonElement;
+        const text = task.querySelector<HTMLElement>('[data-hint-text]');
+        if (text) text.hidden = false;
+        btn.hidden = true;
+      });
+
+      task.querySelector<HTMLButtonElement>('[data-check]')?.addEventListener('click', () => {
+        if (input) check(task, input);
+      });
+
+      task.querySelector<HTMLButtonElement>('[data-clear]')?.addEventListener('click', () => {
+        if (input) input.value = '';
+        const feedback = task.querySelector<HTMLElement>('[data-feedback]');
+        if (feedback) feedback.hidden = true;
+        if (rules) rules.hidden = true;
+        const expects = task.querySelector<HTMLElement>('[data-expects]');
+        if (expects) expects.hidden = true;
+      });
+    });
+  }
+
+  initTasks();
+  document.addEventListener('astro:page-load', initTasks);
+</script>
