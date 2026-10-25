@@ -1,0 +1,96 @@
+---
+title: "The security mindset"
+description: "What security actually protects, why threat, vulnerability, risk and exploit are four different words, and why a smaller blast radius beats chasing zero risk."
+excerpt: "There is no perfectly secure system, only different degrees of exposure. The aim is a smaller blast radius, not zero risk."
+category: "Security"
+track: "security"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 19
+level: Beginner
+tags: [mindset, risk]
+---
+
+import Callout from '../../components/Callout.astro';
+
+In this lesson you will step back from commands and look at what security is for. You will name the three things security protects, tell apart four words that are often used as one, and see why the goal is less exposure rather than zero risk. People starting in security tend to collect tools before they have a way to think.
+
+## What you'll be able to do
+
+- Name the three properties security protects, with an example of each failing.
+- Tell apart a threat, a vulnerability, a risk and an exploit.
+- Explain why "perfectly secure" is not a state you can reach.
+- Say why detection and response matter even when prevention works.
+
+## Step 1: What security is protecting
+
+Security protects three things, each easiest to see when it breaks.
+
+Confidentiality is keeping something out of the wrong hands. A private note is read by another app because the file was world readable. Nothing broke, but the secret is out.
+
+Integrity is keeping something as it should be. A script you rely on is edited by something else and now does what you did not ask. The content changed when it should not have.
+
+Availability is having the thing work when you need it. The storage fills up or a process is stuck and the phone will not respond. Nothing was stolen, but you cannot use your own device.
+
+Almost every security story is one of these three breaking. When you read about an incident, ask which was harmed. The answer usually points at what to do about it.
+
+## Step 2: Four words people use as one
+
+People say "threat" when they mean "risk", and "exploit" when they mean "vulnerability". The four words are different, and keeping them apart is most of the thinking.
+
+A threat is anything that could cause harm: a person, a piece of software, the weather. It is not yet an event, only a possibility.
+
+A vulnerability is a weakness a threat could use. A file with loose permissions is a vulnerability. So is a service left running. It is a gap, not an attack.
+
+A risk is a vulnerability meeting a threat, weighed by how likely it is and how much it would cost. A weakness on a device nobody wants is a small risk; the same weakness on a device holding something valuable is a large one. Risk is the thing you act on.
+
+An exploit is the method that turns a vulnerability into harm. A vulnerability can sit for years with no exploit, and an exploit with no vulnerability does nothing.
+
+A stolen phone is the threat, an unset lock screen the vulnerability, and a tool that reads an unlocked device the exploit.
+
+## Step 3: There is no perfectly secure
+
+You cannot reach zero risk, and aiming for it wastes effort. Every device you own is exposed: it is connected, it runs software written by people, and a person could reach it. The question is never "is this secure", because the honest answer is always "partly". The question is "how exposed is this, and what would it cost me if it went wrong".
+
+That second question is about blast radius, how much damage one failure causes. You reduce it by limiting what a single broken thing can reach. Keep secrets out of shared storage so one careless file cannot leak everything. Run as an ordinary user so one bad command cannot take the whole device. Keep few listeners so one exposed service cannot open the rest. You are not trying to seal the device, only to make each failure smaller.
+
+<Callout type="tip" title="Aim at the blast radius">
+You will not make anything perfectly secure. You can make one failure cost less. That is the decision in front of you most of the time.
+</Callout>
+
+## Step 4: Prevention will fail, so watch for it
+
+Prevention stops things before they happen: strong secrets, tight permissions, few open doors. Do it, but plan for it failing, because eventually something gets through. A password is reused on one site that leaks.
+
+That is why detection matters. Detection is how you find out that something happened instead of guessing. It is reading your logs, noticing a listener you did not start, seeing a file change you did not make.
+
+But detection on its own achieves nothing. A log entry nobody reads is just text. Detection has to lead to a response: stop the service, change the password, remove the file, block the source. Prevention, detection and response go together, and a chain with a missing link is not a chain.
+
+## Step 5: Who and what causes trouble
+
+People picture an attacker. Attackers exist and some are skilled, but they are not the only source, and often not the largest.
+
+The insider already has access: a person, an app, or a script you granted permission to. Most access is given for good reasons and most of it is never reviewed. An app that can read your storage is an insider. The insider matters because they do not need to break in; the door was opened for them.
+
+The accident is the cause people forget: a mistyped command, a file overwritten by a script, a backup never tested. No malice is involved and the damage is real. On a phone you own, an accident is a more likely source of trouble than a determined attacker.
+
+The attacker is the third. Knowing the insider and the accident exist changes what you defend. You stop asking only "how do I keep an outsider out" and start asking "who already has access, and what happens when someone makes a mistake".
+
+## Quick reference
+
+| Term | What it means |
+| --- | --- |
+| Confidentiality | Keeping something out of the wrong hands |
+| Integrity | Keeping something as it should be |
+| Availability | Having it work when you need it |
+| Threat | Anything that could cause harm |
+| Vulnerability | A weakness a threat could use |
+| Risk | A weakness meeting a threat, weighed by likelihood and cost |
+| Exploit | The method that turns a weakness into harm |
+| Blast radius | How much damage one failure causes |
+
+## Next steps
+
+- [Thinking in threats](/learn/threat-modelling/) turns this mindset into four questions you can ask about any system.
+- [Hardening your Termux setup](/learn/hardening-your-termux/) is the prevention half, done on your own device.
+- [Reading logs and spotting oddities](/learn/logs-and-detection/) is the detection half, done on your own device.
