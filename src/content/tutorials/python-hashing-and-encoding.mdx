@@ -1,7 +1,7 @@
 ---
 title: "Hashing and encoding in Python"
-description: "Turn text into bytes, take a digest, and encode to base64, by placing pieces into blanks and running them in the page."
-excerpt: "The difference between str and bytes, and what hashlib and base64 actually do with them."
+description: "Turn text into bytes, take digests, and round-trip through base64, in whole programs built from blanks."
+excerpt: "Six complete programs: bytes, hex, sha256, base64, base64url, and a small tool that uses all of it."
 category: "Python"
 track: "python"
 author: "The Study Cipher"
@@ -11,121 +11,164 @@ level: "Beginner"
 tags: [python, interactive]
 ---
 
-import PyCell from '../../components/PyCell.astro';
 import PyBlanks from '../../components/PyBlanks.astro';
+import PyCell from '../../components/PyCell.astro';
 
-Python is strict about one thing that most languages let you be vague about: the difference between text and bytes. A `str` is characters. A `bytes` is raw values. Hashing and encoding both work on bytes, so `encode()` is the doorway you have to walk through.
-
-Every box below starts with the pieces placed for you. Turn that off once the shapes are familiar.
+Python is strict about one thing most languages let you be vague about: the difference between text and bytes. A `str` is characters. A `bytes` is raw values. Hashing and encoding both work on bytes, so `encode()` is the doorway you have to walk through, and every program below walks through it.
 
 ## What you'll be able to do
 
-- Explain why `len("café")` and `len("café".encode())` are different.
-- Take a SHA-256 digest and read it as hex.
-- Encode to base64 and back, and know why base64url exists.
-- Recognise the error you get when you hash text by mistake.
+- Explain why `len("café")` and `len("café".encode())` are different numbers.
+- Round-trip bytes through hex and back.
+- Take a SHA-256 digest and read its length.
+- Encode to base64 and decode it again.
+- Write a small function that uses all of it.
 
-## Step 1: Text and bytes are different things
+## Step 1: Characters and bytes are different things
 
 Count the characters in `café`, then count the bytes.
 
 <PyBlanks
   title="Characters and bytes"
   scaffold={`text = "café"
-print(len(text), len(text.@1()))`}
-  pieces={['upper', 'decode', 'encode']}
-  answers={[2]}
-  expect="4 5"
-  hint="One of those turns text into bytes. The other two go the wrong way or change nothing useful."
+raw = @1
+
+print("characters", @2)
+print("bytes", len(raw))`}
+  pieces={['len(text)', 'text.encode()', 'text']}
+  answers={[1, 0]}
+  expect={`characters 4
+bytes 5`}
+  hint="One gap turns text into bytes. The other counts the characters."
 />
 
-Four characters, five bytes. The `é` is one character but it takes two bytes in UTF-8. That gap is the whole reason the distinction exists: bytes have a length that depends on the encoding, characters do not.
+Four characters, five bytes. The `é` is one character but it takes two bytes in UTF-8. That gap is the whole reason the distinction exists: the byte length depends on the encoding, the character length does not.
 
-## Step 2: Bytes shown as hex
+## Step 2: Round-trip through hex
 
-Hex is the usual way to look at bytes, because every byte is exactly two hex digits.
+Hex is how you look at bytes, because each byte is exactly two hex digits. This program goes to hex and back again.
 
 <PyBlanks
-  title="Bytes as hex"
-  scaffold={`print("Hi".encode().@1())`}
-  pieces={['decode', 'hex', 'upper']}
-  answers={[1]}
-  expect="4869"
-  hint="Which one turns bytes into their hex digits?"
+  title="Bytes to hex and back"
+  scaffold={`message = "Hi"
+raw = message.encode()
+
+as_hex = @1
+back = bytes.fromhex(@2)
+
+print(as_hex)
+print(@3)`}
+  pieces={['as_hex', 'raw.hex()', 'back', 'raw']}
+  answers={[1, 0, 2]}
+  expect={`4869
+b'Hi'`}
+  hint="One gap turns bytes into hex digits. The other two use the values already made."
 />
 
-`H` is `48` and `i` is `69`. Two characters, four hex digits, no guessing. This is why every checksum you have ever seen is a long string of hex: it is bytes written out in a form you can read and compare.
+Eight lines, and it comes back to where it started, which is what "round trip" means. `H` is `48` and `i` is `69`. `bytes.fromhex` takes the hex back to bytes, and the print shows the `b` because it is still bytes, not text.
 
-## Step 3: A digest
+Every checksum you have ever seen is this: bytes written out as hex so you can read and compare them.
 
-A hash function takes any amount of data and gives back a fixed number of bytes. SHA-256 always gives 32 bytes, no matter whether the input was one character or a gigabyte.
+## Step 3: A digest, and how long it is
+
+A hash function takes any amount of data and gives back a fixed number of bytes. SHA-256 always gives 32, whatever went in.
 
 <PyBlanks
-  title="SHA-256"
+  title="A SHA-256 digest"
   scaffold={`import hashlib
 
-digest = hashlib.sha256(@1).hexdigest()
-print(digest[:8])`}
-  pieces={['"hello termux"', 'b"hello termux"', 'hello termux']}
-  answers={[1]}
-  expect="ba522390"
-  hint="Two of those are not bytes. One of them is not even a value."/>
+message = b"hello termux"
+digest = hashlib.@1(message)
+as_hex = @2
 
-The `b` before the quote is what makes it bytes. `hashlib.sha256("hello termux")` raises `TypeError: Strings must be encoded before hashing`, and that error is a good friend: it tells you exactly what you forgot. `hexdigest()` then writes the 32 bytes out as 64 hex characters.
+print(len(as_hex))
+print(@3)`}
+  pieces={['as_hex[:8]', 'sha256', 'digest.hexdigest()', 'sha1']}
+  answers={[1, 2, 0]}
+  expect={`64
+ba522390`}
+  hint="The function name carries the bit size. Then turn the digest into hex, then take its first eight."
+/>
 
-## Step 4: Base64
+Eight lines, two values, one printed figure of 64. That is 32 bytes written as two hex characters each. `sha1` would give 40 and `md5` would give 32, which is how you recognise a digest on sight: by its length.
 
-Base64 turns bytes into text using 64 safe characters, so binary can travel through anything that only carries text: a JSON field, an email header, a URL parameter.
+`as_hex[:8]` is the first eight characters, which is the usual way to show a digest on a screen.
+
+## Step 4: Base64, both ways
+
+Base64 turns bytes into text using 64 safe characters, so binary can travel through anything that only carries text.
 
 <PyBlanks
-  title="Base64"
+  title="Encode and decode base64"
   scaffold={`import base64
 
-print(base64.b64encode(@1))`}
-  pieces={['"hello termux"', 'b"hello termux"']}
-  answers={[1]}
-  expect="b'aGVsbG8gdGVybXV4'"
-  hint="Same lesson as the hash: this works on bytes."/>
+raw = b"hello termux"
+encoded = base64.@1(raw)
+decoded = base64.@2(encoded)
 
-The result is still bytes, which is why it prints with a `b` in front. Add `.decode()` to get a string you can put in a JSON field.
+print(encoded)
+print(@3)`}
+  pieces={['b64decode', 'decoded', 'b64encode', 'raw']}
+  answers={[2, 0, 1]}
+  expect={`b'aGVsbG8gdGVybXV4'
+b'hello termux'`}
+  hint="One gap encodes, one decodes, and one prints a value already made."
+/>
+
+Eight lines, and the second print is the original message back again. Both are bytes, which is why both print with a `b`. Add `.decode()` if you need a string to put in a JSON field.
 
 ## Step 5: Why base64url exists
 
 Standard base64 uses `+` and `/`. Both mean something in a URL, so a second alphabet swaps them for `-` and `_`.
 
 <PyBlanks
-  title="Base64url"
+  title="Two alphabets"
   scaffold={`import base64
 
-print(base64.@1(bytes([255, 255, 255])))`}
-  pieces={['b64encode', 'b64decode', 'urlsafe_b64encode']}
-  answers={[2]}
-  expect="b'____'"
-  hint="Three bytes of 255 come out as three slashes in the ordinary alphabet."
+raw = bytes([255, 255, 255])
+standard = @1
+url_safe = @2
+
+print(standard)
+print(url_safe)`}
+  pieces={['base64.urlsafe_b64encode(raw)', 'base64.b64encode(raw)', 'base64.b64decode(raw)']}
+  answers={[1, 0]}
+  expect={`b'////'
+b'____'`}
+  hint="Same three bytes, two alphabets. The safe one is the one with url in the name."
 />
 
-The same three bytes give `////` in standard base64 and `____` in the URL-safe alphabet. This is exactly what a JWT uses, which is why a token never contains a `+` or a `/`.
+The same three bytes of 255 give `////` in the standard alphabet and `____` in the URL-safe one. This is exactly what a JWT uses, which is why a token never contains a `+` or a `/`.
 
-## Step 6: A digest is always the same length
+## Step 6: A small tool that uses all of it
 
-Whatever goes in, the length coming out is fixed. That is what makes a digest useful for comparison.
+Now a function, called in a loop. This is the shape of a real script rather than a demonstration.
 
 <PyBlanks
-  title="Always 64"
+  title="A short-hash function"
   scaffold={`import hashlib
 
-print(len(hashlib.@1(b"hello termux").hexdigest()))`}
-  pieces={['sha1', 'sha256', 'md5']}
-  answers={[1]}
-  expect="64"
-  hint="The one with 256 in its name gives 32 bytes, and hex writes each byte as two characters."
+def short_hash(text):
+    raw = @1
+    digest = hashlib.sha256(raw).hexdigest()
+    return @2
+
+for word in ["alpha", "bravo"]:
+    print(word, @3)`}
+  pieces={['text.encode()', 'short_hash(word)', 'digest[:8]', 'text']}
+  answers={[0, 2, 1]}
+  expect={`alpha 8ed3f6ad
+bravo f144a690`}
+  hint="Encode the text, slice the digest, then call the function inside the loop."
 />
 
-64 characters for SHA-256. `md5` would give 32 and `sha1` would give 40, which is the point: the algorithm decides the length, and the length is how you recognise a digest on sight. Since it is fixed you can compare two of them without caring how big the files were.
+Ten lines. The function does the work once, and the loop calls it for each word. Two different words give two different digests, and each is eight characters because of the slice.
+
+This is the part that makes a function worth writing: change the slice to `digest[:12]` and every call changes with it.
 
 ## Step 7: Type one yourself
 
-Take a digest and print just its first eight characters, which is the usual way to show one on a screen.
+Print the first eight characters of the SHA-256 digest of `b"password"`.
 
 <PyCell
   title="A short digest"
@@ -141,7 +184,7 @@ print(hashlib.sha256(b"password").hexdigest()[:8])`}
 
 ## Step 8: A mistake to find
 
-This one raises. Press Run and read the last line, because it names the problem precisely.
+This one raises. Press Run and read the last line.
 
 <PyCell
   variant="fix"
@@ -155,7 +198,7 @@ print(hashlib.sha256("hello termux").hexdigest()[:8])`}
 print(hashlib.sha256(b"hello termux").hexdigest()[:8])`}
 />
 
-`TypeError: Strings must be encoded before hashing`. The message is not cryptic once you know the rule, and the rule is the one thing this lesson is really about.
+`TypeError: Strings must be encoded before hashing`. Not cryptic once you know the rule, and the rule is the one thing this lesson is really about.
 
 ## Quick reference
 
@@ -163,12 +206,14 @@ print(hashlib.sha256(b"hello termux").hexdigest()[:8])`}
 | --- | --- |
 | `"text".encode()` | text to bytes |
 | `b"text"` | a bytes literal |
-| `.hex()` | bytes as hex digits |
+| `raw.hex()` | bytes as hex digits |
+| `bytes.fromhex(s)` | hex back to bytes |
 | `hashlib.sha256(...)` | a digest, which needs bytes |
-| `.hexdigest()` | the digest as 64 hex characters |
+| `.hexdigest()` | 64 hex characters for SHA-256 |
 | `base64.b64encode(...)` | bytes to base64 text |
+| `base64.b64decode(...)` | base64 text back to bytes |
 | `base64.urlsafe_b64encode(...)` | the alphabet a URL or JWT can carry |
-| `.decode()` | bytes back to text |
+| `digest[:8]` | a short digest for a screen |
 | `TypeError: Strings must be encoded` | you hashed text instead of bytes |
 
 ## Next steps
