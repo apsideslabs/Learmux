@@ -1,7 +1,7 @@
 ---
 title: "Run your first Python"
-description: "Build your first Python programs by placing pieces into blanks, then run them in the page and see what they print."
-excerpt: "You do not have to type anything to start. Place the pieces, press Run, and watch the output appear."
+description: "Build real Python programs by placing pieces into blanks, then run them in the page and see what they print."
+excerpt: "Not one-liners. Whole programs, six to ten lines, put together a piece at a time."
 category: "Python"
 track: "python"
 author: "The Study Cipher"
@@ -14,84 +14,131 @@ tags: [python, interactive]
 import PyCell from '../../components/PyCell.astro';
 import PyBlanks from '../../components/PyBlanks.astro';
 
-You do not need to type a single character to start. Each box below has some lines already written and one or more gaps. Tap a piece from the list and it drops into a gap, then press Run and the program executes right there on the page.
+You do not need to type a single character to start. Each box below is a whole program with a few gaps in it. Tap a piece from the list and it drops into a gap, then press Run and the program executes right there on the page.
 
-Every box starts with the switch **Put pieces in the right place for me** turned on. In that mode a piece you tap goes where it belongs, so you can never end up with a program that is broken for a reason you cannot see yet. Turn the switch off once you want to place them yourself, and the mistakes become yours to find, which is when the learning really starts.
+Every box starts with the switch **Put pieces in the right place for me** turned on, so a piece you tap goes where it belongs. Turn it off once you want to place them yourself, and the mistakes become yours to find.
 
 ## What you'll be able to do
 
-- Put a program together from pieces without typing.
-- Run Python and read what it prints.
-- Place pieces in the right order without help.
+- Put a six to ten line program together from pieces without typing.
+- Follow a value through several lines to the print at the end.
 - Read the error Python gives you when something is wrong.
 
-## Step 1: Make it say something
+## Step 1: Two names and a print
 
-`print` is the word that makes Python show you something. Tap the piece that belongs in the gap.
+`print` shows a value. `+` glues two strings together. This program has both, and two gaps.
 
 <PyBlanks
   title="Say hello"
-  scaffold={`@1("Hello from Python")`}
-  pieces={['len', 'print', 'input']}
-  answers={[1]}
-  expect="Hello from Python"
-  hint="Two of those pieces ask the reader for something. One of them shows a value."
-/>
-
-The program is one line: the word `print`, then a pair of brackets with some text inside. The quotes tell Python the text is literal characters rather than a name to look up.
-
-Now turn the switch off and press Reset, then put the pieces back yourself. Same program, but now you chose it.
-
-## Step 2: Store a value
-
-A name on the left of an `=` holds whatever is on the right. Fill both gaps so the program works out the minutes in a day and prints it.
-
-<PyBlanks
-  title="Minutes in a day"
-  scaffold={`minutes = @1
-print(@2)`}
-  pieces={['minutes', '60 * 24', '"minutes"', '1440']}
+  scaffold={`greeting = "Hello"
+name = @1
+print(greeting + ", " + @2)`}
+  pieces={['name', '"Termux"', 'greeting']}
   answers={[1, 0]}
-  expect="1440"
-  hint="The first gap is a sum Python works out. The second is the name you just stored it under."
+  expect="Hello, Termux"
+  hint="One gap wants a value in quotes. The other wants the name you stored it under."
 />
 
-Two of those pieces are wrong on purpose. `"minutes"` is the word itself, in quotes, which is text rather than the number. `1440` would work, but then Python has not done the arithmetic and you have not learned anything. Tap a wrong piece in guided mode and it will tell you so.
+Three lines, and the order matters. Line two creates `name`, so line three can use it. If you swap those two lines the program fails, because Python reads from the top down and will not use a name before it exists.
 
-## Step 3: Repeat a line
+The quotes on `"Termux"` make it text. Without them Python would look for a name called `Termux` and fail.
 
-This is the loop, and it is the shape most beginners find hardest. Two gaps, two pieces, and the order matters.
+## Step 2: Carry a value through several lines
+
+Real programs keep a value, do arithmetic on it, and print the result. This one works out the minutes in a day and then in a week.
 
 <PyBlanks
-  title="Add them up"
+  title="Minutes in a day and a week"
+  scaffold={`minutes = 60
+hours = @1
+days = 7
+
+per_day = minutes * hours
+per_week = @2
+
+print("a day has", @3, "minutes")
+print("a week has", per_week, "minutes")`}
+  pieces={['per_day * days', '24', 'per_day', 'per_day + days']}
+  answers={[1, 0, 2]}
+  expect={`a day has 1440 minutes
+a week has 10080 minutes`}
+  hint="One piece is the hours in a day. One builds the week from the day. One is the day figure itself."
+/>
+
+Nine lines, three gaps, and one piece that is wrong on purpose. `per_day + days` would give 1464, which is nonsense: you do not add days to minutes. Reading a variable name and thinking about what it holds is most of the skill here.
+
+`print` takes several things separated by commas and puts a space between them, which is why the sentence comes out with the right spacing.
+
+## Step 3: A loop, and a running total
+
+This is the shape most beginners find hardest: two values changing inside a loop, then three prints at the end.
+
+<PyBlanks
+  title="Sum, count and average"
   scaffold={`total = 0
+count = 0
+
 for i in range(1, 101):
     @1
-@2`}
-  pieces={['print(total)', 'total += i']}
-  answers={[1, 0]}
-  expect="5050"
-  hint="One piece belongs inside the loop, indented under it. The other comes after the loop has finished."
+    @2
+
+print("sum", total)
+print("count", count)
+print("average", @3)`}
+  pieces={['count += 1', 'total / count', 'total += i']}
+  answers={[2, 0, 1]}
+  expect={`sum 5050
+count 100
+average 50.5`}
+  hint="Both indented lines run a hundred times. The third gap is worked out once, after the loop."
 />
 
-Read the indentation, because it is doing the work. The line indented under `for` runs a hundred times, once for each number. The line at the left edge runs once, after the loop has finished.
+Ten lines. Read the indentation, because it is doing the work: the two indented lines run a hundred times each, and the three prints run once at the end.
 
-`total += i` means "add `i` to `total` and store it back". It is shorthand for `total = total + i`.
+`total += i` means add `i` to `total` and store it back. `count += 1` means add one. The average is worked out after the loop, from the two totals, which is why it can divide safely: `count` is 100 by then, never zero.
 
-Put them the wrong way round with the switch off and press Run. You will get a hundred numbers instead of one, which shows exactly what the indentation controls.
+Put the two loop lines the wrong way round with the switch off and press Run. The average comes out wrong, and nothing tells you why. That is the kind of bug that takes an afternoon to find.
 
-## Step 4: Now type one yourself
+## Step 4: A function with a loop inside it
 
-Placing pieces teaches you the shape. Typing teaches you the vocabulary. This box is empty on purpose, and you can edit it.
+A function is a named block you can call with different values. This one adds up whatever list you give it.
+
+<PyBlanks
+  title="A function"
+  scaffold={`def total_of(numbers):
+    running = 0
+    for n in numbers:
+        @1
+    @2
+
+print(total_of([1, 2, 3]))
+print(total_of([10, 20, 30]))`}
+  pieces={['return running', 'running += n', 'return 0']}
+  answers={[1, 0]}
+  expect={`6
+60`}
+  hint="One gap adds to the running total inside the loop. The other hands the answer back after it."
+/>
+
+Eight lines, and the same function called twice with different lists. That is the point of a function: the loop is written once and used for any list.
+
+`return` is what hands the value back to whoever called. Without it the function returns `None`, and `print(total_of(...))` would show `None`. `return 0` is there as a trap: it would hand back zero no matter what the loop did.
+
+## Step 5: Now type one yourself
+
+Placing pieces teaches the shape. Typing teaches the vocabulary. This box is empty on purpose, and you can edit it.
 
 <PyCell
   title="Your turn to type"
-  code={`print("I typed this myself")`}
+  code={`name = "Termux"
+version = 0.118
+
+print(name, "version", version)`}
 />
 
-Change the words inside the quotes and press Run. The quotes have to stay, or Python looks for a name and fails.
+Change the values and press Run. `print` with commas handles the spacing for you, which is why there are no stray spaces in the output.
 
-## Step 5: A mistake, and what Python says about it
+## Step 6: A mistake, and what Python says about it
 
 This one is broken already. Press Run and read the last line of what comes back.
 
@@ -99,34 +146,14 @@ This one is broken already. Press Run and read the last line of what comes back.
   variant="fix"
   title="Find the mistake"
   expect="Hello, Termux"
-  hint="Python is case sensitive. Compare the name on the first line with the name on the second."
+  hint="Python is case sensitive. Compare the name on line one with the name on line two."
   code={`name = "Termux"
 print("Hello, " + Name)`}
   solution={`name = "Termux"
 print("Hello, " + name)`}
 />
 
-The last line reads `NameError: name 'Name' is not defined`. Read that line first, every time, because it names the problem exactly. Something called `Name` was used but never created. There is a `name` above it with a lowercase `n`, and Python treats those as two entirely different names.
-
-Fix it and press Run. The box marks itself when it prints `Hello, Termux`.
-
-## Step 6: Put a function together
-
-A function is a named block you can call. One gap here, and three pieces, only one of which belongs.
-
-<PyBlanks
-  title="A function"
-  scaffold={`def area(width, height):
-    @1
-
-print(area(3, 4))`}
-  pieces={['return width * height', 'print(width * height)', 'width + height']}
-  answers={[0]}
-  expect="12"
-  hint="A function hands a value back to whoever called it. Only one of these words does that."
-/>
-
-`return` is what sends the value back to the caller, which is why `print(area(3, 4))` has something to print. Without it the function returns nothing, and the print gets nothing to show.
+The last line reads `NameError: name 'Name' is not defined`. Read that line first, every time, because it names the problem exactly. Something called `Name` was used but never created. There is a `name` on the line above with a lowercase `n`, and Python treats those as two entirely different names.
 
 ## Step 7: One more, all yours
 
@@ -154,6 +181,7 @@ print(backwards("Termux"))`}
 | `print(...)` | show a value |
 | `name = value` | store a value under a name |
 | `"text"` | literal characters, not a name |
+| `a + b` | glue two strings, or add two numbers |
 | `total += i` | add to a running total |
 | four spaces | what puts a line inside a loop or a function |
 | `def` and `return` | define a function, and hand a value back |
@@ -162,6 +190,6 @@ print(backwards("Termux"))`}
 
 ## Next steps
 
-- [Working with text](/learn/python-working-with-text/) takes the string handling further.
+- [Working with text in Python](/learn/python-working-with-text/) takes the string handling further.
 - [Reading and searching text](/learn/reading-and-searching-text/) is the same job done with shell tools instead.
 - [Getting started with Termux](/learn/getting-started/) is where the rest of the course begins.
