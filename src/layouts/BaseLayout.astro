@@ -3,7 +3,7 @@ import '../styles/global.css';
 import '../styles/terminal.css';
 import { ClientRouter } from 'astro:transitions';
 import { challenges } from '../lib/challenges';
-import { site, studio, nav, drawerNav, drawerHome, type DrawerGroup, type DrawerItem } from '../lib/site';
+import { site, studio, nav, drawerNav, drawerTop, type DrawerGroup, type DrawerItem } from '../lib/site';
 import Icon from '../components/Icon.astro';
 
 interface Props {
@@ -158,13 +158,16 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
       </div>
 
       <nav aria-label="Menu">
-        <a
-          class="drawer__link drawer__link--home"
-          href={base}
-          {...(isCurrent(drawerHome) ? { 'aria-current': 'page' } : {})}
-        >
-          <span>{drawerHome.label}</span>
-        </a>
+        {drawerTop.map((item) => (
+          <a
+            class="drawer__link drawer__link--home"
+            href={`${base}${item.href}`}
+            {...(isCurrent(item) ? { 'aria-current': 'page' } : {})}
+          >
+            <span>{item.label}</span>
+            {item.tag && <span class="drawer__home-tag">{item.tag}</span>}
+          </a>
+        ))}
 
         {drawerNav.map((group) => {
           const gid = `drawer-group-${slugify(group.title)}`;
@@ -417,6 +420,55 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
         document.addEventListener('astro:page-load', finish);
       }
 
+      /**
+       * Give every fenced code block a copy button.
+       *
+       * Lessons end with a complete script the reader is meant to keep, and
+       * selecting a fifty line block by hand on a phone is miserable. The
+       * button copies the code element's text, not the wrapper's, so the
+       * button's own label never ends up in the clipboard.
+       */
+      function initCodeCopy() {
+        document.querySelectorAll<HTMLElement>('pre.astro-code').forEach((pre) => {
+          if (pre.dataset.copyBound || pre.parentElement?.classList.contains('code-wrap')) return;
+          pre.dataset.copyBound = '1';
+
+          const wrap = document.createElement('div');
+          wrap.className = 'code-wrap';
+          pre.parentNode?.insertBefore(wrap, pre);
+          wrap.appendChild(pre);
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'code-copy';
+          btn.setAttribute('aria-label', 'Copy this code');
+          btn.innerHTML = '<span class="code-copy__idle">Copy</span><span class="code-copy__done">Copied</span>';
+
+          btn.addEventListener('click', async () => {
+            const text = pre.querySelector('code')?.textContent ?? pre.textContent ?? '';
+            try {
+              await navigator.clipboard.writeText(text);
+            } catch {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.setAttribute('readonly', '');
+              ta.style.position = 'fixed';
+              ta.style.top = '-1000px';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              ta.remove();
+            }
+            btn.dataset.copied = 'true';
+            window.setTimeout(() => {
+              btn.dataset.copied = 'false';
+            }, 1400);
+          });
+
+          wrap.appendChild(btn);
+        });
+      }
+
       function boot() {
         document.body.classList.remove('menu-open');
         document.querySelectorAll('[data-drawer]').forEach((d) => d.setAttribute('data-open', 'false'));
@@ -427,6 +479,7 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
         initMenu();
         initDrawerGroups();
         initProgressBar();
+        initCodeCopy();
         refreshProgress();
       }
 
