@@ -1,0 +1,240 @@
+---
+title: "Build a permissions calculator"
+description: "Convert between the symbolic mode string that ls prints and the octal number that chmod takes, with a small script of your own."
+excerpt: "Build a converter that turns a permission string into an octal number and back, so you never guess what 2755 means."
+category: "Utilities"
+track: "utilities"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 50
+level: Intermediate
+tags: [utilities, permissions]
+---
+
+import Callout from '../../components/Callout.astro';
+
+A Linux permission is a number, and every number has a second spelling in letters. You have seen both: `644` on one line and `rw-r--r--` on another, the same mode written two ways. This lesson builds a small converter that moves between them, so you can read a mode you did not set and write one you did without guessing. It builds the same thing as the [permissions calculator](/utilities/permissions/) on this site, so once you have it here you can do the same work on your phone with nothing but Termux.
+
+## What you'll be able to do
+
+- Read a file's mode two ways, with `ls -l` and with `stat`.
+- Explain the leading digit and the three special bits it holds.
+- Convert an octal mode to its symbolic form, and back, with a short script.
+- Set a mode with `chmod` in both the numeric and the symbolic form.
+- Audit a directory for world-writable files with `find -perm`.
+- Say why `chmod 777` is almost always the wrong answer.
+
+## Step 1: Read a mode two ways
+
+Start with a file you control. The long listing shows the symbolic mode, and `stat` can show the same mode as a number.
+
+```bash
+cd ~
+touch notes.txt
+chmod 640 notes.txt
+ls -l notes.txt
+stat -c '%a %n' notes.txt
+```
+
+```text
+-rw-r----- 1 u0_a123 u0_a123 0 Oct 25 06:28 notes.txt
+640 notes.txt
+```
+
+The first line is the symbolic form: read and write for the owner, read for the group, nothing for anyone else. The second line is the octal form, `640`, the same thing in one number. `stat` prints what you ask for with `-c`: `%a` is the mode in octal and `%n` is the name. Ask for `%A` too and you get both forms at once.
+
+```bash
+stat -c '%A %a %n' notes.txt
+```
+
+```text
+-rw-r----- 640 notes.txt
+```
+
+## Step 2: The four digits and the special bits
+
+Most modes are three digits: owner, group, others. Each digit adds read (4), write (2) and execute (1). So `7` is read, write and execute, `6` is read and write, and `5` is read and execute.
+
+A mode can carry a fourth digit in front of those three. It holds three special bits, and each one changes how a file behaves:
+
+| Digit | Bit | Name | Effect |
+| --- | --- | --- | --- |
+| 4 | setuid | set user ID | a program runs as its owner, not as you |
+| 2 | setgid | set group ID | a program runs with its group; on a directory, new files inherit the group |
+| 1 | sticky | sticky bit | on a directory, only the owner of a file may delete it |
+
+The digits add, so `2755` is setgid plus `755`, and `4755` is setuid plus `755`. You write them as one four-digit number: `chmod 4755 program`.
+
+## Step 3: Convert octal to symbolic with a script
+
+Doing that arithmetic by hand gets tiring, so build the converter. This short Python script takes octal modes as arguments and prints the symbolic form. Install Python once with `pkg install python`, and then the standard library is all you need. Nothing here touches the network.
+
+```bash
+cat > ~/oct2sym.py <<'EOF'
+import sys
+for arg in sys.argv[1:]:
+    n = int(arg, 8)
+    special = (n >> 9) & 7
+    out = ''
+    for i, shift in enumerate((6, 3, 0)):
+        d = (n >> shift) & 7
+        x = d & 1
+        s = (special >> (2 - i)) & 1
+        out += 'r' if d & 4 else '-'
+        out += 'w' if d & 2 else '-'
+        if s:
+            out += ('s' if i < 2 else 't') if x else ('S' if i < 2 else 'T')
+        else:
+            out += 'x' if x else '-'
+    print(f'{arg} {out}')
+EOF
+python3 ~/oct2sym.py 644 755 600 4755 2755 1777
+```
+
+```text
+644 rw-r--r--
+755 rwxr-xr-x
+600 rw-------
+4755 rwsr-xr-x
+2755 rwxr-sr-x
+1777 rwxrwxrwt
+```
+
+The script shifts each group of three bits out of the number and prints `r`, `w` and `x` where the matching bit is set, and a dash where it is not. The special digit is read the same way, three bits higher up.
+
+## Step 4: The s versus S and t versus T distinction
+
+In `4755 rwsr-xr-x` the owner's execute slot holds a lowercase `s`, not an `x`. That `s` is doing two jobs at once: the execute bit is set, and so is setuid. When setuid is set but execute is not, the letter turns capital.
+
+```bash
+python3 ~/oct2sym.py 4644 1777 1666
+```
+
+```text
+4644 rwSr--r--
+1777 rwxrwxrwt
+1666 rw-rw-rwT
+```
+
+In `rwSr--r--` the capital `S` says setuid is on but the owner cannot execute the file, so the bit has nothing to act on. The same rule holds for setgid in the group position. For the sticky bit the letters are `t` and `T`: `rwxrwxrwt` is a sticky directory everyone can write to, which is what `/tmp` looks like, while `rw-rw-rwT` has sticky set but no execute for others. A capital letter always means the special bit is set while the matching execute bit is not.
+
+## Step 5: Set a mode in both forms
+
+The symbolic form names who you are changing (`u` for user, `g` for group, `o` for others, `a` for all three) and what you are doing (`+` to add, `-` to remove, `=` to set exactly). You can join several changes with commas.
+
+```bash
+touch script.sh
+chmod 640 script.sh
+ls -l script.sh
+chmod u+rwx,go+rx script.sh
+ls -l script.sh
+stat -c '%a %n' script.sh
+```
+
+```text
+-rw-r----- 1 u0_a123 u0_a123 0 Oct 25 06:28 script.sh
+-rwxr-xr-x 1 u0_a123 u0_a123 0 Oct 25 06:28 script.sh
+755 script.sh
+```
+
+The comma list `u+rwx,go+rx` gives the owner read, write and execute, and the group and others read and execute, in one command. It lands on the same mode as `chmod 755`: the symbolic form describes a change, and the numeric form is the result.
+
+<Callout type="tip" title="When the symbolic form is clearer">
+Use the symbolic form to change one thing and leave the rest alone, such as `chmod +x run.sh`. Use the numeric form to state the whole mode at once.
+</Callout>
+
+## Step 6: Read a mode string back to octal
+
+The other direction is just as useful. Give a script the symbolic form and let it print the number.
+
+```bash
+cat > ~/sym2oct.py <<'EOF'
+import sys
+def to_oct(s):
+    s = s[-9:]
+    special = 0
+    digits = []
+    for i in range(3):
+        c = s[i * 3:i * 3 + 3]
+        d = (4 if c[0] == 'r' else 0) + (2 if c[1] == 'w' else 0) + (1 if c[2] in 'xst' else 0)
+        digits.append(d)
+        if c[2] in 'sS' and i < 2:
+            special |= (4 >> i)
+        if c[2] in 'tT':
+            special |= 1
+    if special:
+        return f'{special}{digits[0]}{digits[1]}{digits[2]}'
+    return f'{digits[0]}{digits[1]}{digits[2]}'
+for arg in sys.argv[1:]:
+    print(f'{arg} {to_oct(arg)}')
+EOF
+python3 ~/sym2oct.py rw-r----- rwxr-xr-x rwsr-xr-x rwxrwxrwt rwSr--r--
+```
+
+```text
+rw-r----- 640
+rwxr-xr-x 755
+rwsr-xr-x 4755
+rwxrwxrwt 1777
+rwSr--r-- 4644
+```
+
+The script takes the last nine characters, which drops the leading type letter if you copied it from `ls`. It reads each group of three into a digit, and adds the special bit back when it sees an `s`, `S`, `t` or `T`. You can now paste a mode string out of a listing and get the number, or paste a number and get the string.
+
+## Step 7: Audit a directory with find -perm
+
+You rarely want to change one file at a time. You want to find the files that are already wrong. `find` can test permissions without changing anything. `-perm 755` matches a mode exactly. A leading `-` means every listed bit must be set, and a leading `/` means any listed bit may be set.
+
+```bash
+mkdir -p ~/audit
+touch ~/audit/a.txt ~/audit/b.sh
+chmod 777 ~/audit/a.txt
+chmod 755 ~/audit/b.sh
+find ~/audit -perm -0002
+```
+
+```text
+/data/data/com.termux/files/home/audit/a.txt
+```
+
+`-0002` asks for files where the other-write bit is set, and only `a.txt` has it, because it was set to `777`. To catch any file with any write bit set, use `-perm /0222`, and to find a sticky directory use `-perm -1000`.
+
+<Callout type="warning" title="find reports, chmod changes">
+`find -perm` only lists. Nothing is altered until you pass the result to `chmod`, so it is safe to run while you decide what to fix.
+</Callout>
+
+## Step 8: Why chmod 777 is almost always wrong
+
+Mode `777` gives read, write and execute to the owner, the group, and everyone else. On a phone, everyone else means every other app on the device. A world-writable file can be replaced by anything that can reach it, and a world-writable file on your `PATH` is worse, because a replacement command runs the next time you type its name.
+
+```bash
+touch open.txt
+chmod 777 open.txt
+ls -l open.txt
+```
+
+```text
+-rwxrwxrwx 1 u0_a123 u0_a123 0 Oct 25 06:28 open.txt
+```
+
+There are a few honest uses: `/tmp` is `1777` because it is shared on purpose, and the sticky bit stops you deleting other people's files there. For your own files the answer is nearly always `600` for a file you keep to yourself, `644` for one others may read, `700` for a private directory and `755` for one they may enter. If you reached for `777` because something could not read or write a file, give the right class the right bit instead of opening the file to the world.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `ls -l FILE` | Show the symbolic mode string |
+| `stat -c '%a %n' FILE` | Show the mode in octal |
+| `stat -c '%A %a %n' FILE` | Show both forms at once |
+| `chmod 640 FILE` | Set the whole mode numerically |
+| `chmod u+rwx,go+rx FILE` | Set several classes with a comma list |
+| `chmod +t DIR` | Set the sticky bit on a directory |
+| `find DIR -perm -0002` | Find files with other-write set |
+| `find DIR -perm /0222` | Find files with any write bit set |
+| `find DIR -perm 755` | Find files whose mode is exactly 755 |
+
+## Next steps
+
+- [File permissions](/learn/file-permissions/) for the mode string and `chmod` from the ground up.
+- [Shell scripting basics](/learn/shell-scripting-basics/) to turn the two converter scripts into a command you can call anywhere.
+- [Hardening your Termux](/learn/hardening-your-termux/) to put `find -perm` to work on your own home directory.
