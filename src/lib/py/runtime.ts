@@ -210,6 +210,18 @@ function ensureReady(): Promise<void> {
   return readyPromise;
 }
 
+/**
+ * Start the runtime without running anything.
+ *
+ * Called when the first cell scrolls into view, so the download and the
+ * compile overlap with reading the lesson rather than with the first press of
+ * Run. It is deliberately not called on page load: six megabytes should not be
+ * fetched for somebody who only wanted to read.
+ */
+export function ensureRuntime(): Promise<void> {
+  return ensureReady();
+}
+
 /** Try the whole download again, after a failure. */
 export function retryRuntime(): void {
   killWorker();
