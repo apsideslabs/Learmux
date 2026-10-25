@@ -1,0 +1,202 @@
+---
+title: "Build a hash and checksum tool"
+description: "Build the checksum workflow on your phone: hash files with sha256sum, write a SHA256SUMS file, check it with sha256sum -c, and compare digests in a script."
+excerpt: "Hash files, record the digests, check them later with sha256sum -c, and learn what a matching digest really proves."
+category: "Utilities"
+track: "utilities"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 48
+level: Intermediate
+tags: [utilities, hashing]
+---
+
+import Callout from '../../components/Callout.astro';
+
+This lesson builds the same checksum workflow as the [hash and checksum tool](/utilities/hash/), so you can do the whole job from the shell without opening it. By the end you will be able to hash a single file, hash a folder full of files in one command, write those digests into a checksum file, check that file later to find out what changed, and say plainly what a matching digest does and does not prove. Every command here runs offline in Termux as an ordinary app, with no root.
+
+## What you'll be able to do
+
+- Hash one file and read the digest it prints.
+- Hash several files in a single command.
+- Write a checksum file with a shell redirect.
+- Check a checksum file with `sha256sum -c` and read the OK and FAILED lines.
+- Compare two digests in a script with `[ "$a" = "$b" ]`.
+- Use `openssl dgst`, `shasum -a 256`, `md5sum` and `sha1sum`.
+- Explain why a digest from the same place as the file proves nothing, and what a signature adds.
+
+## Step 1: Hash one file
+
+Make two small files to work with. `printf` writes exactly the text you give it, so the digests below will match the ones you get.
+
+```bash
+printf 'alpha\n' > a.txt
+printf 'bravo\n' > b.txt
+```
+
+Hash the first one with `sha256sum`.
+
+```bash
+sha256sum a.txt
+```
+
+```text
+b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060  a.txt
+```
+
+The line has two parts. First the digest: sixty-four hexadecimal characters, always that length no matter how large the file is. Then two spaces and the filename. The digest is a function of the file's contents and nothing else, so hash the same file again and you get the same sixty-four characters. Change one byte and the whole digest changes. That is what makes it useful as a fingerprint.
+
+## Step 2: Hash several files at once
+
+Give `sha256sum` more than one name and it prints one line per file.
+
+```bash
+sha256sum a.txt b.txt
+```
+
+```text
+b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060  a.txt
+5da8f23decf397b13f4f55b6fb8a61936238bfe08ed9d901132974f1beccc45c  b.txt
+```
+
+The shell expands a pattern before the command runs, so `sha256sum *.txt` does the same job for every matching file. That is the quick way to hash a whole folder. To walk into subfolders as well, pair it with `find`: `find . -type f -exec sha256sum {} +`.
+
+## Step 3: Write a checksum file
+
+The output of `sha256sum` is already in the format the check mode expects, so you can save it straight to a file with a redirect.
+
+```bash
+sha256sum a.txt b.txt > SHA256SUMS
+cat SHA256SUMS
+```
+
+```text
+b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060  a.txt
+5da8f23decf397b13f4f55b6fb8a61936238bfe08ed9d901132974f1beccc45c  b.txt
+```
+
+`SHA256SUMS` is the name projects often use for this file. It is plain text: a digest, two spaces, a filename, one line per file. Keep it somewhere safe, because it is your record of what those files were when you last trusted them.
+
+## Step 4: Check a checksum file
+
+The `-c` flag means check. It reads each line, hashes the file that line names, and compares the result with the digest written on the line.
+
+```bash
+sha256sum -c SHA256SUMS
+```
+
+```text
+a.txt: OK
+b.txt: OK
+```
+
+Every line ends in `OK` when the file still matches what you recorded. Now change one file and check again.
+
+```bash
+printf 'ALPHA\n' > a.txt
+sha256sum -c SHA256SUMS
+```
+
+```text
+a.txt: FAILED
+b.txt: OK
+sha256sum: WARNING: 1 computed checksum did NOT match
+```
+
+The `FAILED` line names the file that changed. The `WARNING` line is a summary, and it goes to standard error rather than standard output, which is why it can look out of place when you redirect the rest into a log. The command also exits with status 1 when any line fails, so a script can test `$?` afterwards and act on it. Notice that one capital letter was enough: `alpha` and `ALPHA` share no digest characters at all.
+
+<Callout type="tip" title="OK and FAILED mean exactly what they say">
+`OK` means the file is byte for byte what it was when you wrote the line. `FAILED` means it is not. Neither line says why the file changed, or who changed it, only whether it is the same as before.
+</Callout>
+
+## Step 5: Compare two digests in a script
+
+Sometimes you have two digests in variables and want to compare them yourself, rather than let `-c` do it. In POSIX sh the string test is a single equals sign.
+
+```bash
+a=$(sha256sum a.txt | cut -d' ' -f1)
+b=$(sha256sum a.txt | cut -d' ' -f1)
+[ "$a" = "$b" ] && echo "match" || echo "differ"
+```
+
+```text
+match
+```
+
+The `==` form is a bash extension, not POSIX. Under `sh`, which is what a script with a `#!/bin/sh` line gets, it is an error.
+
+```bash
+sh -c '[ "x" == "x" ] && echo match'
+```
+
+```text
+sh: 1: [: x: unexpected operator
+```
+
+Write `=` and the test works in any sh. On a phone where `sh` happens to be bash the `==` line prints `match` instead, and that is the trap: the same script passes on one system and breaks on another. Stick to `=` so it runs everywhere.
+
+## Step 6: The same digest from other tools
+
+`sha256sum` is not the only way to get a SHA-256 digest. `openssl` ships with Termux and can hash a file too.
+
+```bash
+openssl dgst -sha256 b.txt
+```
+
+```text
+SHA2-256(b.txt)= 5da8f23decf397b13f4f55b6fb8a61936238bfe08ed9d901132974f1beccc45c
+```
+
+The digest is the same one `sha256sum` printed. On older versions of OpenSSL the label reads `SHA256` rather than `SHA2-256`; the digest itself is unchanged. The Perl-based `shasum` prints it in the familiar two-space format.
+
+```bash
+shasum -a 256 b.txt
+```
+
+```text
+5da8f23decf397b13f4f55b6fb8a61936238bfe08ed9d901132974f1beccc45c  b.txt
+```
+
+If `shasum` is missing, `pkg install perl` provides it. All three tools agree because SHA-256 is a fixed standard and every implementation produces the same result.
+
+## Step 7: md5sum and sha1sum
+
+Two older tools turn up in guides and in old checksum files.
+
+```bash
+md5sum b.txt
+sha1sum b.txt
+```
+
+```text
+df34f5f71a4e812327ac9b04538386af  b.txt
+bb596efe9e3023a502013767a0559a94a5eea4bc  b.txt
+```
+
+MD5 gives 32 characters and SHA-1 gives 40. Both still work as a quick check that a download did not get corrupted on the way to you. Neither is safe against an attacker. Practical collisions have been built for MD5 for years, and SHA-1 collisions are now cheap enough to matter. A collision is a second file that produces the same digest as the real one, which means someone can swap in a changed file and keep the digest looking correct. For spotting corruption, MD5 and SHA-1 are fine. For anything an adversary might tamper with, use SHA-256.
+
+## Step 8: What a matching digest proves, and what it does not
+
+Here is the part that matters most. A digest only tells you that two things are the same. It cannot tell you that the thing is trustworthy. If the file and the published digest both come from the same place, then whoever changed the file could just as easily have changed the digest to match, and `sha256sum -c` would still print `OK`. A checksum file that travels with the download it describes proves only that the download arrived intact. It says nothing at all about where that download came from or who wrote it.
+
+A signature closes that gap. A signature is a digest of the file, encrypted with the publisher's private key. Anyone can check it with the matching public key, and only the real holder of the private key could have produced it. So a valid signature proves both that the file is unchanged and that it came from the key's owner. That is the difference a plain checksum cannot make. When a project offers a `.sig` or `.asc` file next to its checksum, that is what it is for.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `sha256sum FILE` | Prints the SHA-256 digest of a file |
+| `sha256sum A B` | Hashes several files, one line each |
+| `sha256sum *.txt > SHA256SUMS` | Writes a checksum file with a redirect |
+| `sha256sum -c SHA256SUMS` | Checks each file and prints OK or FAILED |
+| `[ "$a" = "$b" ]` | Compares two digests in POSIX sh |
+| `openssl dgst -sha256 FILE` | Hashes a file with OpenSSL |
+| `shasum -a 256 FILE` | Hashes a file with the Perl tool |
+| `md5sum FILE` | Prints an MD5 digest, fine for corruption only |
+| `sha1sum FILE` | Prints a SHA-1 digest, fine for corruption only |
+
+## Next steps
+
+- [Encoding and hashes](/learn/encoding-and-hashes/) covers base64 and the first look at what a hash is.
+- [File integrity: noticing a change](/learn/file-integrity/) turns this workflow into a manifest you check on a schedule.
+- [Signing and verifying](/learn/signing-and-verifying/) explains what a signature adds on top of a plain digest.
