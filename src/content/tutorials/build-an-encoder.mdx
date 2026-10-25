@@ -1,0 +1,256 @@
+---
+title: "Build an encoder and decoder"
+description: "Encode and decode base64, hex and URL text at the Termux prompt, and confirm that a decode really worked."
+excerpt: "Turn text into base64, hex and URL form and back, and check the round trip."
+category: "Utilities"
+track: "utilities"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 47
+level: Intermediate
+tags: [utilities, shell]
+---
+
+import Callout from '../../components/Callout.astro';
+
+You will build the conversions that change how text is written down and change it back again. Encoding does not hide anything, it only rewrites the same bytes in a different alphabet, so the same tools decode as easily as they encode. By the end you can move a value through base64, hex and URL form, check that a decode actually worked, and see the one place where a phone quietly disagrees with a desktop. This lesson builds the same conversions as the interactive encoder and decoder in the Utilities section, so you can do the same work by hand without the tool.
+
+If you would rather click than type, that tool lives at [the encoder and decoder](/utilities/encode-decode/). Everything below does the same work in the shell.
+
+## What you'll be able to do
+
+- Encode and decode text with `base64` and `base64 -d`.
+- Spot why a decode can succeed and still be wrong, and confirm a round trip.
+- Explain why `printf '%s'` and `echo` give different results.
+- Turn text into hex with `xxd -p` and `od -An -tx1`.
+- Do the same conversions in one line of Python, including URL quoting and ROT13.
+- Show why the character encoding matters, and why an encoded value is not a secret.
+
+## Step 1: Encode and decode with base64
+
+`base64` reads from standard input and writes the encoded text. Give it a short string.
+
+```bash
+printf '%s' 'hello termux' | base64
+```
+
+```text
+aGVsbG8gdGVybXV4
+```
+
+To reverse it, pass `-d` and feed the encoded text back in.
+
+```bash
+printf '%s' 'hello termux' | base64 | base64 -d
+```
+
+```text
+hello termux
+```
+
+The round trip needs no key, because base64 is a public rule rather than a lock. It exists so that bytes which a text only system would mangle, such as a binary file or an image, can travel inside something that carries text. Nothing about it is secret.
+
+## Step 2: The decode that quietly succeeds
+
+The trap with `base64 -d` is that it does not ask whether the input was base64, only whether it could be. Hand it something malformed and it complains, and the exit code tells you.
+
+```bash
+printf '%s' 'notbase64!!' | base64 -d > /dev/null 2>&1; echo "exit $?"
+```
+
+```text
+exit 1
+```
+
+So always check the exit code. But a zero exit code is not proof that the value was base64. An ordinary word of the right length passes without a murmur.
+
+```bash
+printf 'password' | base64 -d > /dev/null; echo "exit $?"
+```
+
+```text
+exit 0
+```
+
+`password` is eight characters, and every one of them is a valid base64 character, so the decoder accepts it and produces eight bytes that mean nothing at all. To confirm that a string really is base64, decode it and encode the result again, then compare.
+
+```bash
+S='aGVsbG8gdGVybXV4'; R=$(printf '%s' "$S" | base64 -d | base64); [ "$R" = "$S" ] && echo "round trip matches" || echo "does not match"
+```
+
+```text
+round trip matches
+```
+
+Run the same check on a string that is not base64 and it fails, which is the signal you want.
+
+```bash
+S='hello!!'; R=$(printf '%s' "$S" | base64 -d 2>/dev/null | base64); [ "$R" = "$S" ] && echo "round trip matches" || echo "does not match: got $R"
+```
+
+```text
+does not match: got hell
+```
+
+<Callout type="warning" title="Check the exit code, then check the round trip">
+Two checks catch different faults. The exit code catches input that is not base64 at all. The round trip catches input that was mangled on the way, because re-encoding gives something different from what you started with. Do both before you trust a decode.
+</Callout>
+
+## Step 3: printf versus echo
+
+Look back at Step 1 and you will see `printf '%s'` rather than `echo`. That choice matters more than it looks. `echo` adds a newline to the end of its output.
+
+```bash
+echo 'hello termux' | base64
+```
+
+```text
+aGVsbG8gdGVybXV4Cg==
+```
+
+Compare that with the first encode, `aGVsbG8gdGVybXV4`. The extra `Cg==` on the end is the newline that `echo` added, encoded along with the text. `printf '%s'` writes exactly the characters you gave it and no more, so it is the right tool for anything that has to survive a round trip. A newline that crept in at one end and not the other is the most common reason a value will not match the original after decoding.
+
+## Step 4: Hex with xxd and od
+
+Hex is another alphabet for the same bytes. `xxd -p` prints plain hex, with no offset column and no ASCII view, so it is easy to read and easy to feed back in.
+
+```bash
+printf '%s' 'hello termux' | xxd -p
+```
+
+```text
+68656c6c6f207465726d7578
+```
+
+Reverse it with `xxd -r -p`, which reads plain hex and writes the original bytes.
+
+```bash
+printf '%s' '68656c6c6f207465726d7578' | xxd -r -p; echo
+```
+
+```text
+hello termux
+```
+
+`xxd` may not be installed on your phone. If it is missing, run `pkg install xxd`. The other option is `od`, which comes with coreutils in the base install, so it is always there.
+
+```bash
+printf '%s' 'hello termux' | od -An -tx1
+```
+
+```text
+ 68 65 6c 6c 6f 20 74 65 72 6d 75 78
+```
+
+The `-An` drops the leading offset column and `-tx1` asks for one byte per value in hex. You get one byte per column, separated by spaces, with a single leading space on each line. It is a little harder to read than `xxd -p` and a little harder to feed back in, but it never needs a package, which on a phone is often the deciding factor.
+
+## Step 5: The Python one-liners
+
+Python does all of these conversions in a single line, which is handy when you want to chain one into a script. It needs `pkg install python` if `python3` is not already there.
+
+```bash
+python3 -c "import base64; print(base64.b64encode('hello termux'.encode()).decode())"
+```
+
+```text
+aGVsbG8gdGVybXV4
+```
+
+URL quoting turns the characters that would confuse a web address into percent escapes. A space becomes `%20` and an ampersand becomes `%26`.
+
+```bash
+python3 -c "import urllib.parse; print(urllib.parse.quote('hello termux & tea'))"
+```
+
+```text
+hello%20termux%20%26%20tea
+```
+
+`unquote` takes it back.
+
+```bash
+python3 -c "import urllib.parse; print(urllib.parse.unquote('hello%20termux'))"
+```
+
+```text
+hello termux
+```
+
+ROT13 shifts each letter thirteen places through the alphabet, which is half of twenty six, so the same operation undoes it.
+
+```bash
+python3 -c "import codecs; print(codecs.encode('Hello termux', 'rot13'))"
+```
+
+```text
+Uryyb grezhk
+```
+
+Run `codecs.decode` with the same name on `Uryyb grezhk` and you are back to `Hello termux`. ROT13 hides a spoiler in a forum post. It stops nobody who wants to read your data, and it is not encryption.
+
+## Step 6: UTF-8, and why an encoded value is not a secret
+
+One thing trips people up when they move a value between a phone and a desktop. The letter e with an acute accent is not one byte in the encoding most systems use now. In UTF-8 it is two.
+
+```bash
+printf '%s' 'café' | base64
+```
+
+```text
+Y2Fmw6k=
+```
+
+The bytes behind that base64 are `c3` and `a9`, which is the UTF-8 for the accented letter. A tool that treats the same text as latin-1, where that letter is a single byte, would use `e9` instead and produce a different string.
+
+```bash
+python3 -c "import base64; print(base64.b64encode('café'.encode('latin-1')).decode())"
+```
+
+```text
+Y2Fm6Q==
+```
+
+`od` shows the difference in the bytes themselves.
+
+```bash
+printf '%s' 'café' | od -An -tx1
+```
+
+```text
+ 63 61 66 c3 a9
+```
+
+If a value decodes to the wrong characters, the usual cause is that one end wrote it as UTF-8 and the other read it as latin-1, not that the value is wrong. Check the bytes with `od` before you change anything else.
+
+Finally, the point the whole lesson rests on. An encoded value is not a secret, and you can prove it by decoding it in front of yourself.
+
+```bash
+printf '%s' 'Y2Fmw6k=' | base64 -d; echo
+```
+
+```text
+café
+```
+
+Anyone holding that string decodes it in one command, exactly as you just did. Base64, hex, URL quoting and ROT13 are all public rules with no key. Never store a password, a token or a key in any of them and call it protected. Use a password manager or a real secrets store instead.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `printf '%s' 'text' \| base64` | Encode text as base64 with no trailing newline |
+| `base64 -d` | Decode base64 back to its bytes |
+| `printf 'x' \| base64 -d \| base64` | Confirm a round trip, then compare with the original |
+| `echo 'text' \| base64` | Encode text with a newline included, the usual mistake |
+| `xxd -p` | Plain hex, no offsets and no ASCII column |
+| `xxd -r -p` | Read plain hex back into bytes |
+| `od -An -tx1` | One byte per column in hex, always available |
+| `python3 -c "import base64; ..."` | Encode or decode in one line |
+| `urllib.parse.quote` and `unquote` | Percent escape a value for a URL, and back |
+| `codecs.encode('x', 'rot13')` | Shift letters by thirteen, and the same to undo it |
+
+## Next steps
+
+- [Encoding and hashes](/learn/encoding-and-hashes/) takes the same tools further, with `strings`, `hexdump` and `sha256sum`.
+- [Hashing, encoding and encryption](/learn/hashing-encoding-encryption/) draws the line between the three, which is the idea this lesson leans on.
+- [Reading and searching text](/learn/reading-and-searching-text/) is the next step for pulling a value out of a file before you decode it.
