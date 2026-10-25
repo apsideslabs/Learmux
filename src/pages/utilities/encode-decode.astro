@@ -1,0 +1,270 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import '../../styles/utilities.css';
+import { utilityBySlug, otherUtilities } from '../../data/utilities';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const u = utilityBySlug('encode-decode')!;
+const others = otherUtilities('encode-decode');
+---
+
+<BaseLayout
+  title="Encode and decode"
+  description="Convert between Base64, Base64URL, hexadecimal, URL encoding, ROT13, HTML entities and binary, byte-accurate for non-ASCII text."
+>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span>
+      <a href={`${base}utilities/`}>Utilities</a><span class="sep">›</span>
+      <span>Encode and decode</span>
+    </nav>
+
+    <header class="util-hero">
+      <h1>Encode and decode</h1>
+      <p class="lede">
+        Seven representations, in both directions. None of them is encryption, and one of
+        them is not even a real encoding, but all of them turn up constantly once you start
+        reading protocols.
+      </p>
+    </header>
+
+    <div class="util-panel">
+      <div class="util-panel__head">
+        <h2 class="util-panel__title">Convert</h2>
+        <div class="util-toggles" role="group" aria-label="Direction">
+          <button class="util-toggle" type="button" data-dir="encode" aria-pressed="true">Encode</button>
+          <button class="util-toggle" type="button" data-dir="decode" aria-pressed="false">Decode</button>
+        </div>
+      </div>
+
+      <div class="util-panel__body">
+        <div class="util-row">
+          <label class="util-field">
+            <span class="util-label">Format</span>
+            <select class="util-select" id="kind"></select>
+          </label>
+          <div class="util-field" style="flex:0 0 auto;align-self:flex-end">
+            <button class="util-btn" id="swap" type="button" title="Swap the two boxes">
+              <Icon name="swap" size={15} /> Swap
+            </button>
+          </div>
+        </div>
+
+        <div class="util-row">
+          <label class="util-field" style="flex:1 1 100%">
+            <span class="util-label" id="inLabel">Input</span>
+            <textarea class="util-textarea" id="input" spellcheck="false" placeholder="Type or paste here. It converts as you type.">Hello, Termux</textarea>
+          </label>
+        </div>
+
+        <div class="util-out-head">
+          <h3>Output</h3>
+          <span class="util-cell__k" id="sizes"></span>
+        </div>
+        <div class="util-out" id="output">SGVsbG8sIFRlcm11eA==</div>
+
+        <div class="util-actions">
+          <button class="util-btn" id="copy" type="button"><Icon name="copy" size={15} /> Copy the output</button>
+          <button class="util-btn" id="useAsInput" type="button"><Icon name="swap" size={15} /> Use output as input</button>
+        </div>
+
+        <div class="util-msg" id="note">
+          <Icon name="info" size={16} />
+          <span></span>
+        </div>
+      </div>
+    </div>
+
+    <section>
+      <h2>What this is actually doing</h2>
+      <p>
+        Encoding changes how something is written down. It does not change what it means and
+        it does not hide anything. Base64 of a password is still the password to anyone who
+        knows to decode it, and Base64 is one command away on every machine you will ever
+        touch. Treating encoding as protection is one of the most common mistakes in this
+        whole area.
+      </p>
+      <p>
+        Each format exists for a specific reason. Base64 puts arbitrary bytes into text so
+        they can travel through systems that only accept text, which is why it turns up in
+        email attachments, data URLs and JWTs. Base64URL is the same thing with the two
+        characters that mean something in a URL swapped out. Hex is twice as long but has no
+        padding rules and is trivial to read. URL encoding makes a value safe to put in a
+        query string. HTML entity encoding stops a browser reading your text as markup, which
+        is the actual fix for cross-site scripting. Binary is there so you can see exactly
+        what the machine holds.
+      </p>
+      <p>
+        ROT13 is included on purpose. It is a Caesar shift of thirteen, it is its own inverse,
+        and it has never been anything but a way to hide a punchline. If you have seen it
+        described as encryption, that description was wrong.
+      </p>
+      <p>
+        All of this is byte-accurate for text that is not ASCII. Type an accent or an emoji
+        and the conversion goes through UTF-8 first, so it round-trips rather than producing
+        the mojibake you get from tools that treat strings as latin-1.
+      </p>
+    </section>
+
+    <div class="util-build">
+      <div class="util-build__copy">
+        <h2>Build it yourself</h2>
+        <p>
+          The same conversions with <code>base64</code>, <code>printf</code>, <code>xxd</code>,
+          <code>od</code> and a little Python, plus why <code>base64 -d</code> silently
+          accepts almost anything and how to check your work.
+        </p>
+      </div>
+      <a class="btn btn--green" href={`${base}learn/${u.lesson}/`}>Read the lesson</a>
+    </div>
+
+    <section>
+      <h2>Other utilities</h2>
+      <div class="util-cards">
+        {others.map((o) => (
+          <section class="util-card">
+            <div class="util-card__head">
+              <span class="util-card__icon"><Icon name={o.icon} size={18} /></span>
+              <h2><a href={`${base}utilities/${o.slug}/`}>{o.name}</a></h2>
+            </div>
+            <p class="util-card__desc">{o.tagline}</p>
+            <div class="util-card__links">
+              <a class="is-tool" href={`${base}utilities/${o.slug}/`}>Open <Icon name="arrow" size={13} /></a>
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <script>
+    import {
+      encode,
+      decode,
+      ENCODING_LABELS,
+      ENCODING_NOTES,
+      byteLength,
+      type EncodingName,
+    } from '../../lib/utilities/encoding';
+
+    function initEncoder() {
+      const panel = document.querySelector('.util-panel');
+      if (!panel || (panel as HTMLElement).dataset.bound) return;
+      (panel as HTMLElement).dataset.bound = '1';
+
+      const $ = <T extends HTMLElement>(sel: string) => panel.querySelector(sel) as T;
+      const kindSel = $('#kind') as unknown as HTMLSelectElement;
+      const input = $('#input') as HTMLTextAreaElement;
+      const output = $('#output');
+      const sizes = $('#sizes');
+      const inLabel = $('#inLabel');
+      const note = $('#note');
+      const noteText = note.querySelector('span') as HTMLElement;
+
+      let direction: 'encode' | 'decode' = 'encode';
+      let kind: EncodingName = 'base64';
+
+      const order: EncodingName[] = ['base64', 'base64url', 'hex', 'url', 'rot13', 'html', 'binary'];
+      kindSel.innerHTML = order
+        .map((k) => `<option value="${k}">${ENCODING_LABELS[k]}</option>`)
+        .join('');
+      kindSel.value = kind;
+
+      const pressed = (el: Element) => el.getAttribute('aria-pressed') === 'true';
+
+      panel.querySelectorAll<HTMLElement>('[data-dir]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          direction = btn.dataset.dir as 'encode' | 'decode';
+          panel.querySelectorAll<HTMLElement>('[data-dir]').forEach((b) =>
+            b.setAttribute('aria-pressed', String(b === btn)),
+          );
+          run();
+        });
+      });
+
+      kindSel.addEventListener('change', () => {
+        kind = kindSel.value as EncodingName;
+        run();
+      });
+
+      input.addEventListener('input', run);
+
+      $('#swap').addEventListener('click', () => {
+        const other = direction === 'encode' ? 'decode' : 'encode';
+        direction = other;
+        panel.querySelectorAll<HTMLElement>('[data-dir]').forEach((b) =>
+          b.setAttribute('aria-pressed', String(b.dataset.dir === other)),
+        );
+        const text = output.textContent ?? '';
+        if (text && !output.classList.contains('util-out--empty')) {
+          input.value = text;
+        }
+        run();
+      });
+
+      $('#useAsInput').addEventListener('click', () => {
+        const text = output.textContent ?? '';
+        if (!text || output.classList.contains('util-out--empty')) return;
+        input.value = text;
+        run();
+      });
+
+      $('#copy').addEventListener('click', async () => {
+        const text = output.textContent ?? '';
+        if (!text || output.classList.contains('util-out--empty')) return;
+        const btn = $('#copy');
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+        }
+        const original = btn.innerHTML;
+        btn.innerHTML = '<span>Copied</span>';
+        window.setTimeout(() => {
+          btn.innerHTML = original;
+        }, 1200);
+      });
+
+      function run() {
+        const value = input.value;
+        inLabel.textContent = direction === 'encode' ? 'Plain text' : `${ENCODING_LABELS[kind]} to read`;
+
+        const result = direction === 'encode' ? encode(kind, value) : decode(kind, value);
+
+        if (!result.ok) {
+          output.textContent = result.error ?? 'That did not convert.';
+          output.classList.add('util-out--empty');
+          sizes.textContent = '';
+          note.className = 'util-msg util-msg--bad';
+          noteText.textContent = 'Nothing was changed. Fix the input and it will convert again.';
+          return;
+        }
+
+        output.textContent = result.value === '' ? 'Nothing to convert.' : result.value;
+        output.classList.toggle('util-out--empty', result.value === '');
+        note.className = 'util-msg';
+        noteText.textContent = ENCODING_NOTES[kind];
+
+        const inBytes = byteLength(value);
+        const outBytes = byteLength(result.value);
+        sizes.textContent =
+          value === ''
+            ? ''
+            : direction === 'encode'
+              ? `${inBytes} byte${inBytes === 1 ? '' : 's'} in · ${result.value.length} character${result.value.length === 1 ? '' : 's'} out`
+              : `${value.length} character${value.length === 1 ? '' : 's'} in · ${outBytes} byte${outBytes === 1 ? '' : 's'} out`;
+      }
+
+      run();
+    }
+
+    initEncoder();
+    document.addEventListener('astro:page-load', initEncoder);
+  </script>
+</BaseLayout>
