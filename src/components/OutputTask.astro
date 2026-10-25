@@ -68,6 +68,7 @@ const forClient = JSON.stringify({ id: task.id, rules: task.rules });
   </div>
 
   <p class="task__feedback" hidden data-feedback aria-live="polite"></p>
+  <p class="task__diag" hidden data-diag></p>
 
   <ul class="task__rules" hidden data-rules>
     {task.rules.map((rule) => (
@@ -137,6 +138,8 @@ const forClient = JSON.stringify({ id: task.id, rules: task.rules });
       }
       if (list) list.hidden = true;
       if (expects) expects.hidden = true;
+      const diag = task.querySelector<HTMLElement>('[data-diag]');
+      if (diag) diag.hidden = true;
       return;
     }
 
@@ -144,11 +147,19 @@ const forClient = JSON.stringify({ id: task.id, rules: task.rules });
     const result = gradeOutput(text, parsed as any);
     showRules(task, result.results);
 
+    const diag = task.querySelector<HTMLElement>('[data-diag]');
+
     if (feedback) {
       feedback.hidden = false;
       if (result.passed) {
         feedback.className = 'task__feedback is-ok';
         feedback.textContent = 'That has everything it should. Read the notes below.';
+      } else if (result.nothingMatched) {
+        // Nothing at all matched, which is a different problem from a near
+        // miss and deserves a different sentence.
+        feedback.className = 'task__feedback is-bad';
+        feedback.textContent =
+          'Nothing in that paste matches what this command prints. Check you copied the whole output, and that it came from the command above rather than from something else.';
       } else {
         const missed = result.results.filter((r) => !r.ok).length;
         feedback.className = 'task__feedback is-bad';
@@ -156,6 +167,20 @@ const forClient = JSON.stringify({ id: task.id, rules: task.rules });
           missed === 1
             ? 'One thing is missing. The rule that did not pass is marked below.'
             : `${missed} things are missing. The rules that did not pass are marked below.`;
+      }
+    }
+
+    // Show what the grader actually read, so a wrong paste can be diagnosed
+    // rather than guessed at.
+    if (diag) {
+      if (result.passed) {
+        diag.hidden = true;
+      } else {
+        const firstLine = text.trim().split('\n')[0] ?? '';
+        diag.hidden = false;
+        diag.textContent =
+          `Read ${result.lines} line${result.lines === 1 ? '' : 's'}. ` +
+          `First line: ${JSON.stringify(firstLine.slice(0, 90))}`;
       }
     }
 
@@ -195,6 +220,8 @@ const forClient = JSON.stringify({ id: task.id, rules: task.rules });
         if (rules) rules.hidden = true;
         const expects = task.querySelector<HTMLElement>('[data-expects]');
         if (expects) expects.hidden = true;
+        const diag = task.querySelector<HTMLElement>('[data-diag]');
+        if (diag) diag.hidden = true;
       });
     });
   }
