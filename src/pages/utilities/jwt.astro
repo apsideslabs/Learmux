@@ -1,0 +1,302 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import '../../styles/utilities.css';
+import { utilityBySlug, otherUtilities } from '../../data/utilities';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const u = utilityBySlug('jwt')!;
+const others = otherUtilities('jwt');
+---
+
+<BaseLayout
+  title="JWT inspector"
+  description="Decode a JWT header and payload, date its claims, flag alg:none, and verify an HS or RS signature with a key you supply. Decoding is not verification, and this tool never confuses the two."
+>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span>
+      <a href={`${base}utilities/`}>Utilities</a><span class="sep">›</span>
+      <span>JWT inspector</span>
+    </nav>
+
+    <header class="util-hero">
+      <h1>JWT inspector</h1>
+      <p class="lede">
+        Paste a token to read its header and claims, see when it expires, and check the
+        signature for real. The one thing it will not do is call a token verified when it has
+        not been.
+      </p>
+    </header>
+
+    <div class="util-panel">
+      <div class="util-panel__head">
+        <h2 class="util-panel__title">Token</h2>
+        <div class="util-toggles" role="group" aria-label="Examples">
+          <button class="util-toggle" type="button" data-sample="0" aria-pressed="false">HS256</button>
+          <button class="util-toggle" type="button" data-sample="1" aria-pressed="false">alg:none</button>
+          <button class="util-toggle" type="button" data-sample="2" aria-pressed="false">Expired</button>
+        </div>
+      </div>
+
+      <div class="util-panel__body">
+        <label class="util-field" style="flex:1 1 100%">
+          <span class="util-label">Paste a JWT</span>
+          <textarea class="util-textarea" id="token" spellcheck="false" style="min-height:5.5rem" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+        </label>
+        <p class="util-msg" style="margin-top:0.8rem">
+          <Icon name="lock" size={16} />
+          <span>
+            Nothing leaves your device. The token is decoded and verified in this page, which
+            is a static file with no server behind it. That matters, because a token is a
+            credential and pasting one into a stranger's website is how credentials leak.
+          </span>
+        </p>
+
+        <div id="result" hidden>
+          <div class="util-out-head">
+            <h3>Header</h3>
+            <span class="util-cell__k" id="algLabel"></span>
+          </div>
+          <div class="util-out" id="header"></div>
+
+          <div class="util-out-head">
+            <h3>Payload</h3>
+            <span class="util-cell__k" id="sigLabel"></span>
+          </div>
+          <div class="util-out" id="payload"></div>
+
+          <div id="warnings"></div>
+
+          <div class="util-out-head">
+            <h3>Claims</h3>
+          </div>
+          <div class="util-grid" id="claims"></div>
+
+          <div class="util-out-head">
+            <h3>Signature</h3>
+          </div>
+          <label class="util-field" style="flex:1 1 100%;margin-top:0.4rem">
+            <span class="util-label" id="keyLabel">Secret or public key</span>
+            <textarea class="util-textarea" id="key" spellcheck="false" style="min-height:4.5rem" placeholder="The shared secret for HS256, or a PEM public key beginning -----BEGIN PUBLIC KEY-----"></textarea>
+          </label>
+          <div class="util-actions">
+            <button class="util-btn util-btn--primary" id="verify" type="button">
+              <Icon name="shield" size={15} /> Check the signature
+            </button>
+          </div>
+          <div class="util-msg" id="verifyOut">
+            <Icon name="info" size={16} />
+            <span>The signature has not been checked yet. Decoding a token tells you what it claims, not whether the claim is trustworthy.</span>
+          </div>
+        </div>
+
+        <div class="util-msg util-msg--bad" id="error" hidden>
+          <Icon name="warning" size={16} />
+          <span></span>
+        </div>
+      </div>
+    </div>
+
+    <section>
+      <h2>What this is actually doing</h2>
+      <p>
+        A JWT has three parts separated by dots. The first two are base64url, which is
+        encoding, not encryption. That means anybody holding the token can read every claim in
+        it without any key at all. The third part is a signature, and the signature is the
+        only part that proves anything: it says the token was issued by whoever holds the key,
+        and that nobody has changed it since.
+      </p>
+      <p>
+        This distinction is the whole reason the tool exists. Plenty of online decoders show
+        you the claims and put a green tick on the page, which teaches exactly the wrong
+        lesson. Here, the signature is reported as unchecked until a key is supplied and the
+        maths actually agrees.
+      </p>
+      <p>
+        The most useful thing a token can tell you in an audit is how long it lives. An
+        access token should expire in minutes. A token with no <code>exp</code> claim at all
+        is valid forever unless something else revokes it, and a token with a thirty day
+        lifetime turns one leak into a month of access. The inspector dates every time claim
+        and says which of those you are looking at.
+      </p>
+      <p>
+        The <code>alg: none</code> example is worth loading. It is an unsigned token claiming
+        to be an admin, and it is one of the oldest JWT vulnerabilities there is. A verifier
+        that honours the algorithm named in the header, rather than deciding for itself which
+        algorithms it will accept, will happily take it. The same family of bug covers
+        algorithm confusion, where an attacker signs with HS256 using a public key as the
+        secret, and a verifier that does not pin its algorithm believes them.
+      </p>
+    </section>
+
+    <div class="util-build">
+      <div class="util-build__copy">
+        <h2>Build it yourself</h2>
+        <p>
+          Decode a token with <code>base64</code> and <code>jq</code>, verify an HS256
+          signature with <code>openssl</code>, and write a decoder that refuses to trust a
+          token it has not checked.
+        </p>
+      </div>
+      <a class="btn btn--green" href={`${base}learn/${u.lesson}/`}>Read the lesson</a>
+    </div>
+
+    <section>
+      <h2>Other utilities</h2>
+      <div class="util-cards">
+        {others.map((o) => (
+          <section class="util-card">
+            <div class="util-card__head">
+              <span class="util-card__icon"><Icon name={o.icon} size={18} /></span>
+              <h2><a href={`${base}utilities/${o.slug}/`}>{o.name}</a></h2>
+            </div>
+            <p class="util-card__desc">{o.tagline}</p>
+            <div class="util-card__links">
+              <a class="is-tool" href={`${base}utilities/${o.slug}/`}>Open <Icon name="arrow" size={13} /></a>
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <script>
+    import { inspect, verify, SAMPLE_TOKENS, type JwtInspection } from '../../lib/utilities/jwt';
+
+    function initJwtTool() {
+      const panel = document.querySelector('.util-panel');
+      if (!panel || (panel as HTMLElement).dataset.bound) return;
+      (panel as HTMLElement).dataset.bound = '1';
+
+      const $ = <T extends HTMLElement>(sel: string) => panel.querySelector(sel) as T;
+      const tokenArea = $('#token') as HTMLTextAreaElement;
+      const keyArea = $('#key') as HTMLTextAreaElement;
+      const result = $('#result');
+      const errorBox = $('#error');
+      const errorText = errorBox.querySelector('span') as HTMLElement;
+      const headerOut = $('#header');
+      const payloadOut = $('#payload');
+      const algLabel = $('#algLabel');
+      const sigLabel = $('#sigLabel');
+      const keyLabel = $('#keyLabel');
+      const claimsGrid = $('#claims');
+      const warningsBox = $('#warnings');
+      const verifyOut = $('#verifyOut');
+
+      let current: JwtInspection | null = null;
+
+      panel.querySelectorAll<HTMLElement>('[data-sample]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const sample = SAMPLE_TOKENS[Number(btn.dataset.sample)];
+          if (!sample) return;
+          tokenArea.value = sample.token;
+          keyArea.value = sample.secret;
+          panel.querySelectorAll<HTMLElement>('[data-sample]').forEach((b) =>
+            b.setAttribute('aria-pressed', String(b === btn)),
+          );
+          run();
+        });
+      });
+
+      tokenArea.addEventListener('input', run);
+      $('#verify').addEventListener('click', async () => {
+        if (!current) return;
+        const outcome = await verify(current, keyArea.value);
+        const cls =
+          outcome.status === 'verified'
+            ? 'util-msg util-msg--ok'
+            : outcome.status === 'failed'
+              ? 'util-msg util-msg--bad'
+              : outcome.status === 'not-checked'
+                ? 'util-msg util-msg--warn'
+                : 'util-msg util-msg--bad';
+        verifyOut.className = cls;
+        verifyOut.innerHTML = `<span><strong>${
+          outcome.status === 'verified'
+            ? 'Signature verified.'
+            : outcome.status === 'failed'
+              ? 'Signature does not hold.'
+              : outcome.status === 'not-checked'
+                ? 'Not checked.'
+                : 'Could not check.'
+        }</strong> ${outcome.detail}</span>`;
+      });
+
+      function run() {
+        const token = tokenArea.value.trim();
+        if (token === '') {
+          result.hidden = true;
+          errorBox.hidden = true;
+          current = null;
+          return;
+        }
+
+        const info = inspect(token);
+        current = info;
+
+        if (!info.ok) {
+          result.hidden = true;
+          errorBox.hidden = false;
+          errorText.textContent = info.error ?? 'That token could not be read.';
+          return;
+        }
+
+        errorBox.hidden = true;
+        result.hidden = false;
+
+        headerOut.textContent = JSON.stringify(info.header, null, 2);
+        payloadOut.textContent = JSON.stringify(info.payload, null, 2);
+        algLabel.textContent = `alg: ${info.algorithm ?? 'missing'}`;
+        sigLabel.textContent =
+          info.signatureBytes === undefined
+            ? 'signature unreadable'
+            : `${info.signatureBytes} signature bytes`;
+
+        keyLabel.textContent =
+          info.algorithmFamily === 'hmac'
+            ? 'Shared secret'
+            : info.algorithmFamily === 'rsa' || info.algorithmFamily === 'ecdsa'
+              ? 'PEM public key'
+              : 'Secret or public key';
+
+        claimsGrid.innerHTML = (info.claims ?? [])
+          .map((c) => {
+            const bad = c.problem ? ` · <span style="color:var(--danger)">${c.problem}</span>` : '';
+            return `<div class="util-cell${c.problem ? ' util-cell--flag' : ''}">
+              <span class="util-cell__k">${c.name}${bad}</span>
+              <span class="util-cell__v">${escapeHtml(c.value)}</span>
+              <span class="util-cell__k" style="text-transform:none;letter-spacing:0;margin-top:0.4rem;font-weight:400">${escapeHtml(c.meaning)}</span>
+            </div>`;
+          })
+          .join('');
+
+        warningsBox.innerHTML = (info.warnings ?? [])
+          .map(
+            (w) =>
+              `<div class="util-msg util-msg--${
+                w.level === 'critical' ? 'bad' : w.level === 'warning' ? 'warn' : 'ok'
+              }" style="margin-top:0.8rem">
+                <span><strong>${escapeHtml(w.title)}.</strong> ${escapeHtml(w.detail)}</span>
+              </div>`,
+          )
+          .join('');
+
+        // Reset the verdict whenever the token changes: the previous result was
+        // about a different token and keeping it on screen would be misleading.
+        verifyOut.className = 'util-msg';
+        verifyOut.innerHTML =
+          '<span>The signature has not been checked yet. Decoding a token tells you what it claims, not whether the claim is trustworthy.</span>';
+      }
+
+      function escapeHtml(s: string): string {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      run();
+    }
+
+    initJwtTool();
+    document.addEventListener('astro:page-load', initJwtTool);
+  </script>
+</BaseLayout>
