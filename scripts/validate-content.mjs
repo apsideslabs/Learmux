@@ -557,6 +557,33 @@ function checkLinks(base) {
   return { count: pages.length, broken };
 }
 
+// ── built pages ─────────────────────────────────────────────────────────────
+// A command box on a web page is ambiguous: it looks like something the page
+// might run for you. Every task has to say where the command actually goes, so
+// that a learner never wonders whether they are meant to type it here.
+function checkBuiltPractice() {
+  const dir = join(ROOT, 'dist/practice');
+  if (!existsSync(dir)) return null;
+
+  let pages = 0;
+  for (const entry of readdirSync(dir)) {
+    const file = join(dir, entry, 'index.html');
+    if (!existsSync(file)) continue;
+
+    const html = readFileSync(file, 'utf8');
+    if (!html.includes('data-task')) continue; // a set with no output task
+    pages++;
+
+    if (!html.includes('Run this in Termux')) {
+      fail(
+        `practice/${entry}`,
+        'has an output task but never says the command runs in Termux on your own device',
+      );
+    }
+  }
+  return { pages };
+}
+
 // ── run ─────────────────────────────────────────────────────────────────────
 const t0 = Date.now();
 
@@ -575,6 +602,7 @@ if (data) {
   const pr = checkPractice(data.practiceSets);
   const base = '/Learmux/';
   const links = WANT_LINKS ? checkLinks(base) : null;
+  const built = checkBuiltPractice();
 
   if (!errors.length) {
     const bits = [];
@@ -584,6 +612,7 @@ if (data) {
     if (x) bits.push(`${x.count} Termux CTF challenges (${x.points} pts, tool ${x.version})`);
     if (pr) bits.push(`${pr.count} practice sets (${pr.questions} questions, ${pr.tasks} tasks)`);
     if (links && !links.skipped) bits.push(`${links.count} pages linked`);
+    if (built) bits.push(`${built.pages} task pages say where to run the command`);
     console.log(`content ok: ${bits.join(', ')}`);
   }
 }
