@@ -1,0 +1,179 @@
+---
+title: "Working with text in Python"
+description: "Learn how Python treats text as a real object with methods: build strings, split lines into fields, slice out parts, and spot the case mistakes that break a script."
+excerpt: "Strings as objects: build them, split them, slice them, and clean them before you compare."
+category: "Python"
+track: "python"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 15
+level: "Beginner"
+tags: [python, interactive]
+---
+
+import PyCell from '../../components/PyCell.astro';
+
+Text is the thing you work with most, whether you are reading a log file, pulling a field out of a config, or printing a result for someone to read. By the end of this lesson you will be able to build strings, split a line into its parts, pull a slice out of the middle of a value, and clean a messy field before you compare it. Every code cell on this page runs in your browser, in real CPython compiled to WebAssembly, so there is nothing to install and nothing to save: press Run and the answer appears under the cell.
+
+## What you'll be able to do
+
+- Read a string as a sequence of characters and reach one by its position.
+- Build readable output with f-strings instead of piling up `+` signs.
+- Explain why a string method returns a new string and leaves the original alone.
+- Split a line into fields on a separator and join the fields back together.
+- Slice out one part of a value, such as the year inside an ID.
+- Clean and normalise a field before you compare it.
+- Recognise the two mistakes that catch most beginners: a method that is not called, and a name that is compared in the wrong case.
+
+## Step 1: A string is a sequence
+
+In the shell, text is just bytes flowing through a pipe. In Python a string is a real object: it knows its own length, and you can reach any character by its position. Position counting starts at zero, and a negative position counts back from the end.
+
+<PyCell
+  title="A string is a sequence"
+  code={`word = "Termux"
+print(len(word))
+print(word[0])
+print(word[-1])`}
+/>
+
+`len(word)` is 6 because there are six characters. `word[0]` is `T`, the first, and `word[-1]` is `x`, the last. That negative index is something the shell has no equivalent for, and it saves you writing `word[len(word) - 1]`.
+
+## Step 2: Building text with f-strings
+
+Concatenation with `+` works, but the moment you mix text and numbers it gets clumsy, because you have to convert the number yourself. An f-string lets you drop values straight into a line and reads the way the result does.
+
+<PyCell
+  title="Building text with f-strings"
+  code={`name = "Termux"
+version = 0.118
+print(f"{name} {version} runs Python 3")
+print("plain " + "join")`}
+/>
+
+The `f` before the quote turns the string into a template. Anything inside `{}` is evaluated and its result is placed in the line, so `{version}` becomes `0.118` with no conversion step. The second line shows plain concatenation for comparison. This is one place Python is friendlier than the shell, where you would reach for `printf` or `${}` expansion.
+
+## Step 3: Methods return a new string
+
+A string has methods attached to it: named actions you call with a dot and parentheses. The important thing to notice is that they return a new string. The one you called them on is never changed, because strings in Python cannot be changed in place.
+
+<PyCell
+  title="Methods return a new string"
+  code={`line = "Admin:user"
+print(line.lower())
+print(line.replace(":", " "))
+print(line)`}
+/>
+
+The first two lines print the lowercased and the space-separated versions. The third prints `Admin:user` again, exactly as it was written, because `line` itself was never touched. If you want to keep a cleaned version, you have to store it: `clean = line.lower()`. This trips people up coming from the shell, where a command like `tr` passes a changed stream along and the original variable, if you had one, would be untouched too, but the new value is easy to lose.
+
+## Step 4: Splitting a line into fields
+
+A colon-separated system file, the kind that holds one account per line, is really a row of fields, and `split` turns one string into a list of them. Give it the separator, and you get the pieces back in order.
+
+<PyCell
+  title="Splitting a line into fields"
+  code={`line = "root:x:0:0:root:/root:/bin/sh"
+fields = line.split(":")
+print(fields[0])
+print(fields[2])
+print(len(fields))`}
+/>
+
+`fields[0]` is the username `root` and `fields[2]` is the user id `0`. There are seven fields, which `len` confirms. This is the Python version of `cut -d: -f1`, with one difference worth remembering: in the shell you would write a new pipeline for each field, while here you split once and index the list as often as you like.
+
+## Step 5: A checkpoint you can edit
+
+This cell is a checkpoint. It already produces the output it is checking for, so it marks itself correct when you run it. Change the separator in the `join` call and watch it turn red, then put it back.
+
+<PyCell
+  title="Split and rejoin"
+  expect="one-two-three"
+  code={`line = "one,two,three"
+parts = line.split(",")
+print("-".join(parts))`}
+/>
+
+`join` is the reverse of `split`. You call it on the separator, not on the list, and pass the list in: `"-".join(parts)`. Getting that backwards is a common slip, because it reads as if the list should be doing the joining.
+
+## Step 6: Slicing out part of a string
+
+A slice takes a range of characters by position. The start is included and the end is not, so `word[0:3]` gives you characters zero, one and two.
+
+<PyCell
+  title="Slicing out part of a string"
+  code={`code = "INV-2026-0042"
+print(code[:3])
+print(code[4:8])
+print(code[-4:])`}
+/>
+
+`code[:3]` is `INV`, the prefix. `code[4:8]` is `2026`, the year. `code[-4:]` is `0042`, the last four characters, because leaving the end off means "to the end of the string". Slices never raise an error for running past the end; they simply stop, which makes them safer than indexing when you are not sure how long a value is.
+
+## Step 7: Another checkpoint
+
+The next cell is a checkpoint too. It pulls the year out of the same kind of ID, and it passes as written. Try changing the slice to `[0:4]` and run it again to see what the checker says.
+
+<PyCell
+  title="Pull the year out of an ID"
+  expect="2026"
+  code={`code = "INV-2026-0042"
+print(code[4:8])`}
+/>
+
+The positions 4 to 8 are exactly the four characters of the year. Counting from zero is the whole trick: the hyphen sits at position 3, so the year starts at position 4.
+
+## Step 8: Find the mistake
+
+Now for an exercise. This cell is meant to greet a name in its normal form, but it prints something else. Read the code, work out which method is being used, and fix it so the output matches. Python is case sensitive, and the method names carry meaning.
+
+<PyCell
+  variant="fix"
+  title="Find the mistake"
+  expect="Hello, Termux"
+  hint="The greeting should not shout. Nothing needs changing about the name itself."
+  code={`name = "Termux"
+print("Hello, " + name.upper())`}
+  solution={`name = "Termux"
+print("Hello, " + name)`}
+/>
+
+`name.upper()` does exactly what it says and returns `TERMUX`, which is why the greeting came out in capitals. The greeting wanted the name as it was, so the method should not be there at all. The general lesson is to read a method name literally: it tells you what it will do to the text.
+
+## Step 9: Your turn: tidy a field
+
+Real data arrives with stray spaces and inconsistent capitals. This exercise gives you a raw field and asks for a cleaned, lowercased version of it. The starter is incomplete, so it prints nothing until you add the line that does the work.
+
+<PyCell
+  title="Tidy a field"
+  expect="admin"
+  hint="Strip the spaces first, then lowercase what is left. You can chain the two methods in one line."
+  code={`raw = "  Admin  "
+# Your turn: print the cleaned, lowercase value.`}
+  solution={`raw = "  Admin  "
+print(raw.strip().lower())`}
+/>
+
+`strip` removes whitespace from both ends, and `lower` folds the letters down, and you can chain them because each one hands back a string that the next method can use. Doing both is what lets you compare two fields that were typed by different people and treat `  Admin  ` and `admin` as the same thing.
+
+## Quick reference
+
+| Piece | What it does |
+| --- | --- |
+| `len(s)` | number of characters |
+| `s[0]`, `s[-1]` | first and last character |
+| `f"{name} {value}"` | build a line with values dropped in |
+| `s.lower()`, `s.upper()` | fold the letters down or up, returning a new string |
+| `s.strip()` | remove whitespace from both ends |
+| `s.replace(a, b)` | swap one piece of text for another |
+| `s.split(",")` | break a string into a list of fields |
+| `sep.join(parts)` | join a list back into one string |
+| `s[4:8]` | characters from position 4 up to but not including 8 |
+| `s[-4:]` | the last four characters |
+| `s == t` | compare two strings, case for case |
+
+## Next steps
+
+- [Reading and searching text](/learn/reading-and-searching-text/) shows the shell tools that pull a line out of a file before Python sees it.
+- [Text processing with sed and awk](/learn/text-processing-awk-sed/) is the same field splitting done in a pipeline instead of in a list.
+- [Environment variables and PATH](/learn/environment-and-variables/) is where a Python script reads settings that live outside the file.
