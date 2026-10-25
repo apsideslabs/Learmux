@@ -1,0 +1,140 @@
+---
+title: "Thinking in threats: modelling a system"
+description: "Threat modelling as four plain questions, a data flow diagram drawn in text, and STRIDE used as a checklist on your own Termux setup."
+excerpt: "A threat model is four questions you can ask about anything. The output is a short list with a decision next to each item."
+category: "Security"
+track: "security"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 20
+level: Beginner
+tags: [mindset, threat-modelling]
+---
+
+import Callout from '../../components/Callout.astro';
+
+In this lesson you will turn the security mindset into a method. You will ask four questions about a system, draw the simplest useful picture of it, and walk a checklist of what can go wrong. Then you will do it on your own Termux install, with an SSH service running and a folder of notes. A threat model is not a document you file away, but a short list of decisions you can follow.
+
+## What you'll be able to do
+
+- Ask the four threat modelling questions about any system, including your phone.
+- Draw a data flow diagram in plain text.
+- Use STRIDE as a checklist of what can go wrong.
+- Turn a model into a short list with a decision beside each item.
+
+## Step 1: Four questions anyone can ask
+
+Threat modelling sounds like specialist work. It is four questions, and you can ask them about anything.
+
+What am I working on? The system, drawn out so you can see its parts. You cannot reason about what you cannot describe.
+
+What can go wrong? Where you look for weaknesses, on purpose and in a fixed order, so you find more than the obvious ones.
+
+What am I going to do about it? The part people skip. For each item you decide: fix it, accept it, or watch it. A model with no decisions is a worry list.
+
+Did I do a good job? The review, later, to check the decisions still hold as the system changes.
+
+## Step 2: Draw what you have
+
+The simplest useful picture is a data flow diagram, and you need no software.
+
+Four shapes cover almost everything. A box is a process, a store is where data sits, an arrow is data moving, and a dashed border is a trust boundary, across which trust is not automatic.
+
+Here is your own setup, drawn in text.
+
+```text
+        +----------------+
+  you ->|  Termux shell  |
+        +--------+-------+
+                 |
+   ------------- | -------------  (device boundary)
+                 |
+    +-----------------+   +------------------+
+    |  notes folder   |   |  sshd on :8022   |
+    |  (data store)   |   |  (a process)     |
+    +-----------------+   +------------------+
+                                   ^
+   another machine ----------------+
+```
+
+Read it left to right. You sit at the edge, typing. The shell is the process you drive, the notes folder is a store, and the SSH service listens. The arrow from another machine crosses the device boundary, so that flow is the one to look at first.
+
+## Step 3: Ask what can go wrong, with STRIDE
+
+A fixed checklist stops you seeing only the weakness you already worried about. The usual one is STRIDE, six letters for six kinds of problem.
+
+Spoofing: pretending to be someone or something else.
+
+Tampering: changing data you should not change.
+
+Repudiation: denying an event, with no record to settle it.
+
+Information disclosure: data reaching somewhere it should not.
+
+Denial of service: stopping something from working.
+
+Elevation of privilege: gaining more power than you were given.
+
+Ask each letter of your picture in order. You will skip some; the value is that you looked.
+
+## Step 4: Work it on your own setup
+
+Run STRIDE over the picture from Step 2. Termux with sshd on port 8022 and a folder of notes is familiar, and it produces a real list.
+
+Spoofing. A weak SSH password could be guessed by someone on the same network, and a key with no passphrase on an unlocked stolen phone means they are already you.
+
+Tampering. The notes folder can be written by anything running as you, and in shared storage by other apps too.
+
+Repudiation. Run sshd without logging and a connection leaves no trace you can read.
+
+Information disclosure. A world readable notes folder can be read by another app, and sshd listening on a reachable address is exposed to the network.
+
+Denial of service. A flood of connection attempts uses the battery, and a full disk stops writes to the notes folder.
+
+Elevation of privilege. On a rooted phone a fault could reach more than your app; without root this is much harder, a reason to stay unrooted.
+
+<Callout type="warning" title="A model is a snapshot">
+The list above is true for a particular setup on a particular day. Change the setup and the list changes, which is why the last question is a habit rather than a one-off.
+</Callout>
+
+## Step 5: Write it down with a decision
+
+The output is a short written list, with a decision next to each item, so the next time you open it you know what you chose and why. Keep it in a file so it survives a restart.
+
+A line per item, each ending in a decision: fix it, accept it, or watch it. A decision you cannot state in a few words is not a decision yet.
+
+```text
+asset: sshd on port 8022
+threat: an exposed listener anyone on the network can reach
+risk: medium, and only while the listener runs
+decision: keep sshd stopped unless I am using it
+
+asset: notes folder
+threat: readable by another app if permissions are loose
+risk: high, the notes are private
+decision: keep it in the private home directory, mode 600
+
+asset: device without root
+threat: a fault reaching more than my app
+risk: low while the phone stays unrooted
+decision: accept it, and do not root the device
+```
+
+Three items, three decisions, none of them a paragraph. The first two are prevention; the third is a decision to accept a risk on purpose, which is a real answer as long as you wrote down why. A short list you act on beats a thorough one you never open.
+
+## Quick reference
+
+| Term | What it means |
+| --- | --- |
+| The four questions | What am I working on, what can go wrong, what to do about it, did I do a good job |
+| Box | A process, something that acts on data |
+| Store | Where data sits |
+| Arrow | Data moving between two things |
+| Trust boundary | A line across which trust is not automatic |
+| STRIDE | Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege |
+
+## Next steps
+
+- [The security mindset](/learn/security-mindset/) explains the words threat, vulnerability, risk and exploit that this lesson puts to work.
+- [Hardening your Termux setup](/learn/hardening-your-termux/) carries out the prevention decisions a model like this produces.
+- [Rules of engagement and the law](/learn/rules-of-engagement/) matters as soon as you point this method at anything you do not own.
