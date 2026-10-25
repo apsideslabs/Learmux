@@ -25,13 +25,13 @@ export interface Track {
 export const course = {
   title: 'Termux and the command line',
   summary:
-    'Eleven tracks, in order, from opening a prompt for the first time to assessing your own systems, understanding how web applications break, and writing up what you find. Every lesson is done on the phone in your pocket, offline and without root.',
+    'Twelve tracks, in order, from opening a prompt for the first time to assessing your own systems, understanding how web applications break, and writing up what you find. Every lesson is done on the phone in your pocket, offline and without root.',
   audience:
     'Written for someone starting from nothing on an Android phone. You do not need prior Linux, a laptop, or root. If you already work at a prompt, the later tracks stand on their own.',
   requirements: 'An Android device with Termux installed from F-Droid. Budget about 20 minutes per lesson.',
   outcome:
     'You will be comfortable at a Linux prompt, able to write small scripts and explain what happens on a network, and able to assess your own devices, reason about how something could fail, and write the result up so another person can act on it.',
-  timeEstimate: 'about 19 hours',
+  timeEstimate: 'about 21 hours',
 };
 
 export const tracks: Track[] = [
@@ -58,8 +58,19 @@ export const tracks: Track[] = [
     prereq: 'Finish Foundations first, especially pipes and redirection.',
   },
   {
-    id: 'networking',
+    id: 'python',
     number: 3,
+    title: 'Python you can run here',
+    tagline: 'Write Python and run it in the page.',
+    description:
+      'Every cell in this track runs real Python in your browser. There is nothing to install and no server: press Run and the code executes, so you can make a mistake, read the error, and change it, which is the way anyone actually learns. The track starts from a print statement and ends at the standard library modules the rest of the course uses.',
+    outcome: 'you can write and run small Python programs, read a traceback, and use the standard library.',
+    level: 'Beginner',
+    prereq: 'Nothing. This one stands on its own.',
+  },
+  {
+    id: 'networking',
+    number: 4,
     title: 'Networking and the internet',
     tagline: 'Understand what travels the wire.',
     description:
@@ -70,7 +81,7 @@ export const tracks: Track[] = [
   },
   {
     id: 'security',
-    number: 4,
+    number: 5,
     title: 'Security fundamentals',
     tagline: 'Learn how to think about security before you touch a tool.',
     description:
@@ -81,7 +92,7 @@ export const tracks: Track[] = [
   },
   {
     id: 'recon',
-    number: 5,
+    number: 6,
     title: 'Reconnaissance and assessment',
     tagline: 'Find out what is exposed before somebody else does.',
     description:
@@ -92,7 +103,7 @@ export const tracks: Track[] = [
   },
   {
     id: 'websecurity',
-    number: 6,
+    number: 7,
     title: 'Web and application security',
     tagline: 'How web applications break, and how each break is fixed.',
     description:
@@ -103,7 +114,7 @@ export const tracks: Track[] = [
   },
   {
     id: 'cryptography',
-    number: 7,
+    number: 8,
     title: 'Cryptography in practice',
     tagline: 'What the padlock means, and where crypto goes wrong.',
     description:
@@ -114,7 +125,7 @@ export const tracks: Track[] = [
   },
   {
     id: 'defence',
-    number: 8,
+    number: 9,
     title: 'Defence and monitoring',
     tagline: 'Know what normal looks like, then notice what does not.',
     description:
@@ -125,7 +136,7 @@ export const tracks: Track[] = [
   },
   {
     id: 'utilities',
-    number: 9,
+    number: 10,
     title: 'Utilities you build yourself',
     tagline: 'Six small tools, each built twice.',
     description:
@@ -136,7 +147,7 @@ export const tracks: Track[] = [
   },
   {
     id: 'projects',
-    number: 10,
+    number: 11,
     title: 'Projects',
     tagline: 'Build three small tools end to end.',
     description:
@@ -147,7 +158,7 @@ export const tracks: Track[] = [
   },
   {
     id: 'profession',
-    number: 11,
+    number: 12,
     title: 'Working in security',
     tagline: 'Report it well, practise legally, and keep going.',
     description:
