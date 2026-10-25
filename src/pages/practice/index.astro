@@ -1,60 +1,107 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import '../../styles/practice.css';
+import { getCollection } from 'astro:content';
+import { tracks } from '../../lib/curriculum';
 import { allSets, questionCount, taskCount } from '../../data/practice';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const sets = allSets();
 const questions = questionCount();
 const tasks = taskCount();
+
+// A set is keyed by lesson slug, so the lesson tells us which track it sits in
+// and where it comes in the order. Grouping here keeps the practice data plain
+// TypeScript, which the build validator also reads.
+const lessons = await getCollection('tutorials');
+const lessonBySlug = new Map(lessons.map((l) => [l.id, l]));
+
+const groups = tracks
+  .map((track) => ({
+    track,
+    sets: sets
+      .filter((s) => lessonBySlug.get(s.slug)?.data.track === track.id)
+      .sort((a, b) => (lessonBySlug.get(a.slug)?.data.order ?? 0) - (lessonBySlug.get(b.slug)?.data.order ?? 0)),
+  }))
+  .filter((g) => g.sets.length > 0);
+
+const lessonsCovered = groups.reduce((n, g) => n + g.sets.length, 0);
 ---
 
 <BaseLayout
   title="Test yourself"
-  description={`${questions} multiple-choice questions and ${tasks} tasks where you run a real command on your own device and paste what it printed.`}
+  description={`${questions} multiple-choice questions and ${tasks} tasks across ${sets.length} sets, one for every lesson in the course.`}
 >
   <div class="wrap">
     <header class="section--tight">
       <h1>Test yourself</h1>
       <p class="lede">
-        {questions} questions and {tasks} tasks, one set per lesson. The questions explain
-        why the answer is right. The tasks ask you to run a real command on your own phone
-        and paste what it printed, and they are marked on what the output means rather
-        than on the exact characters.
+        {questions} questions and {tasks} tasks, in {sets.length} sets. There is one for every
+        lesson in the course, so wherever you have just finished reading, there is something
+        to check it landed.
       </p>
+      <div class="chip-row">
+        <span class="chip">{sets.length} sets</span>
+        <span class="chip">{questions} questions</span>
+        <span class="chip chip--easy">{tasks} tasks</span>
+        <span class="chip chip--mono">{lessonsCovered} of {lessons.length} lessons</span>
+      </div>
     </header>
 
     <div class="ctf-note">
       <strong>How the marking works</strong>
-      Everything here is marked in your browser, so you are marking your own work. On a
-      site with no server the answers have to be in the page, and they are. That is fine,
-      because the point is the explanation, not the mark. The tasks are more useful: you
-      cannot answer one without actually running the command and reading what came back.
+      Everything here is marked in your browser, so you are marking your own work. On a site
+      with no server the answers have to be in the page, and they are. That is fine, because
+      the explanation is the point. The tasks are the more useful half: each one asks you to
+      run a real command in Termux on your own device and paste what it printed, and it is
+      marked on what the output means rather than on the exact characters. You cannot answer
+      one without reading the result.
     </div>
 
-    <div class="practice-grid">
-      {sets.map((s) => (
-        <a class="practice-card" href={`${base}practice/${s.slug}/`}>
-          <h3>{s.title}</h3>
-          <p>{s.summary}</p>
-          <div class="practice-card__meta">
-            <span class="chip">{s.questions.length} question{s.questions.length === 1 ? '' : 's'}</span>
-            {s.tasks.length > 0 && (
-              <span class="chip chip--easy">
-                {s.tasks.length} task{s.tasks.length === 1 ? '' : 's'}
-              </span>
-            )}
-          </div>
-        </a>
-      ))}
-    </div>
+    {groups.map((group) => (
+      <section>
+        <div class="section-label">
+          <span>Track {group.track.number} · {group.track.title}</span>
+        </div>
+        <p class="ctf-empty">
+          {group.sets.length} set{group.sets.length === 1 ? '' : 's'} in this track.
+        </p>
+        <div class="practice-grid">
+          {group.sets.map((s) => {
+            const lesson = lessonBySlug.get(s.slug);
+            return (
+              <a class="practice-card" href={`${base}practice/${s.slug}/`}>
+                <h3>{s.title}</h3>
+                <p>{s.summary}</p>
+                <div class="practice-card__meta">
+                  <span class="chip">{s.questions.length} question{s.questions.length === 1 ? '' : 's'}</span>
+                  {s.tasks.length > 0 && (
+                    <span class="chip chip--easy">
+                      {s.tasks.length} task{s.tasks.length === 1 ? '' : 's'}
+                    </span>
+                  )}
+                  {lesson && <span class="chip chip--mono">lesson {lesson.data.order}</span>}
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    ))}
 
     <section>
-      <h2>Where these come from</h2>
+      <h2>What the tasks are for</h2>
       <p>
-        Each set follows a lesson and tests what that lesson actually taught, so the
-        questions are answerable from the reading and the tasks use only commands the
-        lesson covered. Every lesson with a set has a link to it at the foot of the page.
+        A question tells you whether you remember something. A task tells you whether you can
+        do it, because the only way through one is to run the command and read what came back.
+        Each task states plainly that the command runs in Termux on your own device: nothing
+        on these pages executes anything, and the box only reads what you paste into it.
+      </p>
+      <p>
+        The marking describes what a correct answer means rather than what it looks like, so a
+        different port, a different owner name, a different version string or a different
+        ordering all pass. Paste something that is not the output of that command and every
+        check fails, and the page shows you what it actually read so you can see why.
       </p>
       <p>
         <a class="btn" href={`${base}course/`}>The course</a>
