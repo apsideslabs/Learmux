@@ -9,11 +9,21 @@ import type { PracticeSet } from './types';
 import { filesystemSets } from './filesystem';
 import { textSets } from './text';
 import { systemSets } from './system';
+import { environmentSets } from './environment';
+import { networkSets } from './network';
+import { securitySets } from './security';
 
 export type { PracticeSet, McqQuestion, OutputTask, OutputRule } from './types';
 export { setSize, totalPoints } from './types';
 
-export const practiceSets: PracticeSet[] = [...filesystemSets, ...textSets, ...systemSets];
+export const practiceSets: PracticeSet[] = [
+  ...filesystemSets,
+  ...textSets,
+  ...systemSets,
+  ...environmentSets,
+  ...networkSets,
+  ...securitySets,
+];
 
 export function findSet(slug: string): PracticeSet | undefined {
   return practiceSets.find((s) => s.slug === slug);
