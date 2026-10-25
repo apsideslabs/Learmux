@@ -18,6 +18,7 @@ import { cryptographySets } from './cryptography';
 import { defenceSets } from './defence';
 import { mindsetSets } from './mindset';
 import { professionSets } from './profession';
+import { pythonSets } from './python';
 import { utilitiesSets } from './utilities';
 import { utilitiesBSets } from './utilities-b';
 import { utilitiesCSets } from './utilities-c';
@@ -38,6 +39,7 @@ export const practiceSets: PracticeSet[] = [
   ...defenceSets,
   ...mindsetSets,
   ...professionSets,
+  ...pythonSets,
   ...utilitiesSets,
   ...utilitiesBSets,
   ...utilitiesCSets,
