@@ -158,6 +158,31 @@
   margin-bottom: var(--sp-2);
 }
 
+.task__where {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: baseline;
+  font-size: 0.88rem;
+  color: var(--muted);
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-3);
+  margin: var(--sp-3) 0;
+}
+.task__where-mark {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--white);
+  background: var(--navy);
+  border-radius: var(--r-sm);
+  padding: 0.2rem 0.5rem;
+}
+
 .task__hint {
   margin: var(--sp-2) 0 var(--sp-3);
 }
