@@ -24,6 +24,15 @@ const canonical = new URL(path, Astro.site);
 const fullTitle = title.includes(site.name) ? title : `${title} · ${site.name}`;
 const total = challenges.length;
 const isExternal = (href: string) => /^https?:/.test(href);
+
+// Marks the drawer entry for the page you are on, so the menu shows where you
+// are rather than only where you can go.
+const isHere = (href: string) => {
+  if (isExternal(href)) return false;
+  const full = base + href;
+  if (href === '') return path === base || path === base.slice(0, -1);
+  return path === full || path.startsWith(full);
+};
 ---
 
 <!doctype html>
@@ -122,16 +131,36 @@ const isExternal = (href: string) => /^https?:/.test(href);
       </div>
 
       <nav aria-label="Menu">
-        {drawerNav.map((item) => (
-          <a
-            href={isExternal(item.href) ? item.href : base + item.href}
-            {...(isExternal(item.href) ? { target: '_blank', rel: 'noopener' } : {})}
-          >
-            <span>{item.label}</span>
-            {item.note === 'chevron' && <span class="chev"><Icon name="chevron" size={16} /></span>}
-            {item.note === 'external' && <span class="chev"><Icon name="arrow" size={16} /></span>}
-            {item.note === 'tag' && <span class="tag">CTF</span>}
-          </a>
+        {drawerNav.map((group) => (
+          <div class="drawer__group">
+            <p class="drawer__group-title">{group.title}</p>
+            {group.items.map((item) => (
+              <>
+                <a
+                  class="drawer__link"
+                  href={isExternal(item.href) ? item.href : base + item.href}
+                  {...(isExternal(item.href) ? { target: '_blank', rel: 'noopener' } : {})}
+                  {...(isHere(item.href) ? { 'aria-current': 'page' } : {})}
+                >
+                  <span>{item.label}</span>
+                  {item.tag && <span class="tag">{item.tag}</span>}
+                </a>
+                {item.children && (
+                  <div class="drawer__sub">
+                    {item.children.map((child) => (
+                      <a
+                        class="drawer__link drawer__link--sub"
+                        href={base + child.href}
+                        {...(isHere(child.href) ? { 'aria-current': 'page' } : {})}
+                      >
+                        <span>{child.label}</span>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </>
+            ))}
+          </div>
         ))}
       </nav>
 
