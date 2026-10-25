@@ -1,0 +1,183 @@
+---
+/**
+ * A set of multiple-choice questions, marked in the browser.
+ *
+ * Each question is checked on its own, so the explanation arrives while the
+ * reasoning is still fresh. One button for the whole set would be quicker to
+ * build and much worse to learn from.
+ */
+import type { McqQuestion } from '../data/practice/types';
+
+interface Props {
+  questions: McqQuestion[];
+  setSlug: string;
+}
+
+const { questions, setSlug } = Astro.props;
+---
+
+<div class="quiz" data-quiz data-set={setSlug}>
+  <p class="quiz-summary" data-quiz-summary aria-live="polite">
+    {questions.length} question{questions.length === 1 ? '' : 's'}, marked as you go.
+  </p>
+
+  {questions.map((q, qi) => (
+    <fieldset class="quiz-q" data-question data-qid={q.id} data-answer={q.answer}>
+      <legend class="quiz-q__legend">
+        <span class="quiz-q__num">{qi + 1}</span>
+        <span>{q.question}</span>
+      </legend>
+
+      <div class="quiz-opts">
+        {q.options.map((o, oi) => (
+          <label class="quiz-opt" data-opt={oi}>
+            <input type="radio" name={q.id} value={oi} />
+            <span class="quiz-opt__text">{o}</span>
+          </label>
+        ))}
+      </div>
+
+      <div class="quiz-actions">
+        <button type="button" class="btn btn--green" data-check>Check answer</button>
+        <button type="button" class="btn" data-retry hidden>Try again</button>
+      </div>
+
+      <p class="quiz-feedback" hidden data-feedback></p>
+
+      <div class="quiz-explain" hidden data-explain>
+        <span class="quiz-explain__label">Why</span>
+        <p>{q.explanation}</p>
+      </div>
+    </fieldset>
+  ))}
+</div>
+
+<script>
+  const KEY = 'learmux-practice-mcq';
+
+  function loadStore(): Record<string, boolean> {
+    try {
+      return JSON.parse(localStorage.getItem(KEY) ?? '{}');
+    } catch {
+      return {};
+    }
+  }
+
+  function saveStore(store: Record<string, boolean>) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(store));
+    } catch {
+      /* private mode: the questions still work, they just will not be remembered */
+    }
+  }
+
+  function markQuestion(field: HTMLElement, chosen: number) {
+    const answer = Number(field.dataset.answer);
+    const right = chosen === answer;
+
+    field.querySelectorAll<HTMLElement>('.quiz-opt').forEach((opt) => {
+      const i = Number(opt.dataset.opt);
+      opt.classList.remove('is-correct', 'is-wrong');
+      if (i === answer) opt.classList.add('is-correct');
+      if (i === chosen && !right) opt.classList.add('is-wrong');
+    });
+
+    field.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((r) => {
+      r.disabled = true;
+    });
+
+    const feedback = field.querySelector<HTMLElement>('[data-feedback]');
+    if (feedback) {
+      feedback.hidden = false;
+      feedback.textContent = right
+        ? 'Right.'
+        : 'Not quite. The correct answer is marked in green.';
+      feedback.classList.toggle('quiz-feedback--right', right);
+      feedback.classList.toggle('quiz-feedback--wrong', !right);
+    }
+
+    const explain = field.querySelector<HTMLElement>('[data-explain]');
+    if (explain) explain.hidden = false;
+
+    const check = field.querySelector<HTMLButtonElement>('[data-check]');
+    const retry = field.querySelector<HTMLButtonElement>('[data-retry]');
+    if (check) check.hidden = true;
+    if (retry) retry.hidden = false;
+
+    return right;
+  }
+
+  function resetQuestion(field: HTMLElement) {
+    field.querySelectorAll('.quiz-opt').forEach((o) => o.classList.remove('is-correct', 'is-wrong'));
+    field.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((r) => {
+      r.disabled = false;
+      r.checked = false;
+    });
+    const feedback = field.querySelector<HTMLElement>('[data-feedback]');
+    if (feedback) feedback.hidden = true;
+    const explain = field.querySelector<HTMLElement>('[data-explain]');
+    if (explain) explain.hidden = true;
+    const check = field.querySelector<HTMLButtonElement>('[data-check]');
+    const retry = field.querySelector<HTMLButtonElement>('[data-retry]');
+    if (check) check.hidden = false;
+    if (retry) retry.hidden = true;
+  }
+
+  function summarise(quiz: HTMLElement) {
+    const out = quiz.querySelector<HTMLElement>('[data-quiz-summary]');
+    if (!out) return;
+    const fields = [...quiz.querySelectorAll<HTMLElement>('[data-question]')];
+    const done = fields.filter((f) => f.querySelector('[data-explain]')?.hidden === false);
+    const right = done.filter((f) => f.classList.contains('is-right')).length;
+    if (done.length === 0) {
+      out.textContent = `${fields.length} question${fields.length === 1 ? '' : 's'}, marked as you go.`;
+    } else {
+      out.textContent = `${right} of ${fields.length} right so far.`;
+    }
+  }
+
+  function initQuiz() {
+    document.querySelectorAll<HTMLElement>('[data-quiz]').forEach((quiz) => {
+      if (quiz.dataset.bound) return;
+      quiz.dataset.bound = '1';
+
+      const store = loadStore();
+
+      quiz.querySelectorAll<HTMLElement>('[data-question]').forEach((field) => {
+        const id = field.dataset.qid ?? '';
+
+        field.querySelector<HTMLButtonElement>('[data-check]')?.addEventListener('click', () => {
+          const picked = field.querySelector<HTMLInputElement>('input[type="radio"]:checked');
+          const feedback = field.querySelector<HTMLElement>('[data-feedback]');
+          if (!picked) {
+            if (feedback) {
+              feedback.hidden = false;
+              feedback.textContent = 'Pick an answer first.';
+              feedback.classList.remove('quiz-feedback--right');
+              feedback.classList.add('quiz-feedback--wrong');
+            }
+            return;
+          }
+          const right = markQuestion(field, Number(picked.value));
+          field.classList.toggle('is-right', right);
+          store[id] = right;
+          saveStore(store);
+          summarise(quiz);
+        });
+
+        field.querySelector<HTMLButtonElement>('[data-retry]')?.addEventListener('click', () => {
+          resetQuestion(field);
+          field.classList.remove('is-right');
+          delete store[id];
+          saveStore(store);
+          summarise(quiz);
+        });
+      });
+
+      summarise(quiz);
+    });
+  }
+
+  initQuiz();
+  document.addEventListener('astro:page-load', initQuiz);
+</script>
