@@ -48,6 +48,14 @@ export default defineConfig({
     prefetchAll: true,
     defaultStrategy: 'viewport',
   },
+  // The lesson index used to live at /learn/. It listed the same 26 lessons as
+  // the course page with less structure, so it now sends you there instead.
+  // Lesson pages themselves stay at /learn/<slug>/.
+  redirects: {
+    // The value needs the base spelled out: Astro prefixes the generated file
+    // path but not the target, and without it the redirect lands on a 404.
+    '/learn': `${BASE}/course/`,
+  },
   output: 'static',
   build: {
     inlineStylesheets: 'auto',
