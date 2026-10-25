@@ -64,7 +64,6 @@ export const drawerNav: DrawerGroup[] = [
     title: 'Learn',
     items: [
       { href: 'course/', label: 'Course' },
-      { href: 'learn/', label: 'All lessons' },
       { href: 'categories/', label: 'Categories' },
       { href: 'tools/', label: 'Tools' },
     ],
