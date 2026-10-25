@@ -80,7 +80,11 @@ const thumbs = [
   { slug: 'build-a-hash-tool', accent: '#20d65a', lines: ['$ sha256sum -c SHA256SUMS', 'notes.txt: OK', 'archive.zip: FAILED'] },
   { slug: 'build-a-jwt-inspector', accent: '#f3bc36', lines: ['$ cut -d. -f2 token | base64 -d', '{"sub":"user-42"}', '$ openssl dgst -sha256 -hmac'] },
   { slug: 'build-a-permissions-calculator', accent: '#8b7cd8', lines: ['$ stat -c "%a %n" calc.sh', '4755 calc.sh', '$ ls -l calc.sh'] },
-  { slug: 'build-a-subnet-calculator', accent: '#2878d0', lines: ['$ python3 -c "import ipaddress"', '255.255.255.0', '10.0.0.192/26'] },
+  { slug: 'run-your-first-python', accent: '#3fb98a', lines: ['>>> print("hello")', 'hello', '>>> 6 * 7'] },
+  { slug: 'python-working-with-text', accent: '#f3bc36', lines: ['>>> "Termux".upper()', 'TERMUX', '>>> "a-b-c".split("-")'] },
+  { slug: 'python-hashing-and-encoding', accent: '#e0559a', lines: ['>>> hashlib.sha256(b"abc")', '<sha256 _hashlib.HASH>', '>>> base64.b64encode(b"hi")'] },
+  { slug: 'python-addresses', accent: '#2878d0', lines: ['>>> net = ip_network("10.0.0.0/24")', '>>> net.broadcast_address', 'IPv4Address("10.0.0.255")'] },
+  { slug: 'python-secrets-and-tokens', accent: '#8b7cd8', lines: ['>>> secrets.token_hex(16)', '4f2a9c1e7b3d8a05', '>>> hmac.compare_digest(a, b)'] },
 ];
 
 function esc(s) {
