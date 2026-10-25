@@ -1,0 +1,317 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Utilities.
+
+   The tools are the same visual language as the rest of the site: white panel,
+   one hairline border, monospace for anything a machine produced, and green
+   only where something is an action. Nothing decorative, because the output is
+   the interesting part.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.util-hero {
+  padding: var(--sp-6) 0 var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+.util-hero h1 { margin: 0 0 var(--sp-2); }
+.util-hero .lede { max-width: 64ch; margin: 0; }
+
+/* ── the panel every tool sits in ──────────────────────────────────────── */
+.util-panel {
+  margin: var(--sp-5) 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: #fff;
+  overflow: hidden;
+}
+.util-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  background: var(--soft);
+}
+.util-panel__title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.util-panel__body { padding: var(--sp-4); }
+
+/* ── controls ──────────────────────────────────────────────────────────── */
+.util-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: flex-end;
+}
+.util-row + .util-row { margin-top: var(--sp-3); }
+
+.util-field { display: flex; flex-direction: column; gap: 0.3rem; flex: 1 1 14rem; min-width: 0; }
+.util-field--narrow { flex: 0 1 9rem; }
+.util-label {
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.util-input,
+.util-textarea,
+.util-select {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  outline: none;
+}
+.util-input:focus,
+.util-textarea:focus,
+.util-select:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(32, 214, 90, 0.14);
+}
+.util-textarea { min-height: 6.5rem; resize: vertical; line-height: 1.55; }
+.util-select { font-family: var(--font-body); cursor: pointer; }
+
+/* ── toggles ───────────────────────────────────────────────────────────── */
+.util-toggles { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.util-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: #4d4d55;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.util-toggle:hover { border-color: #c9c9d2; }
+.util-toggle[aria-pressed='true'] {
+  color: var(--ink);
+  border-color: var(--green);
+  background: var(--ok-bg);
+}
+.util-toggle__mark {
+  width: 13px;
+  height: 13px;
+  border: 1px solid #c2c2cc;
+  border-radius: 3px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  line-height: 1;
+  color: transparent;
+  flex: none;
+}
+.util-toggle[aria-pressed='true'] .util-toggle__mark {
+  background: var(--green);
+  border-color: var(--green);
+  color: #06301a;
+}
+
+/* ── buttons ───────────────────────────────────────────────────────────── */
+.util-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-4); }
+.util-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  font-family: var(--font-head);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.util-btn:hover { border-color: #c9c9d2; background: var(--soft); }
+.util-btn--primary {
+  color: #06301a;
+  background: var(--green);
+  border-color: var(--green);
+}
+.util-btn--primary:hover { background: var(--green-dark); border-color: var(--green-dark); color: #fff; }
+
+/* ── output ────────────────────────────────────────────────────────────── */
+.util-out {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  word-break: break-all;
+  white-space: pre-wrap;
+  min-height: 2.6rem;
+}
+.util-out--big { font-size: 1.02rem; letter-spacing: 0.01em; }
+.util-out--empty { color: var(--muted); font-family: var(--font-body); }
+.util-out--term {
+  color: #cfe9d6;
+  background: var(--term);
+  border-color: var(--term);
+}
+
+.util-out-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+.util-out-head h3 { margin: 0; font-size: 0.86rem; }
+
+/* ── result rows, for the calculators ──────────────────────────────────── */
+.util-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  margin-top: var(--sp-3);
+}
+.util-cell {
+  padding: var(--sp-3);
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+.util-cell__k {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+.util-cell__v {
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  color: var(--ink);
+  word-break: break-all;
+}
+.util-cell--wide { grid-column: 1 / -1; }
+.util-cell--flag { background: var(--soft); }
+
+/* ── messages ──────────────────────────────────────────────────────────── */
+.util-msg {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  font-size: 0.86rem;
+  line-height: 1.55;
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: var(--r-sm);
+  background: var(--soft);
+  color: #4d4d55;
+}
+.util-msg--ok { border-left-color: var(--ok); background: var(--ok-bg); color: #14532b; }
+.util-msg--warn { border-left-color: var(--yellow); background: var(--warn-bg); color: #6b4a00; }
+.util-msg--bad { border-left-color: var(--danger); background: #fdecea; color: #7d2b21; }
+.util-msg strong { color: inherit; }
+
+/* ── the hash length readout ───────────────────────────────────────────── */
+.util-meter {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+  margin-top: var(--sp-2);
+}
+.util-meter span { display: block; height: 100%; background: var(--green); transition: width 0.2s ease; }
+.util-meter[data-verdict='weak'] span { background: var(--danger); }
+.util-meter[data-verdict='fair'] span { background: var(--yellow); }
+.util-meter[data-verdict='strong'] span { background: var(--ok); }
+
+/* An element with the hidden attribute must actually be hidden. The UA rule
+   is `display: none`, but any author `display` beats it, and several of these
+   panels are flex containers. Without this, an empty message box renders. */
+.util-panel [hidden] { display: none !important; }
+
+/* ── the utilities index ───────────────────────────────────────────────── */
+.util-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: var(--sp-4);
+  margin-top: var(--sp-5);
+}
+.util-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: #fff;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.util-card:hover { border-color: #d6d6de; box-shadow: var(--shadow-hover); }
+.util-card__head { display: flex; align-items: center; gap: var(--sp-2); }
+.util-card__icon {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+  background: var(--soft);
+  color: var(--green);
+}
+.util-card h2 { margin: 0; font-size: 1.02rem; }
+.util-card__desc { margin: var(--sp-2) 0 var(--sp-3); font-size: 0.88rem; color: #4d4d55; }
+.util-card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: auto;
+  font-family: var(--font-head);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+.util-card__links a { display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: none; }
+.util-card__links a:hover { text-decoration: underline; }
+.util-card__links .is-tool { color: var(--blue); }
+.util-card__links .is-lesson { color: var(--muted); }
+
+/* ── the build-it-yourself banner on each tool page ────────────────────── */
+.util-build {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin: var(--sp-5) 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--green);
+  border-radius: var(--r);
+  background: var(--soft);
+}
+.util-build__copy { min-width: 0; }
+.util-build__copy h2 { margin: 0 0 0.25rem; font-size: 1rem; }
+.util-build__copy p { margin: 0; font-size: 0.88rem; color: #4d4d55; max-width: 60ch; }
+
+@media (max-width: 620px) {
+  .util-panel__body { padding: var(--sp-3); }
+  .util-cell { border-right: none; }
+  .util-grid { grid-template-columns: 1fr; }
+}
