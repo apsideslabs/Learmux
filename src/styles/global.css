@@ -301,11 +301,15 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   color: #fff;
   transform: translateX(-101%);
   visibility: hidden;
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.3s;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.28s;
+  /* promoted to its own layer, so the slide is composited rather than
+     repainting the page behind it on every frame */
+  will-change: transform;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 .drawer[data-open="true"] { transform: translateX(0); visibility: visible; }
 
