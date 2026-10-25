@@ -1,0 +1,280 @@
+---
+import '../styles/python.css';
+
+/**
+ * A Python cell you can run in the page.
+ *
+ * One component covers the three things the roadmap called for:
+ *
+ *   runnable cell   <PyCell code="print('hi')" />
+ *   checkpoint      <PyCell code="..." expect="hi" />
+ *   fix the error   <PyCell variant="fix" code="<broken>" expect="hi" />
+ *
+ * The code is rendered into a textarea rather than an attribute, so quotes and
+ * newlines in the snippet need no escaping and the reader can edit it in place.
+ * The original is captured by the script on first run, which is what Reset
+ * restores.
+ */
+interface Props {
+  code: string;
+  /** Expected output. Its presence turns the cell into a checkpoint. */
+  expect?: string;
+  /** How to compare. Exact by default. */
+  mode?: 'exact' | 'contains' | 'regex';
+  /** A label shown above the editor. */
+  title?: string;
+  /** `fix` marks a deliberate mistake for the reader to find and correct. */
+  variant?: 'run' | 'fix';
+  /** A nudge, revealed on request. */
+  hint?: string;
+  /** Run from an empty namespace rather than the page's shared one. */
+  fresh?: boolean;
+  /**
+   * A correct version of the code.
+   *
+   * Two things use it. The reader can reveal it when they are stuck, and the
+   * checker runs it to prove the exercise is actually solvable and that
+   * `expect` is the right answer for it. Without it, a checkpoint could be
+   * wrong and nobody would notice.
+   */
+  solution?: string;
+}
+
+const { code, expect, mode = 'exact', title, variant = 'run', hint, fresh = false, solution } = Astro.props;
+
+// The lesson slug, so a checkpoint can be recorded against it.
+const parts = Astro.url.pathname.split('/').filter(Boolean);
+const learnAt = parts.indexOf('learn');
+const lesson = learnAt >= 0 ? (parts[learnAt + 1] ?? 'unknown') : 'unknown';
+
+const isCheckpoint = typeof expect === 'string' && expect !== '';
+---
+
+<div
+  class:list={['pycell', variant === 'fix' && 'pycell--fix']}
+  data-pycell
+  data-expect={isCheckpoint ? expect : undefined}
+  data-mode={mode}
+  data-lesson={lesson}
+  data-variant={variant}
+  data-fresh={fresh ? '1' : undefined}
+>
+  <div class="pycell__head">
+    <span class="pycell__title">{title ?? (variant === 'fix' ? 'Fix this' : 'Python')}</span>
+    {variant === 'fix' && <span class="pycell__badge pycell__badge--fix">Find the mistake</span>}
+    {isCheckpoint && variant !== 'fix' && <span class="pycell__badge">Checkpoint</span>}
+  </div>
+
+  <div class="pycell__editor">
+    <label class="visually-hidden" for={`cell-${lesson}-${Math.random().toString(36).slice(2, 7)}`}>Python code</label>
+    <textarea class="pycell__code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off">{code}</textarea>
+  </div>
+
+  <div class="pycell__actions">
+    <button class="pycell__run" type="button" data-run>
+      <span class="pycell__run-idle">Run</span>
+      <span class="pycell__run-busy">Running…</span>
+    </button>
+    <button class="pycell__reset" type="button" data-reset>Reset</button>
+    {hint && <button class="pycell__hint-btn" type="button" data-hint>Hint</button>}
+    {solution && <button class="pycell__hint-btn" type="button" data-solution>Show a solution</button>}
+    <span class="pycell__status" data-status aria-live="polite"></span>
+  </div>
+
+  {hint && <p class="pycell__hint" data-hint-text hidden>{hint}</p>}
+
+  {/* Held in a template so multi-line Python needs no attribute escaping. */}
+  {solution && <template data-solution-text>{solution}</template>}
+
+  <div class="pycell__output" data-output hidden>
+    <div class="pycell__out-label">Output</div>
+    <pre class="pycell__stdout" data-stdout></pre>
+    <pre class="pycell__stderr" data-stderr hidden></pre>
+  </div>
+
+  <div class="pycell__verdict" data-verdict hidden></div>
+
+  <p class="pycell__note" data-note>
+    This runs in your browser. Nothing is sent anywhere, and the first run downloads the
+    Python runtime, about ten megabytes, which the browser then keeps.
+  </p>
+</div>
+
+<script>
+  import { runPython, ensureRuntime, onLoadStage, loadStage, resetNamespace } from '../lib/py/runtime';
+  import { checkOutput, checkpointId, type MatchMode } from '../lib/py/cells';
+  import { isSolved, markSolved } from '../lib/progress';
+
+  let cellsWired = false;
+
+  function initCells() {
+    if (cellsWired) return;
+    const cells = [...document.querySelectorAll<HTMLElement>('[data-pycell]')];
+    if (cells.length === 0) return;
+    cellsWired = true;
+
+    cells.forEach((cell, index) => {
+      const ta = cell.querySelector<HTMLTextAreaElement>('.pycell__code')!;
+      const runBtn = cell.querySelector<HTMLButtonElement>('[data-run]')!;
+      const resetBtn = cell.querySelector<HTMLButtonElement>('[data-reset]')!;
+      const hintBtn = cell.querySelector<HTMLButtonElement>('[data-hint]');
+      const hintText = cell.querySelector<HTMLElement>('[data-hint-text]');
+      const status = cell.querySelector<HTMLElement>('[data-status]')!;
+      const outWrap = cell.querySelector<HTMLElement>('[data-output]')!;
+      const stdoutEl = cell.querySelector<HTMLElement>('[data-stdout]')!;
+      const stderrEl = cell.querySelector<HTMLElement>('[data-stderr]')!;
+      const verdict = cell.querySelector<HTMLElement>('[data-verdict]')!;
+      const note = cell.querySelector<HTMLElement>('[data-note]')!;
+
+      const original = ta.value;
+      const expect = cell.dataset.expect ?? '';
+      const mode = (cell.dataset.mode ?? 'exact') as MatchMode;
+      const lesson = cell.dataset.lesson ?? 'unknown';
+      const id = checkpointId(lesson, index);
+
+      if (expect && isSolved(id)) cell.dataset.done = '1';
+
+      // Keep the textarea the right height for its content, so a short cell
+      // does not leave a big empty box.
+      const fit = () => {
+        ta.style.height = 'auto';
+        ta.style.height = `${Math.min(ta.scrollHeight + 2, 520)}px`;
+      };
+      fit();
+      ta.addEventListener('input', fit);
+
+      // Tab should indent, not move focus out of the editor.
+      ta.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const start = ta.selectionStart;
+          ta.setRangeText('    ', start, ta.selectionEnd, 'end');
+          fit();
+        }
+      });
+
+      resetBtn.addEventListener('click', async () => {
+        ta.value = original;
+        fit();
+        outWrap.hidden = true;
+        verdict.hidden = true;
+        status.textContent = 'Reset to the original code.';
+        await resetNamespace().catch(() => {});
+      });
+
+      const solBtn = cell.querySelector<HTMLButtonElement>('[data-solution]');
+      const solTpl = cell.querySelector<HTMLTemplateElement>('[data-solution-text]');
+      if (solBtn && solTpl) {
+        solBtn.addEventListener('click', () => {
+          const text = solTpl.content.textContent ?? '';
+          if (ta.value.trim() === text.trim()) {
+            // Second press puts their own attempt back, so the button toggles.
+            ta.value = original;
+            solBtn.textContent = 'Show a solution';
+          } else {
+            ta.value = text;
+            solBtn.textContent = 'Back to my attempt';
+          }
+          fit();
+        });
+      }
+
+      if (hintBtn && hintText) {
+        hintBtn.addEventListener('click', () => {
+          const showing = !hintText.hidden;
+          hintText.hidden = showing;
+          hintBtn.textContent = showing ? 'Hint' : 'Hide hint';
+        });
+      }
+
+      runBtn.addEventListener('click', async () => {
+        runBtn.disabled = true;
+        verdict.hidden = true;
+
+        if (!(window as any).__pyCellStageHooked) {
+          (window as any).__pyCellStageHooked = true;
+        }
+        const off = onLoadStage((s) => {
+          if (s === 'script' || s === 'runtime') {
+            status.textContent = 'Fetching the Python runtime, about ten megabytes. Once only.';
+          }
+        });
+
+        try {
+          const result = await runPython(ta.value, { fresh: cell.dataset.fresh === '1' });
+          off();
+          note.hidden = true;
+
+          outWrap.hidden = false;
+          stdoutEl.textContent = result.stdout === '' ? '(no output)' : result.stdout;
+          stdoutEl.classList.toggle('pycell__stdout--empty', result.stdout === '');
+          if (result.stderr) {
+            stderrEl.hidden = false;
+            stderrEl.textContent = result.stderr;
+          } else {
+            stderrEl.hidden = true;
+          }
+
+          if (!result.ok) {
+            // Show the traceback in the output area, where a learner expects it.
+            stdoutEl.textContent = result.stdout === '' ? '(no output)' : result.stdout;
+            stderrEl.hidden = false;
+            stderrEl.textContent = result.error ?? 'the code raised an error';
+            stderrEl.classList.add('pycell__stderr--error');
+            status.textContent = `${result.errorLine ?? 'error'} · ${result.ms} ms`;
+          } else {
+            stderrEl.classList.remove('pycell__stderr--error');
+            status.textContent = `${result.ms} ms`;
+          }
+
+          if (expect) {
+            const check = checkOutput(result.stdout, expect, mode);
+            verdict.hidden = false;
+            if (check.pass) {
+              verdict.className = 'pycell__verdict pycell__verdict--pass';
+              verdict.innerHTML = `<strong>Correct.</strong> ${check.message}`;
+              cell.dataset.done = '1';
+              markSolved(id);
+            } else {
+              verdict.className = 'pycell__verdict pycell__verdict--fail';
+              let html = `<strong>Not yet.</strong> ${check.message}`;
+              if (check.firstDifference) {
+                const d = check.firstDifference;
+                html += `<dl class="pycell__diff">
+                  <dt>Line ${d.line} should be</dt><dd><code>${escapeHtml(d.expected)}</code></dd>
+                  <dt>and yours is</dt><dd><code>${escapeHtml(d.got)}</code></dd>
+                </dl>`;
+              }
+              if (!result.ok) {
+                html += `<p class="pycell__diff-note">The code raised before it could produce the right output. Read the last line of the traceback first: it names the mistake.</p>`;
+              }
+              verdict.innerHTML = html;
+            }
+          }
+        } catch (e) {
+          off();
+          outWrap.hidden = false;
+          stderrEl.hidden = false;
+          stderrEl.textContent = String(e);
+          status.textContent = 'Could not run the code.';
+        } finally {
+          runBtn.disabled = false;
+        }
+      });
+    });
+
+    // Warm nothing up front: the runtime is only fetched on the first Run.
+    void ensureRuntime;
+    void loadStage;
+  }
+
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  initCells();
+  document.addEventListener('astro:page-load', () => {
+    cellsWired = false;
+    initCells();
+  });
+</script>
