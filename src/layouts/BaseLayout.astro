@@ -3,7 +3,7 @@ import '../styles/global.css';
 import '../styles/terminal.css';
 import { ClientRouter } from 'astro:transitions';
 import { challenges } from '../lib/challenges';
-import { site, studio, nav, drawerNav } from '../lib/site';
+import { site, studio, nav, drawerNav, type DrawerGroup, type DrawerItem } from '../lib/site';
 import Icon from '../components/Icon.astro';
 
 interface Props {
@@ -25,14 +25,26 @@ const fullTitle = title.includes(site.name) ? title : `${title} · ${site.name}`
 const total = challenges.length;
 const isExternal = (href: string) => /^https?:/.test(href);
 
-// Marks the drawer entry for the page you are on, so the menu shows where you
-// are rather than only where you can go.
+// Two different questions, answered two different ways.
+//
+// `isHere` is a prefix test: it decides which category and which sub-page start
+// open, so the trail to where you are is already unfolded when the menu opens.
 const isHere = (href: string) => {
   if (isExternal(href)) return false;
   const full = base + href;
   if (href === '') return path === base || path === base.slice(0, -1);
   return path === full || path.startsWith(full);
 };
+
+// `isCurrent` decides which single entry is marked. A parent that has children
+// is only marked when none of its children is the better match, so you never
+// see two green entries for one page.
+const childMatches = (item: DrawerItem) => (item.children ?? []).some((c) => isHere(c.href));
+const isCurrent = (item: DrawerItem) =>
+  item.children && item.children.length > 0 ? isHere(item.href) && !childMatches(item) : isHere(item.href);
+const groupHasCurrent = (group: DrawerGroup) =>
+  group.items.some((i) => isHere(i.href) || childMatches(i));
+const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 ---
 
 <!doctype html>
@@ -131,37 +143,80 @@ const isHere = (href: string) => {
       </div>
 
       <nav aria-label="Menu">
-        {drawerNav.map((group) => (
-          <div class="drawer__group">
-            <p class="drawer__group-title">{group.title}</p>
-            {group.items.map((item) => (
-              <>
-                <a
-                  class="drawer__link"
-                  href={isExternal(item.href) ? item.href : base + item.href}
-                  {...(isExternal(item.href) ? { target: '_blank', rel: 'noopener' } : {})}
-                  {...(isHere(item.href) ? { 'aria-current': 'page' } : {})}
-                >
-                  <span>{item.label}</span>
-                  {item.tag && <span class="tag">{item.tag}</span>}
-                </a>
-                {item.children && (
-                  <div class="drawer__sub">
-                    {item.children.map((child) => (
+        {drawerNav.map((group) => {
+          const gid = `drawer-group-${slugify(group.title)}`;
+          const gOpen = groupHasCurrent(group);
+          return (
+            <div class="drawer__group">
+              <button
+                class="drawer__cat"
+                type="button"
+                data-cat
+                aria-expanded={gOpen ? 'true' : 'false'}
+                aria-controls={gid}
+              >
+                <span>{group.title}</span>
+                <span class="drawer__chev" aria-hidden="true"><Icon name="chevron" size={15} /></span>
+              </button>
+
+              <div class="drawer__panel" id={gid} hidden={!gOpen}>
+                {group.items.map((item) => {
+                  if (!item.children || item.children.length === 0) {
+                    return (
                       <a
-                        class="drawer__link drawer__link--sub"
-                        href={base + child.href}
-                        {...(isHere(child.href) ? { 'aria-current': 'page' } : {})}
+                        class="drawer__link"
+                        href={isExternal(item.href) ? item.href : base + item.href}
+                        {...(isExternal(item.href) ? { target: '_blank', rel: 'noopener' } : {})}
+                        {...(isCurrent(item) ? { 'aria-current': 'page' } : {})}
                       >
-                        <span>{child.label}</span>
+                        <span>{item.label}</span>
+                        {item.tag && <span class="tag">{item.tag}</span>}
                       </a>
-                    ))}
-                  </div>
-                )}
-              </>
-            ))}
-          </div>
-        ))}
+                    );
+                  }
+
+                  const sid = `drawer-sub-${slugify(item.label)}`;
+                  const sOpen = childMatches(item);
+                  return (
+                    <div class="drawer__item">
+                      <div class="drawer__row">
+                        <a
+                          class="drawer__link"
+                          href={base + item.href}
+                          {...(isCurrent(item) ? { 'aria-current': 'page' } : {})}
+                        >
+                          <span>{item.label}</span>
+                          {item.tag && <span class="tag">{item.tag}</span>}
+                        </a>
+                        <button
+                          class="drawer__toggle"
+                          type="button"
+                          data-toggle
+                          aria-expanded={sOpen ? 'true' : 'false'}
+                          aria-controls={sid}
+                          aria-label={`Show the pages in ${item.label}`}
+                        >
+                          <span class="drawer__chev" aria-hidden="true"><Icon name="chevron" size={15} /></span>
+                        </button>
+                      </div>
+                      <div class="drawer__panel drawer__panel--sub" id={sid} hidden={!sOpen}>
+                        {item.children.map((child) => (
+                          <a
+                            class="drawer__link drawer__link--sub"
+                            href={base + child.href}
+                            {...(isHere(child.href) ? { 'aria-current': 'page' } : {})}
+                          >
+                            <span>{child.label}</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </nav>
 
       <div class="drawer__foot">
@@ -295,6 +350,25 @@ const isHere = (href: string) => {
         });
       }
 
+      // Categories and sub-pages start closed, except the trail to the page you
+      // are on, which is already open so you can see where you are.
+      function initDrawerGroups() {
+        const drawer = document.querySelector<HTMLElement>('[data-drawer]');
+        if (!drawer || drawer.dataset.groupsBound) return;
+        drawer.dataset.groupsBound = '1';
+
+        drawer.querySelectorAll<HTMLButtonElement>('[data-cat], [data-toggle]').forEach((btn) => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const id = btn.getAttribute('aria-controls');
+            const panel = id ? document.getElementById(id) : null;
+            const open = btn.getAttribute('aria-expanded') === 'true';
+            btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+            if (panel) panel.hidden = open;
+          });
+        });
+      }
+
       function boot() {
         document.body.classList.remove('menu-open');
         document.querySelectorAll('[data-drawer]').forEach((d) => d.setAttribute('data-open', 'false'));
@@ -303,6 +377,7 @@ const isHere = (href: string) => {
           t.setAttribute('aria-label', 'Open menu');
         });
         initMenu();
+        initDrawerGroups();
         refreshProgress();
       }
 
