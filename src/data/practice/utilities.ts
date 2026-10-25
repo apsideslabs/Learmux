@@ -1,12 +1,17 @@
 /**
  * Practice sets for the Utilities track: the password generator and the
- * encoder and decoder. Each set follows the lesson that builds the same thing
+ * encoder and decoder. Each set follows the lesson that builds the same tool
  * in the shell, so the two can be read side by side.
  *
- * The output tasks are graded against rules that describe meaning rather than
- * exact characters. A generated password differs on every run, so the rules
- * ask whether the output has the right shape: a value of the right length
- * under the right label, the bytes of the UTF-8 text, and a clean run with no
+ * The output tasks run the finished script from the lesson. Each command
+ * writes the whole script to a file, runs it once, and prints what it
+ * produced on a single line, so the task tests the thing the lesson actually
+ * built rather than a loose collection of one liners.
+ *
+ * The rules describe meaning rather than exact characters. A generated
+ * password differs on every run, so the rules ask whether the output has the
+ * right shape: a value of the right length from the right alphabet, with the
+ * entropy the arithmetic gives for those options, and a clean run with no
  * error message.
  */
 
@@ -17,9 +22,9 @@ export const utilitiesSets: PracticeSet[] = [
     slug: 'build-a-password-generator',
     title: 'Build a password generator',
     topic: 'build-a-password-generator',
-    summary: 'Generate a real random secret with openssl and Python, and count its bits.',
+    summary: 'Run the genpass.sh script you built, and read the entropy it reports.',
     intro:
-      'A password is only as strong as the randomness behind it. This set covers why the shell number $RANDOM will not do, what is subtly wrong with the common /dev/urandom pipeline, and how to work out the entropy of a password from its length and its alphabet.',
+      'A password is only as strong as the randomness behind it. This set covers why the shell number $RANDOM will not do, what is subtly wrong with the common /dev/urandom pipeline, and how the finished genpass.sh works out the entropy of a password from its length and its alphabet.',
     questions: [
       {
         id: 'pw-1',
@@ -45,7 +50,7 @@ export const utilitiesSets: PracticeSet[] = [
         ],
         answer: 0,
         explanation:
-          'The pipeline usually returns twenty characters, which is why the idiom spreads. The problem is the mechanism. head exits the moment it has its twenty bytes and closes the pipe, while tr is still writing, so tr is killed by a signal part way through its work. Correctness depends on that signal rather than on the two tools agreeing on a length, and in a script that inspects the status of every stage the same line can report a broken pipe. A tool that asks the kernel for exactly the bytes it needs avoids the race.',
+          'The pipeline usually returns twenty characters, which is why the idiom spreads. The problem is the mechanism. head exits the moment it has its twenty bytes and closes the pipe, while tr is still writing, so tr is killed by a signal part way through its work. Correctness depends on that signal rather than on the two tools agreeing on a length, and in a script that inspects the status of every stage the same line can report a broken pipe. A tool that asks the kernel for exactly the bytes it needs avoids the race, which is why the lesson uses openssl rand.',
       },
       {
         id: 'pw-3',
@@ -57,50 +62,34 @@ export const utilitiesSets: PracticeSet[] = [
       },
       {
         id: 'pw-4',
-        question: 'Why is a loop that asks you to type the password characters weaker than openssl or secrets?',
+        question: 'In the finished script, why are bytes at or above the limit thrown away rather than used straight away?',
         options: [
-          'The characters come from your own habits, so the entropy is limited by what you tend to choose, and the length depends on how many times you press enter',
-          'read cannot accept more than one character at a time',
-          'The loop hashes each character as it is typed',
-          'A shell loop cannot run on a phone',
+          'Taking the byte modulo the alphabet size on its own would favour the low positions, because 256 is not a multiple of the alphabet size',
+          'The bytes above the limit are not random',
+          'It makes the script faster',
+          'It stops the password from being too long',
         ],
         answer: 0,
         explanation:
-          'A generator is worth using precisely because it draws from a source you cannot bias. When you type the characters, you reach for the same keys every time, a name, a birthday, the top row of the keyboard, and the result is far less random than it looks. The loop also ties the length to how many times you happen to press enter, and it leaves the password sitting on the screen. read takes a whole line, hashes nothing, and works perfectly well on a phone.',
+          'A byte runs from 0 to 255, and 256 is not a multiple of most alphabet sizes, so a plain modulo would hand the first few positions a slightly better chance than the rest. The limit is the largest multiple of the alphabet size that fits in a byte, and any byte at or above it is discarded and drawn again. That is what makes every position equally likely, and it is why the finished script is not biased even though it is short.',
       },
     ],
     tasks: [
       {
         id: 'pw-t1',
-        title: 'Generate a secret three ways',
+        title: "Run the generator you built",
         prompt:
-          'This makes a random secret three times, once with openssl in base64, once with openssl in hex, and once with the Python secrets module, printing a label in front of each so you can see which is which. It needs the openssl and python packages, so run pkg install openssl python first if either is missing. Read the length of each value against its label.',
+          "The genpass.sh you finished in the last lesson is already saved next to you. This runs it for a twenty character password drawn from lower case, upper case and digits, and prints the password and its entropy on one line. Paste that line.",
         command:
-          'printf \'base64 : \'; openssl rand -base64 24; printf \'hex    : \'; openssl rand -hex 16; printf \'python : \'; python3 -c "import secrets, string; a = string.ascii_letters + string.digits; print(\'\'.join(secrets.choice(a) for _ in range(20)))"',
-        hint: 'Twenty four bytes in base64 is 32 characters, sixteen bytes in hex is also 32 characters, and the Python loop was asked for 20 characters.',
+          "bash genpass.sh -l 20 -c lud",
+        fixture: { lesson: 'build-a-password-generator', as: 'genpass.sh' },
+        hint: "The bracket at the end is the report: the length, the size of the alphabet it drew from, and the entropy in bits.",
         expects:
-          'Three labelled lines. The base64 line is 32 characters from the base64 alphabet, which is 24 random bytes at six bits each. The hex line is 32 characters from the hex alphabet, which is 16 random bytes at four bits each, so it carries fewer bits than the base64 line even though it looks the same length. The python line is 20 characters from letters and digits. Every value changes each time you run it, which is the whole point.',
+          "One line, holding a twenty character password and then a bracketed report. The report should read 20 chars, alphabet 62, and a figure near 119.08 bits, because twenty characters drawn from 62 possible ones is 20 times log2(62). Lower case, upper case and digits together are 26 plus 26 plus 10, which is 62. If the alphabet figure is different, the wrong classes were selected; if the bit figure is much lower, the length did not take.",
         rules: [
-          {
-            type: 'matches',
-            pattern: '^\\s*base64\\s*:\\s*[A-Za-z0-9+/]{32}\\s*$',
-            label: 'a 32 character base64 secret follows the base64 label',
-          },
-          {
-            type: 'matches',
-            pattern: '^\\s*hex\\s*:\\s*[0-9a-f]{32}\\s*$',
-            label: 'a 32 character hex secret follows the hex label',
-          },
-          {
-            type: 'matches',
-            pattern: '^\\s*python\\s*:\\s*[A-Za-z0-9]{20}\\s*$',
-            label: 'a 20 character password follows the python label',
-          },
-          {
-            type: 'absent',
-            pattern: 'command not found|No such file or directory|not installed',
-            label: 'the commands actually ran',
-          },
+          { type: 'matches', pattern: '^\\s*[A-Za-z0-9]{20}\\s+\\[20 chars, alphabet 62, \\d+\\.\\d+ bits\\]\\s*$', label: 'a 20 character password with the 62 character alphabet reported' },
+          { type: 'contains', value: '119.0', label: 'the entropy is the real figure for that alphabet' },
+          { type: 'absent', pattern: 'command not found|No such file or directory|not installed|genpass:', label: 'the script ran' },
         ],
       },
     ],
@@ -110,9 +99,9 @@ export const utilitiesSets: PracticeSet[] = [
     slug: 'build-an-encoder',
     title: 'Build an encoder and decoder',
     topic: 'build-an-encoder',
-    summary: 'Move text through base64 and hex, and confirm the round trip.',
+    summary: 'Run the encdec.sh script you built, and let its round trip check catch a bad decode.',
     intro:
-      'Encoding rewrites the same bytes in a different alphabet, so it hides nothing. This set covers base64 and hex, the decode that quietly succeeds on input that was never base64, and the one place where a phone disagrees with a desktop, the bytes behind an accented letter.',
+      'Encoding rewrites the same bytes in a different alphabet, so it hides nothing. This set covers base64 and hex, the decode that quietly succeeds on input that was never base64, and the round trip check the finished encdec.sh adds to catch it.',
     questions: [
       {
         id: 'enc-1',
@@ -125,7 +114,7 @@ export const utilitiesSets: PracticeSet[] = [
         ],
         answer: 0,
         explanation:
-          'base64 -d does not ask whether the input was base64, only whether it could be. The word password is eight characters and every one of them is a valid base64 character, so the decoder accepts it and produces eight bytes that mean nothing. A zero exit code rules out malformed input, but it is not proof of intent. Decode the result and encode it again, then compare with the original, to confirm the round trip.',
+          'base64 -d does not ask whether the input was base64, only whether it could be. The word password is eight characters and every one of them is a valid base64 character, so the decoder accepts it and produces six bytes that mean nothing. A zero exit code rules out malformed input, but it is not proof of intent. That is why the finished script adds the -c flag: it decodes the value, encodes the result again, and compares the two.',
       },
       {
         id: 'enc-2',
@@ -142,16 +131,16 @@ export const utilitiesSets: PracticeSet[] = [
       },
       {
         id: 'enc-3',
-        question: 'What is the difference between xxd -p and od -An -tx1?',
+        question: 'Why does the finished script read hex back with printf and od rather than with xxd -r -p?',
         options: [
-          'xxd -p prints plain hex with no offsets and no ASCII column, while od -An -tx1 prints one byte per column separated by spaces and needs no extra package',
-          'xxd -p prints base64 and od -An -tx1 prints decimal',
-          'xxd -p decodes and od -An -tx1 encodes',
-          'od -An -tx1 sorts the bytes before printing them',
+          'od comes with the base system and is always there, while xxd may need installing on the phone',
+          'xxd -r -p cannot read plain hex',
+          'printf and od produce base64 instead of bytes',
+          'xxd -r -p sorts the bytes before writing them',
         ],
         answer: 0,
         explanation:
-          'Both turn bytes into hex, in different layouts. xxd -p writes the hex with nothing else, so it is easy to read and easy to feed back with xxd -r -p, but xxd may need installing on your phone. od comes with the base system, so it is always there, and -An drops the offset column while -tx1 asks for one byte per value in hex. Neither sorts anything, and neither prints base64.',
+          'od -An -tx1 turns bytes into hex with nothing else on the line, and it is part of the base install, so it is always available on a phone. xxd prints plain hex with -p and reads it back with -r -p, but xxd may not be installed, and on a phone that is often the deciding factor. The script keeps to od so that it needs no package beyond the base system.',
       },
       {
         id: 'enc-4',
@@ -170,34 +159,19 @@ export const utilitiesSets: PracticeSet[] = [
     tasks: [
       {
         id: 'enc-t1',
-        title: 'Encode a word, decode it back, and show the bytes',
+        title: "Encode a value and decode it back",
         prompt:
-          'This takes a short word with an accented letter and runs it through base64, then decodes it straight back, then prints the bytes it is made of in hex. Read the three lines together: the encoded form, the original word, and the bytes behind it.',
-        command: "printf '%s' 'café' | base64; printf '%s' 'café' | base64 | base64 -d; echo; printf '%s' 'café' | od -An -tx1",
-        hint: 'The accented e is two bytes in UTF-8, so the hex line has five values for four letters.',
+          "The encdec.sh you finished is saved next to you. This encodes café to hex, which shows the UTF-8 bytes rather than the latin-1 ones, then decodes a base64 string back to text. Paste both lines.",
+        command:
+          "bash encdec.sh --to hex 'café'; bash encdec.sh -d --to base64 'aGVsbG8gdGVybXV4'",
+        fixture: { lesson: 'build-an-encoder', as: 'encdec.sh' },
+        hint: "The first line is six pairs of hex digits, because é takes two bytes in UTF-8.",
         expects:
-          'Three lines. The first is the base64 of the word, Y2Fmw6k=, which was built from the UTF-8 bytes rather than from one byte per letter. The second is the word back again, which shows that decoding needs no key. The third is the byte values in hex, and the pair c3 a9 near the end is the UTF-8 for the accented e. A tool that used latin-1 would show e9 in that position and a different base64 on the first line.',
+          "Two lines. The first is 63 61 66 c3 a9, which is c, a, f, then the two bytes of é. The second is hello termux. The point of the first line is that é is c3 a9 in UTF-8 and e9 in latin-1, so a tool showing e9 is treating your text as latin-1 and would mangle it on the way back. If you see e9, the encoding path is wrong.",
         rules: [
-          {
-            type: 'matches',
-            pattern: '^\\s*Y2Fmw6k=\\s*$',
-            label: 'the base64 of the UTF-8 word is printed',
-          },
-          {
-            type: 'contains',
-            value: 'café',
-            label: 'the word decodes back to the original',
-          },
-          {
-            type: 'matches',
-            pattern: '^\\s*63\\s+61\\s+66\\s+c3\\s+a9\\s*$',
-            label: 'the bytes are shown as UTF-8 hex',
-          },
-          {
-            type: 'absent',
-            pattern: 'command not found|No such file or directory|not installed',
-            label: 'the commands actually ran',
-          },
+          { type: 'contains', value: '63 61 66 c3 a9', label: 'the hex is the UTF-8 bytes, not latin-1' },
+          { type: 'contains', value: 'hello termux', label: 'the base64 decoded back to text' },
+          { type: 'absent', pattern: 'command not found|No such file or directory|not installed|encdec:', label: 'the script ran' },
         ],
       },
     ],
