@@ -51,6 +51,101 @@ const { practiceSets, gradeOutput } = await import(pathToFileURL(outfile).href);
  * without -sV, a different port, different spacing.
  */
 const SAMPLES = {
+  'xfer-t1': {
+    reason: 'rsync is not installed on the build machine',
+    pass: [
+      {
+        name: 'a dry run over two files',
+        text: [
+          'sending incremental file list',
+          './',
+          'draft.md',
+          'final.md',
+          '',
+          'sent 123 bytes  received 57 bytes  360.00 bytes/sec',
+          'total size is 12  speedup is 0.07 (DRY RUN)',
+        ].join('\n'),
+      },
+      {
+        name: 'a dry run that also lists a nested directory',
+        text: [
+          'sending incremental file list',
+          './',
+          'draft.md',
+          'final.md',
+          'notes/',
+          'notes/todo.txt',
+          '',
+          'sent 210 bytes  received 88 bytes  596.00 bytes/sec',
+          'total size is 41  speedup is 0.14 (DRY RUN)',
+        ].join('\n'),
+      },
+    ],
+    fail: [
+      {
+        name: 'a real transfer rather than a dry run',
+        why: 'nothing says DRY RUN, so files may already have moved',
+        text: 'sending incremental file list\ndraft.md\nfinal.md\n\nsent 123 bytes  received 57 bytes  360.00 bytes/sec',
+      },
+      {
+        name: 'rsync was never installed',
+        why: 'the command did not run',
+        text: 'bash: rsync: command not found',
+      },
+      { name: 'an empty paste', why: 'nothing at all', text: '   ' },
+    ],
+  },
+
+  'ssh-t1': {
+    reason: 'ssh-keygen is not installed on the build machine',
+    pass: [
+      {
+        name: 'a key generated at the default path',
+        text: [
+          'Generating public/private ed25519 key pair.',
+          'Enter file in which to save the key (/data/data/com.termux/files/home/.ssh/id_ed25519): ',
+          "Created directory '/data/data/com.termux/files/home/.ssh'.",
+          'Enter passphrase (empty for no passphrase): ',
+          'Enter same passphrase again: ',
+          'Your identification has been saved in /data/data/com.termux/files/home/.ssh/id_ed25519',
+          'Your public key has been saved in /data/data/com.termux/files/home/.ssh/id_ed25519.pub',
+          'The key fingerprint is:',
+          'SHA256:5xK9mN2pQrT7vWbYzA1cD3eF4gH6jK8lM0nO2pQ4rS you@phone',
+          "The key's randomart image is:",
+          '+--[ED25519 256]--+',
+          '|    .o+..        |',
+          '|   . +o=         |',
+          '+----[SHA256]-----+',
+          'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH8kZ2mNpQrT7vWbYzA1cD3eF4gH6jK8lM0nO2pQ4rS you@phone',
+        ].join('\n'),
+      },
+      {
+        name: 'a key written to a named file, with a different comment',
+        text: [
+          'Generating public/private ed25519 key pair.',
+          'Your identification has been saved in /data/data/com.termux/files/home/.ssh/phone_key',
+          'Your public key has been saved in /data/data/com.termux/files/home/.ssh/phone_key.pub',
+          'The key fingerprint is:',
+          'SHA256:Ab1Cd2Ef3Gh4Ij5Kl6Mn7Op8Qr9St0Uv1Wx2Yz3A phone',
+          'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC7dE9fG1hI2jK3lM4nO5pQ6rS7tU8vW9xY0zA1 phone',
+        ].join('\n'),
+      },
+    ],
+    fail: [
+      {
+        name: 'the public key was never printed',
+        why: 'there is no ssh-ed25519 line, so the public half is missing',
+        text: 'Generating public/private ed25519 key pair.\nThe key fingerprint is:\nSHA256:5xK9mN2pQrT7vWbYzA1cD3eF4gH6jK8lM0nO2pQ4rS you@phone',
+      },
+      {
+        name: 'ssh-keygen was never installed',
+        why: 'the command did not run',
+        text: 'bash: ssh-keygen: command not found\ncat: /data/data/com.termux/files/home/.ssh/id_ed25519.pub: No such file or directory',
+      },
+      { name: 'an empty paste', why: 'nothing at all', text: '   ' },
+    ],
+  },
+
   'net-t1': {
     reason: 'nmap and sshd are not installed on the build machine',
     pass: [
@@ -141,8 +236,12 @@ const SAMPLES = {
  */
 function runTask(command) {
   const root = mkdtempSync(join(tmpdir(), 'learn-practice-'));
-  const home = join(root, 'data', 'data', 'com.termux', 'files', 'home');
+  const termuxFiles = join(root, 'data', 'data', 'com.termux', 'files');
+  const home = join(termuxFiles, 'home');
+  const prefix = join(termuxFiles, 'usr');
   mkdirSync(home, { recursive: true });
+  // Termux sets PREFIX to its own usr directory, and one of the tasks reads it
+  mkdirSync(join(prefix, 'bin'), { recursive: true });
   try {
     const r = spawnSync('bash', ['-c', command], {
       encoding: 'utf8',
@@ -150,7 +249,7 @@ function runTask(command) {
       // run from the home directory, the way a learner would, because one of
       // the tasks asks for pwd and that reports the working directory
       cwd: home,
-      env: { ...process.env, HOME: home, NO_COLOR: '1' },
+      env: { ...process.env, HOME: home, PREFIX: prefix, NO_COLOR: '1' },
     });
     return `${r.stdout ?? ''}${r.stderr ?? ''}`;
   } finally {
