@@ -39,6 +39,11 @@ jobs:
       - name: Install nmap for the practice checks
         run: sudo apt-get update -qq && sudo apt-get install -y -qq nmap
 
+      # The calculators do arithmetic people will trust, so they are checked
+      # against published test vectors rather than against themselves.
+      - name: Test the utility logic
+        run: npm run test:utilities
+
       # Proves every practice task is gradeable, and that wrong output is
       # rejected rather than waved through.
       - name: Test practice tasks
