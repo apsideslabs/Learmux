@@ -76,7 +76,7 @@ export const systemSets: PracticeSet[] = [
         id: 'proc-t1',
         title: 'List what is running',
         prompt:
-          'Run the command below and paste the output. It lists the processes your account can see.',
+          'This lists the processes your account can see, with the command that started each one.',
         command: 'ps',
         hint: 'The first line is a header naming the columns, not a process.',
         expects:
@@ -156,7 +156,7 @@ export const systemSets: PracticeSet[] = [
         id: 'net-t1',
         title: 'Start a server and scan it',
         prompt:
-          'Run the command below. It starts the SSH server that Termux ships, then scans your own device on the port that server listens on. Paste the scan output, not the whole terminal session.',
+          'This starts the SSH server that Termux ships, then scans your own device on the port that server listens on. Paste the scan output, not the whole terminal session.',
         command: 'sshd; nmap -sV -p 8022 localhost',
         hint: 'If you are not sure which port it is listening on, netstat -tln lists what is listening on your device right now.',
         expects:
