@@ -1,0 +1,110 @@
+---
+title: "Certifications, labs and what they actually prove"
+description: "What a certification does and does not show, the categories of certification, free and legal places to practise, and how to build a portfolio from work you actually did."
+excerpt: "A certification proves you passed an exam. Hands-on work is what gets read. Build a portfolio of things you actually did."
+category: "Career"
+track: "profession"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 52
+level: Intermediate
+tags: [profession, learning, practice]
+---
+
+import Callout from '../../components/Callout.astro';
+
+In this lesson you will look at how people enter security work. You will see what a certification proves and what it does not, the broad categories of certification, and the free and legal places to practise. Then you will look at what matters most when someone is deciding whether to work with you: a portfolio of things you actually did.
+
+## What you'll be able to do
+
+- Explain what a certification does and does not demonstrate.
+- Name the broad categories of certification and where each sits.
+- Practise for free and legally, on your own lab, local targets, invited platforms and capture-the-flag events.
+- Build a portfolio from work you actually did, in your own words.
+
+## Step 1: What a certification proves
+
+A certification is evidence that you passed an exam. That is worth something: it shows you learned a body of material and met a standard on a given day.
+
+What it does not show is that you can do the work. An exam is a fixed set of questions, taken at a moment, and cannot see how you behave when a real system surprises you. Two people with the same certificate can be very different in front of a live problem.
+
+That is why hands-on work is what hiring actually looks at. The question someone is asking is whether you can find and fix a real problem. A certificate supports an answer. It does not answer it.
+
+None of this means skip the exam, but know what you are buying: a certification can open a door and clear a filter, not carry you through the room.
+
+## Step 2: The categories, without picking a winner
+
+Certifications come in rough categories, and knowing where one sits tells you what it is for. The names differ by vendor, and this lesson does not recommend one, because the right choice depends on where you are.
+
+Entry-level general certificates cover the vocabulary and the landscape: broad and shallow, they suit someone deciding whether the field is for them.
+
+Practical, hands-on certificates put you in front of a live system and score what you do, not what you remember. They carry more weight with people who do the work.
+
+Vendor and product certificates prove you know one company's tool: valuable in a job that uses it, narrow elsewhere.
+
+Governance, risk and compliance certificates are about the rules and paperwork around security rather than the systems, and suit a genuine kind of role.
+
+Specialist certificates go deep in one area, and come later.
+
+Read the category before the name; it tells you more than the logo does.
+
+## Step 3: Practise for free and legally
+
+You do not need to pay anyone to practise, and you never need to touch a system you do not own. There are four free places to work.
+
+Your own lab is the first. You already have one: your phone, with Termux on it, where you can run a service locally and attack it.
+
+Deliberately vulnerable applications are the second: small programs written to be broken, run locally so you practise against a real target with no legal question.
+
+Platforms that invite testing are the third. Some sites run challenges and publish the rules. The invitation is the point: you are being asked, within a boundary that is written down.
+
+Capture-the-flag events are the fourth: time-limited competitions, often free and online, across a range of skills, and a good way to find out what you enjoy.
+
+<Callout type="warning" title="An invitation has a boundary">
+A platform that invites testing invites it on the systems it names, within the rules it publishes. An invitation to attack one service is not permission to attack the host it runs on, or anything else nearby.
+</Callout>
+
+## Step 4: Build a portfolio of what you did
+
+The strongest thing you can show someone is a record of work you actually did. Not courses you started, but things you finished, written up in your own words.
+
+A write-up has a simple shape: what the lab was, what you were trying to do, how you did it, what happened, and what you concluded. Keep the reasoning in, because the reasoning shows how you think. Anyone can paste a command; explaining why you chose it is the skill.
+
+```text
+lab: my own Termux install
+goal: check which services are listening
+method: ran netstat -tuln, then stopped sshd with pkill
+result: no listeners remained
+reasoning: a listener is a door, so I keep as few as I can
+```
+
+Five lines, and it is more convincing than a certificate, because it is a thing you did and can talk about. Do a few of these and you have a portfolio, and keep the reasoning visible, because a reader can tell a write-up you understood from one you copied.
+
+## Step 5: Stay current without drowning
+
+Security changes, and it is easy to spend all your time reading about it instead of doing it. Follow a few primary sources, and let them be enough.
+
+A primary source is the place the news comes from: the vendor's advisory, the maintainer's note, the original write-up. Secondary coverage is faster but thinner, and loses the detail you learn from.
+
+The field will consume every hour you give it, and reading is not doing. The people who grow fastest spend most of their time in a lab.
+
+## Quick reference
+
+| Term | What it means |
+| --- | --- |
+| Certification | Evidence you passed an exam, not that you can do the work |
+| Hands-on work | What hiring actually looks at |
+| Entry-level certificate | Broad and shallow, covers the landscape |
+| Practical certificate | Scored on a live system, carries more weight |
+| Vendor certificate | Proves one company's tool, narrow elsewhere |
+| Your own lab | Free and legal, on your own devices |
+| Vulnerable application | A local target written to be broken |
+| Invited platform | A challenge site with published rules |
+| Capture the flag | A time-limited competition across skills |
+| Primary source | Where the news comes from, not a summary |
+
+## Next steps
+
+- [Rules of engagement and the law](/learn/rules-of-engagement/) is the permission that keeps all of this practice legal.
+- [Responsible disclosure](/learn/responsible-disclosure/) is what to do the day you find a real problem in something you do not own.
+- [Thinking in threats: modelling a system](/learn/threat-modelling/) is a skill that shows up in every one of these labs.
