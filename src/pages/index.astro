@@ -22,6 +22,7 @@ const topics = new Set(challenges.map((c) => c.category)).size;
 const outcomes = [
   'Find your way around a Linux filesystem and pull what you need out of a file.',
   'Write a small script, run it on a schedule, and process a large file without opening it.',
+  'Write Python and run it in the page, with no install and no server, and read the traceback when it goes wrong.',
   'Explain what happens when you open a page, and read an HTTP response by hand.',
   'Check a file against its hash and spot the entries in a log that do not belong.',
   'Build three working tools of your own: a backup script, a log analyser, a dashboard.',
@@ -36,7 +37,7 @@ const outcomes = [
       <p class="eyebrow">Termux · Linux · Security</p>
       <h1>Learn the command line by using it.</h1>
       <p class="lede">
-        A course for Android's Termux, in five tracks. Read a short lesson, then prove it in a real
+        A course for Android's Termux, in twelve tracks. Read a short lesson, then prove it in a real
         terminal. Every challenge has a flag to find.
       </p>
       <div class="actions">
@@ -64,7 +65,7 @@ const outcomes = [
       <div class="outcomes__intro">
         <h2>What you will be able to do</h2>
         <p class="muted">
-          This is not a list of commands to memorise. By the end of the five tracks you can sit down at a
+          This is not a list of commands to memorise. By the end of the course you can sit down at a
           Linux prompt and get something done.
         </p>
       </div>
@@ -79,7 +80,7 @@ const outcomes = [
     <div class="section-head">
       <div>
         <p class="eyebrow">The path</p>
-        <h2>Five tracks, in order</h2>
+        <h2>Twelve tracks, in order</h2>
       </div>
       <p class="section-head__meta">
         {groups.length} tracks · {lessons.length} lessons · {course.timeEstimate}
