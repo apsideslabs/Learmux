@@ -1,0 +1,212 @@
+---
+title: "Injection: when data becomes code"
+description: "See a value cross from data into a shell command and into a SQL query, and learn the two fixes that keep data as data."
+excerpt: "Make a server run a command you did not write, then stop it doing that."
+category: "Web"
+track: "websecurity"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 33
+level: Intermediate
+tags: [web, security]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Injection is what happens when a value you were treating as data is read as code by something that runs code. The interpreter could be a shell, a database, a template engine, or a regular expression. In every case the mistake is the same: the value is joined into a command or a query as text, so the part that was meant to be a value gets a vote on what the code does. In this lesson you will make a server run a command it did not intend, then make the value stay a value.
+
+<Callout type="warning" title="Only attack your own server">
+The server and the database below live on your own phone. The commands you inject are harmless on purpose, but the habit is what matters: only ever test a system you own or have written permission to test.
+</Callout>
+
+## What you'll be able to do
+
+- See a shell command run from a value you sent.
+- Explain why percent-encoding is not a defence.
+- See the same mistake in a SQL query.
+- Fix both with an argument list and a parameter, not more quoting.
+
+## Step 1: A server that greets a name
+
+This server says hello to a name taken from the query string. It builds a shell command out of the value. Write it as `greet.py`.
+
+```python
+# greet.py: says hello to a name taken from the query string
+import http.server
+import socketserver
+import subprocess
+from urllib.parse import urlparse, parse_qs
+
+socketserver.TCPServer.allow_reuse_address = True
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        query = parse_qs(urlparse(self.path).query)
+        name = query.get("name", ["world"])[0]
+        # FLAW: the value is pasted into a shell command
+        out = subprocess.run("echo hello " + name, shell=True,
+                             capture_output=True, text=True)
+        body = (out.stdout + out.stderr).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, fmt, *args):
+        print("request:", self.requestline)
+
+with socketserver.TCPServer(("127.0.0.1", 8000), Handler) as httpd:
+    print("serving on http://127.0.0.1:8000")
+    httpd.serve_forever()
+```
+
+Run it and greet a friend.
+
+```bash
+python3 greet.py
+```
+
+```text
+serving on http://127.0.0.1:8000
+```
+
+```bash
+curl -s "http://127.0.0.1:8000/?name=world"
+```
+
+```text
+hello world
+```
+
+Look at the flaw line. `"echo hello " + name` builds one string and hands it to a shell, which then decides what that string means. The shell does not see a name. It sees a command line.
+
+## Step 2: Let the value become a command
+
+The shell treats `;` as the end of one command and the start of the next. Send a value that contains one.
+
+```bash
+curl -s "http://127.0.0.1:8000/?name=world;id"
+```
+
+```text
+hello world
+uid=10123(u0_a123) gid=10123(u0_a123) groups=10123(u0_a123) context=u:r:untrusted_app:s0
+```
+
+Two commands ran. The first was the greeting, and the second was `id`, which you did not write. Anything a shell can do, the value can now ask for. Percent-encoding the semicolon changes nothing, because the value is decoded before it reaches the shell.
+
+```bash
+curl -s "http://127.0.0.1:8000/?name=world%3Bid"
+```
+
+```text
+hello world
+uid=10123(u0_a123) gid=10123(u0_a123) groups=10123(u0_a123) context=u:r:untrusted_app:s0
+```
+
+## Step 3: The same mistake in a query
+
+A database is another interpreter, and it has the same problem. This script looks a user up in a small in-memory table, once by pasting text into the query and once by passing the value as a parameter. Write it as `sqli.py`.
+
+```python
+# sqli.py: two lookups, one built by pasting text into the query
+import sqlite3
+
+db = sqlite3.connect(":memory:")
+db.execute("create table users (name text)")
+db.execute("insert into users values ('ada')")
+db.execute("insert into users values ('grace')")
+
+typed = "ada' OR '1'='1"
+
+# FLAW: the typed value is pasted into the query text
+bad = "select count(*) from users where name = '" + typed + "'"
+print("vulnerable query:", bad)
+print("vulnerable rows :", db.execute(bad).fetchone()[0])
+
+# FIX: the value is passed as a parameter, never as query text
+good = "select count(*) from users where name = ?"
+print("fixed query     :", good)
+print("fixed rows      :", db.execute(good, (typed,)).fetchone()[0])
+```
+
+Run it.
+
+```bash
+python3 sqli.py
+```
+
+```text
+vulnerable query: select count(*) from users where name = 'ada' OR '1'='1'
+vulnerable rows : 2
+fixed query     : select count(*) from users where name = ?
+fixed rows      : 0
+```
+
+The typed value was `ada' OR '1'='1`. In the first query it closed the quote and added a condition, so the database returned both rows for a name that matches neither. In the second query the whole value was one parameter, so it matched nothing and returned zero. The value was data in one case and code in the other, and the only difference was how it was passed.
+
+## Step 4: Fix the shell command
+
+Two changes fix the greeting server. First, validate the value against an allowlist. Second, stop using a shell at all.
+
+```python
+        # FIX: accept only letters, digits and a couple of safe marks
+        if not re.fullmatch(r"[A-Za-z0-9 ._-]{1,40}", name):
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b"name has a character that is not allowed\n")
+            return
+        # FIX: pass an argument list and keep the shell out of it
+        out = subprocess.run(["echo", "hello", name],
+                             shell=False, capture_output=True, text=True)
+```
+
+Add `import re` at the top. With `shell=False` and a list, `subprocess` runs `echo` directly and hands it two arguments, `hello` and the name. There is no shell to interpret `;`, so a semicolon is just a character inside an argument. The parameter `?` does the same job for the database: it tells the driver that this value is data, so it is never parsed as part of the query.
+
+## Step 5: Attack it again
+
+Restart the server and resend the payload.
+
+```bash
+curl -s "http://127.0.0.1:8000/?name=world;id"
+```
+
+```text
+name has a character that is not allowed
+```
+
+```bash
+curl -s "http://127.0.0.1:8000/?name=world%3Bid"
+```
+
+```text
+name has a character that is not allowed
+```
+
+The greeting still works, and the injected command is refused at the door.
+
+```bash
+curl -s "http://127.0.0.1:8000/?name=world"
+```
+
+```text
+hello world
+```
+
+## Quick reference
+
+| Item | What it does |
+| --- | --- |
+| `"echo hello " + name` | Builds a command line the shell will interpret |
+| `shell=True` | Hands the string to a shell, which runs all of it |
+| `;`, `&&`, `|` | Shell marks that start a second command |
+| `%3B` | A semicolon in disguise, decoded before the shell sees it |
+| `subprocess.run([...], shell=False)` | Runs one program with fixed arguments |
+| `... where name = ?` | A parameter, so the value is never query text |
+
+## Next steps
+
+- [Cross-site scripting](/learn/cross-site-scripting/) is the same mistake with a browser as the interpreter.
+- [Input you do not control](/learn/untrusted-input/) is the validation half of this lesson.
+- [Text processing with awk and sed](/learn/text-processing-awk-sed/) shows how the shell itself treats special characters.
