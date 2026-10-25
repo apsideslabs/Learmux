@@ -1,0 +1,255 @@
+---
+title: "Build a subnet calculator"
+description: "Work out a network address, a mask, a broadcast address and a host count with Python's ipaddress module, and by hand when Python is not there."
+excerpt: "Build a subnet calculator with Python's ipaddress module, then do the same arithmetic by hand with bitwise operators."
+category: "Utilities"
+track: "utilities"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 51
+level: Intermediate
+tags: [utilities, subnetting]
+---
+
+import Callout from '../../components/Callout.astro';
+
+An address like `192.168.1.42/24` hides four answers: the network it belongs to, the mask that defines that network, the broadcast address, and how many devices can live on it. This lesson builds a calculator that gives you all four, using Python's `ipaddress` module, and then does the same arithmetic by hand with bitwise operators, for the times Python is not to hand. It builds the same thing as the [subnet calculator](/utilities/subnet/) on this site, so you can run it yourself on your phone with nothing but Termux.
+
+## What you'll be able to do
+
+- Build a network object from an address and a prefix length.
+- Print its netmask, broadcast address, host range and host count.
+- Split one network into smaller ones with `subnets`.
+- Convert an address to a 32 bit integer and back, by hand.
+- Work out the network and broadcast addresses with bitwise AND and OR.
+- Explain why `/31` and `/32` are special.
+- See the subnet your own phone is on with `ip`.
+
+## Step 1: Build a network object
+
+The `ipaddress` module is part of Python's standard library. Install Python once with `pkg install python`, and then give the module an address and a prefix length and it returns a network. But be careful: by default it refuses an address that is not already a network address, because `192.168.1.42` is a host, not the start of a block.
+
+```bash
+python3 -c "import ipaddress; print(ipaddress.ip_network('192.168.1.42/24'))"
+```
+
+```text
+ValueError: 192.168.1.42/24 has host bits set
+```
+
+The `/24` leaves eight bits for hosts, and `42` is not zero, so some host bits are set. Pass `strict=False` to say you know this and want the network the address sits in. The result is the network address itself.
+
+```bash
+python3 - <<'EOF'
+import ipaddress
+net = ipaddress.ip_network('192.168.1.42/24', strict=False)
+print(net)
+EOF
+```
+
+```text
+192.168.1.0/24
+```
+
+So the calculator's first answer is the network: `192.168.1.0/24`.
+
+## Step 2: Ask for the four figures
+
+The network object answers the rest of the questions directly. Each one is a property, so you read it rather than call it.
+
+```bash
+python3 - <<'EOF'
+import ipaddress
+net = ipaddress.ip_network('192.168.1.42/24', strict=False)
+print('network  ', net.network_address)
+print('netmask  ', net.netmask)
+print('broadcast', net.broadcast_address)
+print('addresses', net.num_addresses)
+print('hosts    ', net.num_addresses - 2)
+print('first    ', list(net.hosts())[0])
+print('last     ', list(net.hosts())[-1])
+EOF
+```
+
+```text
+network   192.168.1.0
+netmask   255.255.255.0
+broadcast 192.168.1.255
+addresses 256
+hosts     254
+first     192.168.1.1
+last      192.168.1.254
+```
+
+`netmask` is the mask in dotted form. `broadcast_address` is the last address in the block, which every host here can reach at once. `num_addresses` counts every address in the block, all 256 of them. `hosts()` gives the addresses a device may actually take, and there are 254, because the first address names the network and the last is the broadcast. That subtraction, `num_addresses - 2`, is the host count you want.
+
+## Step 3: Split a network into smaller ones
+
+A `/24` is often too big. `subnets` carves it into equal pieces. Ask for a new prefix length and it returns each piece in order.
+
+```bash
+python3 - <<'EOF'
+import ipaddress
+net = ipaddress.ip_network('192.168.1.0/24')
+for s in net.subnets(new_prefix=26):
+    print(s, s.broadcast_address, s.num_addresses)
+EOF
+```
+
+```text
+192.168.1.0/26 192.168.1.63 64
+192.168.1.64/26 192.168.1.127 64
+192.168.1.128/26 192.168.1.191 64
+192.168.1.192/26 192.168.1.255 64
+```
+
+Four `/26` blocks fit inside one `/24`, each holding 64 addresses and 62 usable hosts. Every block starts on an even boundary, and the broadcast of each is one less than the start of the next. That is the pattern to look for when you are checking someone else's plan.
+
+## Step 4: The arithmetic by hand
+
+Python is not always there, so it is worth knowing how the four figures are derived. The trick is that an IPv4 address is really a 32 bit integer, and the dots are just a way of writing it. Split the address into its four numbers, shift each into place, and OR them together.
+
+```bash
+cat > ~/subnet.sh <<'EOF'
+ip=192.168.1.42
+mask=24
+IFS=. read -r a b c d <<< "$ip"
+n=$(( (a << 24) | (b << 16) | (c << 8) | d ))
+echo "address int $n"
+EOF
+bash ~/subnet.sh
+```
+
+```text
+address int 3232235818
+```
+
+That integer is the whole address. `192` sits in the top eight bits, `168` in the next eight, and so on down to `42`.
+
+## Step 5: Mask, network and broadcast with bitwise operators
+
+The prefix length says how many of the 32 bits name the network. A `/24` means the top 24 bits are fixed and the bottom 8 vary. Build the mask by shifting a full set of ones left by the number of host bits. Then the network is the address ANDed with the mask, and the broadcast is the network ORed with the inverse of the mask.
+
+```bash
+cat > ~/subnet.sh <<'EOF'
+ip=192.168.1.42
+mask=24
+IFS=. read -r a b c d <<< "$ip"
+n=$(( (a << 24) | (b << 16) | (c << 8) | d ))
+m=$(( (0xffffffff << (32 - mask)) & 0xffffffff ))
+net=$(( n & m ))
+bc=$(( net | (~m & 0xffffffff) ))
+echo "mask int    $m"
+echo "network     $((net>>24&255)).$((net>>16&255)).$((net>>8&255)).$((net&255))"
+echo "broadcast   $((bc>>24&255)).$((bc>>16&255)).$((bc>>8&255)).$((bc&255))"
+echo "host bits   $((32 - mask))"
+echo "host count  $(( 2 ** (32 - mask) - 2 ))"
+EOF
+bash ~/subnet.sh
+```
+
+```text
+mask int    4294967040
+network     192.168.1.0
+broadcast   192.168.1.255
+host bits   8
+host count  254
+```
+
+`4294967040` is `255.255.255.0` as an integer. The AND wipes the host bits, giving the network, and the OR with the inverse mask fills them all in, giving the broadcast. The last two lines give the arithmetic behind the host count, which is two to the power of the host bits, less two.
+
+## Step 6: Host count as two to the power of the host bits
+
+A `/24` has 8 host bits, and `2 ** 8` is 256. A `/26` has 6 host bits, and `2 ** 6` is 64. The count doubles each time the prefix drops by one, and halves each time it rises by one. That is why the four `/26` blocks above each hold 64 addresses: `256 / 4`.
+
+<Callout type="tip" title="Count the host bits first">
+When you are given a prefix, subtract it from 32 to get the host bits, then use `2 ** host bits` for the block size. Everything else follows from that one number.
+</Callout>
+
+## Step 7: The /31 and /32 cases
+
+The rule of subtracting two breaks down at the very small end. A `/31` has one host bit, so the block is two addresses, and by the usual rule that would leave zero usable hosts. In practice, RFC 3021 allows both addresses on a point-to-point link, and Python agrees: `hosts()` returns both. A `/32` is a single address, used for one machine, and `hosts()` returns that one address.
+
+```bash
+python3 - <<'EOF'
+import ipaddress
+print(list(ipaddress.ip_network('192.0.2.4/31').hosts()))
+print(list(ipaddress.ip_network('192.0.2.9/32').hosts()))
+print(ipaddress.ip_network('192.0.2.4/31').num_addresses)
+EOF
+```
+
+```text
+[IPv4Address('192.0.2.4'), IPv4Address('192.0.2.5')]
+[IPv4Address('192.0.2.9')]
+2
+```
+
+So a `/31` has no network and broadcast addresses reserved, and a `/32` is a block of exactly one. When you meet these in a routing table, they are not mistakes.
+
+## Step 8: See the subnet you are on
+
+You can check your own phone against the calculator. Install the `ip` tool if you have not already, then ask it for your IPv4 addresses in one line each.
+
+```bash
+pkg install iproute2
+ip -o -4 addr show
+```
+
+```text
+1: lo    inet 127.0.0.1/8 scope host lo
+2: wlan0    inet 192.168.1.42/24 brd 192.168.1.255 scope global wlan0
+```
+
+The `wlan0` line holds the address and the prefix length, `192.168.1.42/24`, and even prints the broadcast, `192.168.1.255`. Feed that pair into the calculator and you get the network `192.168.1.0/24`. The routing table shows the same block as the network you can reach directly.
+
+```bash
+ip route
+```
+
+```text
+default via 192.168.1.1 dev wlan0
+192.168.1.0/24 dev wlan0 scope link src 192.168.1.42
+```
+
+The second line is your local subnet, reachable without a router. The first line is the default route: anything that is not on `192.168.1.0/24` goes to `192.168.1.1`, which is the router.
+
+## Step 9: IPv6 is the same idea on 128 bits
+
+Nothing above depends on the address being four bytes wide. An IPv6 address is 128 bits, so the prefix counts up to 128, and the same module does the same work. A `/64` leaves 64 host bits, which is why a single IPv6 subnet is far larger than anything you will need at home.
+
+```bash
+python3 - <<'EOF'
+import ipaddress
+n6 = ipaddress.ip_network('2001:db8::/64')
+print(n6.netmask)
+print(n6.num_addresses)
+EOF
+```
+
+```text
+ffff:ffff:ffff:ffff::
+18446744073709551616
+```
+
+The mask is written in hexadecimal, and the host count is about 18 quintillion. The arithmetic is the same; only the width changes.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `ip_network('192.168.1.42/24', strict=False)` | Build a network from a host address |
+| `.network_address` | The network address |
+| `.netmask` | The mask in dotted form |
+| `.broadcast_address` | The broadcast address |
+| `.num_addresses` | Every address in the block |
+| `.hosts()` | The usable host addresses |
+| `.subnets(new_prefix=26)` | Split into smaller blocks |
+| `ip -o -4 addr show` | Your addresses and prefix lengths |
+| `ip route` | The subnets you can reach directly |
+
+## Next steps
+
+- [Networking basics](/learn/networking-basics/) for `ip`, `ifconfig` and what a prefix length means on an interface.
+- [DNS and addresses](/learn/dns-and-addresses/) to see how a name becomes one of these addresses.
+- [Reading a port scan](/learn/reading-a-port-scan/) to put a subnet and its host range to work.
