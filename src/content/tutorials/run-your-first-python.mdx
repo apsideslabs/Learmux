@@ -1,154 +1,143 @@
 ---
 title: "Run your first Python"
-description: "Write Python and run it inside the page. No install, no server, and a traceback you can read when you get it wrong."
-excerpt: "Press Run and real Python executes in your browser. Start with a print statement, then fix a mistake and read the error it gives you."
+description: "Build your first Python programs by placing pieces into blanks, then run them in the page and see what they print."
+excerpt: "You do not have to type anything to start. Place the pieces, press Run, and watch the output appear."
 category: "Python"
 track: "python"
 author: "The Study Cipher"
 date: "2026-10-25"
-order: 14
+order: 999
 level: "Beginner"
 tags: [python, interactive]
 ---
 
 import PyCell from '../../components/PyCell.astro';
+import PyBlanks from '../../components/PyBlanks.astro';
 
-Every grey box on this page is a real Python interpreter. Press Run and your code executes, right there in the browser tab, with no installation and nothing sent anywhere. That means you can make a mistake, read what Python says about it, and change it, which is how anyone actually learns a language.
+You do not need to type a single character to start. Each box below has some lines already written and one or more gaps. Tap a piece from the list and it drops into a gap, then press Run and the program executes right there on the page.
 
-The first time you press Run, the page downloads the interpreter. It is about ten megabytes and the browser keeps it, so every cell after that starts immediately.
+Every box starts with the switch **Put pieces in the right place for me** turned on. In that mode a piece you tap goes where it belongs, so you can never end up with a program that is broken for a reason you cannot see yet. Turn the switch off once you want to place them yourself, and the mistakes become yours to find, which is when the learning really starts.
 
 ## What you'll be able to do
 
-- Run Python and see its output.
-- Store a value in a variable and use it.
-- Read a traceback and find the mistake it names.
-- Use a loop and a function.
+- Put a program together from pieces without typing.
+- Run Python and read what it prints.
+- Place pieces in the right order without help.
+- Read the error Python gives you when something is wrong.
 
 ## Step 1: Make it say something
 
-Type nothing and just press Run.
+`print` is the word that makes Python show you something. Tap the piece that belongs in the gap.
 
-<PyCell
-  title="Your first line"
-  code={`print("Hello from Python")`}
+<PyBlanks
+  title="Say hello"
+  scaffold={`@1("Hello from Python")`}
+  pieces={['len', 'print', 'input']}
+  answers={[1]}
+  expect="Hello from Python"
+  hint="Two of those pieces ask the reader for something. One of them shows a value."
 />
 
-The word `print` is a function. You give it something in brackets and it writes that to the output. The quotes around the text tell Python it is a string, meaning literal characters rather than a name to look up.
+The program is one line: the word `print`, then a pair of brackets with some text inside. The quotes tell Python the text is literal characters rather than a name to look up.
 
-## Step 2: Do some arithmetic
+Now turn the switch off and press Reset, then put the pieces back yourself. Same program, but now you chose it.
 
-Python is a calculator that can keep notes. Assign a value to a name with a single `=`, then use the name.
+## Step 2: Store a value
 
-<PyCell
-  title="Names and numbers"
-  code={`minutes_in_an_hour = 60
-hours_in_a_day = 24
+A name on the left of an `=` holds whatever is on the right. Fill both gaps so the program works out the minutes in a day and prints it.
 
-print(minutes_in_an_hour * hours_in_a_day)
-print("one day is", hours_in_a_day * minutes_in_an_hour, "minutes")`}
+<PyBlanks
+  title="Minutes in a day"
+  scaffold={`minutes = @1
+print(@2)`}
+  pieces={['minutes', '60 * 24', '"minutes"', '1440']}
+  answers={[1, 0]}
+  expect="1440"
+  hint="The first gap is a sum Python works out. The second is the name you just stored it under."
 />
 
-A single `=` means "store this value under this name". It is not a question about equality, which trips up almost everyone at first. Note that `print` can take several things separated by commas and puts a space between them.
+Two of those pieces are wrong on purpose. `"minutes"` is the word itself, in quotes, which is text rather than the number. `1440` would work, but then Python has not done the arithmetic and you have not learned anything. Tap a wrong piece in guided mode and it will tell you so.
 
-## Step 3: A checkpoint
+## Step 3: Repeat a line
 
-Work out how many minutes there are in a week and print just the number. The cell marks itself when the output matches.
+This is the loop, and it is the shape most beginners find hardest. Two gaps, two pieces, and the order matters.
 
-<PyCell
-  title="Minutes in a week"
-  expect="10080"
-  hint="There are seven days in a week, and you already have the minutes in a day."
-  code={`minutes_in_an_hour = 60
-hours_in_a_day = 24
-
-# Your turn: print the number of minutes in a week.
-`}
-  solution={`minutes_in_an_hour = 60
-hours_in_a_day = 24
-
-print(minutes_in_an_hour * hours_in_a_day * 7)`}
+<PyBlanks
+  title="Add them up"
+  scaffold={`total = 0
+for i in range(1, 101):
+    @1
+@2`}
+  pieces={['print(total)', 'total += i']}
+  answers={[1, 0]}
+  expect="5050"
+  hint="One piece belongs inside the loop, indented under it. The other comes after the loop has finished."
 />
 
-## Step 4: Get it wrong on purpose
+Read the indentation, because it is doing the work. The line indented under `for` runs a hundred times, once for each number. The line at the left edge runs once, after the loop has finished.
 
-This cell has one mistake in it. Press Run and read what Python says.
+`total += i` means "add `i` to `total` and store it back". It is shorthand for `total = total + i`.
+
+Put them the wrong way round with the switch off and press Run. You will get a hundred numbers instead of one, which shows exactly what the indentation controls.
+
+## Step 4: Now type one yourself
+
+Placing pieces teaches you the shape. Typing teaches you the vocabulary. This box is empty on purpose, and you can edit it.
+
+<PyCell
+  title="Your turn to type"
+  code={`print("I typed this myself")`}
+/>
+
+Change the words inside the quotes and press Run. The quotes have to stay, or Python looks for a name and fails.
+
+## Step 5: A mistake, and what Python says about it
+
+This one is broken already. Press Run and read the last line of what comes back.
 
 <PyCell
   variant="fix"
   title="Find the mistake"
   expect="Hello, Termux"
-  hint="Python is case sensitive. Look closely at the name on the second line."
+  hint="Python is case sensitive. Compare the name on the first line with the name on the second."
   code={`name = "Termux"
 print("Hello, " + Name)`}
   solution={`name = "Termux"
 print("Hello, " + name)`}
 />
 
-You will see a traceback ending in `NameError: name 'Name' is not defined`. Read that last line first, every time. It names the problem exactly: something called `Name` was used but never created. There is a `name` on the line above, with a lowercase `n`, and Python treats those as two entirely different things.
+The last line reads `NameError: name 'Name' is not defined`. Read that line first, every time, because it names the problem exactly. Something called `Name` was used but never created. There is a `name` above it with a lowercase `n`, and Python treats those as two entirely different names.
 
-Fix it and press Run again. The cell marks itself when it prints `Hello, Termux`.
+Fix it and press Run. The box marks itself when it prints `Hello, Termux`.
 
-## Step 5: Repeat yourself
+## Step 6: Put a function together
 
-A loop runs the same lines more than once. `range(1, 6)` gives the numbers one up to five, stopping before six.
+A function is a named block you can call. One gap here, and three pieces, only one of which belongs.
 
-<PyCell
-  title="A loop"
-  code={`for n in range(1, 6):
-    print(n, "squared is", n * n)`}
-/>
-
-The indentation is not decoration. The four spaces before `print` are what tells Python those lines belong inside the loop, and Python refuses to run code where the indentation is inconsistent. Every other language uses braces for this. Python uses whitespace, and it is stricter about it than you expect.
-
-## Step 6: A checkpoint with a loop
-
-Add up every number from one to one hundred and print the total.
-
-<PyCell
-  title="Add them up"
-  expect="5050"
-  hint="Start a running total at zero before the loop, and add to it inside."
-  code={`total = 0
-
-# Your turn: loop from 1 to 100 and add each number to total.
-`}
-  solution={`total = 0
-
-for n in range(1, 101):
-    total = total + n
-
-print(total)`}
-/>
-
-## Step 7: Wrap it in a function
-
-A function is a named block of code you can call. `def` defines one, and `return` hands a value back.
-
-<PyCell
+<PyBlanks
   title="A function"
-  code={`def area(width, height):
-    return width * height
+  scaffold={`def area(width, height):
+    @1
 
-print(area(3, 4))
-print(area(10, 2))
-
-# A function is just a value, so you can loop over calls to it.
-for size in [1, 2, 3]:
-    print("a square of", size, "has area", area(size, size))`}
+print(area(3, 4))`}
+  pieces={['return width * height', 'print(width * height)', 'width + height']}
+  answers={[0]}
+  expect="12"
+  hint="A function hands a value back to whoever called it. Only one of these words does that."
 />
 
-The names in the brackets are parameters. They only exist inside the function, so two different functions can each have their own `width` without colliding.
+`return` is what sends the value back to the caller, which is why `print(area(3, 4))` has something to print. Without it the function returns nothing, and the print gets nothing to show.
 
-## Step 8: The last checkpoint
+## Step 7: One more, all yours
 
-Write a function that takes a word and returns it backwards, then print the reversed form of `Termux`. You should get `xumreT`.
+Write a function that hands a word back reversed, then print the reversed form of `Termux`. The answer is `xumreT`.
 
 <PyCell
   title="Backwards"
   expect="xumreT"
   hint="A slice with a step of -1 walks a string from the end to the start: word[::-1]"
   code={`def backwards(word):
-    # Your turn: return the word reversed.
+    # Your turn: hand the word back, reversed.
     pass
 
 print(backwards("Termux"))`}
@@ -158,19 +147,16 @@ print(backwards("Termux"))`}
 print(backwards("Termux"))`}
 />
 
-`word[::-1]` is the idiom. A slice takes `start:stop:step`, and leaving start and stop out means the whole string, while a step of minus one means walk it backwards.
-
 ## Quick reference
 
 | Piece | What it does |
 | --- | --- |
-| `print(...)` | write something to the output |
+| `print(...)` | show a value |
 | `name = value` | store a value under a name |
-| `"text"` | a string, which is literal characters |
-| `+` on strings | join them together |
-| `for n in range(1, 6)` | repeat, with `n` taking each value in turn |
-| four spaces | what marks a block, instead of braces |
-| `def f(x):` and `return` | define a function and hand a value back |
+| `"text"` | literal characters, not a name |
+| `total += i` | add to a running total |
+| four spaces | what puts a line inside a loop or a function |
+| `def` and `return` | define a function, and hand a value back |
 | `word[::-1]` | the whole string, walked backwards |
 | the last line of a traceback | what actually went wrong |
 
