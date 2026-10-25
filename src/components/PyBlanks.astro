@@ -1,0 +1,371 @@
+---
+/**
+ * Fill in the blanks, from a palette of pieces.
+ *
+ * This is the beginner's on-ramp, and it exists because typing Python into an
+ * empty box is not a beginner's task. A blank editor asks a smaller question:
+ * given these pieces and this shape, which piece goes where? That is answerable
+ * without knowing the syntax, which is the whole point.
+ *
+ * The `scaffold` holds the lines that are already written, with `@1`, `@2` and
+ * so on marking the blanks. Indentation before a marker is kept, so a blank
+ * inside a loop is written as four spaces then the marker.
+ *
+ * `answers` maps each blank to an index in `pieces`, so the component always
+ * knows which piece belongs where. That is what makes the guided mode possible.
+ */
+interface Props {
+  title?: string;
+  /** The code with @1, @2 ... for each blank. */
+  scaffold: string;
+  /** The pieces, in the order they appear in the palette. Scramble them here. */
+  pieces: string[];
+  /** answers[n] is the index in `pieces` that belongs in blank n + 1. */
+  answers: number[];
+  /** Expected output, which turns this into a checkpoint. */
+  expect?: string;
+  mode?: 'exact' | 'contains' | 'regex';
+  hint?: string;
+}
+
+const { title, scaffold, pieces, answers, expect, mode = 'exact', hint } = Astro.props;
+
+const parts = Astro.url.pathname.split('/').filter(Boolean);
+const learnAt = parts.indexOf('learn');
+const lesson = learnAt >= 0 ? (parts[learnAt + 1] ?? 'unknown') : 'unknown';
+
+if (answers.length !== scaffold.split('@').length - 1) {
+  // A mismatch here means a blank with no answer, which would be unsolvable.
+  throw new Error(`PyBlanks "${title}": ${answers.length} answers for ${scaffold.split('@').length - 1} blanks`);
+}
+
+// Each line, split into text and markers, so the markup can render slots.
+const lines = scaffold.split('\n').map((line) => {
+  const segments: { text?: string; slot?: number }[] = [];
+  const re = /@(\d+)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(line)) !== null) {
+    if (m.index > last) segments.push({ text: line.slice(last, m.index) });
+    segments.push({ slot: Number(m[1]) });
+    last = m.index + m[0].length;
+  }
+  if (last < line.length) segments.push({ text: line.slice(last) });
+  return segments;
+});
+---
+
+<div
+  class="pyblanks"
+  data-pyblanks
+  data-expect={expect}
+  data-mode={mode}
+  data-lesson={lesson}
+  data-scaffold={scaffold}
+  data-pieces={JSON.stringify(pieces)}
+  data-answers={JSON.stringify(answers)}
+>
+  <div class="pyblanks__head">
+    <span class="pyblanks__title">{title ?? 'Fill the blanks'}</span>
+    <span class="pyblanks__badge">{expect ? 'Checkpoint' : 'Fill the blanks'}</span>
+  </div>
+
+  <div class="pyblanks__code" data-code aria-label="The code so far">
+    {lines.map((segments, i) => (
+      <div class="pyblanks__line">
+        {segments.map((seg) =>
+          seg.slot !== undefined ? (
+            <button
+              class="pyblanks__slot"
+              type="button"
+              data-slot={seg.slot}
+              aria-label={`Blank ${seg.slot}`}
+            >
+              <span class="pyblanks__slot-empty">drop a piece here</span>
+            </button>
+          ) : (
+            <span class="pyblanks__text">{seg.text}</span>
+          ),
+        )}
+        {segments.length === 0 && <span class="pyblanks__text"> </span>}
+      </div>
+    ))}
+  </div>
+
+  <div class="pyblanks__palette-wrap">
+    <p class="pyblanks__palette-label">Tap a piece to place it</p>
+    <div class="pyblanks__palette" data-palette>
+      {pieces.map((piece, i) => (
+        <button class="pyblanks__piece" type="button" data-piece={i}>
+          {piece}
+        </button>
+      ))}
+    </div>
+  </div>
+
+  <div class="pyblanks__actions">
+    <label class="pyblanks__toggle">
+      <input type="checkbox" data-autoplace checked />
+      <span>Put pieces in the right place for me</span>
+    </label>
+    <button class="pyblanks__run" type="button" data-run disabled>
+      <span class="pyblanks__run-idle">Run</span>
+      <span class="pyblanks__run-busy">Running…</span>
+    </button>
+    <button class="pyblanks__reset" type="button" data-reset>Reset</button>
+    {hint && <button class="pyblanks__hint-btn" type="button" data-hint>Hint</button>}
+    <span class="pyblanks__status" data-status aria-live="polite"></span>
+  </div>
+
+  {hint && <p class="pyblanks__hint" data-hint-text hidden>{hint}</p>}
+
+  <div class="pyblanks__output" data-output hidden>
+    <div class="pyblanks__out-label">Output</div>
+    <pre class="pyblanks__stdout" data-stdout></pre>
+    <pre class="pyblanks__stderr" data-stderr hidden></pre>
+  </div>
+
+  <div class="pyblanks__verdict" data-verdict hidden></div>
+
+  <p class="pyblanks__note" data-note>
+    Turn the switch off when you want to place the pieces yourself, and the mistakes
+    become yours to find.
+  </p>
+</div>
+
+<script>
+  import { runPython, ensureRuntime, onLoadState, retryRuntime } from '../lib/py/runtime';
+  import { checkOutput, checkpointId, type MatchMode } from '../lib/py/cells';
+  import { isSolved, markSolved } from '../lib/progress';
+
+  let wired = false;
+
+  function initBlanks() {
+    if (wired) return;
+    const blocks = [...document.querySelectorAll<HTMLElement>('[data-pyblanks]')];
+    if (blocks.length === 0) return;
+    wired = true;
+
+    blocks.forEach((block, index) => {
+      const scaffold = block.dataset.scaffold ?? '';
+      const pieces: string[] = JSON.parse(block.dataset.pieces ?? '[]');
+      const answers: number[] = JSON.parse(block.dataset.answers ?? '[]');
+      const expect = block.dataset.expect ?? '';
+      const mode = (block.dataset.mode ?? 'exact') as MatchMode;
+      const lesson = block.dataset.lesson ?? 'unknown';
+      const id = checkpointId(lesson, index);
+
+      const slots = [...block.querySelectorAll<HTMLButtonElement>('[data-slot]')];
+      const pieceButtons = [...block.querySelectorAll<HTMLButtonElement>('[data-piece]')];
+      const autoplace = block.querySelector<HTMLInputElement>('[data-autoplace]')!;
+      const runBtn = block.querySelector<HTMLButtonElement>('[data-run]')!;
+      const resetBtn = block.querySelector<HTMLButtonElement>('[data-reset]')!;
+      const hintBtn = block.querySelector<HTMLButtonElement>('[data-hint]');
+      const hintText = block.querySelector<HTMLElement>('[data-hint-text]');
+      const status = block.querySelector<HTMLElement>('[data-status]')!;
+      const outWrap = block.querySelector<HTMLElement>('[data-output]')!;
+      const stdoutEl = block.querySelector<HTMLElement>('[data-stdout]')!;
+      const stderrEl = block.querySelector<HTMLElement>('[data-stderr]')!;
+      const verdict = block.querySelector<HTMLElement>('[data-verdict]')!;
+      const note = block.querySelector<HTMLElement>('[data-note]')!;
+
+      /** slot number -> index into pieces, or undefined when empty */
+      const placed = new Map<number, number>();
+
+      if (expect && isSolved(id)) block.dataset.done = '1';
+
+      const pieceOf = (slot: number) => placed.get(slot);
+
+      const render = () => {
+        for (const slotEl of slots) {
+          const n = Number(slotEl.dataset.slot);
+          const pi = placed.get(n);
+          slotEl.classList.toggle('pyblanks__slot--filled', pi !== undefined);
+          slotEl.textContent = '';
+          if (pi === undefined) {
+            const span = document.createElement('span');
+            span.className = 'pyblanks__slot-empty';
+            span.textContent = 'drop a piece here';
+            slotEl.appendChild(span);
+          } else {
+            slotEl.textContent = pieces[pi];
+          }
+        }
+
+        // A piece already placed is dimmed, so the palette shows what is left.
+        const used = new Set(placed.values());
+        for (const b of pieceButtons) {
+          const pi = Number(b.dataset.piece);
+          b.classList.toggle('pyblanks__piece--used', used.has(pi));
+        }
+
+        const full = placed.size === slots.length;
+        runBtn.disabled = !full;
+        status.textContent = full ? '' : `${slots.length - placed.size} blank(s) left`;
+      };
+
+      const place = (pieceIndex: number, slotNumber: number) => {
+        // One piece occupies one slot: pull it out of wherever it was.
+        for (const [s, p] of [...placed.entries()]) {
+          if (p === pieceIndex) placed.delete(s);
+        }
+        // And one slot holds one piece.
+        placed.set(slotNumber, pieceIndex);
+        render();
+      };
+
+      for (const b of pieceButtons) {
+        b.addEventListener('click', () => {
+          const pi = Number(b.dataset.piece);
+          // Already placed: put it back, which is the undo a beginner expects.
+          for (const [s, p] of [...placed.entries()]) {
+            if (p === pi) {
+              placed.delete(s);
+              render();
+              return;
+            }
+          }
+
+          if (autoplace.checked) {
+            // The guided mode. The piece goes where it belongs, so the reader
+            // cannot end up with a program that is broken for a reason they
+            // have no way to see yet.
+            const target = answers.indexOf(pi) + 1;
+            if (target > 0) {
+              place(pi, target);
+            } else {
+              // A distractor. Saying nothing would look like a broken button,
+              // so say what happened.
+              status.textContent = 'That piece does not belong in this program.';
+              b.classList.add('pyblanks__piece--reject');
+              window.setTimeout(() => b.classList.remove('pyblanks__piece--reject'), 500);
+            }
+            return;
+          }
+
+          // Free mode: the next empty blank, left to right.
+          const next = slots.map((s) => Number(s.dataset.slot)).find((n) => !placed.has(n));
+          if (next !== undefined) place(pi, next);
+        });
+      }
+
+      for (const slotEl of slots) {
+        slotEl.addEventListener('click', () => {
+          const n = Number(slotEl.dataset.slot);
+          if (placed.has(n)) {
+            placed.delete(n);
+            render();
+          }
+        });
+      }
+
+      resetBtn.addEventListener('click', () => {
+        placed.clear();
+        render();
+        outWrap.hidden = true;
+        verdict.hidden = true;
+        status.textContent = '';
+      });
+
+      if (hintBtn && hintText) {
+        hintBtn.addEventListener('click', () => {
+          const showing = !hintText.hidden;
+          hintText.hidden = showing;
+          hintBtn.textContent = showing ? 'Hint' : 'Hide hint';
+        });
+      }
+
+      const assemble = () =>
+        scaffold
+          .split('\n')
+          .map((line) =>
+            line.replace(/@(\d+)/g, (_m, n) => {
+              const pi = pieceOf(Number(n));
+              return pi === undefined ? '' : pieces[pi];
+            }),
+          )
+          .join('\n');
+
+      runBtn.addEventListener('click', async () => {
+        runBtn.disabled = true;
+        runBtn.dataset.busy = 'true';
+        verdict.hidden = true;
+
+        const off = onLoadState((s) => {
+          if (s.stage === 'script') status.textContent = `Fetching the Python runtime from ${s.source}… ${s.elapsed}s`;
+          else if (s.stage === 'runtime') status.textContent = `Starting Python. Once only, and it can take a moment. ${s.elapsed}s`;
+        });
+
+        try {
+          const result = await runPython(assemble(), { fresh: true });
+          off();
+          note.hidden = true;
+
+          outWrap.hidden = false;
+          stdoutEl.textContent = result.stdout === '' ? '(no output)' : result.stdout;
+          stdoutEl.classList.toggle('pyblanks__stdout--empty', result.stdout === '');
+          if (!result.ok || result.stderr) {
+            stderrEl.hidden = false;
+            stderrEl.textContent = result.ok ? result.stderr : (result.error ?? 'the code raised an error');
+            stderrEl.classList.add('pyblanks__stderr--error');
+          } else {
+            stderrEl.hidden = true;
+          }
+          status.textContent = result.ok ? `${result.ms} ms` : (result.errorLine ?? 'error');
+
+          if (expect) {
+            const check = checkOutput(result.stdout, expect, mode);
+            verdict.hidden = false;
+            if (check.pass) {
+              verdict.className = 'pyblanks__verdict pyblanks__verdict--pass';
+              verdict.innerHTML = `<strong>Correct.</strong> ${check.message}`;
+              block.dataset.done = '1';
+              markSolved(id);
+            } else {
+              verdict.className = 'pyblanks__verdict pyblanks__verdict--fail';
+              verdict.innerHTML =
+                `<strong>Not yet.</strong> ${check.message}` +
+                (result.ok
+                  ? ' The pieces are in the wrong places. Turn the switch off and try again, or reset and read the shape of the code.'
+                  : ' The code raised before it printed. Read the last line of the error first.');
+            }
+          }
+        } catch (e) {
+          off();
+          status.textContent = 'Could not run.';
+          outWrap.hidden = false;
+          stderrEl.hidden = false;
+          stderrEl.textContent = String(e);
+        } finally {
+          runBtn.dataset.busy = 'false';
+          runBtn.disabled = placed.size !== slots.length;
+        }
+      });
+
+      render();
+    });
+
+    // Warm the runtime when the first block is about to be seen, so the wait
+    // overlaps with reading rather than with the first press of Run.
+    if ('IntersectionObserver' in window) {
+      const warm = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            warm.disconnect();
+            ensureRuntime().catch(() => {});
+          }
+        },
+        { rootMargin: '300px' },
+      );
+      warm.observe(blocks[0]);
+    }
+  }
+
+  initBlanks();
+  document.addEventListener('astro:page-load', () => {
+    wired = false;
+    initBlanks();
+  });
+
+  void retryRuntime;
+</script>
