@@ -4,7 +4,8 @@ import '../../styles/certificate.css';
 import { getCollection } from 'astro:content';
 import { tracks } from '../../lib/curriculum';
 import { site, studio } from '../../lib/site';
-import { todayIso } from '../../lib/certificate';
+import { todayIso, formatDate, certificateId, claim } from '../../lib/certificate';
+import { certificateArt } from '../../lib/certificate-art';
 
 const lessons = await getCollection('tutorials');
 const lessonsTotal = lessons.length;
@@ -20,6 +21,17 @@ const today = todayIso();
 // Every link on this site is written against the base, so a relative one would
 // resolve differently once the site is served from a subpath.
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+
+// The certificate is drawn here, at build time, in its untouched state: nobody
+// has a name yet and nothing is finished. The browser script rewrites five text
+// nodes and the QR as the reader types.
+const art = certificateArt({
+  name: 'Your name',
+  date: formatDate(today),
+  id: await certificateId('Your name', today),
+  headline: claim({ name: '', date: today, lessonsDone: 0, lessonsTotal, tracksDone: 0, tracksTotal }).headline,
+  detail: claim({ name: '', date: today, lessonsDone: 0, lessonsTotal, tracksDone: 0, tracksTotal }).detail,
+});
 ---
 
 <BaseLayout
@@ -120,74 +132,13 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
         role="img"
         aria-labelledby="cert-title cert-desc"
         xmlns="http://www.w3.org/2000/svg"
+        set:html={art}
       >
         <title id="cert-title">Certificate of completion from {site.name}</title>
         <desc id="cert-desc">
           A certificate naming the holder as having worked through the {site.name} course in
           Termux and the Linux command line.
         </desc>
-
-        <rect width="1000" height="707" fill="#ffffff" />
-
-        <!-- the frame: one firm rule outside, one hairline inside -->
-        <rect x="22" y="22" width="956" height="663" fill="none" stroke="#1c1b27" stroke-width="1.6" />
-        <rect x="31" y="31" width="938" height="645" fill="none" stroke="#e7e7eb" stroke-width="1" />
-
-        <!-- a green keyline down the left edge, the only saturated thing here -->
-        <rect x="22" y="22" width="5" height="663" fill="#20d65a" />
-
-        <!-- brand -->
-        <text x="500" y="66" class="cert__brand" text-anchor="middle">{studio.name.toUpperCase()}</text>
-        <text x="500" y="88" class="cert__brand-sub" text-anchor="middle">{site.name.toUpperCase()}</text>
-
-        <!-- title -->
-        <text x="500" y="152" class="cert__title" text-anchor="middle">CERTIFICATE OF COMPLETION</text>
-        <line x1="390" y1="172" x2="610" y2="172" stroke="#20d65a" stroke-width="2" />
-
-        <text x="500" y="216" class="cert__kicker" text-anchor="middle">THIS IS TO CERTIFY THAT</text>
-
-        <!-- the recipient -->
-        <text x="500" y="278" class="cert__name" data-cert-name text-anchor="middle">Your name</text>
-        <line x1="250" y1="296" x2="750" y2="296" stroke="#e7e7eb" stroke-width="1" />
-
-        <text x="500" y="330" class="cert__claim" data-cert-headline text-anchor="middle">
-          is working through the Learmux course
-        </text>
-        <text x="500" y="352" class="cert__detail" data-cert-detail text-anchor="middle">
-          in Termux and the Linux command line.
-        </text>
-
-        <!-- date and identifier, either side of the seal -->
-        <text x="120" y="420" class="cert__label" text-anchor="start">DATE</text>
-        <text x="120" y="444" class="cert__value" data-cert-date text-anchor="start">{today}</text>
-
-        <text x="880" y="420" class="cert__label" text-anchor="end">CERTIFICATE ID</text>
-        <text x="880" y="444" class="cert__value cert__value--mono" data-cert-id text-anchor="end">
-          PENDING
-        </text>
-
-        <!-- the seal -->
-        <g class="cert__seal">
-          <circle cx="500" cy="452" r="46" fill="none" stroke="#20d65a" stroke-width="2" />
-          <circle cx="500" cy="452" r="38" fill="none" stroke="#e7e7eb" stroke-width="1" />
-          <path
-            d="M482 452 l11 11 l22 -24"
-            fill="none"
-            stroke="#1c1b27"
-            stroke-width="3.4"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </g>
-
-        <!-- signature -->
-        <line x1="120" y1="588" x2="330" y2="588" stroke="#cfcfda" stroke-width="1" />
-        <text x="120" y="612" class="cert__sign-name">The Study Cipher</text>
-        <text x="120" y="630" class="cert__sign-role">{studio.name}</text>
-
-        <!-- verification -->
-        <g data-cert-qr transform="translate(806 514) scale(2.4)" shape-rendering="crispEdges"></g>
-        <text x="846" y="618" class="cert__qr-label" text-anchor="middle">SCAN TO VERIFY</text>
       </svg>
 
       <figcaption class="cert__caption">
@@ -287,9 +238,16 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
       // Serialise what is on screen, so the file matches the preview exactly.
       const clone = svg.cloneNode(true) as SVGSVGElement;
       clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-      // The styles are in a stylesheet, which a standalone file will not have,
-      // so the presentation is written onto the elements as attributes.
-      inlineStyles(svg, clone);
+      // The data- attributes are hooks for this page's script. In a delivered
+      // file they are noise, so they come out.
+      for (const el of [clone, ...clone.querySelectorAll('*')]) {
+        for (const attr of [...el.attributes]) {
+          if (attr.name.startsWith('data-') || attr.name === 'class') el.removeAttribute(attr.name);
+        }
+      }
+      // Nothing else to do: every colour, size and typeface in the artwork is
+      // already an attribute rather than a stylesheet rule, so the clone is
+      // self-contained the moment it is made.
       const source = `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(clone)}`;
       const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
       const a = document.createElement('a');
@@ -302,32 +260,6 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
     document.querySelector('[data-print]')?.addEventListener('click', () => window.print());
 
     void render();
-  }
-
-  /**
-   * Copy the computed presentation onto a clone.
-   *
-   * A downloaded SVG has no stylesheet beside it, so anything that came from
-   * CSS has to become an attribute or the file opens looking like plain text.
-   */
-  function inlineStyles(from: SVGSVGElement, to: SVGSVGElement) {
-    const props = [
-      'font-family', 'font-size', 'font-weight', 'letter-spacing',
-      'fill', 'stroke', 'stroke-width', 'text-anchor', 'paint-order',
-    ];
-    const sourceNodes = [from, ...from.querySelectorAll<SVGElement>('*')];
-    const targetNodes = [to, ...to.querySelectorAll<SVGElement>('*')];
-    sourceNodes.forEach((el, i) => {
-      const target = targetNodes[i];
-      if (!target) return;
-      const cs = getComputedStyle(el);
-      let style = '';
-      for (const p of props) {
-        const v = cs.getPropertyValue(p);
-        if (v && v !== 'none' || p === 'fill' && v === 'none') style += `${p}:${v};`;
-      }
-      if (style) target.setAttribute('style', style);
-    });
   }
 
   initProfile();
