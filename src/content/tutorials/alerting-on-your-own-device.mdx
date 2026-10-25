@@ -1,0 +1,131 @@
+---
+title: "Alerting on your own device"
+description: "Write a check that compares your device with its baseline, append a line only when something changed, and let cron run it so you do not have to remember."
+excerpt: "Detection you have to remember to perform is detection you will forget, so make the phone tell you."
+category: "Defence"
+track: "defence"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 44
+level: Intermediate
+tags: [defence, monitoring]
+---
+
+import Callout from '../../components/Callout.astro';
+
+A check you have to remember to run is a check you will stop running. The point of alerting is to move that memory out of your head and into the phone. You write the check once, put it on a timer, and let it append a line to a log whenever it finds something worth telling you about. Then you read the log when it suits you. This lesson builds that loop on your own device, with nothing but cron and the tools you already have.
+
+## What you'll be able to do
+
+- Decide which changes deserve an alert and which are just noise.
+- Compare two states with `diff` and `comm`.
+- Make a check print nothing when all is well and a line when it is not.
+- Append each alert to a log with a timestamp.
+- Schedule the check with cron so it runs without you.
+- Test a check by hand before trusting it to a timer.
+
+## Step 1: Decide what deserves an alert
+
+An alert is only useful if it means something. If the check fires every day, you will stop reading it, and a log you do not read is worth nothing. Pick a small number of things that should almost never change: a file whose contents you trust, the set of listening ports, the list of installed packages. Leave out anything that changes on its own, such as process counts or free space, because those will drown the real signals.
+
+<Callout type="tip" title="Quiet by default">
+The best check says nothing at all when everything is fine. You should only see a line when there is something to see. A check that reports success every day trains you to ignore it, which is worse than no check at all.
+</Callout>
+
+## Step 2: Compare two states
+
+The building block is a comparison. `diff -q` compares two files and stays silent when they match, which is exactly the quiet-by-default behaviour you want. `comm -13` does the same job for two sorted lists and prints only the lines unique to the second one.
+
+```bash
+$ printf 'a\nb\n' > base.txt
+$ printf 'a\nb\nc\n' > now.txt
+$ diff -q base.txt now.txt
+Files base.txt and now.txt differ
+$ comm -13 base.txt now.txt
+c
+```
+
+`diff -q` answers yes or no. `comm -13` answers what. Together they tell you that something was added and what it was. If the files matched, `diff -q` would print nothing at all, and that silence is the success case.
+
+## Step 3: Print a line only when something changed
+
+Now wrap the comparison in a condition. The `if` runs the `diff`, and the `!` means "when it does not match". Inside the branch you build one line that carries the time and the change.
+
+```bash
+$ if ! diff -q base.txt now.txt >/dev/null; then printf '%s ALERT new line: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(comm -13 base.txt now.txt | tr '\n' ' ')"; fi
+2026-10-25T04:28:38Z ALERT new line: c
+```
+
+Read the pieces. `diff -q ... >/dev/null` throws away the "differ" message so only the exit status is used. `printf` builds the line with `%s` placeholders filled by the timestamp and the changed lines. `tr '\n' ' '` joins several changed lines onto one line so the log stays one entry per event. The result is a single alert, ready to append.
+
+## Step 4: Append it to a log
+
+A check should add to its log, never overwrite it, or you lose the history that makes the log worth keeping. The `>>` operator appends.
+
+```bash
+$ if ! diff -q base.txt now.txt >/dev/null; then printf '%s ALERT new line: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(comm -13 base.txt now.txt | tr '\n' ' ')" >> ~/alert.log; fi
+$ cat ~/alert.log
+2026-10-25T04:28:38Z ALERT new line: c
+```
+
+Run it a second time with no change and nothing is added, because the `diff` matched and the branch did not run. That is the behaviour you want: the log grows only when there is news. `tail` reads the newest entries when you want to check in.
+
+```bash
+$ tail -n 3 ~/alert.log
+2026-10-25T04:28:38Z ALERT new line: c
+```
+
+## Step 5: Put it on a timer
+
+Now hand the check to cron. Save the whole check as a script so the crontab line stays short, and remember that cron runs with a small environment, so give every command its full path and set `PATH` at the top of the script.
+
+```bash
+$ printf '#!/data/data/com.termux/files/usr/bin/bash\nexport PATH=/data/data/com.termux/files/usr/bin:$PATH\nif ! diff -q ~/base.txt ~/now.txt >/dev/null; then printf "%%s ALERT new line: %%s\\n" "$(date -u +%%Y-%%m-%%dT%%H:%%M:%%SZ)" "$(comm -13 ~/base.txt ~/now.txt | tr "\\n" " ")" >> ~/alert.log; fi\n' > ~/bin/check.sh
+$ chmod +x ~/bin/check.sh
+$ crontab -e
+```
+
+In the editor, add one line that runs the script every hour and sends any error to the same log.
+
+```text
+0 * * * * /data/data/com.termux/files/home/bin/check.sh >> /data/data/com.termux/files/home/alert.log 2>&1
+```
+
+The five time fields read as minute 0, every hour, every day. Confirm the job was saved with `crontab -l`, and remember that Termux does not start cron by default, so the service has to be enabled once with `sv-enable crond`.
+
+## Step 6: Test by hand first, then leave it alone
+
+Before you trust the timer, run the script once by hand with the exact path you put in the crontab. If it works there, any later silence means the check found nothing, not that the check is broken.
+
+```bash
+$ ~/bin/check.sh
+$ echo $?
+0
+```
+
+An exit status of zero and no new line in the log is a clean run. Now leave it be. The phone is doing the remembering, and you only have to look when the log has something new in it.
+
+<Callout type="warning" title="Detection without a response is pointless">
+An alert that sits unread in a log has done nothing. The whole value of the loop is in the response: read the log, ask what changed, and act. That is the subject of the next lesson, where the alert becomes the first step of a calm, ordered reaction rather than the end of the work.
+</Callout>
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `diff -q a b` | Says whether two files differ, quietly |
+| `comm -13 a b` | Prints the lines unique to the second sorted file |
+| `if ! cmd; then ...; fi` | Runs the branch when the command fails |
+| `printf '%s ...' "$x"` | Builds a line from a value |
+| `tr '\n' ' '` | Turns several lines into one |
+| `cmd >> log` | Appends output to a log |
+| `crontab -e` | Edits your scheduled jobs |
+| `crontab -l` | Lists your scheduled jobs |
+| `sv-enable crond` | Starts the cron service in Termux |
+| `tail -n 3 log` | Reads the newest entries |
+
+## Next steps
+
+- [Incident response, in six steps](/learn/incident-response-steps/) is what to do once an alert fires.
+- [File integrity: noticing a change](/learn/file-integrity/) builds the file check this loop runs.
+- [Scheduling work with cron](/learn/scheduling-with-cron/) explains the timer fields and the environment cron provides.
