@@ -1,0 +1,188 @@
+---
+title: "Input you do not control"
+description: "Why every value in a request is hostile until it has been checked, and how to validate input with an allowlist instead of a blocklist."
+excerpt: "Take a value from the query string, crash a server with it, then validate it properly."
+category: "Web"
+track: "websecurity"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 32
+level: Intermediate
+tags: [web, security]
+---
+
+import Callout from '../../components/Callout.astro';
+
+A request arrives carrying a path, a set of headers, any cookies, and sometimes a body. Not one of those was created by your server. The client wrote all of them, and the client can write anything. The working rule for the rest of this track is that input you did not create is hostile until it has been checked. In this lesson you will take a value straight from the query string, watch it crash a server, and then validate it so the crash cannot happen.
+
+<Callout type="warning" title="Only attack your own server">
+The server below is one you write and run yourself on `127.0.0.1`. Every request in this lesson goes to your own phone. Never send these requests to a system you do not own.
+</Callout>
+
+## What you'll be able to do
+
+- See what happens when a value is used before it is checked.
+- Read a traceback that reached your own terminal.
+- Tell an allowlist apart from a blocklist, and see why the blocklist loses.
+- Validate a value with a regular expression and a length limit.
+
+## Step 1: A server that trusts a number
+
+This server divides 100 by a number taken from the query string. It does no checking at all. Write it as `calc.py`.
+
+```python
+# calc.py: divides 100 by a number taken from the query string
+import http.server
+import socketserver
+from urllib.parse import urlparse, parse_qs
+
+socketserver.TCPServer.allow_reuse_address = True
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        query = parse_qs(urlparse(self.path).query)
+        n = query.get("n", ["0"])[0]
+        # FLAW: the value is used with no check that it is a number
+        result = 100 // int(n)
+        body = ("100 divided by " + n + " is " + str(result) + "\n").encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, fmt, *args):
+        print("request:", self.requestline)
+
+with socketserver.TCPServer(("127.0.0.1", 8000), Handler) as httpd:
+    print("serving on http://127.0.0.1:8000")
+    httpd.serve_forever()
+```
+
+Start it and send it a good value.
+
+```bash
+python3 calc.py
+```
+
+```text
+serving on http://127.0.0.1:8000
+```
+
+```bash
+curl -s "http://127.0.0.1:8000/"
+```
+
+```text
+100 divided by 5 is 20
+```
+
+The value `5` arrived in the query string as text, and `int()` turned it into a number. That is the one case the author had in mind. It is also the only case the author handled.
+
+## Step 2: Send something the author did not expect
+
+Send text where a number was expected.
+
+```bash
+curl -s "http://127.0.0.1:8000/"
+```
+
+```text
+```
+
+`curl` prints nothing, because the server died before it could answer. Now look at the server's own window, which is where the real story is.
+
+```text
+Exception occurred during processing of request from ('127.0.0.1', 45123)
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/calc.py", line 13, in do_GET
+    result = 100 // int(n)
+                    ^^^^^^
+ValueError: invalid literal for int() with base 10: 'abc'
+```
+
+The value `abc` reached `int()` unchecked, `int()` refused it, and nothing caught the error. A value of `0` does the same thing in a different way, with a `ZeroDivisionError`. The input is not a number, and the server assumed it was. That assumption is the bug, and it is the same mistake in every lesson that follows, wearing different clothes.
+
+## Step 3: A blocklist loses, an allowlist wins
+
+The tempting fix is to reject values that look dangerous. Try it. This removes every line containing `..`, which is the usual first attempt at blocking a path traversal.
+
+```bash
+printf '%s\n' '..' '%2e%2e' '....//' | grep -v -E '\.\.'
+```
+
+```text
+%2e%2e
+```
+
+The plain `..` was removed, but `%2e%2e` walked straight through. A blocklist has to name every hostile shape in advance, and an attacker only has to find one you forgot. An allowlist turns that around: you name what is permitted, and everything else fails.
+
+## Step 4: Fix it with an allowlist
+
+Replace the start of `do_GET` so the value is checked before it is used.
+
+```python
+    def do_GET(self):
+        query = parse_qs(urlparse(self.path).query)
+        n = query.get("n", [""])[0]
+        # FIX: accept only a short run of digits, and refuse zero
+        if not re.fullmatch(r"[0-9]{1,3}", n) or int(n) == 0:
+            body = b"n must be a whole number from 1 to 999\n"
+            self.send_response(400)
+            self.send_header("Content-Type", "text/plain")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        result = 100 // int(n)
+        # ...the rest of the method is unchanged
+```
+
+Add `import re` at the top. The pattern `[0-9]{1,3}` is the allowlist: one to three digit characters and nothing else. The `fullmatch` call means the whole value must fit that shape, so `5x`, `-1` and an empty value are all refused. The length is bounded by the pattern, which matters because a very long value can exhaust memory on a phone. The refusal is a `400`, which is the honest answer to a bad request, and the message names the rule rather than repeating the value back.
+
+## Step 5: Attack it again
+
+Restart the server and resend the bad values.
+
+```bash
+curl -s "http://127.0.0.1:8000/"
+```
+
+```text
+n must be a whole number from 1 to 999
+```
+
+```bash
+curl -s "http://127.0.0.1:8000/"
+```
+
+```text
+n must be a whole number from 1 to 999
+```
+
+No traceback appears in the server window, because nothing threw. The good value still works, and the bad values get a clear, boring answer.
+
+```bash
+curl -s "http://127.0.0.1:8000/"
+```
+
+```text
+100 divided by 5 is 20
+```
+
+## Quick reference
+
+| Item | What it does |
+| --- | --- |
+| `?n=5` | A value from the query string, always text |
+| `int(n)` on unchecked text | The assumption that crashes the handler |
+| `grep -v -E '\.\.'` | A blocklist, which `%2e%2e` walks past |
+| `re.fullmatch(r"[0-9]{1,3}", n)` | An allowlist, applied to the whole value |
+| `send_response(400)` | The honest answer to a request that is wrong |
+| Bound the length | Stop one long value exhausting memory |
+
+## Next steps
+
+- [Injection: when data becomes code](/learn/injection/) shows what happens when an unchecked value reaches an interpreter rather than a number parser.
+- [How a web request is handled](/learn/how-a-web-request-works/) is the request itself, which this lesson assumes.
+- [Encoding and hashes](/learn/encoding-and-hashes/) explains why `%2e%2e` and its plain form are the same bytes to the thing that matters.
