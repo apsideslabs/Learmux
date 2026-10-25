@@ -30,6 +30,7 @@ export const nav = [
   { href: 'practice/', label: 'Test yourself' },
   { href: 'ctf/', label: 'Termux CTF', cta: true },
   { href: 'challenges/', label: 'In-browser' },
+  { href: 'profile/', label: 'Profile' },
   { href: 'about/', label: 'About us' },
 ];
 
@@ -65,9 +66,12 @@ export const drawerTop: DrawerItem[] = [
   // a destination in its own right, not study material, and burying it one
   // level down meant it was invisible until you opened a group.
   { href: 'utilities/', label: 'Utilities', tag: '6 tools' },
-  // The Python track is the only part of the site where code runs in the page,
-  // so it gets a top-level row rather than being buried a level down in Learn.
-  { href: 'course/python/', label: 'Python', tag: 'runs in the page' },
+  // The Python track gets a top-level row rather than being buried a level
+  // down in Learn, because it is a different way of working through the course.
+  { href: 'course/python/', label: 'Python' },
+  // The certificate lives here, so the profile is a destination rather than
+  // something you only find by finishing a lesson.
+  { href: 'profile/', label: 'Profile' },
 ];
 
 export const drawerNav: DrawerGroup[] = [
