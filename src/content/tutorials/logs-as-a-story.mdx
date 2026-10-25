@@ -1,0 +1,139 @@
+---
+title: "Reading logs for a story"
+description: "Stop reading a log line by line and build a short timeline instead: who did what, in what order, and how close together."
+excerpt: "A log is a list of events, and a list of events is a story once you put it in order."
+category: "Defence"
+track: "defence"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 43
+level: Intermediate
+tags: [defence, monitoring]
+---
+
+import Callout from '../../components/Callout.astro';
+
+A log is a record of what happened on your machine, one line per event. Read line by line, it is noise. Read as a whole, it is a story: this happened, then that, then this. Your job in this lesson is to turn the lines into that story. You will pull out the fields you care about, put the events in time order, count who did what, and end with a short timeline you can read in ten seconds. That timeline is what you would hand to someone else if you had to explain what you saw.
+
+## What you'll be able to do
+
+- Read the newest events first with `tail`.
+- Pull the fields you care about out of a line with `awk`.
+- Put events in time order with `sort`.
+- Count who did what with `sort`, `uniq -c` and `sort -nr`.
+- Build a short timeline of a single window.
+- Write the story down so it survives the session.
+
+## Step 1: Read the newest lines first
+
+Logs grow at the bottom, so the most recent events are the last lines. Start there rather than at the top of a huge file.
+
+```bash
+$ printf '2026-10-25T09:01:00Z user=mira src=203.0.113.14 result=ok\n2026-10-25T09:02:10Z user=root src=198.51.100.7 result=fail\n2026-10-25T09:03:00Z user=root src=198.51.100.7 result=ok\n' > ~/auth.log
+$ tail -n 2 ~/auth.log
+2026-10-25T09:02:10Z user=root src=198.51.100.7 result=fail
+2026-10-25T09:03:00Z user=root src=198.51.100.7 result=ok
+```
+
+Each line carries a time, a user, a source and a result. Those four fields are the raw material of every timeline you will build.
+
+## Step 2: Pull out the fields you care about
+
+A log line has more fields than you need. `awk` splits each line on whitespace and numbers the fields from one, so you can print just the ones that matter.
+
+```bash
+$ awk '{print $1, $2, $4}' ~/auth.log
+2026-10-25T09:01:00Z user=mira result=ok
+2026-10-25T09:02:10Z user=root result=fail
+2026-10-25T09:03:00Z user=root result=ok
+```
+
+`$1` is the time, `$2` is the user and `$4` is the result. The source in the middle is dropped because it is not needed yet. What is left is a clean line: when, who, and how it ended. This is already half a timeline.
+
+## Step 3: Put events in time order
+
+Logs are usually written in order, but not always. Files get merged, entries get appended late, and clocks get corrected. `sort` puts the lines in a known order, and because the timestamp is at the start of the line, a plain sort orders them by time.
+
+```bash
+$ sort ~/auth.log | head -n 2
+2026-10-25T09:01:00Z user=mira src=203.0.113.14 result=ok
+2026-10-25T09:02:10Z user=root src=198.51.100.7 result=fail
+```
+
+The timestamps are in ISO 8601 form, which is designed so that sorting the text also sorts the moments. That is why the format matters and why you should use it in anything you write yourself.
+
+<Callout type="tip" title="Read a log you know first">
+Learn normal before you look for abnormal. On a quiet day, read your own log and get used to how many lines an ordinary hour produces. A burst only stands out against a background you already know. The same lesson appears in [Reading logs and spotting oddities](/learn/logs-and-detection/), where you count failures per source.
+</Callout>
+
+## Step 4: Count who did what
+
+The next question is who was busy, and how busy. Filter to the events you care about, keep one field, then count repeats. `uniq -c` only counts lines that sit next to each other, so the `sort` before it is not optional.
+
+```bash
+$ grep 'result=fail' ~/auth.log | cut -d' ' -f3 | sort | uniq -c | sort -nr
+      2 src=198.51.100.7
+      1 src=203.0.113.14
+```
+
+Read the count first, then the value. One source has two failures and the other has one. `sort -nr` ranks them largest first, so the noisiest source is at the top. If one number dwarfs the rest, that is where the story is.
+
+## Step 5: Build a window
+
+A timeline of the whole day is too long. Pick the window that matters, a single minute or hour, and pull just those lines.
+
+```bash
+$ grep '09:02' ~/auth.log
+2026-10-25T09:02:10Z user=root src=198.51.100.7 result=fail
+```
+
+Now widen it. Two failures one after the other, then a success, all in the same minute, all from one source, is the shape a guessed password makes. You can also reduce a line to its time and result to compress a busy window down to the shape alone.
+
+```bash
+$ grep '09:0' ~/auth.log | awk '{print $1, $4}'
+2026-10-25T09:01:00Z result=ok
+2026-10-25T09:02:10Z result=fail
+2026-10-25T09:03:00Z result=ok
+```
+
+Three events, and the middle one is the odd one out. That is the story in one screen.
+
+## Step 6: Write the story down
+
+A timeline in your scrollback disappears when you close the app. Send it to a file so it lasts, and stamp it with the time you made it. Use `sed` to soften the timestamps if they are too long to read.
+
+```bash
+$ { date -u +%Y-%m-%dT%H:%M:%SZ; echo "-- window 09:00 --"; grep '09:0' ~/auth.log | sed 's/T/ /; s/Z//'; } > ~/timeline.txt
+$ cat ~/timeline.txt
+2026-10-25T09:12:44Z
+-- window 09:00 --
+2026-10-25 09:01:00 user=mira src=203.0.113.14 result=ok
+2026-10-25 09:02:10 user=root src=198.51.100.7 result=fail
+2026-10-25 09:03:00 user=root src=198.51.100.7 result=ok
+```
+
+The `sed` script swaps the `T` between the date and the time for a space and removes the trailing `Z`. The line reads as plain English now, and the file keeps your work.
+
+<Callout type="warning" title="A story is not a verdict">
+A run of failures followed by a success reads like a guessed password. It also reads like a broken script, a stale password in an old app, or a colleague testing something. The log tells you what happened, not why. Use the timeline to ask a sharp question, then check the account itself before you decide anything.
+</Callout>
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `tail -n 2 log` | Shows the newest lines first |
+| `awk '{print $1, $2, $4}' log` | Prints selected whitespace-separated fields |
+| `sort log` | Orders lines, and ISO timestamps sort by time |
+| `grep 'pattern' log` | Keeps only the lines that match |
+| `cut -d' ' -f3` | Keeps the third space-separated field |
+| `sort \| uniq -c` | Counts runs of identical lines |
+| `sort -nr` | Orders numerically, largest first |
+| `sed 's/T/ /; s/Z//'` | Edits the text of each line |
+| `{ cmd; cmd; } > file` | Saves the output of several commands |
+
+## Next steps
+
+- [Alerting on your own device](/learn/alerting-on-your-own-device/) takes the counting you did here and turns it into something that runs on its own.
+- [Incident response, in six steps](/learn/incident-response-steps/) shows where a timeline fits in a calm, ordered response.
+- [Text processing with awk and sed](/learn/text-processing-awk-sed/) covers the two tools used here in much more depth.
