@@ -1,54 +1,83 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Icon from '../../components/Icon.astro';
-import { categoryGroups } from '../../lib/tutorials';
+import { categoryGroups, allTutorials } from '../../lib/tutorials';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const groups = await categoryGroups();
+const lessons = await allTutorials();
+
+// Biggest first, so the substantial topics lead rather than whichever happens
+// to start with an early letter.
+const sorted = [...groups].sort((a, b) => b.items.length - a.items.length || a.name.localeCompare(b.name));
 
 const intros: Record<string, string> = {
-  Termux: 'Setting up Termux and getting comfortable in its shell.',
-  Filesystem: 'Moving around the filesystem and finding what you need.',
-  Text: 'Reading files and pulling out the one line that matters.',
-  Pipes: 'Composing small tools into pipelines, and sending output where you want it.',
-  Permissions: 'Reading and changing file permissions.',
-  Packages: 'Installing and inspecting software with the Termux package manager.',
-  Encoding: 'Base64, ROT13, hex dumps, strings and hashes.',
-  Networking: 'Interfaces, port scanning, HTTP and SSH from the shell.',
-  Scripting: 'Writing small shell scripts that do a job for you.',
-  Processes: 'Seeing what is running, and controlling it.',
-  Remote: 'Keys, SSH and working on another machine.',
+  Security: 'How to think about security, and the habits that reduce what your device exposes.',
+  Web: 'How a web application handles a request, and the bug classes that break it.',
+  Recon: 'Finding out what is exposed on your own devices, and judging what you find.',
+  Cryptography: 'Hashing, keys, certificates and signatures, and the mistakes that break them.',
+  Defence: 'Baselines, file integrity, logs, alerting, and responding to an incident calmly.',
+  Text: 'Reading, searching, reshaping and encoding text with tools the shell already has.',
+  Networking: 'Addresses, names, requests, and moving files between two machines.',
+  Shell: 'Scripts, variables, processes and timers: making the shell do the work for you.',
+  Career: 'Writing findings, disclosing responsibly, and choosing what to learn next.',
+  Termux: 'The app itself: installing it, its packages, and shaping the shell you get.',
+  Filesystem: 'Paths, permissions and archives: where things live, and who can reach them.',
+  Projects: 'Three guided builds that tie the earlier topics together.',
 };
 ---
 
 <BaseLayout
-  title="Categories"
-  description="Browse Learmux tutorials by topic: Termux, the filesystem, text processing, pipes, permissions, packages, encoding and networking."
+  title="Topics"
+  description={`All ${lessons.length} lessons by subject, across ${sorted.length} topics. The course page is the order to read them in; this is the index for when you know what you are looking for.`}
 >
   <div class="wrap">
-    <header class="section">
-      <h1>Categories</h1>
-      <p class="lede">Every lesson, grouped by the part of the shell it covers.</p>
+    <header class="section--tight">
+      <h1>Topics</h1>
+      <p class="lede">
+        Every lesson by subject. The <a href={`${base}course/`}>course page</a> is the order to
+        work through them; this is the index for when you already know what you are looking
+        for.
+      </p>
+      <div class="chip-row">
+        <span class="chip">{sorted.length} topics</span>
+        <span class="chip">{lessons.length} lessons</span>
+      </div>
     </header>
 
-    <div class="rows">
-      {groups.map((g) => (
-        <a class="row" href={`${base}category/${g.slug}/`}>
-          <span>
-            <span class="row__title">{g.name}</span>
-            <span class="row__meta">{intros[g.name] ?? `Lessons filed under ${g.name}.`}</span>
-          </span>
-          <span class="row__side">
-            <span class="chip">{g.items.length} {g.items.length === 1 ? 'lesson' : 'lessons'}</span>
-            <Icon name="chevron" size={15} />
-          </span>
-        </a>
+    <div class="topic-grid">
+      {sorted.map((g) => (
+        <section class="topic-card">
+          <div class="topic-card__head">
+            <h2><a href={`${base}category/${g.slug}/`}>{g.name}</a></h2>
+            <span class="chip">{g.items.length}</span>
+          </div>
+          <p class="topic-card__desc">{intros[g.name] ?? `Lessons filed under ${g.name}.`}</p>
+          <ul class="topic-card__list">
+            {g.items.map((l) => (
+              <li>
+                <a href={`${base}learn/${l.id}/`}>{l.data.title}</a>
+              </li>
+            ))}
+          </ul>
+          <a class="topic-card__link" href={`${base}category/${g.slug}/`}>
+            All {g.items.length} <Icon name="chevron" size={13} />
+          </a>
+        </section>
       ))}
     </div>
 
-    <div class="actions" style="margin-top:2rem">
-      <a class="btn btn--outline" href={`${base}course/`}>The course</a>
-      <a class="btn btn--green" href={`${base}challenges/`}>Play the CTF</a>
-    </div>
+    <section class="ctf-panel" style="margin-top:2.6rem">
+      <h2>Not sure where to start?</h2>
+      <p>
+        Topics are for looking things up. If you are working through the material for the
+        first time, the course puts them in an order where each lesson assumes only the ones
+        before it.
+      </p>
+      <p>
+        <a class="btn btn--green" href={`${base}course/`}>Start the course</a>
+        <a class="btn" href={`${base}practice/`}>Test yourself</a>
+      </p>
+    </section>
   </div>
 </BaseLayout>
