@@ -1,0 +1,79 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import '../../styles/utilities.css';
+import { utilities } from '../../data/utilities';
+import { allTutorials } from '../../lib/tutorials';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const lessons = await allTutorials();
+const lessonTitle = (slug: string) => lessons.find((l) => l.id === slug)?.data.title ?? null;
+---
+
+<BaseLayout
+  title="Utilities"
+  description="Six small tools that run entirely in your browser, each with a lesson showing how to build the same thing yourself in Termux."
+>
+  <div class="wrap">
+    <header class="util-hero">
+      <h1>Utilities</h1>
+      <p class="lede">
+        Six small tools that do one job each, and they all run on your own device. Nothing
+        you paste is sent anywhere, because there is nowhere to send it: these pages are
+        static files and the work happens in the browser.
+      </p>
+    </header>
+
+    <section>
+      <h2>Why there is a lesson with every tool</h2>
+      <p>
+        A toolbox teaches you to press buttons. That is useful, but it stops being useful the
+        moment you need something slightly different, or you are on a machine where the tool
+        is not installed, or you want to know whether the answer you got is right.
+      </p>
+      <p>
+        So each utility here has a companion lesson that builds the same thing from scratch in
+        Termux, using commands you already have. Read the tool to see what it should do. Read
+        the lesson to be able to do it without the tool. The second one is the skill.
+      </p>
+    </section>
+
+    <div class="util-cards">
+      {utilities.map((u) => (
+        <section class="util-card">
+          <div class="util-card__head">
+            <span class="util-card__icon"><Icon name={u.icon} size={18} /></span>
+            <h2><a href={`${base}utilities/${u.slug}/`}>{u.name}</a></h2>
+          </div>
+          <p class="util-card__desc">{u.about}</p>
+          <div class="util-card__links">
+            <a class="is-tool" href={`${base}utilities/${u.slug}/`}>
+              Open the tool <Icon name="arrow" size={13} />
+            </a>
+            <a class="is-lesson" href={`${base}learn/${u.lesson}/`}>
+              Build it yourself <Icon name="chevron" size={12} />
+            </a>
+          </div>
+          {lessonTitle(u.lesson) && (
+            <p class="util-card__lesson muted" style="margin:0.6rem 0 0;font-size:0.8rem">
+              Lesson {lessonTitle(u.lesson)}
+            </p>
+          )}
+        </section>
+      ))}
+    </div>
+
+    <section class="ctf-panel" style="margin-top:2.6rem">
+      <h2>Learning these properly</h2>
+      <p>
+        The utilities pair with the later tracks in the course, where the same ideas come up
+        as part of a bigger job: randomness in the cryptography track, hashing and encoding
+        in security fundamentals, addresses in networking.
+      </p>
+      <p>
+        <a class="btn btn--green" href={`${base}course/`}>The course</a>
+        <a class="btn" href={`${base}practice/`}>Test yourself</a>
+      </p>
+    </section>
+  </div>
+</BaseLayout>
