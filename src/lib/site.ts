@@ -58,7 +58,13 @@ export interface DrawerGroup {
  * The drawer's first row, above the categories. Home is one tap from anywhere,
  * rather than being buried inside a group you would have to open first.
  */
-export const drawerHome: DrawerItem = { href: '', label: 'Home' };
+export const drawerTop: DrawerItem[] = [
+  { href: '', label: 'Home' },
+  // Utilities sits at the top level rather than inside the Learn group: it is
+  // a destination in its own right, not study material, and burying it one
+  // level down meant it was invisible until you opened a group.
+  { href: 'utilities/', label: 'Utilities', tag: '6 tools' },
+];
 
 export const drawerNav: DrawerGroup[] = [
   {
@@ -67,7 +73,6 @@ export const drawerNav: DrawerGroup[] = [
       { href: 'course/', label: 'Course' },
       { href: 'categories/', label: 'Categories' },
       { href: 'tools/', label: 'Tools' },
-      { href: 'utilities/', label: 'Utilities', tag: '6 tools' },
     ],
   },
   {
