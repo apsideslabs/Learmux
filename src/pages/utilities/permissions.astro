@@ -1,0 +1,307 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import '../../styles/utilities.css';
+import { utilityBySlug, otherUtilities } from '../../data/utilities';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const u = utilityBySlug('permissions')!;
+const others = otherUtilities('permissions');
+---
+
+<BaseLayout
+  title="Permissions calculator"
+  description="Convert between octal and symbolic Unix file permissions, handle setuid, setgid and sticky correctly, and read a chmod command in both directions."
+>
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={base}>Home</a><span class="sep">›</span>
+      <a href={`${base}utilities/`}>Utilities</a><span class="sep">›</span>
+      <span>Permissions calculator</span>
+    </nav>
+
+    <header class="util-hero">
+      <h1>Permissions calculator</h1>
+      <p class="lede">
+        Tick the boxes, or paste a value you found. Octal and symbolic in both directions,
+        with the special bits handled properly, which is the part most calculators get wrong.
+      </p>
+    </header>
+
+    <div class="util-panel">
+      <div class="util-panel__head">
+        <h2 class="util-panel__title">Bits</h2>
+        <label class="util-field util-field--narrow" style="flex-direction:row;align-items:center;gap:0.5rem">
+          <span class="util-label" style="margin:0">Type</span>
+          <select class="util-select" id="type"></select>
+        </label>
+      </div>
+
+      <div class="util-panel__body">
+        <div id="toggles"></div>
+
+        <div class="util-out-head">
+          <h3>Result</h3>
+        </div>
+        <div class="util-grid" id="result"></div>
+
+        <div class="util-out-head">
+          <h3>Read a value you found</h3>
+        </div>
+        <label class="util-field" style="flex:1 1 100%;margin-top:0.4rem">
+          <span class="util-label">Octal, symbolic or a chmod clause</span>
+          <input class="util-input" id="reverse" type="text" spellcheck="false" placeholder="755, 4755, rwxr-xr-x or u+x" />
+        </label>
+        <div class="util-msg" id="reverseMsg">
+          <Icon name="info" size={16} />
+          <span>Type any of those forms and the boxes above update to match.</span>
+        </div>
+
+        <div class="util-out-head">
+          <h3>What each bit lets someone do</h3>
+        </div>
+        <div class="util-msg" id="meaning" style="flex-direction:column;gap:0.5rem"></div>
+      </div>
+    </div>
+
+    <section>
+      <h2>What this is actually doing</h2>
+      <p>
+        A Unix permission has three parts, one for the owner, one for the group and one for
+        everyone else, and each part is three bits: read, write and execute. Four plus two
+        plus one. That is why the octal digits only ever go up to seven, and why
+        <code>rwx</code> is <code>7</code> and <code>r-x</code> is <code>5</code>.
+      </p>
+      <p>
+        The ten character string you get from <code>ls -l</code> has one more character at the
+        front, and it is not a permission at all. It is the file type: a dash for a regular
+        file, a <code>d</code> for a directory, an <code>l</code> for a symlink. That is the
+        single most common source of confusion here, and it is why <code>chmod 755</code> and
+        <code>rwxr-xr-x</code> are ten characters and three digits respectively.
+      </p>
+      <p>
+        Then there are the special bits, which live in a fourth octal digit in front.
+        <code>setuid</code> on an executable makes it run as its owner rather than as whoever
+        started it, which is how <code>sudo</code> works and also how privilege escalation
+        usually happens. <code>setgid</code> does the same for the group, or, on a directory,
+        makes new files inherit the directory's group. <code>sticky</code> on a directory means
+        only a file's owner can delete it, which is the entire reason <code>/tmp</code> is not
+        a free-for-all.
+      </p>
+      <p>
+        In symbolic form the special bits borrow the execute position, and this is the detail
+        worth learning. A lowercase <code>s</code> means the special bit is set and execute is
+        also set. An uppercase <code>S</code> means the special bit is set but execute is not,
+        which on a file means it does nothing until you add execute. So
+        <code>rwsr-xr-x</code> and <code>rwSr-xr-x</code> differ by one bit and mean quite
+        different things. The same rule applies to the sticky bit, where <code>t</code> and
+        <code>T</code> are the two cases.
+      </p>
+    </section>
+
+    <div class="util-build">
+      <div class="util-build__copy">
+        <h2>Build it yourself</h2>
+        <p>
+          The same conversion with <code>stat</code>, <code>chmod</code> and a short script,
+          including how to read a directory's permissions in bulk and the arithmetic behind
+          the octal digits.
+        </p>
+      </div>
+      <a class="btn btn--green" href={`${base}learn/${u.lesson}/`}>Read the lesson</a>
+    </div>
+
+    <section>
+      <h2>Other utilities</h2>
+      <div class="util-cards">
+        {others.map((o) => (
+          <section class="util-card">
+            <div class="util-card__head">
+              <span class="util-card__icon"><Icon name={o.icon} size={18} /></span>
+              <h2><a href={`${base}utilities/${o.slug}/`}>{o.name}</a></h2>
+            </div>
+            <p class="util-card__desc">{o.tagline}</p>
+            <div class="util-card__links">
+              <a class="is-tool" href={`${base}utilities/${o.slug}/`}>Open <Icon name="arrow" size={13} /></a>
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <script>
+    import {
+      emptyBits,
+      fromOctal,
+      toOctal,
+      toOctal4,
+      toSymbolic,
+      toSymbolic9,
+      parseAny,
+      describe,
+      FILE_TYPES,
+      type PermissionBits,
+      type FileType,
+    } from '../../lib/utilities/permissions';
+
+    function initPermissionsTool() {
+      const panel = document.querySelector('.util-panel');
+      if (!panel || (panel as HTMLElement).dataset.bound) return;
+      (panel as HTMLElement).dataset.bound = '1';
+
+      const $ = <T extends HTMLElement>(sel: string) => panel.querySelector(sel) as T;
+      const typeSel = $('#type') as unknown as HTMLSelectElement;
+      const toggles = $('#toggles');
+      const resultGrid = $('#result');
+      const reverse = $('#reverse') as HTMLInputElement;
+      const reverseMsg = $('#reverseMsg');
+      const meaning = $('#meaning');
+
+      // Open on 644, the permission most files on a Unix system actually have,
+      // so the page shows something meaningful rather than nine empty boxes.
+      let bits: PermissionBits =
+        fromOctal('644').bits ?? emptyBits('-');
+
+      typeSel.innerHTML = FILE_TYPES.map(
+        (t) => `<option value="${t.char}">${t.name}</option>`,
+      ).join('');
+      typeSel.value = '-';
+
+      const TRIADS: { key: 'user' | 'group' | 'other'; label: string }[] = [
+        { key: 'user', label: 'Owner' },
+        { key: 'group', label: 'Group' },
+        { key: 'other', label: 'Everyone else' },
+      ];
+      const SPECIALS: { key: 'setuid' | 'setgid' | 'sticky'; label: string }[] = [
+        { key: 'setuid', label: 'setuid' },
+        { key: 'setgid', label: 'setgid' },
+        { key: 'sticky', label: 'sticky' },
+      ];
+
+      toggles.innerHTML = `
+        ${TRIADS.map(
+          (t) => `
+          <div class="util-row" style="align-items:center">
+            <span class="util-label" style="flex:0 0 8rem;margin:0">${t.label}</span>
+            <div class="util-toggles">
+              ${['r', 'w', 'x']
+                .map(
+                  (bit) => `
+                <button class="util-toggle" type="button" data-triad="${t.key}" data-bit="${bit}" aria-pressed="false">
+                  <span class="util-toggle__mark">✓</span> ${bit}
+                </button>`,
+                )
+                .join('')}
+            </div>
+          </div>`,
+        ).join('')}
+        <div class="util-row" style="align-items:center;margin-top:0.8rem">
+          <span class="util-label" style="flex:0 0 8rem;margin:0">Special</span>
+          <div class="util-toggles">
+            ${SPECIALS.map(
+              (s) => `
+              <button class="util-toggle" type="button" data-special="${s.key}" aria-pressed="false">
+                <span class="util-toggle__mark">✓</span> ${s.label}
+              </button>`,
+            ).join('')}
+          </div>
+        </div>`;
+
+      toggles.querySelectorAll<HTMLElement>('[data-triad]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const triad = btn.dataset.triad as 'user' | 'group' | 'other';
+          const bit = btn.dataset.bit as 'r' | 'w' | 'x';
+          bits = { ...bits, [triad]: { ...bits[triad], [bit]: !bits[triad][bit] } };
+          reverse.value = '';
+          render();
+        });
+      });
+
+      toggles.querySelectorAll<HTMLElement>('[data-special]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const key = btn.dataset.special as 'setuid' | 'setgid' | 'sticky';
+          bits = { ...bits, [key]: !bits[key] };
+          reverse.value = '';
+          render();
+        });
+      });
+
+      typeSel.addEventListener('change', () => {
+        bits = { ...bits, type: typeSel.value as FileType };
+        render();
+      });
+
+      reverse.addEventListener('input', () => {
+        const value = reverse.value.trim();
+        if (value === '') {
+          reverseMsg.className = 'util-msg';
+          reverseMsg.innerHTML =
+            '<span>Type any of those forms and the boxes above update to match.</span>';
+          return;
+        }
+        const parsed = parseAny(value, bits.type);
+        if (!parsed.ok || !parsed.bits) {
+          reverseMsg.className = 'util-msg util-msg--bad';
+          reverseMsg.innerHTML = `<span>${parsed.error ?? 'That is not a permission.'}</span>`;
+          return;
+        }
+        bits = { ...parsed.bits, type: bits.type };
+        reverseMsg.className = 'util-msg util-msg--ok';
+        reverseMsg.innerHTML = `<span>Read as <strong>${toSymbolic(bits)}</strong> (${toOctal(bits)}).</span>`;
+        render();
+      });
+
+      function render() {
+        // Keep the toggle states in step with the bits, whatever changed them.
+        toggles.querySelectorAll<HTMLElement>('[data-triad]').forEach((btn) => {
+          const triad = btn.dataset.triad as 'user' | 'group' | 'other';
+          const bit = btn.dataset.bit as 'r' | 'w' | 'x';
+          btn.setAttribute('aria-pressed', String(bits[triad][bit]));
+        });
+        toggles.querySelectorAll<HTMLElement>('[data-special]').forEach((btn) => {
+          const key = btn.dataset.special as 'setuid' | 'setgid' | 'sticky';
+          btn.setAttribute('aria-pressed', String(bits[key]));
+        });
+        typeSel.value = bits.type;
+
+        const octal = toOctal(bits);
+        const symbolic = toSymbolic(bits);
+        const symbolic9 = toSymbolic9(bits);
+
+        const cells: [string, string][] = [
+          ['Octal', octal],
+          ['Octal, four digits', toOctal4(bits)],
+          ['Symbolic (as ls prints it)', symbolic],
+          ['Symbolic, no file type', symbolic9],
+        ];
+        resultGrid.innerHTML =
+          cells
+            .map(
+              ([k, v]) =>
+                `<div class="util-cell"><span class="util-cell__k">${k}</span><span class="util-cell__v">${v}</span></div>`,
+            )
+            .join('') +
+          `<div class="util-cell util-cell--wide"><span class="util-cell__k">chmod</span><span class="util-cell__v">chmod ${octal} file</span></div>`;
+
+        const items = describe(bits);
+        meaning.innerHTML = items
+          .map(
+            (m) =>
+              `<div style="display:flex;gap:0.6rem;align-items:baseline">
+                <span style="font-family:var(--font-mono);font-size:0.82rem;color:${
+                  m.risky ? 'var(--danger)' : 'var(--ink)'
+                };min-width:11rem">${m.label}</span>
+                <span>${m.detail}</span>
+              </div>`,
+          )
+          .join('');
+      }
+
+      render();
+    }
+
+    initPermissionsTool();
+    document.addEventListener('astro:page-load', initPermissionsTool);
+  </script>
+</BaseLayout>
