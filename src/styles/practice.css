@@ -240,6 +240,19 @@
   color: var(--danger);
 }
 
+.task__diag {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--muted);
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+  word-break: break-word;
+}
+
 .task__rules {
   list-style: none;
   padding: 0;
