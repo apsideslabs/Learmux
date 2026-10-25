@@ -551,11 +551,12 @@ export const networkSets: PracticeSet[] = [
         id: 'ssh-t1',
         title: 'Generate a key pair and read the public half',
         prompt:
-          'This creates an ed25519 key pair for your phone and then prints the public key, which is the half you copy to a server. Accept the default location when it asks, and set a passphrase when it prompts for one.',
-        command: 'ssh-keygen -t ed25519 -C "you@phone"; cat ~/.ssh/id_ed25519.pub',
-        hint: 'You should see the banner, a fingerprint line, the randomart block, and then a single line beginning ssh-ed25519.',
+          'This creates an ed25519 key pair and then prints the public key, which is the half you copy to a server. It writes to a demonstration filename and creates the key without a passphrase, so it never stops to ask you anything. The lesson covers protecting a key with a passphrase, which is what you want for a key you actually use.',
+        command:
+          'mkdir -p ~/.ssh; rm -f ~/.ssh/learmux-demo ~/.ssh/learmux-demo.pub; ssh-keygen -t ed25519 -C "you@phone" -f ~/.ssh/learmux-demo -N ""; cat ~/.ssh/learmux-demo.pub',
+        hint: 'You should see the banner, a fingerprint line, the randomart block, and then a single line beginning ssh-ed25519. It is the last line that gets copied to a server.',
         expects:
-          'The banner Generating public/private ed25519 key pair, a prompt for the file and the passphrase, then a line naming the fingerprint as SHA256: followed by a short string. After that comes the randomart block, and then the public key itself: one line beginning ssh-ed25519, a long block of characters, and the label you@phone. The label is only a comment, which is why it carries no secret, and the fingerprint is what an admin compares to check they are talking to the right machine. The private key sits beside the public one in the file with no .pub on the end, and that one never leaves the phone.',
+          'The banner Generating public/private ed25519 key pair, a line saying where each half was saved, then a line naming the fingerprint as SHA256: followed by a short string. After that comes the randomart block, and then the public key itself: one line beginning ssh-ed25519, a long block of characters, and the label you@phone. The label is only a comment, which is why it carries no secret, and the fingerprint is what an admin compares to check they are talking to the right machine. The private key sits beside the public one in the file with no .pub on the end, and that one never leaves the phone.',
         rules: [
           {
             type: 'matches',
