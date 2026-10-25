@@ -156,11 +156,12 @@ export const systemSets: PracticeSet[] = [
         id: 'net-t1',
         title: 'Start a server and scan it',
         prompt:
-          'This starts the SSH server that Termux ships, then scans your own device on the port that server listens on. Paste the scan output, not the whole terminal session.',
-        command: 'sshd; nmap -sV -p 8022 localhost',
-        hint: 'If you are not sure which port it is listening on, netstat -tln lists what is listening on your device right now.',
+          'This starts a small web server on port 8022, scans that port on your own device, then stops the server again. Paste the scan output, not the whole terminal session.',
+        command:
+          'python3 -m http.server 8022 >/dev/null 2>&1 & sleep 2; nmap -sV -p 8022 localhost; kill %1 2>/dev/null',
+        hint: 'netstat -tln lists what is listening on your device right now, so you can check the server came up before you scan it.',
         expects:
-          'You should see nmap\'s usual shape: a banner line naming the version, a scan report naming the host, a blank line, then a table with the columns PORT, STATE and SERVICE, and one row for the port you scanned. The row should read 8022/tcp, then open, then the service it identified. Then a note that service detection was performed, and a summary line at the end. The parts worth reading are the STATE column, which is the answer to your question, and the SERVICE and VERSION columns, which tell you what is actually answering and how old it is. Every open port on a device you own is something to keep patched.',
+          'You should see nmap\'s usual shape: a banner line naming the version, a scan report naming the host, a blank line, then a table with the columns PORT, STATE and SERVICE, and one row for the port you scanned. The row should read 8022/tcp, then open, then the service it identified. Then a note that service detection was performed, and a summary line at the end. The parts worth reading are the STATE column, which is the answer to your question, and the SERVICE and VERSION columns, which tell you what is actually answering and how old it is. Every open port on a device you own is something to keep patched. The same exercise works on the SSH server Termux ships: start it with sshd and it listens on the same port.',
         rules: [
           { type: 'matches', pattern: 'Nmap', label: 'the output is from nmap' },
           {
