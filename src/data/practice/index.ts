@@ -1,0 +1,32 @@
+/**
+ * Every practice set, in one list.
+ *
+ * A set is keyed by lesson slug where one exists, so the lesson page can find
+ * its own set without a second mapping to keep in step.
+ */
+
+import type { PracticeSet } from './types';
+import { filesystemSets } from './filesystem';
+import { textSets } from './text';
+import { systemSets } from './system';
+
+export type { PracticeSet, McqQuestion, OutputTask, OutputRule } from './types';
+export { setSize, totalPoints } from './types';
+
+export const practiceSets: PracticeSet[] = [...filesystemSets, ...textSets, ...systemSets];
+
+export function findSet(slug: string): PracticeSet | undefined {
+  return practiceSets.find((s) => s.slug === slug);
+}
+
+export function allSets(): PracticeSet[] {
+  return practiceSets;
+}
+
+export function questionCount(): number {
+  return practiceSets.reduce((n, s) => n + s.questions.length, 0);
+}
+
+export function taskCount(): number {
+  return practiceSets.reduce((n, s) => n + s.tasks.length, 0);
+}
