@@ -1,9 +1,0 @@
-        if path != ROOT and not path.startswith(ROOT + os.sep):
-            self.send_response(403)
-            self.end_headers()
-            self.wfile.write(b"forbidden\n")
-            return
-        # ...the rest of the method is unchanged
-```
-
-`os.path.realpath` follows every `..` and every symbolic link and returns the true file on disk. Comparing that result against the root catches traversal whether it was written as `..`, as a link, or as something more inventive. The check is on the resolved path, not on the text of the request.
