@@ -18,6 +18,9 @@ import { cryptographySets } from './cryptography';
 import { defenceSets } from './defence';
 import { mindsetSets } from './mindset';
 import { professionSets } from './profession';
+import { utilitiesSets } from './utilities';
+import { utilitiesBSets } from './utilities-b';
+import { utilitiesCSets } from './utilities-c';
 
 export type { PracticeSet, McqQuestion, OutputTask, OutputRule } from './types';
 export { setSize, totalPoints } from './types';
@@ -35,6 +38,9 @@ export const practiceSets: PracticeSet[] = [
   ...defenceSets,
   ...mindsetSets,
   ...professionSets,
+  ...utilitiesSets,
+  ...utilitiesBSets,
+  ...utilitiesCSets,
 ];
 
 export function findSet(slug: string): PracticeSet | undefined {
