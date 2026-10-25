@@ -79,6 +79,7 @@ const isCheckpoint = typeof expect === 'string' && expect !== '';
     {hint && <button class="pycell__hint-btn" type="button" data-hint>Hint</button>}
     {solution && <button class="pycell__hint-btn" type="button" data-solution>Show a solution</button>}
     <span class="pycell__status" data-status aria-live="polite"></span>
+    <button class="pycell__retry" type="button" data-retry hidden>Try again</button>
   </div>
 
   {hint && <p class="pycell__hint" data-hint-text hidden>{hint}</p>}
@@ -101,7 +102,7 @@ const isCheckpoint = typeof expect === 'string' && expect !== '';
 </div>
 
 <script>
-  import { runPython, ensureRuntime, onLoadStage, loadStage, resetNamespace } from '../lib/py/runtime';
+  import { runPython, onLoadState, resetNamespace, retryRuntime } from '../lib/py/runtime';
   import { checkOutput, checkpointId, type MatchMode } from '../lib/py/cells';
   import { isSolved, markSolved } from '../lib/progress';
 
@@ -125,6 +126,7 @@ const isCheckpoint = typeof expect === 'string' && expect !== '';
       const stderrEl = cell.querySelector<HTMLElement>('[data-stderr]')!;
       const verdict = cell.querySelector<HTMLElement>('[data-verdict]')!;
       const note = cell.querySelector<HTMLElement>('[data-note]')!;
+      const retryBtn = cell.querySelector<HTMLButtonElement>('[data-retry]')!;
 
       const original = ta.value;
       const expect = cell.dataset.expect ?? '';
@@ -179,6 +181,14 @@ const isCheckpoint = typeof expect === 'string' && expect !== '';
         });
       }
 
+      retryBtn.addEventListener('click', () => {
+        // Drop the failed promise so the next press tries the sources again.
+        retryRuntime();
+        retryBtn.hidden = true;
+        status.textContent = 'Trying again…';
+        runBtn.click();
+      });
+
       if (hintBtn && hintText) {
         hintBtn.addEventListener('click', () => {
           const showing = !hintText.hidden;
@@ -191,12 +201,18 @@ const isCheckpoint = typeof expect === 'string' && expect !== '';
         runBtn.disabled = true;
         verdict.hidden = true;
 
-        if (!(window as any).__pyCellStageHooked) {
-          (window as any).__pyCellStageHooked = true;
-        }
-        const off = onLoadStage((s) => {
-          if (s === 'script' || s === 'runtime') {
-            status.textContent = 'Fetching the Python runtime, about ten megabytes. Once only.';
+        // While the runtime is loading, say which stage it is at and how long
+        // it has been going. A silent spinner is indistinguishable from a
+        // broken page, and this download is large enough to need a while.
+        retryBtn.hidden = true;
+        const off = onLoadState((s) => {
+          if (s.stage === 'script') {
+            status.textContent = `Fetching the Python runtime from ${s.source}… ${s.elapsed}s`;
+          } else if (s.stage === 'runtime') {
+            status.textContent =
+              `Starting Python. About six megabytes, once only, and it can take a minute on mobile data. ${s.elapsed}s`;
+          } else if (s.stage === 'failed') {
+            status.textContent = 'Could not load Python.';
           }
         });
 
@@ -221,7 +237,18 @@ const isCheckpoint = typeof expect === 'string' && expect !== '';
             stderrEl.hidden = false;
             stderrEl.textContent = result.error ?? 'the code raised an error';
             stderrEl.classList.add('pycell__stderr--error');
-            status.textContent = `${result.errorLine ?? 'error'} · ${result.ms} ms`;
+            const runtimeFailed = /could not be loaded from any of|did not respond within/.test(
+              result.error ?? '',
+            );
+            // A small status line cannot hold the whole explanation, and the
+            // output box already does, so keep this short.
+            status.textContent = runtimeFailed ? 'Python could not be loaded' : `${result.errorLine ?? 'error'} · ${result.ms} ms`;
+            // If the runtime itself never arrived, this is not a mistake in the
+            // reader's code, so offer a way to try the download again.
+            if (runtimeFailed) {
+              retryBtn.hidden = false;
+              note.hidden = true;
+            }
           } else {
             stderrEl.classList.remove('pycell__stderr--error');
             status.textContent = `${result.ms} ms`;
@@ -264,8 +291,6 @@ const isCheckpoint = typeof expect === 'string' && expect !== '';
     });
 
     // Warm nothing up front: the runtime is only fetched on the first Run.
-    void ensureRuntime;
-    void loadStage;
   }
 
   function escapeHtml(s: string): string {
