@@ -79,19 +79,19 @@ export const utilitiesBSets: PracticeSet[] = [
     tasks: [
       {
         id: 'hash-t1',
-        title: 'Write a checksum file, then catch a change',
+        title: "Write a checksum file and verify against it",
         prompt:
-          'This makes two files, records their digests in a checksum file, checks them, then edits one file and checks again. Read the four result lines: the first two show the files matched, the last two show which one changed.',
+          "The hashtool.sh you finished is saved next to you. This creates a small file, writes a checksum file for it, then checks the file against that list. Paste the check output.",
         command:
-          'mkdir -p "$HOME/hashtool" && cd "$HOME/hashtool" && printf \'alpha\\n\' > a.txt && printf \'bravo\\n\' > b.txt && sha256sum a.txt b.txt > SHA256SUMS && sha256sum -c SHA256SUMS && printf \'ALPHA\\n\' > a.txt && sha256sum -c SHA256SUMS',
-        hint: 'Each check line is a filename, a colon, then OK or FAILED. The warning that follows goes to standard error, not standard output.',
+          "printf 'alpha\n' > a.txt; bash hashtool.sh --write SUMS a.txt; bash hashtool.sh --check SUMS",
+        fixture: { lesson: 'build-a-hash-tool', as: 'hashtool.sh' },
+        hint: "The check prints one line per file, naming the file and whether it matched.",
         expects:
-          'Four result lines in two pairs. The first pair is a.txt: OK and b.txt: OK, because both files still hash to what the checksum file recorded for them. Then a.txt is rewritten and checked again, giving a.txt: FAILED and b.txt: OK. The FAILED line names the file that changed, which is the whole point of the check: it tells you which file is no longer what it was, not merely that something somewhere changed.',
+          "One line reading a.txt: OK. That is sha256sum reporting that the digest it just computed matches the one recorded in SUMS. The value of the exercise is the second half: change the file and run the check again and the same line reads a.txt: FAILED, and the command exits non-zero. A checksum proves the file has not changed since the digest was taken. It does not prove who took the digest, which is what a signature adds.",
         rules: [
-          { type: 'matches', pattern: '^\\s*\\S+:\\s+OK$', label: 'a file still matches its recorded digest' },
-          { type: 'matches', pattern: '^\\s*\\S+:\\s+FAILED$', label: 'the edited file is reported as changed' },
-          { type: 'lines', min: 4, label: 'both files are checked before and after the edit' },
-          { type: 'absent', pattern: 'command not found|No such file or directory|not installed', label: 'the commands actually ran' },
+          { type: 'matches', pattern: '^\\s*a\\.txt: OK\\s*$', label: 'the file matched its recorded digest' },
+          { type: 'contains', value: 'a.txt', label: 'the check named the file' },
+          { type: 'absent', pattern: 'command not found|No such file or directory|not installed|hashtool:', label: 'the script ran' },
         ],
       },
     ],
@@ -161,19 +161,19 @@ export const utilitiesBSets: PracticeSet[] = [
     tasks: [
       {
         id: 'jwt-t1',
-        title: 'Decode a token and check its signature',
+        title: "Verify a token signature for real",
         prompt:
-          'This decodes the payload of a token, then recomputes its HS256 signature with the secret termux-demo-secret. Read the decoded claims, then the given and calc lines, then the verdict.',
+          "The jwt.sh you finished is saved next to you. This decodes the sample token and then checks its HS256 signature against the secret it was signed with. Paste the last few lines.",
         command:
-          'TOKEN=\'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1pcmEiLCJhZG1pbiI6ZmFsc2UsImlhdCI6MTc1MDAwMDAwMH0.LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY\'; SEG=$(printf \'%s\\n\' "$TOKEN" | cut -d. -f2 | tr \'_-\' \'/+\'); while [ $(( ${#SEG} % 4 )) -ne 0 ]; do SEG="$SEG="; done; printf \'%s\' "$SEG" | base64 -d; echo; SIGNING_INPUT=$(printf \'%s\\n\' "$TOKEN" | cut -d. -f1,2); GIVEN=$(printf \'%s\\n\' "$TOKEN" | cut -d. -f3); CALC=$(printf \'%s\' "$SIGNING_INPUT" | openssl dgst -sha256 -hmac \'termux-demo-secret\' -binary | openssl base64 -A | tr \'+/\' \'-_\' | tr -d \'=\'); echo "given: $GIVEN"; echo "calc:  $CALC"; [ "$GIVEN" = "$CALC" ] && echo "signature valid" || echo "signature invalid"',
-        hint: 'The first line is the JSON payload on its own. The given line is the signature carried in the token; the calc line is the one you computed.',
+          "bash jwt.sh --secret termux-demo-secret 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1pcmEiLCJhZG1pbiI6ZmFsc2UsImlhdCI6MTc1MDAwMDAwMH0.LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY'",
+        fixture: { lesson: 'build-a-jwt-inspector', as: 'jwt.sh' },
+        hint: "You are looking for the verdict line at the very bottom.",
         expects:
-          'The first line is the decoded payload, a JSON object whose name claim is Mira and whose admin claim is false. Then two signature lines: given, the third segment of the token, and calc, the HMAC you recomputed with the secret. The two are identical, so the final line reads signature valid. Change one character of the secret and the calc line changes completely, and the verdict becomes signature invalid.',
+          "The decoded payload, which includes the name Mira, and then result: VALID, meaning the HMAC the script computed over the header and payload matches the signature in the token. Run the same command with --secret wrong-secret and the verdict flips to INVALID, which is the whole point: the signature is the only part of a token that proves anything, and it only proves it when you hold the right key. The payload was readable without any key at all, so treat every claim in it as public.",
         rules: [
-          { type: 'matches', pattern: '^\\s*\\{.*"name"\\s*:\\s*"Mira"', label: 'the payload decodes and shows the name claim' },
-          { type: 'contains', value: 'signature valid', label: 'the recomputed signature matches the one in the token' },
-          { type: 'lines', min: 3, label: 'the decoded payload and the signature check are both present' },
-          { type: 'absent', pattern: 'command not found|No such file or directory|not installed', label: 'the commands actually ran' },
+          { type: 'contains', value: '"name": "Mira"', label: 'the payload was decoded' },
+          { type: 'contains', value: 'result: VALID', label: 'the signature checked out against the secret' },
+          { type: 'absent', pattern: 'command not found|No such file or directory|not installed|jwt.sh:', label: 'the script ran' },
         ],
       },
     ],
