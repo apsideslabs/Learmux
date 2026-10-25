@@ -1,0 +1,179 @@
+---
+title: "Cross-site scripting"
+description: "See a query value cross into a browser as markup, and close it with output escaping and a content security policy."
+excerpt: "Make a search page run your script, then make it show your script as text."
+category: "Web"
+track: "websecurity"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 34
+level: Intermediate
+tags: [web, security]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Cross-site scripting is the injection lesson with a browser as the interpreter. When a value the client sent is placed into a page without escaping, the browser reads it as markup, and markup can carry a script. The page then runs code the author never wrote, inside the site's own origin, with the site's own cookies. In this lesson you will build a search page that reflects what you typed, make it run a script, and then escape the output so the script is only ever text.
+
+<Callout type="warning" title="Only attack your own server">
+The page below is served from `127.0.0.1` on your own phone, and you are the only visitor. The payload is a harmless alert, chosen so you can see the reflection without doing damage. Only ever test a site you own.
+</Callout>
+
+## What you'll be able to do
+
+- See a value reflected into HTML exactly as you sent it.
+- Explain why `curl` shows the bug without running it.
+- Escape output so a value is always text.
+- Add a content security policy as a second line of defence.
+
+## Step 1: A search page that reflects the query
+
+This server shows you what you searched for. Write it as `search.py`.
+
+```python
+# search.py: a search page that shows the query back to you
+import http.server
+import socketserver
+from urllib.parse import urlparse, parse_qs
+
+PAGE = """<!doctype html>
+<html><body>
+<h1>Search</h1>
+<p>You searched for: {q}</p>
+</body></html>
+"""
+
+socketserver.TCPServer.allow_reuse_address = True
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        q = parse_qs(urlparse(self.path).query).get("q", [""])[0]
+        # FLAW: the value is dropped into HTML with no escaping
+        body = PAGE.format(q=q).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, fmt, *args):
+        print("request:", self.requestline)
+
+with socketserver.TCPServer(("127.0.0.1", 8000), Handler) as httpd:
+    print("serving on http://127.0.0.1:8000")
+    httpd.serve_forever()
+```
+
+Start it and search for something ordinary.
+
+```bash
+python3 search.py
+```
+
+```text
+serving on http://127.0.0.1:8000
+```
+
+```bash
+curl -s "http://127.0.0.1:8000/"
+```
+
+```text
+<!doctype html>
+<html><body>
+<h1>Search</h1>
+<p>You searched for: termux</p>
+</body></html>
+```
+
+That is correct. The word `termux` was placed between `<p>` and `</p>`, and the browser would show it as text. The flaw is the line `PAGE.format(q=q)`. Whatever value arrives is dropped into the page with nothing in between.
+
+## Step 2: Send markup instead of a word
+
+Now send a value that is HTML. This one is a script tag.
+
+```bash
+curl -s "http://127.0.0.1:8000/<script>alert(1)</script>"
+```
+
+```text
+<!doctype html>
+<html><body>
+<h1>Search</h1>
+<p>You searched for: <script>alert(1)</script></p>
+```
+
+The script tag came back exactly as it was sent, sitting inside the page as markup. A browser reading this would not display the tag as text. It would find a `<script>` element and run what is inside it. `curl` does not run anything, which is why you can read the bug in the response body: the raw tag in the output is the proof that a browser would treat it as code.
+
+## Step 3: What a browser would do with it
+
+A script running in this page runs in the site's own origin. It can read the page, and it can read the site's cookies unless they are marked otherwise. If this were a real site with a signed-in user, an attacker could send that user a crafted link and the script would run with the user's session. That is why reflected cross-site scripting is worth more than it looks. The fix is not to detect the payload, because there are countless payloads. The fix is to make sure no value is ever treated as markup in the first place.
+
+## Step 4: Escape the output
+
+Change the server so the value is escaped before it goes into the page, and add a policy that refuses to run scripts on the page at all.
+
+```python
+        # FIX: escape the value so it stays text, not markup
+        body = PAGE.format(q=html.escape(q)).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        # FIX: a policy that refuses to run any script on this page
+        self.send_header("Content-Security-Policy", "default-src 'none'")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+```
+
+Add `import html` at the top. `html.escape` turns the four characters that matter in HTML into their safe forms, so `<` becomes `&lt;` and `>` becomes `&gt;`. The browser then shows the value as text, because that is what it now is. The `Content-Security-Policy` header is a second line of defence: it tells the browser to run no script and load no resource from this page, so even a value that slipped through would have nothing to execute. The `X-Content-Type-Options` header stops the browser guessing a different type for the page.
+
+## Step 5: Attack it again
+
+Restart the server and send the payload once more.
+
+```bash
+curl -s "http://127.0.0.1:8000/<script>alert(1)</script>"
+```
+
+```text
+<!doctype html>
+<html><body>
+<h1>Search</h1>
+<p>You searched for: &lt;script&gt;alert(1)&lt;/script&gt;</p>
+</body></html>
+```
+
+The angle brackets are gone, replaced by their escaped forms, and what was a script is now a string of visible text. Confirm the header is present by asking for it directly. The `-D -` option prints the response headers, and `-o /dev/null` throws the body away.
+
+```bash
+curl -s -D - -o /dev/null "http://127.0.0.1:8000/"
+```
+
+```text
+HTTP/1.0 200 OK
+Server: BaseHTTP/0.6 Python/3.12.13
+Date: Sun, 25 Oct 2026 04:34:08 GMT
+Content-Type: text/html; charset=utf-8
+Content-Security-Policy: default-src 'none'
+X-Content-Type-Options: nosniff
+Content-Length: 92
+```
+
+Escape the output, and the same request that used to run code now shows a line of text.
+
+## Quick reference
+
+| Item | What it does |
+| --- | --- |
+| `PAGE.format(q=q)` | Drops the value into HTML with no escaping |
+| `<script>alert(1)</script>` | A payload the browser would run |
+| `curl` on the response | Shows the raw tag without running it |
+| `html.escape(q)` | Turns `<` and `>` into `&lt;` and `&gt;` |
+| `Content-Security-Policy` | Tells the browser which scripts may run |
+| `X-Content-Type-Options: nosniff` | Stops the browser guessing the page type |
+
+## Next steps
+
+- [Injection: when data becomes code](/learn/injection/) is the same crossing of data into code, with a different interpreter.
+- [Broken access control and misconfiguration](/learn/access-control-and-misconfiguration/) covers the server-side checks that decide who may see what.
+- [Input you do not control](/learn/untrusted-input/) is the validation habit that stops the payload before it is stored.
