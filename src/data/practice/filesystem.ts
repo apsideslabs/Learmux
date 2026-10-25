@@ -70,7 +70,7 @@ export const filesystemSets: PracticeSet[] = [
         id: 'gs-t1',
         title: 'Show where you are',
         prompt:
-          'Run the command below and paste what it prints. The output is a single line, and it tells you something specific about how Termux is put together.',
+          'This prints the directory you are currently in. It is a single line, and it tells you something specific about how Termux is put together.',
         command: 'pwd',
         hint: 'If the command prints nothing, check you copied the whole line.',
         expects:
@@ -150,7 +150,7 @@ export const filesystemSets: PracticeSet[] = [
         id: 'nav-t1',
         title: 'Read a long listing',
         prompt:
-          'Run the command below and paste the result. It is a long listing of everything in your home directory, hidden files included.',
+          'A long listing of everything in your home directory, hidden files included. Read the first column of each row as well as the names.',
         command: 'ls -la ~',
         hint: 'The first line of the output is a summary rather than a file, so do not try to read it as one.',
         expects:
@@ -240,7 +240,7 @@ export const filesystemSets: PracticeSet[] = [
         id: 'perm-t1',
         title: 'Produce a mode and read it back',
         prompt:
-          'Run the command below. It creates a file, sets it to owner-only, then shows you both the permission string and the octal value. Paste the output.',
+          'This creates a file, sets it to owner-only, then shows you both the permission string and the octal value, so you can see the same mode written two ways.',
         command:
           'touch ~/secret.txt; chmod 600 ~/secret.txt; ls -l ~/secret.txt; stat -c "%a %n" ~/secret.txt',
         hint: 'You are looking for two different views of the same mode: the symbolic one from ls, and the octal one from stat.',
