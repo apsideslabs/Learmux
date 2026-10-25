@@ -25,13 +25,13 @@ export interface Track {
 export const course = {
   title: 'Termux and the command line',
   summary:
-    'Ten tracks, in order, from opening a prompt for the first time to assessing your own systems, understanding how web applications break, and writing up what you find. Every lesson is done on the phone in your pocket, offline and without root.',
+    'Eleven tracks, in order, from opening a prompt for the first time to assessing your own systems, understanding how web applications break, and writing up what you find. Every lesson is done on the phone in your pocket, offline and without root.',
   audience:
     'Written for someone starting from nothing on an Android phone. You do not need prior Linux, a laptop, or root. If you already work at a prompt, the later tracks stand on their own.',
   requirements: 'An Android device with Termux installed from F-Droid. Budget about 20 minutes per lesson.',
   outcome:
     'You will be comfortable at a Linux prompt, able to write small scripts and explain what happens on a network, and able to assess your own devices, reason about how something could fail, and write the result up so another person can act on it.',
-  timeEstimate: 'about 17 hours',
+  timeEstimate: 'about 19 hours',
 };
 
 export const tracks: Track[] = [
@@ -124,8 +124,19 @@ export const tracks: Track[] = [
     prereq: 'Logs and detection from the security track, and cron from the shell track.',
   },
   {
-    id: 'projects',
+    id: 'utilities',
     number: 9,
+    title: 'Utilities you build yourself',
+    tagline: 'Six small tools, each built twice.',
+    description:
+      'A password generator, an encoder, a checksum tool, a token inspector, a permissions converter and a subnet calculator. Each one exists twice: as something you can use, and as a lesson that shows you how to write it. Every one runs on commands the earlier tracks already gave you, and every one is a job people reach for a website to do.',
+    outcome: 'you can build a small tool that does the job, and check its answers rather than trusting them.',
+    level: 'Intermediate',
+    prereq: 'The shell in practice track, and either security fundamentals or networking for the later tools.',
+  },
+  {
+    id: 'projects',
+    number: 10,
     title: 'Projects',
     tagline: 'Build three small tools end to end.',
     description:
@@ -136,7 +147,7 @@ export const tracks: Track[] = [
   },
   {
     id: 'profession',
-    number: 10,
+    number: 11,
     title: 'Working in security',
     tagline: 'Report it well, practise legally, and keep going.',
     description:
