@@ -34,6 +34,11 @@ jobs:
       - name: Test engine
         run: npm test
 
+      # nmap lets the practice tasks that scan a port be verified by running
+      # the real command, rather than falling back to a recorded sample.
+      - name: Install nmap for the practice checks
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq nmap
+
       # Proves every practice task is gradeable, and that wrong output is
       # rejected rather than waved through.
       - name: Test practice tasks
