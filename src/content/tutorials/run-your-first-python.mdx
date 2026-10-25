@@ -1,0 +1,181 @@
+---
+title: "Run your first Python"
+description: "Write Python and run it inside the page. No install, no server, and a traceback you can read when you get it wrong."
+excerpt: "Press Run and real Python executes in your browser. Start with a print statement, then fix a mistake and read the error it gives you."
+category: "Python"
+track: "python"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 14
+level: "Beginner"
+tags: [python, interactive]
+---
+
+import PyCell from '../../components/PyCell.astro';
+
+Every grey box on this page is a real Python interpreter. Press Run and your code executes, right there in the browser tab, with no installation and nothing sent anywhere. That means you can make a mistake, read what Python says about it, and change it, which is how anyone actually learns a language.
+
+The first time you press Run, the page downloads the interpreter. It is about ten megabytes and the browser keeps it, so every cell after that starts immediately.
+
+## What you'll be able to do
+
+- Run Python and see its output.
+- Store a value in a variable and use it.
+- Read a traceback and find the mistake it names.
+- Use a loop and a function.
+
+## Step 1: Make it say something
+
+Type nothing and just press Run.
+
+<PyCell
+  title="Your first line"
+  code={`print("Hello from Python")`}
+/>
+
+The word `print` is a function. You give it something in brackets and it writes that to the output. The quotes around the text tell Python it is a string, meaning literal characters rather than a name to look up.
+
+## Step 2: Do some arithmetic
+
+Python is a calculator that can keep notes. Assign a value to a name with a single `=`, then use the name.
+
+<PyCell
+  title="Names and numbers"
+  code={`minutes_in_an_hour = 60
+hours_in_a_day = 24
+
+print(minutes_in_an_hour * hours_in_a_day)
+print("one day is", hours_in_a_day * minutes_in_an_hour, "minutes")`}
+/>
+
+A single `=` means "store this value under this name". It is not a question about equality, which trips up almost everyone at first. Note that `print` can take several things separated by commas and puts a space between them.
+
+## Step 3: A checkpoint
+
+Work out how many minutes there are in a week and print just the number. The cell marks itself when the output matches.
+
+<PyCell
+  title="Minutes in a week"
+  expect="10080"
+  hint="There are seven days in a week, and you already have the minutes in a day."
+  code={`minutes_in_an_hour = 60
+hours_in_a_day = 24
+
+# Your turn: print the number of minutes in a week.
+`}
+  solution={`minutes_in_an_hour = 60
+hours_in_a_day = 24
+
+print(minutes_in_an_hour * hours_in_a_day * 7)`}
+/>
+
+## Step 4: Get it wrong on purpose
+
+This cell has one mistake in it. Press Run and read what Python says.
+
+<PyCell
+  variant="fix"
+  title="Find the mistake"
+  expect="Hello, Termux"
+  hint="Python is case sensitive. Look closely at the name on the second line."
+  code={`name = "Termux"
+print("Hello, " + Name)`}
+  solution={`name = "Termux"
+print("Hello, " + name)`}
+/>
+
+You will see a traceback ending in `NameError: name 'Name' is not defined`. Read that last line first, every time. It names the problem exactly: something called `Name` was used but never created. There is a `name` on the line above, with a lowercase `n`, and Python treats those as two entirely different things.
+
+Fix it and press Run again. The cell marks itself when it prints `Hello, Termux`.
+
+## Step 5: Repeat yourself
+
+A loop runs the same lines more than once. `range(1, 6)` gives the numbers one up to five, stopping before six.
+
+<PyCell
+  title="A loop"
+  code={`for n in range(1, 6):
+    print(n, "squared is", n * n)`}
+/>
+
+The indentation is not decoration. The four spaces before `print` are what tells Python those lines belong inside the loop, and Python refuses to run code where the indentation is inconsistent. Every other language uses braces for this. Python uses whitespace, and it is stricter about it than you expect.
+
+## Step 6: A checkpoint with a loop
+
+Add up every number from one to one hundred and print the total.
+
+<PyCell
+  title="Add them up"
+  expect="5050"
+  hint="Start a running total at zero before the loop, and add to it inside."
+  code={`total = 0
+
+# Your turn: loop from 1 to 100 and add each number to total.
+`}
+  solution={`total = 0
+
+for n in range(1, 101):
+    total = total + n
+
+print(total)`}
+/>
+
+## Step 7: Wrap it in a function
+
+A function is a named block of code you can call. `def` defines one, and `return` hands a value back.
+
+<PyCell
+  title="A function"
+  code={`def area(width, height):
+    return width * height
+
+print(area(3, 4))
+print(area(10, 2))
+
+# A function is just a value, so you can loop over calls to it.
+for size in [1, 2, 3]:
+    print("a square of", size, "has area", area(size, size))`}
+/>
+
+The names in the brackets are parameters. They only exist inside the function, so two different functions can each have their own `width` without colliding.
+
+## Step 8: The last checkpoint
+
+Write a function that takes a word and returns it backwards, then print the reversed form of `Termux`. You should get `xumreT`.
+
+<PyCell
+  title="Backwards"
+  expect="xumreT"
+  hint="A slice with a step of -1 walks a string from the end to the start: word[::-1]"
+  code={`def backwards(word):
+    # Your turn: return the word reversed.
+    pass
+
+print(backwards("Termux"))`}
+  solution={`def backwards(word):
+    return word[::-1]
+
+print(backwards("Termux"))`}
+/>
+
+`word[::-1]` is the idiom. A slice takes `start:stop:step`, and leaving start and stop out means the whole string, while a step of minus one means walk it backwards.
+
+## Quick reference
+
+| Piece | What it does |
+| --- | --- |
+| `print(...)` | write something to the output |
+| `name = value` | store a value under a name |
+| `"text"` | a string, which is literal characters |
+| `+` on strings | join them together |
+| `for n in range(1, 6)` | repeat, with `n` taking each value in turn |
+| four spaces | what marks a block, instead of braces |
+| `def f(x):` and `return` | define a function and hand a value back |
+| `word[::-1]` | the whole string, walked backwards |
+| the last line of a traceback | what actually went wrong |
+
+## Next steps
+
+- [Working with text](/learn/python-working-with-text/) takes the string handling further.
+- [Reading and searching text](/learn/reading-and-searching-text/) is the same job done with shell tools instead.
+- [Getting started with Termux](/learn/getting-started/) is where the rest of the course begins.
