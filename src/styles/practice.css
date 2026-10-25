@@ -1,0 +1,351 @@
+/**
+ * Styles for practice sets: multiple-choice questions and output tasks.
+ *
+ * Built from the same tokens as the rest of the site. The only new idea here
+ * is state: an option or a rule can be pending, right, or wrong, and it should
+ * be obvious which without reading carefully.
+ */
+
+.btn--small {
+  font-size: 0.82rem;
+  padding: 0.3rem 0.7rem;
+}
+
+/* ── multiple choice ─────────────────────────────────────────────────────── */
+.quiz-summary {
+  font-size: 0.86rem;
+  color: var(--muted);
+  border-left: 3px solid var(--green);
+  padding-left: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.quiz-q {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-4);
+  margin: 0 0 var(--sp-3);
+}
+
+.quiz-q__legend {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: baseline;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 0;
+  margin-bottom: var(--sp-3);
+  line-height: 1.45;
+}
+.quiz-q__num {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: grid;
+  place-items: center;
+  background: var(--navy);
+  color: var(--green);
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 400;
+}
+
+.quiz-opts {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.quiz-opt {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-3);
+  cursor: pointer;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.quiz-opt:hover {
+  background: var(--soft);
+}
+.quiz-opt input {
+  margin-top: 0.15rem;
+  flex: none;
+  accent-color: var(--green-dark);
+}
+.quiz-opt__text {
+  min-width: 0;
+}
+.quiz-opt:has(input:checked) {
+  border-color: var(--navy-3);
+  background: var(--soft);
+}
+
+/* marked states */
+.quiz-opt.is-correct {
+  border-left-color: var(--ok);
+  background: var(--ok-bg);
+  border-color: transparent;
+}
+.quiz-opt.is-wrong {
+  border-left-color: var(--danger);
+  background: #fdecea;
+  border-color: transparent;
+}
+.quiz-opt.is-correct .quiz-opt__text::after {
+  content: ' ✓';
+  color: var(--ok);
+  font-weight: 700;
+}
+.quiz-opt.is-wrong .quiz-opt__text::after {
+  content: ' ✕';
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.quiz-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.quiz-feedback {
+  margin: var(--sp-3) 0 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.quiz-feedback--right {
+  color: var(--ok);
+}
+.quiz-feedback--wrong {
+  color: var(--danger);
+}
+
+.quiz-explain {
+  margin-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+  padding-top: var(--sp-3);
+}
+.quiz-explain__label {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: var(--sp-2);
+}
+.quiz-explain p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #3a3a44;
+}
+
+/* ── output tasks ────────────────────────────────────────────────────────── */
+.task {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-4);
+  margin: 0 0 var(--sp-4);
+}
+.task__title {
+  font-size: 1rem;
+  margin-bottom: var(--sp-2);
+}
+
+.task__hint {
+  margin: var(--sp-2) 0 var(--sp-3);
+}
+.task__hint-text {
+  margin: var(--sp-2) 0 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+  border-left: 2px solid var(--yellow);
+  padding-left: var(--sp-3);
+}
+
+.task__label {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: var(--sp-4) 0 var(--sp-2);
+}
+.task__input {
+  width: 100%;
+  min-height: 8rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--soft);
+  color: var(--ink);
+  resize: vertical;
+}
+.task__input:focus {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+  background: var(--white);
+}
+
+.task__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.task__feedback {
+  margin: var(--sp-3) 0 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.task__feedback.is-ok {
+  color: var(--ok);
+}
+.task__feedback.is-bad {
+  color: var(--danger);
+}
+
+.task__rules {
+  list-style: none;
+  padding: 0;
+  margin: var(--sp-4) 0 0;
+  border-top: 1px solid var(--line);
+}
+.task__rules li {
+  position: relative;
+  padding: var(--sp-2) 0 var(--sp-2) 1.6rem;
+  font-size: 0.88rem;
+  border-bottom: 1px solid var(--line);
+}
+.task__rules li:last-child {
+  border-bottom: none;
+}
+.task__rules li::before {
+  position: absolute;
+  left: 0;
+  top: var(--sp-2);
+  width: 1.1rem;
+  text-align: center;
+  font-weight: 700;
+}
+.task__rules li.is-pending {
+  color: var(--muted);
+}
+.task__rules li.is-pending::before {
+  content: '·';
+  color: var(--muted);
+}
+.task__rules li.is-ok {
+  color: var(--ok);
+}
+.task__rules li.is-ok::before {
+  content: '✓';
+}
+.task__rules li.is-bad {
+  color: var(--danger);
+}
+.task__rules li.is-bad::before {
+  content: '✕';
+}
+
+.task__expects {
+  margin-top: var(--sp-4);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--green);
+  border-radius: 0 var(--r) var(--r) 0;
+  background: var(--ok-bg);
+  padding: var(--sp-3) var(--sp-4);
+}
+.task__expects-label {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ok);
+  margin-bottom: var(--sp-2);
+}
+.task__expects p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #2b3a30;
+}
+
+/* ── the practice index ──────────────────────────────────────────────────── */
+.practice-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0;
+}
+@media (min-width: 700px) {
+  .practice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.practice-card {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--sp-4);
+  background: var(--white);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.practice-card:hover {
+  border-color: var(--navy-3);
+  box-shadow: var(--shadow-hover);
+}
+.practice-card h3 {
+  font-size: 0.98rem;
+  margin-bottom: var(--sp-2);
+}
+.practice-card p {
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin: 0 0 var(--sp-3);
+}
+.practice-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* ── the card that appears at the foot of a lesson ───────────────────────── */
+.practice-cta {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--green);
+  border-radius: 0 var(--r) var(--r) 0;
+  background: var(--soft);
+  padding: var(--sp-4);
+  margin: var(--sp-5) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  justify-content: space-between;
+}
+.practice-cta__body {
+  min-width: 0;
+  flex: 1 1 16rem;
+}
+.practice-cta h2 {
+  font-size: 0.98rem;
+  margin-bottom: var(--sp-1);
+}
+.practice-cta p {
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin: 0;
+}
