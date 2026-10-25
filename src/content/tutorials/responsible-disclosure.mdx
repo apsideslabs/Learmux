@@ -1,0 +1,102 @@
+---
+title: "Responsible disclosure"
+description: "What to do when you find a problem in something you do not own: report privately, give a reasonable window, do not publish before a fix, and keep a record."
+excerpt: "You will find a problem in something you do not own. Report it privately, give time for a fix, and keep a record of what you did."
+category: "Career"
+track: "profession"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 51
+level: Intermediate
+tags: [profession, disclosure]
+---
+
+import Callout from '../../components/Callout.astro';
+
+In this lesson you will work through the situation that every person who learns security eventually meets: you notice a problem in something you do not own. You will see how to report it privately, how long to wait, and what to do when there is no one to tell. The way a problem is disclosed can matter more than the problem itself. Done well, it gets fixed and you are thanked. Done badly, it is left open and you are the one who published it.
+
+## What you'll be able to do
+
+- Report a problem privately and keep it private until it is fixed.
+- Give a vendor a reasonable window.
+- Find a security contact, including one published as a security.txt file.
+- Decide what to do when there is no contact and the vendor does not reply.
+
+## Step 1: Report privately first
+
+The first move is always the same: tell the people who can fix it, and only them.
+
+Private means a channel that does not broadcast the problem. A security contact address, a bug bounty programme, or a direct message to a maintainer are private. A public issue tracker, a social post, or a forum thread are not.
+
+When you report, give the maintainer enough to act on: a finding in the five parts, with what you saw, why it matters, how to reproduce it, and what you suggest. Say who you are and how to reach you, because a maintainer with a question will be stuck with no way to reply.
+
+## Step 2: Give a reasonable window
+
+Once you have reported, you wait. A fix takes time: the maintainer has to understand the problem, decide on a fix, test it, and ship it to everyone.
+
+A common starting point is 90 days from the report before any public write-up. Some vendors publish their own timeline, and when they do, follow theirs. Ninety days is not a law; it is a convention that gives a maintainer fair time without leaving a problem open forever. If the maintainer is working with you and asks for more time, giving it is usually right, because a fix in progress is worth more than a deadline met.
+
+Say what you are waiting for. If you plan to publish a write-up after the window, tell the maintainer at the start. Surprises are what make disclosures go wrong.
+
+<Callout type="tip" title="Do not publish before a fix">
+A write-up before a fix hands the problem to everyone who reads it, including the people you were trying to keep it from.
+</Callout>
+
+## Step 3: Find the security contact
+
+Most projects have a way to be told, and finding it is usually quick.
+
+Look for a security page, often at a path like /security, or a bug bounty programme, which comes with its own reporting form. If the project is open source, look for a file named SECURITY.md in its repository.
+
+There is also a convention called security.txt. A site can publish a small text file at /.well-known/security.txt that names the security contact and how to reach it, so a person who finds a problem does not have to guess an address. If you run a service of your own, publishing one is a small courtesy.
+
+If you cannot find a contact, an address like security@ followed by the domain is a reasonable guess, and many organisations accept a report through a general support channel, though more slowly.
+
+## Step 4: When there is no contact and nobody replies
+
+This is the hard case, and it happens.
+
+First, make sure the message arrived: check that you used a real address, and look for an automated acknowledgement. If you can, try a second channel, such as a support form, and keep trying before you conclude that no one is listening.
+
+If the window passes with no reply and no fix, you have a decision to make, and there is no perfect answer. Publishing a full technical write-up can help users work around the problem, and it can pressure a silent vendor. It can also expose users who have no way to protect themselves yet. A middle course is to publish enough for people to understand the risk and take precautions, without handing over a working exploit.
+
+## Step 5: Publishing an exploit is a different act
+
+There is a real difference between two things that sound similar: publishing a working exploit, and publishing a write-up after a fix.
+
+A working exploit is a tool: anyone who has it can use the problem, so publishing one before a fix hands out that tool while the door is still open.
+
+A write-up after a fix is a record. It explains what was wrong and how it was fixed, so others can learn. By then the door is closed, and the knowledge does not put anyone at risk.
+
+The test is simple. Ask what a reader could do with what you are about to publish, and whether that is now safe. If the fix has shipped and users have had time to update, a write-up helps. If it has not, you are publishing an exploit, whatever you call it.
+
+## Step 6: Keep a record
+
+Through all of this, keep a record: a short file, one entry per event.
+
+```text
+vendor: example project, example.org
+contact: security@example.org, listed in /.well-known/security.txt
+reported: 2026-10-25, privately by email
+window: 90 days from the report before any write-up
+status: reported and awaiting a reply
+```
+
+Five lines, and you can reconstruct the whole sequence: when you reported, to whom, how you found them, what window you agreed, and where things stand.
+
+## Quick reference
+
+| Step | What to do |
+| --- | --- |
+| Report privately | Tell only the people who can fix it |
+| Give a window | A common starting point is 90 days |
+| Find the contact | Security page, bug bounty, SECURITY.md, security.txt |
+| No contact, no reply | Keep trying, then decide how much to publish |
+| Exploit before fix | Hands a working tool to everyone |
+| Write-up after fix | A record that helps others and risks no one |
+
+## Next steps
+
+- [Writing a finding someone can act on](/learn/writing-a-finding/) is the report you send when you disclose.
+- [Rules of engagement and the law](/learn/rules-of-engagement/) explains why you never test a system you do not own in the first place.
+- [Certifications, labs and what they actually prove](/learn/certifications-and-labs/) shows where to build these skills legally.
