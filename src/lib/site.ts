@@ -53,6 +53,12 @@ export interface DrawerGroup {
   items: DrawerItem[];
 }
 
+/**
+ * The drawer's first row, above the categories. Home is one tap from anywhere,
+ * rather than being buried inside a group you would have to open first.
+ */
+export const drawerHome: DrawerItem = { href: '', label: 'Home' };
+
 export const drawerNav: DrawerGroup[] = [
   {
     title: 'Learn',
