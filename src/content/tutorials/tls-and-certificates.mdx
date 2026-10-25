@@ -1,0 +1,156 @@
+---
+title: "TLS and the chain of trust"
+description: "What the padlock really means, how to make and read a certificate with openssl req -x509 and openssl x509, and how a chain of trust is built."
+excerpt: "The padlock means more than encryption. See what a certificate says, and who vouches for it."
+category: "Cryptography"
+track: "cryptography"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 38
+level: Intermediate
+tags: [cryptography, tls, certificates]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Every time a padlock appears in your browser, two separate things have just happened. The connection is encrypted, so nobody on the network can read it, and the site has proved it holds a certificate for the name you typed. The second part is the one people skip over, and it is the one that stops an attacker standing in the middle. This lesson makes a certificate of your own, reads it, and looks at how trust is passed from a name you have never met down to the site in front of you.
+
+## What you'll be able to do
+
+- Say what the padlock promises, and what it does not promise.
+- Make a self-signed certificate with `openssl req -x509`.
+- Read a certificate with `openssl x509 -noout` and `openssl x509 -text`.
+- Watch a TLS handshake with `openssl s_client`, which needs a network connection.
+- Explain the chain of trust, and why a self-signed certificate has a chain of one.
+
+## Step 1: The padlock is two promises
+
+Encryption alone is not enough. If a site could encrypt your traffic without proving who it is, an attacker could sit between you and the real site, hold one half of the conversation with you and the other half with the site, and read everything. That is a man in the middle, and the certificate is what defeats it.
+
+A certificate is a public key with a name attached, plus a signature from someone who vouches that the name and the key belong together. Your browser ships with a list of trusted authorities. If a site's certificate is signed by one of them, the padlock appears. If not, the browser warns you, because it cannot tell you who is on the other end.
+
+## Step 2: Make a certificate of your own
+
+You can make a certificate without paying anyone, and the tool is `openssl req`. The `-x509` option means make a certificate rather than a request for one, and `-subj` sets the name it is for.
+
+```bash
+$ openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=termux.local"
+```
+
+```text
+Generating a RSA private key
+.....................................+++++
+writing new private key to 'key.pem'
+```
+
+The `+++++` marks are just progress from the key generation. The command wrote two files: `key.pem`, the private key, and `cert.pem`, the certificate itself. The `-nodes` option means no passphrase on the private key, which is fine for a demonstration and wrong for anything real.
+
+## Step 3: Read the certificate
+
+A certificate is a small text file, and `openssl x509` reads it back. Ask for the fields that matter.
+
+```bash
+$ openssl x509 -in cert.pem -noout -subject -issuer -dates -fingerprint -sha256
+```
+
+```text
+subject=CN = termux.local
+issuer=CN = termux.local
+notBefore=Oct 25 04:29:26 2026 GMT
+notAfter=Oct 25 04:29:26 2027 GMT
+sha256 Fingerprint=F0:36:BF:C7:83:D7:7E:B4:CC:84:20:CA:52:20:1C:C9:E1:F8:F1:4D:11:DD:88:FF:C9:95:7F:59:2C:1E:BD:5D
+```
+
+Read the first two lines together. The subject is who the certificate is for, and the issuer is who signed it. They are the same name. That is what self-signed means: this certificate vouches for itself, so no outside authority has said the name and the key belong together and a browser will warn rather than show a padlock. The dates give the valid window, and the fingerprint is a hash of the whole certificate, useful for checking you were given the right one.
+
+For the full contents, ask for the text form.
+
+```bash
+$ openssl x509 -in cert.pem -noout -text
+```
+
+```text
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: CN = termux.local
+        Validity
+            Not Before: Oct 25 04:28:02 2026 GMT
+            Not After : Oct 25 04:28:02 2027 GMT
+        Subject: CN = termux.local
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+```
+
+Here you can see the public key, the signing algorithm, and the same names and dates in a longer layout.
+
+## Step 4: Watch a handshake
+
+The `openssl s_client` command connects to a host and prints the handshake as it happens. Aimed at a real site, this step needs a working internet connection, so it is the one command in this lesson that will not run offline. When you have a connection, point it at a host.
+
+```bash
+$ openssl s_client -connect example.com:443 -servername example.com
+```
+
+Aim it at your own self-signed certificate on the loopback address instead, and you get the same shape of output with no network at all.
+
+```bash
+$ openssl s_client -connect 127.0.0.1:8443 -servername termux.local
+```
+
+```text
+CONNECTED(00000003)
+---
+Certificate chain
+ 0 s:CN = termux.local
+   i:CN = termux.local
+   a:PKEY: rsaEncryption, 2048 (bit); sigalg: RSA-SHA256
+   v:NotBefore: Oct 25 04:28:02 2026 GMT; NotAfter: Oct 25 04:28:02 2027 GMT
+---
+Server certificate
+-----BEGIN CERTIFICATE-----
+MIIDDzCCAfegAwIBAgIULT5h0EPzwtApdF3HGwsy3KuyWw8wDQYJKoZIhvcNAQEL
+...
+-----END CERTIFICATE-----
+subject=CN = termux.local
+issuer=CN = termux.local
+---
+Verification error: self-signed certificate
+---
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+```
+
+The block headed Certificate chain lists each certificate the server sent, with `s` for subject and `i` for issuer. Here there is one entry and it is its own issuer. Then comes the certificate itself, and then the verdict. Against a self-signed certificate the verdict is `Verification error: self-signed certificate`, because nothing in your trust store signed it. Against a real site the same lines read `Verify return code: 0 (ok)` and the chain has more than one entry.
+
+<Callout type="tip" title="Reading the last line">
+The final line names the negotiated cipher, for example `TLS_AES_256_GCM_SHA384`. That tells you the connection ended up using a symmetric cipher, which is exactly the pattern from the previous lesson: the handshake did the asymmetric work, and the traffic runs on a symmetric key.
+</Callout>
+
+## Step 5: The chain of trust
+
+A real site does not present one certificate. It presents a chain. At the top is a root certificate, which is in your phone's trust store and was signed by nobody because it is the anchor. Below it is one or more intermediate certificates, each signed by the one above. At the bottom is the leaf, the certificate for the site itself, signed by an intermediate.
+
+Verifying a site means walking that chain. Your device checks that each signature is valid, that each certificate is within its dates, and that the name on the leaf matches the host you asked for. If every link holds, the padlock appears. A self-signed certificate is a chain of one with no anchor, which is why it fails the check even though the encryption still works.
+
+This is also why you should not click past a certificate warning. It means the chain did not reach a trusted root, so the encryption may be real but the identity is unproven, and an attacker in the middle would look the same.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=name"` | Makes a self-signed certificate |
+| `openssl x509 -in cert.pem -noout -subject -issuer -dates -fingerprint -sha256` | Prints the key fields of a certificate |
+| `openssl x509 -in cert.pem -noout -text` | Prints the whole certificate in readable form |
+| `openssl s_client -connect host:443 -servername host` | Connects and shows the handshake and the chain |
+| `Verification error: self-signed certificate` | The chain reached no trusted root |
+| `Verify return code: 0 (ok)` | Every link in the chain checked out |
+
+## Next steps
+
+- [Symmetric and asymmetric keys](/learn/symmetric-and-asymmetric/) explains the keys the handshake uses.
+- [Signing and verifying a file](/learn/signing-and-verifying/) is the same idea of a signature, applied to a file you hold.
+- [Networking basics](/learn/networking-basics/) covers the host and port in the `s_client` command.
+
+`openssl s_client` needs a network connection when aimed at a real host. Everything else in this lesson works offline.
