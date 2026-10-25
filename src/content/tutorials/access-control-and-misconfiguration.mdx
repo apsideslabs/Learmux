@@ -1,0 +1,248 @@
+---
+title: "Broken access control and misconfiguration"
+description: "See a record handed to the wrong caller and a secret served to anyone, then close both with a check that denies by default."
+excerpt: "Ask for another user's record and for the admin area, then make the server say no."
+category: "Web"
+track: "websecurity"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 35
+level: Intermediate
+tags: [web, security]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Access control is the decision about who may do what. It breaks when the server trusts the request to say who the caller is, or when it forgets to check at all and relies on the page not showing a link. Misconfiguration is the related habit of leaving a server in a talkative state: debug output on, version banners up, and error pages that hand out more than they should. In this lesson you will take a record that belongs to someone else, walk into an admin area that should be locked, read a traceback the server should have kept to itself, and then close all three.
+
+<Callout type="warning" title="Only attack your own server">
+The panel below is yours, running on `127.0.0.1`. The secret it protects is a made-up flag, and the only person who can reach it is you. Only ever test a system you own or have written permission to test.
+</Callout>
+
+## What you'll be able to do
+
+- See a record returned to a caller who should not have it.
+- Reach an area that has no check on it at all.
+- Recognise debug output and a version banner as findings.
+- Fix access control with a check that denies by default.
+
+## Step 1: A small account panel
+
+This server has two paths: `/user`, which returns a record by id, and `/admin`, which returns a secret. Write it as `panel.py`.
+
+```python
+# panel.py: a small account panel
+import http.server
+import socketserver
+import traceback
+from urllib.parse import urlparse, parse_qs
+
+USERS = {"1": {"name": "ada", "role": "user"},
+         "2": {"name": "grace", "role": "admin"}}
+SECRET = "FLAG{admin_area}"
+
+socketserver.TCPServer.allow_reuse_address = True
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        parsed = urlparse(self.path)
+        query = parse_qs(parsed.query)
+        try:
+            if parsed.path == "/user":
+                uid = query.get("id", ["1"])[0]
+                # FLAW: any caller can ask for any record
+                rec = USERS[uid]
+                self.reply(200, "user " + uid + ": " + rec["name"] + "\n")
+            elif parsed.path == "/admin":
+                # FLAW: the admin area is served to anyone who asks
+                self.reply(200, "admin secret: " + SECRET + "\n")
+            else:
+                self.reply(404, "no such path\n")
+        except Exception:
+            # FLAW: debug mode, the traceback is sent to the client
+            self.reply(500, traceback.format_exc())
+
+    def reply(self, code, text):
+        body = text.encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, fmt, *args):
+        print("request:", self.requestline)
+
+with socketserver.TCPServer(("127.0.0.1", 8000), Handler) as httpd:
+    print("serving on http://127.0.0.1:8000")
+    httpd.serve_forever()
+```
+
+Start it and ask for your own record.
+
+```bash
+python3 panel.py
+```
+
+```text
+serving on http://127.0.0.1:8000
+```
+
+```bash
+curl -s "http://127.0.0.1:8000/user?id=1"
+```
+
+```text
+user 1: ada
+```
+
+That works. The flaw is not here. It is in what happens when you change the number.
+
+## Step 2: Ask for a record that is not yours
+
+Nothing in the server checks who is asking. The id in the query string is the only thing that decides which record comes back.
+
+```bash
+curl -s "http://127.0.0.1:8000/user?id=2"
+```
+
+```text
+user 2: grace
+```
+
+That is grace's record, returned to a caller who never proved they were grace. This pattern is called an insecure direct object reference: the object is named by a value the client controls, and the server never asks whether the caller may see it. Changing a number in a URL should not be enough to read someone else's data.
+
+## Step 3: Walk into the admin area
+
+The admin path has a check in the page that links to it, and no check in the server that serves it.
+
+```bash
+curl -s "http://127.0.0.1:8000/admin"
+```
+
+```text
+admin secret: FLAG{admin_area}
+```
+
+The secret came back with no credentials of any kind. Hiding the link is not access control. If the server will answer the request, the resource is public, no matter what the page shows.
+
+## Step 4: Read what the server should have kept
+
+A missing record makes the server fall into its error branch, and the error branch sends the traceback to the client.
+
+```bash
+curl -s "http://127.0.0.1:8000/user?id=99"
+```
+
+```text
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/panel.py", line 21, in do_GET
+    rec = USERS[uid]
+          ~~~~~^^^^^
+KeyError: '99'
+```
+
+That traceback names the file, the line, and the variable, which is a map of the server for anyone who asks. The other half of this finding is quieter: the response header `Server: BaseHTTP/0.6 Python/3.12` tells an attacker the exact software and version. Both are misconfiguration. The code works, but it says too much.
+
+## Step 5: Fix it
+
+Access control is fixed by deciding, on the server, who may see what, and denying by default. Add a check to each path, and stop the server talking about itself.
+
+```python
+    # FIX: stop advertising the server software
+    server_version = "panel"
+    sys_version = ""
+
+    def do_GET(self):
+        parsed = urlparse(self.path)
+        query = parse_qs(parsed.query)
+        caller = self.headers.get("X-User", "")
+        role = self.headers.get("X-Role", "user")
+
+        if parsed.path == "/user":
+            uid = query.get("id", [""])[0]
+            # FIX: allow the record only to its owner, or to an admin
+            if role != "admin" and uid != caller:
+                self.reply(403, "forbidden\n")
+                return
+            rec = USERS.get(uid)
+            if rec is None:
+                self.reply(404, "not found\n")
+                return
+            self.reply(200, "user " + uid + ": " + rec["name"] + "\n")
+
+        elif parsed.path == "/admin":
+            # FIX: deny by default, then allow the one role that may enter
+            if role != "admin":
+                self.reply(403, "forbidden\n")
+                return
+            self.reply(200, "admin secret: " + SECRET + "\n")
+
+        else:
+            self.reply(404, "not found\n")
+```
+
+Notice the shape: the check comes first and the answer comes second, so the default for anything unexpected is refusal. `USERS.get(uid)` returns nothing for a missing id, and the code answers `404` with a plain message instead of a traceback. Setting `server_version` and clearing `sys_version` removes the software and version from the banner. The server still listens only on `127.0.0.1`, which keeps it off the network; that is deliberate and worth keeping.
+
+## Step 6: Attack it again
+
+Restart the server and resend the three requests.
+
+```bash
+curl -s "http://127.0.0.1:8000/user?id=2"
+```
+
+```text
+forbidden
+```
+
+```bash
+curl -s "http://127.0.0.1:8000/admin"
+```
+
+```text
+forbidden
+```
+
+```bash
+curl -s "http://127.0.0.1:8000/user?id=99"
+```
+
+```text
+forbidden
+```
+
+Now send the headers that the server expects, and the allowed requests go through.
+
+```bash
+curl -s -H "X-User: 1" "http://127.0.0.1:8000/user?id=1"
+```
+
+```text
+user 1: ada
+```
+
+```bash
+curl -s -H "X-Role: admin" "http://127.0.0.1:8000/admin"
+```
+
+```text
+admin secret: FLAG{admin_area}
+```
+
+## Quick reference
+
+| Item | What it does |
+| --- | --- |
+| `?id=2` | Names an object with a value the client controls |
+| Missing server-side check | Makes a resource public whatever the page shows |
+| `traceback.format_exc()` in a reply | Sends a map of the server to the client |
+| `Server:` header | Names the software and version |
+| Check, then answer | Deny by default, allow the one case you meant |
+| `127.0.0.1` | Keeps a test server off the network |
+
+## Next steps
+
+- [Cross-site scripting](/learn/cross-site-scripting/) shows a bug that access control cannot fix, because the request is already valid.
+- [Input you do not control](/learn/untrusted-input/) is where the missing checks on these values belong.
+- [Safe habits and privacy](/learn/safe-habits-and-privacy/) is the same deny-by-default thinking applied to your own phone.
