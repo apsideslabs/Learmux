@@ -1,0 +1,98 @@
+---
+title: "Rules of engagement and the law"
+description: "What written authorisation means, what a rules of engagement document contains, and why testing anything you do not own is a criminal offence in most countries."
+excerpt: "Verbal permission is not authorisation. Write down the scope, the window and the limits before you touch anything."
+category: "Career"
+track: "profession"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 49
+level: Intermediate
+tags: [profession, authorisation, law]
+---
+
+import Callout from '../../components/Callout.astro';
+
+In this lesson you will look at the part of security work above the tools: permission. You will see what written authorisation contains, why a spoken yes is not enough, and where the line falls between your own device, a lab you built, a platform that invites testing, and a system you do not own. The fastest way to turn curiosity into a criminal record is to test something without permission.
+
+## What you'll be able to do
+
+- Explain why authorisation must be in writing and specific.
+- List the parts of a rules of engagement document.
+- Tell apart your own device, your own lab, an invited platform and a system you do not own.
+
+## Step 1: What authorisation means
+
+Authorisation is permission to do a defined thing to a defined system, given by someone entitled to give it. Two words carry the weight: defined and entitled.
+
+Defined means the permission names the systems, the activity, and the time. "Have a look at our site" is not a definition. "You may test the staging server at this address, for these tests, between these dates" is.
+
+Entitled means the person who said yes can actually say yes. A support agent or a colleague in another team usually cannot authorise testing of their employer's systems. The safe assumption is that permission comes from the owner, in writing, and covers what you are about to do.
+
+## Step 2: Why verbal permission is not enough
+
+A spoken agreement feels sufficient when nothing goes wrong, and falls apart the moment something does.
+
+If a test causes an outage or a page a customer sees, the question asked afterwards is who authorised it. A memory of a conversation is not an answer. A signed message or an email that names the scope is. Written permission also fixes what you agreed to, so neither side can later claim a wider or narrower mandate than was given.
+
+Writing it down also forces both sides to think about scope before anything is sent.
+
+<Callout type="warning" title="No written scope, no testing">
+If you cannot point to a written scope that names the system and the dates, treat the answer as no.
+</Callout>
+
+## Step 3: What a rules of engagement document contains
+
+A rules of engagement document is short. It is a shared statement of what will happen, so both sides work from the same page. Five things belong in it.
+
+The scope names the systems you may test, precisely. "Our infrastructure" is too broad to be safe. The time window says when you may test, and out-of-hours windows protect live services. What is out of bounds is everything you may not do even inside scope: taking or changing data, testing a connected third-party service, or anything that could damage availability. The contact is who to call if something breaks, with a name and a reachable address. The reporting is what you will deliver, to whom, and when.
+
+## Step 4: Four kinds of system, four different rules
+
+Your own device, and a lab you built, are yours. You own the machine, the network and the target, so you test them freely.
+
+A platform that invites it publishes the rules for taking part. Read the boundary; an invitation to attack one service is not an invitation to attack the host it runs on.
+
+A system you do not own is where everything changes. Without written permission from the owner, testing it is not a grey area in most countries. It is unauthorised access, and a criminal offence.
+
+## Step 5: The law, in broad terms
+
+Unauthorised access to a computer system is a criminal offence in most countries. The names differ: unauthorised access, computer misuse, or a wider offence covering damage or interception. The details differ too: what counts as access, the penalties, and whether intent matters.
+
+What does not differ is the direction. In every jurisdiction this course is aware of, reaching into a system you do not own and were not authorised to test is treated as serious. Meaning no harm is not a defence on its own, nor is finding nothing, stopping, or the door being open.
+
+The details vary by country and change over time. This lesson is not legal advice, and cannot be, because the answer depends on where you are and exactly what you did. If a real situation matters to you, check your own jurisdiction and, if the stakes are high, ask a lawyer. The safe course is simple: do not test a system you do not own without written permission, and when in doubt, do not test it.
+
+## Step 6: Write your own rules of engagement
+
+Practise the habit where it is free. Write a short rules of engagement document for your own lab, so you have the shape in your head before you need it for something that matters.
+
+```text
+scope: my own phone and its Termux install
+window: 2026-10-25, 09:00 to 17:00
+out of bounds: shared storage and every other device
+contact: me, on this device
+```
+
+Four lines, and every one is a decision. The scope names what is fair game, the window says when, the out-of-bounds line rules out the one place on a phone where other apps could be affected, and the contact line is trivial because you are the owner.
+
+The point is that you wrote scope, window, limits and contact before you started, in that order, the way you would for a system that was not yours. Do that every time and the habit carries over to a real target.
+
+## Quick reference
+
+| Part | What it states |
+| --- | --- |
+| Scope | The systems you may test, named precisely |
+| Time window | When you may test |
+| Out of bounds | What you may not do even inside scope |
+| Contact | Who to call if something breaks |
+| Reporting | What you deliver, to whom, and when |
+| Your own device or lab | Yours to test freely |
+| Invited platform | Test only within its published rules |
+| A system you do not own | Do not test it without written permission |
+
+## Next steps
+
+- [Writing a finding someone can act on](/learn/writing-a-finding/) is what you produce at the end of an authorised test.
+- [Responsible disclosure](/learn/responsible-disclosure/) covers what to do when you find a problem in something you do not own.
+- [Certifications, labs and what they actually prove](/learn/certifications-and-labs/) points at the legal places to practise.
