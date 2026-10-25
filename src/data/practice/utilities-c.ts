@@ -76,23 +76,20 @@ export const utilitiesCSets: PracticeSet[] = [
     tasks: [
       {
         id: 'permc-t1',
-        title: 'Print one mode two ways',
+        title: "Read a mode with a special bit",
         prompt:
-          'This creates a file, gives it the setuid bit alongside 755, then shows the mode twice: once as the symbolic string from ls, and once as the octal number from stat. The two lines are the same mode written in the two notations the calculator moves between.',
+          "The permtool.sh you finished is saved next to you. This hands it 4755, the mode of a setuid program, and asks for both notations plus a description. Paste the whole output.",
         command:
-          'touch ~/calc.sh; chmod 4755 ~/calc.sh; ls -l ~/calc.sh; stat -c "%a %n" ~/calc.sh',
-        hint: 'You are looking for the same mode on both lines, with an s where you might have expected an x.',
+          "bash permtool.sh 4755",
+        fixture: { lesson: 'build-a-permissions-calculator', as: 'permtool.sh' },
+        hint: "The first line is the symbolic form, and there is a lowercase letter where you might expect an x.",
         expects:
-          'The ls line should begin with -rwsr-xr-x, which is setuid plus 755: the owner reads, writes and executes, and the group and others read and execute. The lowercase s is in the owner execute slot, and it means both that execute is set and that setuid is on. The stat line should read 4755, the same mode as one number. If your first line begins -rwxr-xr-x, the setuid digit did not take effect and you set 755 instead.',
+          "The symbolic form rwsr-xr-x on the first line, then a description of what each class allows, then a line saying setuid is on. The 4 in front of the 755 is the special digit, and it lands in the owner's execute position as a lowercase s. Lowercase means the special bit is on and execute is on as well. If you run it on 4644 instead, the same position becomes a capital S, and the script says so: setuid is on but owner execute is off, so the program does nothing.",
         rules: [
-          { type: 'matches', pattern: '^\\s*-rwsr-xr-x', label: 'the symbolic mode carries the setuid bit' },
-          { type: 'matches', pattern: '^\\s*4755\\s', label: 'the octal mode is 4755' },
-          { type: 'contains', value: 'calc.sh', label: 'the listing is for the file you created' },
-          {
-            type: 'absent',
-            pattern: 'command not found|No such file or directory',
-            label: 'the command actually ran',
-          },
+          { type: 'matches', pattern: '^\\s*rwsr-xr-x\\s*$', label: 'the symbolic form carries the setuid bit' },
+          { type: 'contains', value: 'setuid is on', label: 'the special bit was explained rather than just converted' },
+          { type: 'contains', value: 'read, write, execute', label: 'the classes were described in words' },
+          { type: 'absent', pattern: 'command not found|No such file or directory|not installed|permtool.sh:', label: 'the script ran' },
         ],
       },
     ],
@@ -152,23 +149,20 @@ export const utilitiesCSets: PracticeSet[] = [
     tasks: [
       {
         id: 'subc-t1',
-        title: 'Calculate a subnet in Python',
+        title: "Work out a /31 the way the RFC says",
         prompt:
-          'This asks Python for the mask, the broadcast address and the usable host count of 10.0.0.0/24, then splits the network into four /26 blocks. It is the calculator in one line, and it needs no network access.',
+          "The subnetcalc.sh you finished is saved next to you. This asks it about a /31, which is the case most calculators get wrong: there is no room to reserve a network or broadcast address, so both addresses are usable. Paste the output.",
         command:
-          'python3 -c "import ipaddress; n=ipaddress.ip_network(\'10.0.0.0/24\', strict=False); print(n.netmask); print(n.broadcast_address); print(n.num_addresses-2); [print(s) for s in n.subnets(new_prefix=26)]"',
-        hint: 'Seven lines should come back: three single values, then four subnet blocks.',
+          "bash subnetcalc.sh 10.0.0.5/31",
+        fixture: { lesson: 'build-a-subnet-calculator', as: 'subnetcalc.sh' },
+        hint: "Look at the usable line, and at which addresses it calls the first and last host.",
         expects:
-          'The first line is the mask, 255.255.255.0, which is the dotted form of /24. The second is the broadcast, 10.0.0.255, the last address in the block. The third is the usable host count, 254, which is 256 addresses less the network and the broadcast. The last four lines are the /26 blocks: 10.0.0.0/26, 10.0.0.64/26, 10.0.0.128/26 and 10.0.0.192/26, each holding 64 addresses. If you see a Traceback instead, the quotes inside the command were altered when you pasted it.',
+          "The network is 10.0.0.4 and the broadcast is 10.0.0.5, but usable reads 2, not 0. The first host is the network address itself and the last is the broadcast address, because RFC 3021 says a /31 has no reserved addresses and both are usable. That is what makes a /31 the right choice on a point-to-point link between two routers, where there is no need for a network or broadcast address. If your usable figure is 0, the script subtracted two addresses that were never reserved.",
         rules: [
-          { type: 'matches', pattern: '^\\s*255\\.255\\.255\\.0\\s*$', label: 'the netmask is the dotted form of /24' },
-          { type: 'matches', pattern: '^\\s*254\\s*$', label: 'the usable host count is 254' },
-          { type: 'contains', value: '10.0.0.192/26', label: 'the last of the four /26 subnets is printed' },
-          {
-            type: 'absent',
-            pattern: 'Traceback|command not found|No such file or directory',
-            label: 'the command actually ran',
-          },
+          { type: 'matches', pattern: '^\\s*network\\s+10\\.0\\.0\\.4\\s*$', label: 'the network address is right' },
+          { type: 'matches', pattern: '^\\s*usable\\s+2\\s*$', label: 'both /31 addresses are counted as usable' },
+          { type: 'matches', pattern: '^\\s*first host\\s+10\\.0\\.0\\.4\\s*$', label: 'the first host is the network address' },
+          { type: 'absent', pattern: 'command not found|No such file or directory|not installed|subnetcalc.sh:', label: 'the script ran' },
         ],
       },
     ],
