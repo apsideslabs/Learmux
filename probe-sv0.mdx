@@ -1,0 +1,27 @@
+---
+title: "Service versions and what they tell you"
+description: "Ask a service what it is with nmap -sV and curl -I, read the version banner it returns, and understand why a version number is the raw material of a judgement."
+excerpt: "Ask an open port what service and version is behind it, and read the banner it sends back."
+category: "Recon"
+track: "recon"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 29
+level: Intermediate
+tags: [recon, versions, banners]
+---
+
+import Callout from '../../components/Callout.astro';
+
+A port being open tells you that something is there. A version tells you what it is and roughly how old. Versions are the raw material of the judgement phase, because a known issue is attached to a version, not to a port. In this lesson you will ask a service to identify itself, first with a scan and then by reading the banner it sends. You will also see why the same version string can matter a great deal or not at all, depending on where it is.
+
+## What you'll be able to do
+
+- Identify a service and its version with `nmap -sV`.
+- Read a service banner directly with `curl -I`.
+- Say why a version number matters more than the port it sits on.
+- Tell what `-sV` can and cannot work out.
+
+## Step 1: Start something to identify
+
+A scan can only identify a service that is running, so start one on purpose. Open a second Termux session by swiping in from the left edge of the screen and tapping New session. In that session, start a throwaway web server on a high port.
