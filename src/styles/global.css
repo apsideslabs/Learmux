@@ -331,26 +331,75 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 }
 .drawer__close:hover { background: var(--navy-2); }
 
-.drawer nav { display: flex; flex-direction: column; padding: 0.4rem 0; }
-.drawer nav a {
+/* The drawer is grouped: a category heading, the pages inside it, and any
+   sub-pages indented under the page they belong to. The panel keeps its width
+   and its type scale; only the structure changed. */
+.drawer nav { display: flex; flex-direction: column; padding: 0.2rem 0 0.6rem; }
+
+.drawer__group-title {
+  margin: 0;
+  padding: 0.95rem 1.15rem 0.3rem;
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.drawer__link {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
-  min-height: 50px;
-  padding: 0.35rem 1.15rem;
+  min-height: 46px;
+  padding: 0.3rem 1.15rem;
   color: #fff;
   font-family: var(--font-head);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.98rem;
   text-decoration: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
-.drawer nav a:hover { background: var(--navy-2); color: #fff; text-decoration: none; }
-.drawer nav a .chev { color: rgba(255, 255, 255, 0.45); flex: none; }
-.drawer nav a .tag {
+.drawer__link:hover { background: var(--navy-2); color: #fff; text-decoration: none; }
+
+/* the page you are on */
+.drawer__link[aria-current='page'] { background: var(--navy-2); color: var(--green); }
+.drawer__link[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--green);
+}
+
+.drawer__sub { position: relative; display: flex; flex-direction: column; }
+/* a hairline spine, so the children read as belonging to the page above */
+.drawer__sub::before {
+  content: '';
+  position: absolute;
+  left: 1.15rem;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.16);
+}
+.drawer__link--sub {
+  min-height: 40px;
+  padding-left: 2.1rem;
   font-family: var(--font-body);
-  font-size: 0.66rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+.drawer__link--sub[aria-current='page'] { color: var(--green); }
+
+.drawer__link .tag {
+  flex: none;
+  font-family: var(--font-body);
+  font-size: 0.62rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -359,6 +408,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   border-radius: 3px;
   padding: 0.14rem 0.36rem;
 }
+.drawer__link--sub .tag { font-size: 0.58rem; }
 .drawer__foot {
   margin-top: auto;
   padding: 1.1rem 1.15rem 1.4rem;
