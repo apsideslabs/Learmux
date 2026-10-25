@@ -26,6 +26,7 @@ export const nav = [
   { href: 'course/', label: 'Course' },
   { href: 'tools/', label: 'Tools' },
   { href: 'utilities/', label: 'Utilities' },
+  { href: 'course/python/', label: 'Python' },
   { href: 'practice/', label: 'Test yourself' },
   { href: 'ctf/', label: 'Termux CTF', cta: true },
   { href: 'challenges/', label: 'In-browser' },
@@ -64,6 +65,9 @@ export const drawerTop: DrawerItem[] = [
   // a destination in its own right, not study material, and burying it one
   // level down meant it was invisible until you opened a group.
   { href: 'utilities/', label: 'Utilities', tag: '6 tools' },
+  // The Python track is the only part of the site where code runs in the page,
+  // so it gets a top-level row rather than being buried a level down in Learn.
+  { href: 'course/python/', label: 'Python', tag: 'runs in the page' },
 ];
 
 export const drawerNav: DrawerGroup[] = [
