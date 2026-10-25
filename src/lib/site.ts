@@ -25,6 +25,7 @@ export const studio = {
 export const nav = [
   { href: 'course/', label: 'Course' },
   { href: 'tools/', label: 'Tools' },
+  { href: 'utilities/', label: 'Utilities' },
   { href: 'practice/', label: 'Test yourself' },
   { href: 'ctf/', label: 'Termux CTF', cta: true },
   { href: 'challenges/', label: 'In-browser' },
@@ -66,6 +67,7 @@ export const drawerNav: DrawerGroup[] = [
       { href: 'course/', label: 'Course' },
       { href: 'categories/', label: 'Categories' },
       { href: 'tools/', label: 'Tools' },
+      { href: 'utilities/', label: 'Utilities', tag: '6 tools' },
     ],
   },
   {
