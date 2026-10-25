@@ -25,13 +25,13 @@ export interface Track {
 export const course = {
   title: 'Termux and the command line',
   summary:
-    'Five tracks, in order, from installing Termux to automating your phone and thinking about security. Every lesson has a challenge you can play in the browser.',
+    'Ten tracks, in order, from opening a prompt for the first time to assessing your own systems, understanding how web applications break, and writing up what you find. Every lesson is done on the phone in your pocket, offline and without root.',
   audience:
-    'Written for someone starting from nothing on an Android phone. You do not need prior Linux, a laptop, or root.',
+    'Written for someone starting from nothing on an Android phone. You do not need prior Linux, a laptop, or root. If you already work at a prompt, the later tracks stand on their own.',
   requirements: 'An Android device with Termux installed from F-Droid. Budget about 20 minutes per lesson.',
   outcome:
-    'You will be comfortable at a Linux prompt. You will be able to write small scripts, explain what happens on a network, and keep your own device tidy and locked down.',
-  timeEstimate: 'about 9 hours',
+    'You will be comfortable at a Linux prompt, able to write small scripts and explain what happens on a network, and able to assess your own devices, reason about how something could fail, and write the result up so another person can act on it.',
+  timeEstimate: 'about 17 hours',
 };
 
 export const tracks: Track[] = [
@@ -72,16 +72,60 @@ export const tracks: Track[] = [
     id: 'security',
     number: 4,
     title: 'Security fundamentals',
-    tagline: 'Think defensively about your own device.',
+    tagline: 'Learn how to think about security before you touch a tool.',
     description:
-      'Security starts with knowing what normal looks like. This track covers hashing and why passwords are stored the way they are, how to read a log and notice what does not belong, and the habits that reduce your exposure. Everything here is defensive and aimed at your own device.',
-    outcome: 'you can check a file against its hash, spot odd entries in a log, and reduce what your phone exposes.',
-    level: 'Intermediate',
+      'The conceptual heart of the course. It opens with the security mindset and threat modelling, which are ways of reasoning rather than pieces of software, then moves to the practical work: hashing, passwords and keys, reading a log, and reducing what your phone exposes. Everything here is defensive and aimed at your own device.',
+    outcome: 'you can say what security actually protects, reason about what could go wrong with a system, and harden your own.',
+    level: 'Beginner',
     prereq: 'Foundations and the shell-in-practice track.',
   },
   {
-    id: 'projects',
+    id: 'recon',
     number: 5,
+    title: 'Reconnaissance and assessment',
+    tagline: 'Find out what is exposed before somebody else does.',
+    description:
+      'Every assessment starts by answering a boring question: what do I actually have? This track teaches the phases security work moves through, how to inventory your own devices, how to read a port scan rather than just run one, what a service version tells you, and how to judge whether a finding is worth acting on. You scan your own device and your own network, and nothing else.',
+    outcome: 'you can describe what is running on your own devices, read a scan properly, and judge a version or a finding on evidence.',
+    level: 'Intermediate',
+    prereq: 'Networking, and the security fundamentals track.',
+  },
+  {
+    id: 'websecurity',
+    number: 6,
+    title: 'Web and application security',
+    tagline: 'How web applications break, and how each break is fixed.',
+    description:
+      'The bug classes behind most real breaches, each one shown against a small server you write and run on your own phone. You trace a request end to end, learn why any input you did not create is hostile until proven otherwise, then work through injection, cross-site scripting, broken access control and misconfiguration. Every lesson ends with the fix, not only the flaw.',
+    outcome: 'you can explain how a request is handled, recognise the common bug classes, and say how each one is prevented.',
+    level: 'Intermediate',
+    prereq: 'HTTP from the networking track, and some Python or willingness to read it.',
+  },
+  {
+    id: 'cryptography',
+    number: 7,
+    title: 'Cryptography in practice',
+    tagline: 'What the padlock means, and where crypto goes wrong.',
+    description:
+      'The cryptography a working person actually meets, taught by doing it rather than by proving theorems. You separate the three things people constantly confuse, work with symmetric and asymmetric keys, read a certificate and follow the chain of trust, sign a file and verify somebody else\'s signature, and then look at the mistakes that break real systems.',
+    outcome: 'you can tell hashing from encoding from encryption, read a certificate, and verify a signature.',
+    level: 'Intermediate',
+    prereq: 'Encoding and hashes from the security track, and some comfort with the shell.',
+  },
+  {
+    id: 'defence',
+    number: 8,
+    title: 'Defence and monitoring',
+    tagline: 'Know what normal looks like, then notice what does not.',
+    description:
+      'The defender\'s half of the course, done on a phone. You write down what normal is, watch the files that matter for a change, read logs as a story rather than line by line, make the device tell you when something moves, and walk the six phases of responding to a small incident calmly. Two ideas run through all of it: perfect security does not exist, and detection without a response achieves nothing.',
+    outcome: 'you can baseline a device, notice a change, build a timeline from logs, and work an incident in order.',
+    level: 'Intermediate',
+    prereq: 'Logs and detection from the security track, and cron from the shell track.',
+  },
+  {
+    id: 'projects',
+    number: 9,
     title: 'Projects',
     tagline: 'Build three small tools end to end.',
     description:
@@ -89,6 +133,17 @@ export const tracks: Track[] = [
     outcome: 'you have three working tools of your own, and the habit of building more.',
     level: 'Advanced',
     prereq: 'Everything above, especially shell scripting.',
+  },
+  {
+    id: 'profession',
+    number: 10,
+    title: 'Working in security',
+    tagline: 'Report it well, practise legally, and keep going.',
+    description:
+      'The part that turns skill into work. What written authorisation actually means and why verbal permission is not enough, how to write a finding somebody can act on, what to do when you find a problem in something you do not own, and what certifications and labs do and do not prove. This is not legal advice, and the law differs by country.',
+    outcome: 'you can write a finding, disclose a problem responsibly, and choose what to learn next on evidence.',
+    level: 'Intermediate',
+    prereq: 'Any of the security tracks. This one is about practice rather than tools.',
   },
 ];
 
