@@ -31,20 +31,61 @@ export const nav = [
   { href: 'about/', label: 'About us' },
 ];
 
-/** The mobile drawer carries the fuller set, per the design brief. */
-export const drawerNav = [
-  { href: '', label: 'Home' },
-  { href: 'course/', label: 'Course' },
-  { href: 'tools/', label: 'Tools' },
-  { href: 'categories/', label: 'Categories', chevron: true },
-  { href: 'learn/', label: 'All lessons' },
-  { href: 'practice/', label: 'Test yourself', tag: 'Quiz' },
-  { href: 'ctf/', label: 'Termux CTF', tag: 'Real' },
-  { href: 'ctf/play/', label: 'How to play' },
-  { href: 'ctf/challenges/', label: 'CTF challenges' },
-  { href: 'ctf/progress/', label: 'Your progress' },
-  { href: 'challenges/', label: 'In-browser CTF', tag: 'Demo' },
-  { href: 'about/', label: 'About Us' },
-  { href: 'contact/', label: 'Contact Us' },
-  { href: 'privacy/', label: 'Privacy Policy' },
+/**
+ * The mobile drawer.
+ *
+ * Fourteen flat links in a 320px panel read as one undifferentiated list, so
+ * the drawer is grouped instead: a category, the pages inside it, and any
+ * sub-pages indented under the page they belong to. The panel keeps its width
+ * and its type scale; only the structure changes.
+ */
+export interface DrawerItem {
+  href: string;
+  label: string;
+  /** A short badge, for the things that need distinguishing at a glance. */
+  tag?: string;
+  /** Pages that sit under this one, shown indented with a hairline spine. */
+  children?: DrawerItem[];
+}
+
+export interface DrawerGroup {
+  title: string;
+  items: DrawerItem[];
+}
+
+export const drawerNav: DrawerGroup[] = [
+  {
+    title: 'Learn',
+    items: [
+      { href: 'course/', label: 'Course' },
+      { href: 'learn/', label: 'All lessons' },
+      { href: 'categories/', label: 'Categories' },
+      { href: 'tools/', label: 'Tools' },
+    ],
+  },
+  {
+    title: 'Practise',
+    items: [
+      { href: 'practice/', label: 'Test yourself', tag: 'Quiz' },
+      {
+        href: 'ctf/',
+        label: 'Termux CTF',
+        tag: 'Real',
+        children: [
+          { href: 'ctf/play/', label: 'How to play' },
+          { href: 'ctf/challenges/', label: 'The challenges' },
+          { href: 'ctf/progress/', label: 'Your progress' },
+        ],
+      },
+      { href: 'challenges/', label: 'In-browser CTF', tag: 'Demo' },
+    ],
+  },
+  {
+    title: 'About',
+    items: [
+      { href: 'about/', label: 'About us' },
+      { href: 'contact/', label: 'Contact us' },
+      { href: 'privacy/', label: 'Privacy' },
+    ],
+  },
 ];
