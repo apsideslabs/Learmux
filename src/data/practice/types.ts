@@ -48,6 +48,17 @@ export interface OutputTask {
   command: string;
   /** Optional nudge, revealed on request rather than by default. */
   hint?: string;
+  /**
+   * A script this task needs, taken from the lesson that built it.
+   *
+   * Several tasks ask the learner to run the tool they finished in the
+   * previous lesson. Rather than pasting the whole program into the command
+   * box, the task names the lesson and the filename, and the checker pulls the
+   * final code block out of that lesson and writes it out before running. The
+   * command stays short, and the script under test is the one the lesson
+   * actually shipped.
+   */
+  fixture?: { lesson: string; as: string };
   /** What a good answer looks like, shown once every rule passes. */
   expects: string;
   rules: OutputRule[];
