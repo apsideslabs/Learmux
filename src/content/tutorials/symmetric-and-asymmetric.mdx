@@ -1,0 +1,152 @@
+---
+title: "Symmetric and asymmetric keys"
+description: "How a single shared key differs from a key pair, why both exist, and how to make each with openssl rand, openssl genpkey and openssl pkeyutl."
+excerpt: "One shared secret, or a pair of related keys? See how each works, and when to reach for which."
+category: "Cryptography"
+track: "cryptography"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 37
+level: Intermediate
+tags: [cryptography, keys, openssl]
+---
+
+import Callout from '../../components/Callout.astro';
+
+A symmetric cipher uses one key for both directions. An asymmetric cipher uses two keys that are different but related, so that what one key locks only the other can open. Both are in daily use, and the padlock in your browser uses both together. This lesson makes each kind on your phone and shows the difference in what you can actually do with the files.
+
+## What you'll be able to do
+
+- Make a symmetric key with `openssl rand` and encrypt with it.
+- Make an asymmetric key pair with `openssl genpkey` and derive the public half with `openssl pkey`.
+- Encrypt with the public key and decrypt with the private key using `openssl pkeyutl`.
+- Explain the distribution problem that symmetric keys have, and the speed problem that asymmetric keys have.
+
+## Step 1: One key, both ways
+
+A symmetric key is a single secret. The same value encrypts and decrypts, so both sides must hold it. Generate one.
+
+```bash
+$ openssl rand -hex 32
+```
+
+```text
+a5ec3c045971c24e5f0bedbda127407b8c70e5af02aacd7beab354b5b163559e
+```
+
+That is 32 random bytes written as 64 hex characters, which is a 256-bit key. `openssl enc` takes a raw key with `-K` instead of a passphrase. A block cipher also needs an initialisation value, or IV, which is not secret but must be different for every message.
+
+```bash
+$ KEY=00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
+$ IV=000102030405060708090a0b0c0d0e0f
+$ printf 'meet at noon' | openssl enc -aes-256-cbc -K "$KEY" -iv "$IV" -base64
+```
+
+```text
+oeyYge1WJVivLWwQUREg/Q==
+```
+
+Decrypting uses the same key and the same IV.
+
+```bash
+$ printf 'oeyYge1WJVivLWwQUREg/Q==\n' | openssl enc -d -aes-256-cbc -K "$KEY" -iv "$IV" -base64
+```
+
+```text
+meet at noon
+```
+
+Change the IV and the same plaintext gives different ciphertext, which is why the IV is sent alongside the message rather than kept secret.
+
+```bash
+$ IV2=0f0e0d0c0b0a09080706050403020100
+$ printf 'meet at noon' | openssl enc -aes-256-cbc -K "$KEY" -iv "$IV2" -base64
+```
+
+```text
+FYUk+H5nwlRi6DLKvUEgRA==
+```
+
+## Step 2: The problem with one shared key
+
+Symmetric encryption is fast and simple, and it has one awkward requirement. Before two people can talk privately, they must already share a secret. If they have never met and have no private channel, how do they agree on the key? Sending it over the network defeats the purpose, because anyone watching the wire now has it too. This is the key distribution problem, and it is what asymmetric keys were invented to solve.
+
+## Step 3: A pair of keys
+
+An asymmetric key comes as two halves. The private half stays with you and is never shared. The public half is given out freely. Make a pair with `openssl genpkey`.
+
+```bash
+$ openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out priv.pem
+$ openssl pkey -in priv.pem -pubout -out pub.pem
+```
+
+The private file holds both halves, so the public half is derived from it with `openssl pkey -pubout`. Look at the first line of each file.
+
+```bash
+$ head -n 1 priv.pem; head -n 1 pub.pem
+```
+
+```text
+-----BEGIN PRIVATE KEY-----
+-----BEGIN PUBLIC KEY-----
+```
+
+Both are text, both are small, and only one of them is safe to publish. The private key is the one that never leaves the device.
+
+<Callout type="warning" title="The private half is the whole secret">
+The public key can be pasted into a chat, printed on a business card or committed to a repository. The private key cannot. Anyone who holds it can read everything addressed to you and can act as you. Keep it readable only by you, and give it a passphrase.
+</Callout>
+
+## Step 4: Encrypt with the public, decrypt with the private
+
+The useful part is that the two halves are not interchangeable in the obvious way. Anything encrypted with the public key can only be decrypted with the private key.
+
+```bash
+$ echo -n "meet at noon" | openssl pkeyutl -encrypt -pubin -inkey pub.pem -out secret.bin
+$ od -An -tx1 secret.bin | head -n 2
+```
+
+```text
+ 40 97 21 13 fe 10 6f fa 11 a8 17 b4 61 74 92 a1
+ 21 63 e8 75 6b fe 67 0e 95 25 35 2a cc 1a dc 1b
+```
+
+Now decrypt with the private key, and only the private key.
+
+```bash
+$ openssl pkeyutl -decrypt -inkey priv.pem -in secret.bin
+```
+
+```text
+meet at noon
+```
+
+This solves the distribution problem. You publish `pub.pem` and keep `priv.pem`. Anyone can encrypt a message to you, and nobody but you can read it, and no shared secret had to be agreed in advance.
+
+There is a catch worth knowing. The ciphertext above is 256 bytes for a twelve-byte message, because RSA can only carry a short message, shorter than its key. It is far too slow and too limited to encrypt a whole file with. So in practice asymmetric encryption is used to carry a short thing, and that short thing is a symmetric key. The next step explains that.
+
+## Step 5: Why both exist
+
+Symmetric encryption is fast but needs a shared secret. Asymmetric encryption needs no shared secret but is slow and can only carry a little. Each covers the other's weakness, so real systems use both in sequence.
+
+TLS, the protocol behind the padlock, does exactly this. The two sides use asymmetric keys to agree on a fresh symmetric key for the session, then encrypt all the traffic with that symmetric key, which is quick enough to keep up with a page load. The asymmetric part is only used for the handshake at the start.
+
+Asymmetric keys also do something symmetric keys cannot: they let you prove who you are. A signature made with a private key can be checked by anyone with the public key, and that is the subject of the signing lesson later in this track.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `openssl rand -hex 32` | Prints 32 random bytes as a symmetric key |
+| `openssl enc -aes-256-cbc -K KEY -iv IV -base64` | Encrypts with a raw key and an IV |
+| `openssl enc -d -aes-256-cbc -K KEY -iv IV -base64` | Decrypts with the same key and IV |
+| `openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out priv.pem` | Makes a private key |
+| `openssl pkey -in priv.pem -pubout -out pub.pem` | Derives the public half |
+| `openssl pkeyutl -encrypt -pubin -inkey pub.pem` | Encrypts to a public key |
+| `openssl pkeyutl -decrypt -inkey priv.pem` | Decrypts with the private key |
+
+## Next steps
+
+- [TLS and the chain of trust](/learn/tls-and-certificates/) shows how a public key is tied to a name you can trust.
+- [Signing and verifying a file](/learn/signing-and-verifying/) uses the same key pair the other way round, to prove authorship rather than to hide data.
+- [Passwords, keys and secrets](/learn/passwords-and-keys/) covers making and protecting the secret itself.
