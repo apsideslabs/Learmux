@@ -1,0 +1,112 @@
+---
+title: "Taking inventory of your own devices"
+description: "List the addresses, the listening services, the tools and the storage on your own phone, so you know what you have before you assess it."
+excerpt: "Build a plain list of what your own device has, with commands that need no root."
+category: "Recon"
+track: "recon"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 27
+level: Intermediate
+tags: [recon, inventory, addresses]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Inventory is the part of reconnaissance you do on yourself. Before you can judge anything about a device you need to know what it has: its addresses, the services it runs, the tools it carries and how much room is left. In this lesson you will build that list for your own phone, with commands that need no root and no network connection. The same commands run on your own laptop or your own second phone, which is how one inventory becomes a picture of all the devices you own.
+
+## What you'll be able to do
+
+- List the network interfaces on your device and the addresses they hold.
+- Tell a private address from a public one by looking at it.
+- Check which reconnaissance tools are installed and where they live.
+- Read how much storage your home directory has left.
+
+## Step 1: List your interfaces and addresses
+
+Every device that talks to a network has at least one interface with an address on it. The loopback interface is always there and only talks to the device itself.
+
+```bash
+ip -o addr show
+```
+
+```text
+1: lo    inet 127.0.0.1/8 scope global dynamic
+1: lo    inet6 ::1/128 scope global dynamic
+2: wlan0    inet 192.168.1.42/24 scope global dynamic
+2: wlan0    inet6 fe80::2806:17ff:fe11:2dff/64 scope global dynamic
+```
+
+The `-o` flag prints each address on one line instead of spreading it over several, which is what makes this output easy to read and easy to pipe. Each line starts with the interface number and its name. `lo` is the loopback, and `wlan0` is the wireless interface on a phone. The word `inet` marks an IPv4 address and `inet6` marks an IPv6 one. The part after the slash, such as `/24`, is the prefix length, which is another way of writing the netmask.
+
+## Step 2: Pick out the private address
+
+You rarely need every line. Asking for IPv4 only makes the list shorter.
+
+```bash
+ip -o -4 addr show
+```
+
+```text
+1: lo    inet 127.0.0.1/8 scope global dynamic
+2: wlan0    inet 192.168.1.42/24 scope global dynamic
+```
+
+Two addresses are worth telling apart. `127.0.0.1` is the loopback and it always means this device, so nothing outside can reach it. `192.168.1.42` is your address on the local network, and it is a private address, because it falls in the `192.168.0.0/16` range. Addresses that begin with `10.` or `172.16` through `172.31` are private too. A private address is only reachable inside your own network, which is why you can scan it and no one else's traffic is involved.
+
+<Callout type="tip" title="This is the address others see">
+If another device on your own network needs to reach a service on your phone, this `192.168` address is the one to give it. The loopback address will not work from anywhere but the phone itself.
+</Callout>
+
+## Step 3: Inventory your tools
+
+The next list is what you have installed. `command -v` prints the full path of a command when it exists and prints nothing when it does not, so a list of names in gives a list of paths out.
+
+```bash
+command -v nmap curl wget openssl ssh ss netstat
+```
+
+```text
+/data/data/com.termux/files/usr/bin/nmap
+/data/data/com.termux/files/usr/bin/curl
+/data/data/com.termux/files/usr/bin/openssl
+/data/data/com.termux/files/usr/bin/ss
+/data/data/com.termux/files/usr/bin/netstat
+```
+
+A path on a line means the tool is present. A missing tool simply produces no line, so the output is shorter than the list you typed. Every one of these lives under the Termux prefix, `/data/data/com.termux/files/usr`, which is where packages are installed without root. If a line is missing and you want that tool, install it with `pkg install` and its name. Note that `wget` and `ssh` are absent above, which is exactly what a shorter list looks like.
+
+## Step 4: Inventory your storage
+
+The last piece of the inventory is room. A device that is nearly full will fail to update a package or write a log, which can look like a security problem when it is only a space problem.
+
+```bash
+df -h ~
+```
+
+```text
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/block/dm-3  110G   42G   68G  39% /data
+```
+
+The `-h` flag prints sizes in units a person can read, and `~` asks about the filesystem that holds your home directory. Read the `Use%` column first. A figure near 100 per cent is the one to act on, because it means the next write may fail. The `Avail` column gives the same fact in gigabytes, which is often easier to plan against.
+
+<Callout type="warning" title="Inventory your own devices only">
+An inventory is a list of what you own, and the point of it is that you can act on everything in it. Adding a device that is not yours turns a private record into someone else's problem. Keep the list to your own phone, your own laptop and your own other devices.
+</Callout>
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `ip -o addr show` | Lists every interface and address on one line each |
+| `ip -o -4 addr show` | The same, IPv4 addresses only |
+| `command -v NAME...` | Prints the path of each tool that exists |
+| `df -h ~` | Shows free space on the filesystem holding your home |
+| `pkg install NAME` | Installs a missing tool in Termux |
+
+## Next steps
+
+- [Reading a port scan properly](/learn/reading-a-port-scan/) turns the list of services into a scan you can read.
+- [Service versions and what they tell you](/learn/service-versions/) shows how to ask each service what it is.
+- [Hardening your Termux setup](/learn/hardening-your-termux/) uses the same lists to decide what to switch off.
