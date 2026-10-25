@@ -43,7 +43,7 @@ const all = await allTutorials();
 const related = all.filter((l) => l.data.track === entry.data.track && l.id !== entry.id).slice(0, 3);
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} image={`/og/${entry.id}.png`}>
   <div class="wrap">
     <nav class="crumbs" aria-label="Breadcrumb">
       <a href={base}>Home</a><span class="sep">›</span>
