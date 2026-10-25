@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.1.0",
   "private": true,
-  "description": "Learmux \u2014 a Termux & cybersecurity learning platform with an interactive TypeScript CTF terminal.",
+  "description": "Learmux — a Termux & cybersecurity learning platform with an interactive TypeScript CTF terminal.",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
@@ -22,7 +22,8 @@
   "dependencies": {
     "@astrojs/mdx": "^4",
     "@astrojs/sitemap": "^3",
-    "astro": "^5"
+    "astro": "^5",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@iconify-json/logos": "^1.2.17",
