@@ -1,0 +1,115 @@
+---
+title: "Writing a finding someone can act on"
+description: "The five parts of a finding, honest severity language, reproducible steps with the exact command, and why a report needs both the problem and the fix."
+excerpt: "A finding is a title, what was observed, why it matters, how to reproduce it, and what to do. In that order, every time."
+category: "Career"
+track: "profession"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 50
+level: Intermediate
+tags: [profession, reporting]
+---
+
+import Callout from '../../components/Callout.astro';
+
+In this lesson you will write the thing that comes out of security work: a finding. You will learn its five parts, how to describe severity without drama, and how to write steps another person can follow to see the problem. A finding nobody can act on is wasted work. The reader is usually busy, often not a security specialist, and needs to understand the problem and the fix without asking a single question.
+
+## What you'll be able to do
+
+- Write a finding in the order: title, observation, impact, reproduction, fix.
+- Choose severity words that are honest rather than dramatic.
+- Give reproducible steps with the exact command and the exact output.
+- Tell apart a finding and a fix, and give the reader both.
+
+## Step 1: The five parts, in order
+
+A finding has five parts, and they go in a fixed order because the reader is asking a sequence of questions.
+
+The title is one line that says what is wrong, the first thing read and sometimes the only thing read. "notes.txt is world readable" tells the reader more than "permissions issue".
+
+The observation is what you actually saw, not what it might mean yet. The file has mode 644. The service is listening on all addresses.
+
+The impact is why it matters, the part that turns a fact into a problem. A world readable file matters because another app can read it. The reader needs the consequence, not just the condition.
+
+The reproduction is how someone else can see it, with the exact command and the exact output.
+
+The fix is what to do about it, a recommendation the reader can carry out.
+
+Five parts, five questions the reader is asking, in that order.
+
+## Step 2: Say what you saw, not what you feared
+
+The observation should be as boring as possible. The instinct is to reach for the most alarming reading of what you found.
+
+Write "the file has mode 644, so any account that can read the directory can read it", not "the file is exposed to the entire internet". The second may turn out to be true, but you have not shown it, and a reader who checks will trust the rest of the report less.
+
+Keep the observation separate from the impact. When you merge them, the reader cannot tell which part you verified and which you inferred.
+
+## Step 3: Be honest about severity
+
+When every finding is "critical", the word stops meaning anything, and the reader learns to discount your reports. That is worse than a missed high rating.
+
+Weigh two things: how much damage this would cause if it were used, and how much effort it would take to use. A weakness that hands over everything with one command is serious. The same weakness that needs physical access, an unlocked device and a rooted phone is far less so.
+
+Rate the problem, not your excitement about finding it. A report where most findings are medium, one is high and one is low is a report a reader can prioritise. A report where all of them are critical is one where nothing stands out.
+
+<Callout type="tip" title="One severity, one reason">
+If you cannot write a single sentence explaining why a finding has the rating you gave it, the rating is a guess. Write the sentence first, then pick the word.
+</Callout>
+
+## Step 4: Make it reproducible
+
+Reproduction is where a finding earns its place. If someone else can follow your steps and see the same thing, the finding is real and closed to argument. If they cannot, it is an opinion.
+
+Give the exact command and the exact output, not a description or a summary.
+
+```text
+reproduce: ls -l ~/findings/notes.txt
+output:    -rw-r--r-- 1 u0_a231 u0_a231 42 Oct 25 09:01 /data/data/com.termux/files/home/findings/notes.txt
+```
+
+Now the reader can run one line and see the mode for themselves. Compare that with "the file permissions are too open", which asks the reader to take your word for it.
+
+State what you expected as well as what you saw, when the difference is the point. If a reproduction needs ten steps, the reader will not run it, and a finding nobody reproduces is a finding nobody acts on.
+
+## Step 5: A finding is not a fix
+
+A finding says what is wrong. A fix says what to do about it. A reader needs both.
+
+It is tempting to stop at the finding, especially when the fix seems obvious to you. It is not obvious to everyone. The person who has to act may be a developer who has never seen this file, or a phone owner who does not know which of two commands is right.
+
+Write the fix as a concrete recommendation. "Set the file to mode 600 with `chmod 600 ~/findings/notes.txt`" tells the reader exactly what to do. "Improve the file permissions" leaves them to work it out, and they may pick a fix that closes your finding but opens another. If there is more than one reasonable fix, say so and say which you would choose and why.
+
+## Step 6: Put it together
+
+Here is a whole finding, in the five parts, short enough to read in a minute.
+
+```text
+title: notes.txt is world readable
+observed: notes.txt has mode 644, so other apps can read it
+impact: a private note is exposed to anything with storage access
+reproduce: ls -l ~/findings/notes.txt
+fix: chmod 600 ~/findings/notes.txt
+```
+
+Five lines, each answering a question the reader would have asked. Nothing here is dramatic, and nothing here needs a follow-up question.
+
+That is the test for any finding. Hand it to someone who was not there and see whether they can act on it without asking you anything. If they cannot, find the part that made them stop and write it again.
+
+## Quick reference
+
+| Part | What it answers |
+| --- | --- |
+| Title | What is wrong, in one line |
+| Observation | What you actually saw |
+| Impact | Why it matters |
+| Reproduction | How someone else can see it |
+| Fix | What to do about it |
+| Severity | How much it matters, and why |
+
+## Next steps
+
+- [Rules of engagement and the law](/learn/rules-of-engagement/) is the permission that comes before any finding.
+- [Responsible disclosure](/learn/responsible-disclosure/) is where a finding goes when the system is not yours.
+- [Reading logs and spotting oddities](/learn/logs-and-detection/) is where a finding often starts: something in a log that does not belong.
