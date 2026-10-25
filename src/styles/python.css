@@ -120,8 +120,8 @@
 .pycell__retry:hover { background: #fdecea; }
 
 .pycell__run-busy { display: none; }
-.pycell__run[disabled] .pycell__run-idle { display: none; }
-.pycell__run[disabled] .pycell__run-busy { display: inline; }
+.pycell__run[data-busy='true'] .pycell__run-idle { display: none; }
+.pycell__run[data-busy='true'] .pycell__run-busy { display: inline; }
 
 .pycell__status {
   margin-left: auto;
@@ -209,4 +209,236 @@
   .pycell__code { font-size: 0.8rem; }
   .pycell__status { width: 100%; margin-left: 0; text-align: left; }
   .pycell__diff { grid-template-columns: 1fr; }
+}
+
+/* ── fill in the blanks ────────────────────────────────────────────────────
+   The blank editor is the beginner's on-ramp, so it is deliberately roomier
+   than the free editor: bigger tap targets, visible slots, and the palette
+   always in view rather than behind a scroll.
+   ───────────────────────────────────────────────────────────────────────── */
+.pyblanks {
+  margin: var(--sp-5) 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: #fff;
+  overflow: hidden;
+}
+.pyblanks[data-done='1'] { border-color: var(--green); }
+
+.pyblanks__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--line);
+  background: var(--soft);
+}
+.pyblanks__title {
+  font-family: var(--font-head);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.pyblanks__badge {
+  margin-left: auto;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--blue-dark);
+  background: #e8f1fb;
+  border: 1px solid #c6dcf3;
+  border-radius: 999px;
+}
+.pyblanks[data-done='1'] .pyblanks__badge { color: #fff; background: var(--ok); border-color: var(--ok); }
+
+/* ── the code, with its blanks ──────────────────────────────────────────── */
+.pyblanks__code {
+  padding: var(--sp-3);
+  background: #fbfbfc;
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  line-height: 2.1;
+  overflow-x: auto;
+}
+.pyblanks__line { white-space: pre; display: flex; align-items: center; flex-wrap: wrap; gap: 0.2rem; }
+.pyblanks__text { white-space: pre; }
+
+.pyblanks__slot {
+  display: inline-flex;
+  align-items: center;
+  min-width: 7.5rem;
+  min-height: 2.1rem;
+  padding: 0.1rem 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  color: var(--ink);
+  background: #fff;
+  border: 1px dashed #b9b9c6;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  white-space: pre;
+}
+.pyblanks__slot--filled {
+  border-style: solid;
+  border-color: var(--green);
+  background: #f2fdf6;
+}
+.pyblanks__slot-empty {
+  color: #a6a6b2;
+  font-style: italic;
+  font-size: 0.78rem;
+}
+
+/* ── the palette ────────────────────────────────────────────────────────── */
+.pyblanks__palette-wrap {
+  padding: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+.pyblanks__palette-label {
+  margin: 0 0 var(--sp-2);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pyblanks__palette { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+
+.pyblanks__piece {
+  padding: 0.45rem 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid #cfcfda;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  white-space: pre;
+}
+.pyblanks__piece:hover { border-color: var(--green); background: #f6fdf8; }
+.pyblanks__piece--reject {
+  border-color: var(--danger);
+  background: #fdecea;
+  animation: pyblanks-shake 0.3s ease;
+}
+@keyframes pyblanks-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+.pyblanks__piece--used {
+  opacity: 0.35;
+  box-shadow: none;
+  border-style: dashed;
+}
+
+/* ── actions ────────────────────────────────────────────────────────────── */
+.pyblanks__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--line);
+  background: var(--soft);
+}
+.pyblanks__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--ink);
+  cursor: pointer;
+  padding-right: var(--sp-2);
+}
+.pyblanks__toggle input { width: 1rem; height: 1rem; accent-color: var(--green); }
+
+.pyblanks__run,
+.pyblanks__reset,
+.pyblanks__hint-btn {
+  padding: 0.35rem 0.75rem;
+  font-family: var(--font-head);
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+}
+.pyblanks__run { color: #06301a; background: var(--green); border-color: var(--green); }
+.pyblanks__run:hover:not(:disabled) { background: var(--green-dark); border-color: var(--green-dark); color: #fff; }
+.pyblanks__run:disabled { opacity: 0.55; cursor: not-allowed; }
+/* Only a run in progress swaps the label. A disabled button still says Run,
+   greyed out, because an empty green pill looks like a rendering fault. */
+.pyblanks__run-busy { display: none; }
+.pyblanks__run[data-busy='true'] .pyblanks__run-idle { display: none; }
+.pyblanks__run[data-busy='true'] .pyblanks__run-busy { display: inline; }
+
+.pyblanks__status {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.pyblanks__hint {
+  margin: 0;
+  padding: var(--sp-3);
+  border-top: 1px solid var(--line);
+  background: var(--warn-bg);
+  color: #6b4a00;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.pyblanks__output { border-top: 1px solid var(--line); }
+.pyblanks__out-label {
+  padding: var(--sp-2) var(--sp-3) 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pyblanks__stdout,
+.pyblanks__stderr {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ink);
+}
+.pyblanks__stdout--empty { color: var(--muted); font-style: italic; }
+.pyblanks__stderr { color: var(--danger); border-top: 1px dashed var(--line); }
+.pyblanks__stderr--error { background: #fdecea; }
+
+.pyblanks__verdict {
+  padding: var(--sp-3);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  border-top: 1px solid var(--line);
+}
+.pyblanks__verdict--pass { background: var(--ok-bg); color: #14532b; }
+.pyblanks__verdict--fail { background: var(--warn-bg); color: #6b4a00; }
+
+.pyblanks__note {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  font-size: 0.78rem;
+  color: var(--muted);
+  border-top: 1px dashed var(--line);
+}
+
+@media (max-width: 620px) {
+  .pyblanks__code { font-size: 0.8rem; line-height: 2.3; }
+  .pyblanks__slot { min-width: 6.5rem; }
+  .pyblanks__status { width: 100%; margin-left: 0; }
 }
