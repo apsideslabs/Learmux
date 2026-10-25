@@ -1,0 +1,123 @@
+---
+title: "Reading a port scan properly"
+description: "Scan your own device with nmap and read the result line by line: what the columns mean, what open, closed and filtered actually say, and what a scan cannot tell you."
+excerpt: "Run nmap against your own phone and learn what each line of the output is telling you."
+category: "Recon"
+track: "recon"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 28
+level: Intermediate
+tags: [recon, scanning, nmap]
+---
+
+import Callout from '../../components/Callout.astro';
+
+A port scan answers one narrow question: which ports on a host will accept a connection? Reading the answer well means knowing what each column and each state word mean, and knowing what the scan cannot tell you. In this lesson you will scan your own device and read the result line by line. You will see the difference between a closed port and an open one, and you will see why a scan is the start of a question rather than an answer.
+
+## What you'll be able to do
+
+- Scan a set of named ports on your own device with `nmap`.
+- Read the `PORT`, `STATE` and `SERVICE` columns of a scan.
+- Tell what `open`, `closed` and `filtered` each mean.
+- Read the summary lines at the top and bottom of a scan.
+
+## Step 1: Scan a few named ports
+
+`nmap` checks which ports on a host are open. The `-p` flag names the ports to check, and `-n` stops it looking up names, which keeps the scan local and quick. The host is `localhost`, which is your own device and nothing else.
+
+```bash
+nmap -n -p 22,80,443,8022 localhost
+```
+
+```text
+Starting Nmap 7.95 ( https://nmap.org ) at 2026-10-25 04:31 IST
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.00057s latency).
+Other addresses for localhost (not scanned): ::1
+
+PORT     STATE  SERVICE
+22/tcp   closed ssh
+80/tcp   closed http
+443/tcp  closed https
+8022/tcp closed unknown
+
+Nmap done: 1 IP address (1 host up) scanned in 0.11 seconds
+```
+
+The first line names the tool and its version. `Nmap scan report for localhost` names the target, and the address in brackets confirms it resolved to `127.0.0.1`, the loopback. The line about other addresses is telling you the host also has an IPv6 address that was not scanned. Then comes the table, and then a closing summary.
+
+## Step 2: Read the three columns
+
+The table has one row per port you asked about, in the order you listed them. The `PORT` column names the port and the protocol, so `22/tcp` is TCP port 22. The `STATE` column is the answer to your question: it says whether the port will accept a connection. The `SERVICE` column is a guess at what usually runs there, taken from a list of well-known ports. It is a label for the number, not a fact about your device, which is why `22/tcp` says `ssh` even when nothing is listening.
+
+Read the `STATE` column before the `SERVICE` column. In the output above every port is `closed`, which means the device answered and said nothing is listening there. That is the ordinary, healthy state of a phone that is not running extra services. A closed port is not a fault; it is the absence of a door.
+
+## Step 3: See the difference an open port makes
+
+An open port is one where a service is listening and will accept a connection. Start the SSH server that Termux ships, then scan the port it listens on.
+
+```bash
+sshd; nmap -n -p 8022 localhost
+```
+
+```text
+Starting Nmap 7.95 ( https://nmap.org ) at 2026-10-25 04:33 IST
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.00072s latency).
+Other addresses for localhost (not scanned): ::1
+
+PORT     STATE SERVICE
+8022/tcp open  unknown
+
+Nmap done: 1 IP address (1 host up) scanned in 0.09 seconds
+```
+
+The same port now reads `open`. The only thing that changed is that a service is listening. That is the whole of what an open port means: something is there and it will talk. Whether that is good or bad depends entirely on whether you meant to run it, which is a question for the judgement phase and not for the scan.
+
+The third state, `filtered`, means no answer came back at all, which usually points at a firewall dropping the packets rather than a service being absent. You will see it more on hosts that have a firewall in front of them. On your own phone you will mostly see `open` and `closed`.
+
+<Callout type="warning" title="Scan only what you own">
+`nmap` is only ever run here against `localhost`, your own device. Scanning a network you do not control can break its terms of service, and in many countries it is a criminal offence. Being on the same network as a host is not permission to scan it.
+</Callout>
+
+## Step 4: Read the summary lines
+
+Scan a wider set of ports and `nmap` stops printing every closed row. It summarises them instead.
+
+```bash
+nmap -n -F localhost
+```
+
+```text
+Starting Nmap 7.95 ( https://nmap.org ) at 2026-10-25 04:34 IST
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.00092s latency).
+Other addresses for localhost (not scanned): ::1
+Not shown: 99 closed tcp ports (conn-refused)
+PORT     STATE SERVICE
+8022/tcp open  unknown
+
+Nmap done: 1 IP address (1 host up) scanned in 0.14 seconds
+```
+
+The `-F` flag scans the hundred most common ports. The line `Not shown: 99 closed tcp ports` is the summary of all the closed ones, and the phrase `conn-refused` records how the device answered. Only the open port is printed in full, because it is the one worth looking at. The closing `Nmap done` line counts the hosts and the time, which is how you tell a scan that finished from one that was cut short. If you see `Nmap done: 0 IP addresses` instead, nothing was scanned at all.
+
+<Callout type="tip" title="A scan is a question">
+A scan tells you which ports answered. It does not tell you what is safe, what is up to date, or what is worth fixing. Take the open ports from here and ask the next two questions: what service is behind each one, and how old is it.
+</Callout>
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `nmap -n -p PORTS HOST` | Scans the named ports on a host |
+| `nmap -n -F HOST` | Scans the hundred most common ports |
+| `sshd` | Starts the Termux SSH server on port 8022 |
+| `ss -tln` | Lists what is listening right now |
+
+## Next steps
+
+- [Service versions and what they tell you](/learn/service-versions/) asks each open port what service and version is behind it.
+- [Finding and judging a vulnerability](/learn/finding-a-vulnerability/) turns a version into a decision about whether to act.
+- [Hardening your Termux setup](/learn/hardening-your-termux/) is the fix for a port you did not mean to leave open.
