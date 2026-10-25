@@ -34,6 +34,11 @@ jobs:
       - name: Test engine
         run: npm test
 
+      # Proves every practice task is gradeable, and that wrong output is
+      # rejected rather than waved through.
+      - name: Test practice tasks
+        run: npm run test:practice
+
       - name: Build site
         run: npm run build
 
