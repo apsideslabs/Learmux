@@ -1187,6 +1187,160 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 }
 .track__link:hover { text-decoration: underline; }
 
+/* ── the course page ───────────────────────────────────────────────────── */
+.course-hero {
+  padding: var(--sp-6) 0 var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+.course-hero__eyebrow {
+  margin: 0 0 var(--sp-2);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.course-hero h1 { margin: 0 0 var(--sp-3); }
+.course-hero .lede { max-width: 62ch; }
+
+.course-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+.course-about {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--sp-4);
+  padding: var(--sp-5) 0;
+  border-bottom: 1px solid var(--line);
+}
+.course-about__col h2 { font-size: 1rem; margin-bottom: var(--sp-2); }
+.course-about__col p { margin: 0; font-size: 0.92rem; color: #4d4d55; }
+
+.course-hint { margin: 0 0 var(--sp-4); font-size: 0.88rem; color: var(--muted); }
+
+/* each track opens on demand, so ten of them do not print fifty lessons */
+.track--fold {
+  margin-top: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.track__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  background: #fff;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.track__toggle:hover { background: var(--soft); }
+.track__title { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.track__name {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1.08rem;
+  color: var(--ink);
+}
+.track__toggle[aria-expanded='true'] .track__name { color: var(--green); }
+.track__toggle .track__tag { margin-top: 0.1rem; }
+.track__meta { display: flex; align-items: center; gap: var(--sp-2); flex: none; }
+.track__chev { display: inline-flex; color: var(--muted); transition: transform 0.18s ease; }
+.track__toggle[aria-expanded='true'] .track__chev { transform: rotate(90deg); }
+
+.track__body {
+  padding: 0 var(--sp-4) var(--sp-4);
+  border-top: 1px solid var(--line);
+  background: #fff;
+}
+.track__body[hidden] { display: none; }
+.track__body:not([hidden]) { animation: trackIn 0.16s ease-out; }
+@keyframes trackIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: none; }
+}
+.track__outcome,
+.track__prereq {
+  margin: var(--sp-2) 0 0;
+  font-size: 0.9rem;
+  color: #4d4d55;
+  max-width: 78ch;
+}
+.track__outcome strong,
+.track__prereq strong { color: var(--ink); font-weight: 600; }
+
+@media (max-width: 620px) {
+  .track__meta .chip { display: none; }
+  .track__meta .chip--mono { display: inline-flex; }
+}
+
+/* ── the topics index ──────────────────────────────────────────────────── */
+.topic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  gap: var(--sp-4);
+  margin-top: var(--sp-5);
+}
+.topic-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: #fff;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.topic-card:hover { border-color: var(--line-2); box-shadow: var(--shadow-hover); }
+.topic-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.topic-card__head h2 { margin: 0; font-size: 1.05rem; }
+.topic-card__head h2 a { color: var(--ink); text-decoration: none; }
+.topic-card__head h2 a:hover { color: var(--green); text-decoration: none; }
+.topic-card__desc {
+  margin: var(--sp-2) 0 var(--sp-3);
+  font-size: 0.86rem;
+  color: #4d4d55;
+}
+.topic-card__list {
+  list-style: none;
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+.topic-card__list li { border-bottom: 1px solid var(--line); }
+.topic-card__list a {
+  display: block;
+  padding: 0.42rem 0;
+  font-size: 0.86rem;
+  color: #4d4d55;
+  text-decoration: none;
+}
+.topic-card__list a:hover { color: var(--blue); text-decoration: underline; }
+.topic-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: auto;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--blue);
+  text-decoration: none;
+}
+.topic-card__link:hover { text-decoration: underline; }
+
 /* ── track landing page ────────────────────────────────────────────────── */
 .track-hero {
   display: flex;
