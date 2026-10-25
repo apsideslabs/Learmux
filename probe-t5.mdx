@@ -1,0 +1,29 @@
+  code={`raw = "  Admin  "
+# Your turn: print the cleaned, lowercase value.`}
+  solution={`raw = "  Admin  "
+print(raw.strip().lower())`}
+/>
+
+`strip` removes whitespace from both ends, and `lower` folds the letters down, and you can chain them because each one hands back a string that the next method can use. Doing both is what lets you compare two fields that were typed by different people and treat `  Admin  ` and `admin` as the same thing.
+
+## Quick reference
+
+| Piece | What it does |
+| --- | --- |
+| `len(s)` | number of characters |
+| `s[0]`, `s[-1]` | first and last character |
+| `f"{name} {value}"` | build a line with values dropped in |
+| `s.lower()`, `s.upper()` | fold the letters down or up, returning a new string |
+| `s.strip()` | remove whitespace from both ends |
+| `s.replace(a, b)` | swap one piece of text for another |
+| `s.split(",")` | break a string into a list of fields |
+| `sep.join(parts)` | join a list back into one string |
+| `s[4:8]` | characters from position 4 up to but not including 8 |
+| `s[-4:]` | the last four characters |
+| `s == t` | compare two strings, case for case |
+
+## Next steps
+
+- [Reading and searching text](/learn/reading-and-searching-text/) shows the shell tools that pull a line out of a file before Python sees it.
+- [Text processing with sed and awk](/learn/text-processing-awk-sed/) is the same field splitting done in a pipeline instead of in a list.
+- [Environment variables and PATH](/learn/environment-and-variables/) is where a Python script reads settings that live outside the file.
