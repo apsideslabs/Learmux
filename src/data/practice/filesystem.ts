@@ -156,17 +156,17 @@ export const filesystemSets: PracticeSet[] = [
         expects:
           'The first line begins with the word total and gives the disk blocks used by the entries. Every line after that is one file or directory, and they all have the same shape: a ten-character type and permission string, a link count, an owner, a group, a size, a date, and finally the name. Two entries near the top will be a single dot and a double dot, which stand for this directory and its parent. If you cannot see them, you did not pass -a.',
         rules: [
-          { type: 'matches', pattern: '^total\\s+\\d+', label: 'the listing opens with a total line' },
+          { type: 'matches', pattern: '^\\s*total\\s+\\d+', label: 'the listing opens with a total line' },
           {
             // the optional [.+]? is the marker some filesystems print after
             // the permission string to flag a security context or an ACL
             type: 'matches',
-            pattern: '^[-d][rwx-]{9}[.+]?\\s+\\d+',
+            pattern: '^\\s*[-d][rwx-]{9}[.+]?\\s+\\d+',
             label: 'each entry starts with a type and a permission string',
           },
           {
             type: 'matches',
-            pattern: '^[-d][rwx-]{9}[.+]?\\s+\\d+\\s+\\S+\\s+\\S+\\s+\\d+',
+            pattern: '^\\s*[-d][rwx-]{9}[.+]?\\s+\\d+\\s+.*\\s+\\d+\\s+\\w{3}\\s+\\d+',
             label: 'the owner, group and size columns are present',
           },
         ],
@@ -247,8 +247,8 @@ export const filesystemSets: PracticeSet[] = [
         expects:
           'The first line is from ls and should read -rw-------, which is the symbolic form: read and write for the owner, nothing for the group, nothing for anyone else. The second line is from stat and should be 600, which is the same thing written in octal. Being able to move between those two notations is the whole skill. If your ls line shows -rw-r--r--, the chmod did not take effect.',
         rules: [
-          { type: 'matches', pattern: '^-rw-------', label: 'the symbolic mode is owner read and write only' },
-          { type: 'matches', pattern: '^600\\s', label: 'the octal mode is 600' },
+          { type: 'matches', pattern: '^\\s*-rw-------', label: 'the symbolic mode is owner read and write only' },
+          { type: 'matches', pattern: '^\\s*600\\s', label: 'the octal mode is 600' },
           { type: 'contains', value: 'secret.txt', label: 'the listing is for the file you created' },
         ],
       },
