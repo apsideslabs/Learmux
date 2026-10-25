@@ -1,0 +1,10 @@
+```python
+ROOT = os.path.realpath(os.path.expanduser("~/webroot"))
+```
+
+Then replace the first lines of `do_GET` with this check.
+
+```python
+    def do_GET(self):
+        # FIX: normalise the path, then refuse anything outside the root
+        path = os.path.realpath(os.path.join(ROOT, self.path.lstrip("/")))
