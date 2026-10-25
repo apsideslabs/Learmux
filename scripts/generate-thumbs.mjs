@@ -75,6 +75,12 @@ const thumbs = [
   { slug: 'writing-a-finding', accent: '#f3bc36', lines: ['$ cat finding.txt', 'title: idor in /user', 'fix: deny by default'] },
   { slug: 'responsible-disclosure', accent: '#e0559a', lines: ['$ cat disclosure.txt', 'reported: 2026-10-25', 'window: 90 days'] },
   { slug: 'certifications-and-labs', accent: '#8b7cd8', lines: ['$ cat portfolio.txt', 'lab: local http server', 'reasoning: allowlist'] },
+  { slug: 'build-a-password-generator', accent: '#e0559a', lines: ['$ openssl rand -base64 24', 'xQ7fK2mP9dL4nR8tY1vB3w==', '$ awk {print 20*log(62)/log(2)}'] },
+  { slug: 'build-an-encoder', accent: '#35b0c4', lines: ['$ printf %s café | base64', 'Y2Fmw6k=', '$ printf %s café | od -An -tx1'] },
+  { slug: 'build-a-hash-tool', accent: '#20d65a', lines: ['$ sha256sum -c SHA256SUMS', 'notes.txt: OK', 'archive.zip: FAILED'] },
+  { slug: 'build-a-jwt-inspector', accent: '#f3bc36', lines: ['$ cut -d. -f2 token | base64 -d', '{"sub":"user-42"}', '$ openssl dgst -sha256 -hmac'] },
+  { slug: 'build-a-permissions-calculator', accent: '#8b7cd8', lines: ['$ stat -c "%a %n" calc.sh', '4755 calc.sh', '$ ls -l calc.sh'] },
+  { slug: 'build-a-subnet-calculator', accent: '#2878d0', lines: ['$ python3 -c "import ipaddress"', '255.255.255.0', '10.0.0.192/26'] },
 ];
 
 function esc(s) {
