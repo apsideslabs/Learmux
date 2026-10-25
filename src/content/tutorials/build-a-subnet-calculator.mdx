@@ -1,7 +1,7 @@
 ---
 title: "Build a subnet calculator"
-description: "Work out a network address, a mask, a broadcast address and a host count with Python's ipaddress module, and by hand when Python is not there."
-excerpt: "Build a subnet calculator with Python's ipaddress module, then do the same arithmetic by hand with bitwise operators."
+description: "Build a shell script that turns an address and prefix into the network, broadcast, host range and host count, including the /31 and /32 cases most calculators get wrong."
+excerpt: "Convert an address to a number, build the mask, work out the network and broadcast with bitwise arithmetic, and finish with a complete script you can keep."
 category: "Utilities"
 track: "utilities"
 author: "The Study Cipher"
@@ -11,245 +11,588 @@ level: Intermediate
 tags: [utilities, subnetting]
 ---
 
-import Callout from '../../components/Callout.astro';
+This lesson builds the same calculator as the subnet tool, so you can do the whole job from the shell without opening it. By the end you will have a script called `subnetcalc.sh` that takes `192.168.1.42/24` and prints the network, the broadcast address, the mask, the wildcard, the first and last usable host, and how many addresses there are.
 
-An address like `192.168.1.42/24` hides four answers: the network it belongs to, the mask that defines that network, the broadcast address, and how many devices can live on it. This lesson builds a calculator that gives you all four, using Python's `ipaddress` module, and then does the same arithmetic by hand with bitwise operators, for the times Python is not to hand. It builds the same thing as the [subnet calculator](/utilities/subnet/) on this site, so you can run it yourself on your phone with nothing but Termux.
+You build it up a few lines at a time, running it after every step, and the finished script sits in one block at the end so you can copy the whole thing at once.
 
 ## What you'll be able to do
 
-- Build a network object from an address and a prefix length.
-- Print its netmask, broadcast address, host range and host count.
-- Split one network into smaller ones with `subnets`.
-- Convert an address to a 32 bit integer and back, by hand.
-- Work out the network and broadcast addresses with bitwise AND and OR.
-- Explain why `/31` and `/32` are special.
-- See the subnet your own phone is on with `ip`.
+- See which subnet your own phone is on.
+- Turn a dotted quad into a single number and back.
+- Build a subnet mask from a prefix length.
+- Get the network with a bitwise AND and the broadcast with an OR.
+- Handle a /31 and a /32 correctly, which most calculators do not.
+- Reject a mask that is not a run of ones followed by zeros.
 
-## Step 1: Build a network object
+## Step 1: Look at your own subnet first
 
-The `ipaddress` module is part of Python's standard library. Install Python once with `pkg install python`, and then give the module an address and a prefix length and it returns a network. But be careful: by default it refuses an address that is not already a network address, because `192.168.1.42` is a host, not the start of a block.
-
-```bash
-python3 -c "import ipaddress; print(ipaddress.ip_network('192.168.1.42/24'))"
-```
-
-```text
-ValueError: 192.168.1.42/24 has host bits set
-```
-
-The `/24` leaves eight bits for hosts, and `42` is not zero, so some host bits are set. Pass `strict=False` to say you know this and want the network the address sits in. The result is the network address itself.
+Before calculating anything, look at what you are actually on.
 
 ```bash
-python3 - <<'EOF'
-import ipaddress
-net = ipaddress.ip_network('192.168.1.42/24', strict=False)
-print(net)
-EOF
-```
-
-```text
-192.168.1.0/24
-```
-
-So the calculator's first answer is the network: `192.168.1.0/24`.
-
-## Step 2: Ask for the four figures
-
-The network object answers the rest of the questions directly. Each one is a property, so you read it rather than call it.
-
-```bash
-python3 - <<'EOF'
-import ipaddress
-net = ipaddress.ip_network('192.168.1.42/24', strict=False)
-print('network  ', net.network_address)
-print('netmask  ', net.netmask)
-print('broadcast', net.broadcast_address)
-print('addresses', net.num_addresses)
-print('hosts    ', net.num_addresses - 2)
-print('first    ', list(net.hosts())[0])
-print('last     ', list(net.hosts())[-1])
-EOF
-```
-
-```text
-network   192.168.1.0
-netmask   255.255.255.0
-broadcast 192.168.1.255
-addresses 256
-hosts     254
-first     192.168.1.1
-last      192.168.1.254
-```
-
-`netmask` is the mask in dotted form. `broadcast_address` is the last address in the block, which every host here can reach at once. `num_addresses` counts every address in the block, all 256 of them. `hosts()` gives the addresses a device may actually take, and there are 254, because the first address names the network and the last is the broadcast. That subtraction, `num_addresses - 2`, is the host count you want.
-
-## Step 3: Split a network into smaller ones
-
-A `/24` is often too big. `subnets` carves it into equal pieces. Ask for a new prefix length and it returns each piece in order.
-
-```bash
-python3 - <<'EOF'
-import ipaddress
-net = ipaddress.ip_network('192.168.1.0/24')
-for s in net.subnets(new_prefix=26):
-    print(s, s.broadcast_address, s.num_addresses)
-EOF
-```
-
-```text
-192.168.1.0/26 192.168.1.63 64
-192.168.1.64/26 192.168.1.127 64
-192.168.1.128/26 192.168.1.191 64
-192.168.1.192/26 192.168.1.255 64
-```
-
-Four `/26` blocks fit inside one `/24`, each holding 64 addresses and 62 usable hosts. Every block starts on an even boundary, and the broadcast of each is one less than the start of the next. That is the pattern to look for when you are checking someone else's plan.
-
-## Step 4: The arithmetic by hand
-
-Python is not always there, so it is worth knowing how the four figures are derived. The trick is that an IPv4 address is really a 32 bit integer, and the dots are just a way of writing it. Split the address into its four numbers, shift each into place, and OR them together.
-
-```bash
-cat > ~/subnet.sh <<'EOF'
-ip=192.168.1.42
-mask=24
-IFS=. read -r a b c d <<< "$ip"
-n=$(( (a << 24) | (b << 16) | (c << 8) | d ))
-echo "address int $n"
-EOF
-bash ~/subnet.sh
-```
-
-```text
-address int 3232235818
-```
-
-That integer is the whole address. `192` sits in the top eight bits, `168` in the next eight, and so on down to `42`.
-
-## Step 5: Mask, network and broadcast with bitwise operators
-
-The prefix length says how many of the 32 bits name the network. A `/24` means the top 24 bits are fixed and the bottom 8 vary. Build the mask by shifting a full set of ones left by the number of host bits. Then the network is the address ANDed with the mask, and the broadcast is the network ORed with the inverse of the mask.
-
-```bash
-cat > ~/subnet.sh <<'EOF'
-ip=192.168.1.42
-mask=24
-IFS=. read -r a b c d <<< "$ip"
-n=$(( (a << 24) | (b << 16) | (c << 8) | d ))
-m=$(( (0xffffffff << (32 - mask)) & 0xffffffff ))
-net=$(( n & m ))
-bc=$(( net | (~m & 0xffffffff) ))
-echo "mask int    $m"
-echo "network     $((net>>24&255)).$((net>>16&255)).$((net>>8&255)).$((net&255))"
-echo "broadcast   $((bc>>24&255)).$((bc>>16&255)).$((bc>>8&255)).$((bc&255))"
-echo "host bits   $((32 - mask))"
-echo "host count  $(( 2 ** (32 - mask) - 2 ))"
-EOF
-bash ~/subnet.sh
-```
-
-```text
-mask int    4294967040
-network     192.168.1.0
-broadcast   192.168.1.255
-host bits   8
-host count  254
-```
-
-`4294967040` is `255.255.255.0` as an integer. The AND wipes the host bits, giving the network, and the OR with the inverse mask fills them all in, giving the broadcast. The last two lines give the arithmetic behind the host count, which is two to the power of the host bits, less two.
-
-## Step 6: Host count as two to the power of the host bits
-
-A `/24` has 8 host bits, and `2 ** 8` is 256. A `/26` has 6 host bits, and `2 ** 6` is 64. The count doubles each time the prefix drops by one, and halves each time it rises by one. That is why the four `/26` blocks above each hold 64 addresses: `256 / 4`.
-
-<Callout type="tip" title="Count the host bits first">
-When you are given a prefix, subtract it from 32 to get the host bits, then use `2 ** host bits` for the block size. Everything else follows from that one number.
-</Callout>
-
-## Step 7: The /31 and /32 cases
-
-The rule of subtracting two breaks down at the very small end. A `/31` has one host bit, so the block is two addresses, and by the usual rule that would leave zero usable hosts. In practice, RFC 3021 allows both addresses on a point-to-point link, and Python agrees: `hosts()` returns both. A `/32` is a single address, used for one machine, and `hosts()` returns that one address.
-
-```bash
-python3 - <<'EOF'
-import ipaddress
-print(list(ipaddress.ip_network('192.0.2.4/31').hosts()))
-print(list(ipaddress.ip_network('192.0.2.9/32').hosts()))
-print(ipaddress.ip_network('192.0.2.4/31').num_addresses)
-EOF
-```
-
-```text
-[IPv4Address('192.0.2.4'), IPv4Address('192.0.2.5')]
-[IPv4Address('192.0.2.9')]
-2
-```
-
-So a `/31` has no network and broadcast addresses reserved, and a `/32` is a block of exactly one. When you meet these in a routing table, they are not mistakes.
-
-## Step 8: See the subnet you are on
-
-You can check your own phone against the calculator. Install the `ip` tool if you have not already, then ask it for your IPv4 addresses in one line each.
-
-```bash
-pkg install iproute2
 ip -o -4 addr show
 ```
 
 ```text
-1: lo    inet 127.0.0.1/8 scope host lo
-2: wlan0    inet 192.168.1.42/24 brd 192.168.1.255 scope global wlan0
+1: lo    inet 127.0.0.1/8 scope global dynamic
+2: wlan0 inet 192.168.1.24/24 scope global dynamic
 ```
 
-The `wlan0` line holds the address and the prefix length, `192.168.1.42/24`, and even prints the broadcast, `192.168.1.255`. Feed that pair into the calculator and you get the network `192.168.1.0/24`. The routing table shows the same block as the network you can reach directly.
+`192.168.1.24/24` is your address and the prefix. The prefix says how many of the 32 bits are fixed for the network. A `/24` fixes 24 and leaves 8 for hosts, which is two to the eight, which is 256 addresses. Every number the finished script prints comes out of that one idea.
+
+If `ip` is missing, `pkg install iproute2` provides it.
+
+## Step 2: An address is really one number
+
+Four numbers between zero and 255, each worth one byte. Multiply each by its place value and add them up and you have a single integer.
 
 ```bash
-ip route
-```
+cat > step2.sh <<'EOF'
+ip_to_int() {
+  printf '%s' "$1" | awk -F. '{ printf "%.0f", ($1 * 16777216) + ($2 * 65536) + ($3 * 256) + $4 }'
+}
 
-```text
-default via 192.168.1.1 dev wlan0
-192.168.1.0/24 dev wlan0 scope link src 192.168.1.42
-```
-
-The second line is your local subnet, reachable without a router. The first line is the default route: anything that is not on `192.168.1.0/24` goes to `192.168.1.1`, which is the router.
-
-## Step 9: IPv6 is the same idea on 128 bits
-
-Nothing above depends on the address being four bytes wide. An IPv6 address is 128 bits, so the prefix counts up to 128, and the same module does the same work. A `/64` leaves 64 host bits, which is why a single IPv6 subnet is far larger than anything you will need at home.
-
-```bash
-python3 - <<'EOF'
-import ipaddress
-n6 = ipaddress.ip_network('2001:db8::/64')
-print(n6.netmask)
-print(n6.num_addresses)
+for a in 192.168.1.42 10.0.0.5 255.255.255.0; do
+  printf '%-16s -> %s\n' "$a" "$(ip_to_int "$a")"
+done
 EOF
+bash step2.sh
 ```
 
 ```text
-ffff:ffff:ffff:ffff::
-18446744073709551616
+192.168.1.42     -> 3232235818
+10.0.0.5         -> 167772165
+255.255.255.0    -> 4294967040
 ```
 
-The mask is written in hexadecimal, and the host count is about 18 quintillion. The arithmetic is the same; only the width changes.
+`-F.` splits the input on dots, so `$1` to `$4` are the four octets. The `%.0f` matters: `awk` does its arithmetic in floating point, and printing an integer that large without it gives you scientific notation. 256, 65536 and 16777216 are the place values of the four bytes.
+
+## Step 3: And back again
+
+The reverse is a shift and a mask per byte.
+
+```bash
+cat > step3.sh <<'EOF'
+int_to_ip() {
+  local n=$1
+  printf '%d.%d.%d.%d' $(( (n >> 24) & 255 )) $(( (n >> 16) & 255 )) $(( (n >> 8) & 255 )) $(( n & 255 ))
+}
+
+for n in 3232235818 4294967295 0; do
+  printf '%-12s -> %s\n' "$n" "$(int_to_ip "$n")"
+done
+EOF
+bash step3.sh
+```
+
+```text
+3232235818   -> 192.168.1.42
+4294967295   -> 255.255.255.255
+0            -> 0.0.0.0
+```
+
+`n >> 24` shifts the top byte down into the low bits, and `& 255` keeps only that byte. Do it four times with a different shift each time and the four octets fall out in order.
+
+## Step 4: The mask, from a prefix
+
+A mask is a run of ones followed by a run of zeros. A `/24` is twenty-four ones and eight zeros.
+
+```bash
+cat > step4.sh <<'EOF'
+mask_from_prefix() {
+  printf '%d' $(( (0xffffffff << (32 - $1)) & 0xffffffff ))
+}
+
+int_to_ip() {
+  local n=$1
+  printf '%d.%d.%d.%d' $(( (n >> 24) & 255 )) $(( (n >> 16) & 255 )) $(( (n >> 8) & 255 )) $(( n & 255 ))
+}
+
+for p in 24 12 31 32 0; do
+  printf '/%-3s -> %s\n' "$p" "$(int_to_ip "$(mask_from_prefix "$p")")"
+done
+EOF
+bash step4.sh
+```
+
+```text
+/24  -> 255.255.255.0
+/12  -> 255.240.0.0
+/31  -> 255.255.255.254
+/32  -> 255.255.255.255
+/0   -> 0.0.0.0
+```
+
+Start with all thirty-two bits set, shift left by the number of host bits, and you have the mask. The `& 0xffffffff` at the end is doing real work: shell arithmetic on 64-bit integers would otherwise leave the top bits set, and the mask would be wrong.
+
+Now `255.240.0.0` stops looking arbitrary. It is twelve ones and twenty zeros, and twelve is the prefix length.
+
+## Step 5: Network with an AND, broadcast with an OR
+
+The network address has every host bit set to zero, so it is the address ANDed with the mask. The broadcast address has every host bit set to one, so it is the network ORed with the inverse of the mask.
+
+```bash
+cat > step5.sh <<'EOF'
+ip_to_int() { printf '%s' "$1" | awk -F. '{ printf "%.0f", ($1 * 16777216) + ($2 * 65536) + ($3 * 256) + $4 }'; }
+int_to_ip() { local n=$1; printf '%d.%d.%d.%d' $(( (n >> 24) & 255 )) $(( (n >> 16) & 255 )) $(( (n >> 8) & 255 )) $(( n & 255 )); }
+mask_from_prefix() { printf '%d' $(( (0xffffffff << (32 - $1)) & 0xffffffff )); }
+
+n=$(ip_to_int 192.168.1.42)
+m=$(mask_from_prefix 24)
+net=$(( n & m ))
+bc=$(( net | (~m & 0xffffffff) ))
+
+printf 'address   %s\n' "$(int_to_ip "$n")"
+printf 'netmask   %s\n' "$(int_to_ip "$m")"
+printf 'network   %s\n' "$(int_to_ip "$net")"
+printf 'broadcast %s\n' "$(int_to_ip "$bc")"
+EOF
+bash step5.sh
+```
+
+```text
+address   192.168.1.42
+netmask   255.255.255.0
+network   192.168.1.0
+broadcast 192.168.1.255
+```
+
+`~m` flips every bit, turning the mask into its inverse, which is the wildcard mask. ANDing the address with the mask clears the host bits and leaves the network. ORing the network with the wildcard sets them all and gives the broadcast.
+
+## Step 6: How many hosts, and the two special cases
+
+The count is two to the power of the host bits. Then two addresses come off, because the network and broadcast addresses cannot be given to a machine. Except when they can.
+
+```bash
+cat > step6.sh <<'EOF'
+ip_to_int() { printf '%s' "$1" | awk -F. '{ printf "%.0f", ($1 * 16777216) + ($2 * 65536) + ($3 * 256) + $4 }'; }
+int_to_ip() { local n=$1; printf '%d.%d.%d.%d' $(( (n >> 24) & 255 )) $(( (n >> 16) & 255 )) $(( (n >> 8) & 255 )) $(( n & 255 )); }
+mask_from_prefix() { printf '%d' $(( (0xffffffff << (32 - $1)) & 0xffffffff )); }
+
+for spec in 192.168.1.42/24 10.0.0.5/31 192.0.2.9/32; do
+  addr=${spec%%/*}
+  prefix=${spec#*/}
+  n=$(ip_to_int "$addr")
+  m=$(mask_from_prefix "$prefix")
+  net=$(( n & m ))
+  bc=$(( net | (~m & 0xffffffff) ))
+  total=$(( 2 ** (32 - prefix) ))
+
+  if [ "$prefix" -eq 32 ]; then
+    usable=1; first=$n; last=$n
+  elif [ "$prefix" -eq 31 ]; then
+    usable=2; first=$net; last=$bc
+  else
+    usable=$(( total - 2 )); first=$(( net + 1 )); last=$(( bc - 1 ))
+  fi
+
+  printf '%-18s network %-15s broadcast %-15s total %-8s usable %-6s first %-15s last %s\n' \
+    "$spec" "$(int_to_ip "$net")" "$(int_to_ip "$bc")" "$total" "$usable" "$(int_to_ip "$first")" "$(int_to_ip "$last")"
+done
+EOF
+bash step6.sh
+```
+
+```text
+192.168.1.42/24    network 192.168.1.0     broadcast 192.168.1.255   total 256      usable 254    first 192.168.1.1     last 192.168.1.254
+10.0.0.5/31        network 10.0.0.4        broadcast 10.0.0.5        total 2        usable 2      first 10.0.0.4        last 10.0.0.5
+192.0.2.9/32       network 192.0.2.9       broadcast 192.0.2.9       total 1        usable 1      first 192.0.2.9       last 192.0.2.9
+```
+
+Look at the `/31`. It has two addresses and both of them are usable, because there is no room to reserve a network or a broadcast address. RFC 3021 defines this, and it is exactly what you want on a point-to-point link between two routers. The `/32` is a single address, and it is both the network and the host. Many calculators subtract two from a `/31` and cheerfully report zero usable hosts, which is wrong.
+
+## Step 7: Accept a mask as well as a prefix
+
+People write `255.255.255.0` as often as they write `/24`, so accept both. Going from a mask back to a prefix is a check as well as a conversion, because not every four numbers are a valid mask.
+
+```bash
+cat > step7.sh <<'EOF'
+ip_to_int() { printf '%s' "$1" | awk -F. '{ printf "%.0f", ($1 * 16777216) + ($2 * 65536) + ($3 * 256) + $4 }'; }
+
+prefix_from_mask() {
+  local m=$1
+  if [ "$m" -eq 0 ]; then
+    printf '0'
+    return 0
+  fi
+  if [ $(( m + (m & -m) )) -ne 4294967296 ]; then
+    return 1
+  fi
+  local wild=$(( (~m) & 0xffffffff ))
+  local size=$(( wild + 1 )) p=32
+  while [ "$size" -gt 1 ]; do
+    size=$(( size / 2 ))
+    p=$(( p - 1 ))
+  done
+  printf '%d' "$p"
+}
+
+for mask in 255.255.255.0 255.240.0.0 255.0.255.0; do
+  printf '%-16s -> ' "$mask"
+  if p=$(prefix_from_mask "$(ip_to_int "$mask")"); then
+    echo "/$p"
+  else
+    echo "not a run of ones then zeros"
+  fi
+done
+EOF
+bash step7.sh
+```
+
+```text
+255.255.255.0    -> /24
+255.240.0.0      -> /12
+255.0.255.0      -> not a run of ones then zeros
+```
+
+The validity check is the interesting line. For a real mask, adding the mask to its own lowest set bit carries all the way out and lands exactly on 2^32. For a mask with a hole in it, like `255.0.255.0`, the carry stops short and the sum is smaller, so the test fails. `m & -m` is the trick for isolating the lowest set bit.
+
+## Step 8: Arguments, usage and errors
+
+A calculator that prints a stack trace when you mistype an address is not finished. Accept `ADDR/PREFIX`, `ADDR PREFIX` and `ADDR NETMASK`, and complain clearly otherwise.
+
+```bash
+cat > step8.sh <<'EOF'
+prog=${0##*/}
+
+valid_ip() {
+  awk -F. '
+    NF != 4 { exit 1 }
+    {
+      for (i = 1; i <= 4; i++) {
+        if ($i !~ /^[0-9]+$/) exit 1
+        if ($i + 0 > 255) exit 1
+      }
+    }
+  ' <<< "$1"
+}
+
+case "$1" in
+  */*) addr=${1%%/*}; prefix_arg=${1#*/} ;;
+  *)   addr=$1; prefix_arg=${2:-} ;;
+esac
+
+if ! valid_ip "$addr"; then
+  printf '%s: not a valid IPv4 address: %s\n' "$prog" "$addr" >&2
+  exit 1
+fi
+
+case "$prefix_arg" in
+  *[!0-9]*|'') printf '%s: prefix must be a number from 0 to 32: %s\n' "$prog" "$prefix_arg" >&2; exit 1 ;;
+  *) if [ "$prefix_arg" -gt 32 ]; then printf '%s: prefix must be 0 to 32\n' "$prog" >&2; exit 1; fi ;;
+esac
+
+printf 'address %s, prefix /%s\n' "$addr" "$prefix_arg"
+EOF
+
+bash step8.sh 999.1.1.1/24; echo "  exit $?"
+bash step8.sh 192.168.1.1/33; echo "  exit $?"
+```
+
+```text
+step8.sh: not a valid IPv4 address: 999.1.1.1
+  exit 1
+step8.sh: prefix must be a number from 0 to 32: 33
+  exit 1
+```
+
+`valid_ip` checks two things the eye misses: that there are exactly four parts, and that each one is digits only and no larger than 255. The `$i !~ /^[0-9]+$/` test is what stops `1.2.3.4x` being accepted.
+
+## The whole script
+
+Save this as `subnetcalc.sh` and make it executable with `chmod +x subnetcalc.sh`. Nothing is left out.
+
+```bash
+#!/usr/bin/env bash
+# subnetcalc.sh - work out the figures for an IPv4 subnet.
+
+set -u
+
+prog=${0##*/}
+
+usage() {
+  cat <<'USAGE'
+Usage: subnetcalc.sh ADDRESS/PREFIX
+       subnetcalc.sh ADDRESS PREFIX
+       subnetcalc.sh ADDRESS NETMASK
+
+Examples:
+  subnetcalc.sh 192.168.1.42/24
+  subnetcalc.sh 192.168.1.42 24
+  subnetcalc.sh 192.168.1.42 255.255.255.0
+
+ADDRESS is an IPv4 address. PREFIX is 0 to 32. NETMASK is a dotted
+mask such as 255.255.255.0.
+USAGE
+}
+
+# Turn a dotted quad into one 32 bit integer.
+ip_to_int() {
+  printf '%s' "$1" | awk -F. '{ printf "%.0f", ($1 * 16777216) + ($2 * 65536) + ($3 * 256) + $4 }'
+}
+
+# Turn one 32 bit integer back into a dotted quad.
+int_to_ip() {
+  local n=$1
+  printf '%d.%d.%d.%d' $(( (n >> 24) & 255 )) $(( (n >> 16) & 255 )) $(( (n >> 8) & 255 )) $(( n & 255 ))
+}
+
+# True when the argument is four numbers, each 0 to 255.
+valid_ip() {
+  awk -F. '
+    NF != 4 { exit 1 }
+    {
+      for (i = 1; i <= 4; i++) {
+        if ($i !~ /^[0-9]+$/) exit 1
+        if ($i + 0 > 255) exit 1
+      }
+    }
+  ' <<< "$1"
+}
+
+# Turn a prefix length into a mask, as an integer.
+mask_from_prefix() {
+  printf '%d' $(( (0xffffffff << (32 - $1)) & 0xffffffff ))
+}
+
+# Turn a mask into a prefix length, or fail if the mask has a hole.
+prefix_from_mask() {
+  local m=$1
+  if [ "$m" -eq 0 ]; then
+    printf '0'
+    return 0
+  fi
+  if [ $(( m + (m & -m) )) -ne 4294967296 ]; then
+    return 1
+  fi
+  local wild=$(( (~m) & 0xffffffff ))
+  local size=$(( wild + 1 )) p=32
+  while [ "$size" -gt 1 ]; do
+    size=$(( size / 2 ))
+    p=$(( p - 1 ))
+  done
+  printf '%d' "$p"
+}
+
+if [ $# -eq 0 ]; then
+  usage >&2
+  exit 2
+fi
+
+case "$1" in
+  -h|--help)
+    usage
+    exit 0
+    ;;
+  -*)
+    printf '%s: unknown option %s\n' "$prog" "$1" >&2
+    printf 'Try %s --help for usage.\n' "$prog" >&2
+    exit 2
+    ;;
+esac
+
+case "$1" in
+  */*)
+    addr=${1%%/*}
+    prefix_arg=${1#*/}
+    ;;
+  *)
+    addr=$1
+    prefix_arg=${2:-}
+    ;;
+esac
+
+if [ -z "$prefix_arg" ]; then
+  printf '%s: no prefix or netmask given\n' "$prog" >&2
+  printf 'Try %s --help for usage.\n' "$prog" >&2
+  exit 2
+fi
+
+if ! valid_ip "$addr"; then
+  printf '%s: not a valid IPv4 address: %s\n' "$prog" "$addr" >&2
+  exit 1
+fi
+
+case "$prefix_arg" in
+  *.*)
+    if ! valid_ip "$prefix_arg"; then
+      printf '%s: not a valid netmask: %s\n' "$prog" "$prefix_arg" >&2
+      exit 1
+    fi
+    m=$(ip_to_int "$prefix_arg")
+    if ! prefix=$(prefix_from_mask "$m"); then
+      printf '%s: netmask is not a run of ones then zeros: %s\n' "$prog" "$prefix_arg" >&2
+      exit 1
+    fi
+    ;;
+  *[!0-9]*|'')
+    printf '%s: prefix must be a number from 0 to 32: %s\n' "$prog" "$prefix_arg" >&2
+    exit 1
+    ;;
+  *)
+    prefix=$prefix_arg
+    if [ "$prefix" -gt 32 ]; then
+      printf '%s: prefix must be a number from 0 to 32: %s\n' "$prog" "$prefix_arg" >&2
+      exit 1
+    fi
+    ;;
+esac
+
+n=$(ip_to_int "$addr")
+m=$(mask_from_prefix "$prefix")
+net=$(( n & m ))
+bc=$(( net | (~m & 0xffffffff) ))
+wild=$(( (~m) & 0xffffffff ))
+total=$(( 2 ** (32 - prefix) ))
+
+if [ "$prefix" -eq 32 ]; then
+  usable=1
+  first=$n
+  last=$n
+elif [ "$prefix" -eq 31 ]; then
+  usable=2
+  first=$net
+  last=$bc
+else
+  usable=$(( total - 2 ))
+  first=$(( net + 1 ))
+  last=$(( bc - 1 ))
+fi
+
+printf 'address      %s\n' "$addr"
+printf 'prefix       /%d\n' "$prefix"
+printf 'network      %s\n' "$(int_to_ip "$net")"
+printf 'broadcast    %s\n' "$(int_to_ip "$bc")"
+printf 'netmask      %s\n' "$(int_to_ip "$m")"
+printf 'wildcard     %s\n' "$(int_to_ip "$wild")"
+printf 'first host   %s\n' "$(int_to_ip "$first")"
+printf 'last host    %s\n' "$(int_to_ip "$last")"
+printf 'addresses    %d\n' "$total"
+printf 'usable       %d\n' "$usable"
+```
+
+## Using it
+
+An ordinary home network:
+
+```bash
+./subnetcalc.sh 192.168.1.42/24
+```
+
+```text
+address      192.168.1.42
+prefix       /24
+network      192.168.1.0
+broadcast    192.168.1.255
+netmask      255.255.255.0
+wildcard     0.0.0.255
+first host   192.168.1.1
+last host    192.168.1.254
+addresses    256
+usable       254
+```
+
+A `/31`, where both addresses are usable:
+
+```bash
+./subnetcalc.sh 10.0.0.5/31
+```
+
+```text
+address      10.0.0.5
+prefix       /31
+network      10.0.0.4
+broadcast    10.0.0.5
+netmask      255.255.255.254
+wildcard     0.0.0.1
+first host   10.0.0.4
+last host    10.0.0.5
+addresses    2
+usable       2
+```
+
+A `/32`, a single host:
+
+```bash
+./subnetcalc.sh 192.0.2.9/32
+```
+
+```text
+address      192.0.2.9
+prefix       /32
+network      192.0.2.9
+broadcast    192.0.2.9
+netmask      255.255.255.255
+wildcard     0.0.0.0
+first host   192.0.2.9
+last host    192.0.2.9
+addresses    1
+usable       1
+```
+
+A `/12`, which does not end on a byte boundary:
+
+```bash
+./subnetcalc.sh 172.16.5.5/12
+```
+
+```text
+address      172.16.5.5
+prefix       /12
+network      172.16.0.0
+broadcast    172.31.255.255
+netmask      255.240.0.0
+wildcard     0.15.255.255
+first host   172.16.0.1
+last host    172.31.255.254
+addresses    1048576
+usable       1048574
+```
+
+A mask instead of a prefix gives the same answer:
+
+```bash
+./subnetcalc.sh 192.168.1.42 255.255.255.0
+```
+
+```text
+address      192.168.1.42
+prefix       /24
+network      192.168.1.0
+```
+
+And the errors are plain:
+
+```bash
+./subnetcalc.sh 192.168.1.42 255.0.255.0
+```
+
+```text
+subnetcalc.sh: netmask is not a run of ones then zeros: 255.0.255.0
+```
+
+To check the subnet you are on right now, feed it your own address:
+
+```bash
+./subnetcalc.sh "$(ip -o -4 addr show | awk 'NR==1{split($4,a,"/"); print a[1]"/"a[2]}')"
+```
 
 ## Quick reference
 
-| Command | What it does |
+| Piece | What it does |
 | --- | --- |
-| `ip_network('192.168.1.42/24', strict=False)` | Build a network from a host address |
-| `.network_address` | The network address |
-| `.netmask` | The mask in dotted form |
-| `.broadcast_address` | The broadcast address |
-| `.num_addresses` | Every address in the block |
-| `.hosts()` | The usable host addresses |
-| `.subnets(new_prefix=26)` | Split into smaller blocks |
-| `ip -o -4 addr show` | Your addresses and prefix lengths |
-| `ip route` | The subnets you can reach directly |
+| `ip -o -4 addr show` | your own addresses and prefixes, one per line |
+| `awk -F.` | split a dotted quad on the dots |
+| `printf '%.0f'` | stop awk printing a large integer in scientific notation |
+| `n >> 24` and `& 255` | pull one byte out of the number |
+| `0xffffffff << (32 - p)` | build a mask from a prefix length |
+| `n & m` | the network address |
+| `net \| (~m)` | the broadcast address |
+| `2 ** (32 - p)` | how many addresses the block holds |
+| `m & -m` | isolate the lowest set bit, used to validate a mask |
+| `/31` and `/32` | the two cases where nothing is reserved |
 
 ## Next steps
 
-- [Networking basics](/learn/networking-basics/) for `ip`, `ifconfig` and what a prefix length means on an interface.
-- [DNS and addresses](/learn/dns-and-addresses/) to see how a name becomes one of these addresses.
-- [Reading a port scan](/learn/reading-a-port-scan/) to put a subnet and its host range to work.
+- [Networking basics](/learn/networking-basics/) covers the addresses and ports this lesson assumes.
+- [DNS and addresses](/learn/dns-and-addresses/) is where a name becomes one of these addresses.
+- [Build a permissions calculator](/learn/build-a-permissions-calculator/) is the same approach applied to a different kind of bit arithmetic.
