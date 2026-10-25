@@ -1,7 +1,7 @@
 ---
 title: "Working with text in Python"
-description: "Pull text apart and put it back together by placing pieces into blanks, then run each one in the page."
-excerpt: "Indexing, slicing, split, join and f-strings, built from pieces rather than typed from memory."
+description: "Pull records apart and put them back together, in whole programs built from blanks and run in the page."
+excerpt: "Slicing, split, join, f-strings and a loop over lines, each a complete program rather than a one-liner."
 category: "Python"
 track: "python"
 author: "The Study Cipher"
@@ -11,123 +11,163 @@ level: "Beginner"
 tags: [python, interactive]
 ---
 
-import PyCell from '../../components/PyCell.astro';
 import PyBlanks from '../../components/PyBlanks.astro';
+import PyCell from '../../components/PyCell.astro';
 
-Most of what a script does is move text around: take a line apart, keep one field, put the fields back in a different order, print the result. Python has a small set of tools for that, and this lesson is about the five you will reach for constantly.
-
-Every box below starts with the pieces placed for you. Turn that off once the shapes look familiar and do it yourself.
+Most of what a script does is move text around: take a line apart, keep the field you want, put the fields back in a different order, print the result. Every program below is that job, six to eight lines long, with a few gaps to fill.
 
 ## What you'll be able to do
 
-- Pick a single character or a slice out of a string.
-- Split a line into fields, and join fields back into a line.
-- Build text with an f-string instead of gluing pieces together.
-- Recognise why a method changed nothing.
+- Pick a slice out of a string and know what the numbers mean.
+- Take a record apart with `split` and read one field out of it.
+- Put fields back together with `join`, the right way round.
+- Loop over a list of lines and build a second list from them.
 
-## Step 1: A string is a sequence
+## Step 1: Three slices out of one string
 
-A string is characters in order, and each one has a position. Position counting starts at zero, which is the first thing to get used to.
-
-<PyBlanks
-  title="First character"
-  scaffold={`word = "Termux"
-print(@1)`}
-  pieces={['word[1]', 'word[0]', 'word[-2]']}
-  answers={[1]}
-  expect="T"
-  hint="Counting starts at zero, so the first character is at position zero."
-/>
-
-`word[0]` is `T` and `word[1]` is `e`. A negative index counts back from the end, so `word[-1]` is the last character. That trips up everybody once.
-
-## Step 2: Take a slice
-
-A slice takes a run of characters. `[start:stop]` gives you everything from `start` up to but **not including** `stop`.
+A slice is `[start:stop]`, and it stops **before** the position you name. Three gaps, three slices, one printed line.
 
 <PyBlanks
-  title="Three characters"
+  title="Three fields from one code"
   scaffold={`code = "INV-2026-0042"
-print(@1)`}
-  pieces={['code[3:]', 'code[:3]', 'code[-3:]']}
-  answers={[1]}
-  expect="INV"
-  hint="Everything up to position three, not including it."
+
+kind = @1
+year = @2
+number = @3
+
+print(kind, year, number)`}
+  pieces={['code[-4:]', 'code[:3]', 'code[4:8]', 'code[3:]']}
+  answers={[1, 2, 0]}
+  expect="INV 2026 0042"
+  hint="The first three characters, then four characters starting at position four, then the last four."
 />
 
-`code[:3]` is the first three characters. `code[3:]` is everything from position three onwards, which is the date. `code[-3:]` is the last three. The same three-part idea with a step, `[::2]`, takes every other character.
+`code[:3]` is `INV`. `code[4:8]` starts at position four and stops before eight, which gives the year. `code[-4:]` counts four back from the end. One piece is wrong on purpose: `code[3:]` would run to the end of the string and swallow the rest.
 
-## Step 3: Split a line into fields
+Counting starts at zero, so position four is the fifth character. That is why the year starts at four and not at five: there is a dash at position three.
 
-A colon-separated system file, the kind that holds one account per line, is really a row of fields. `split` turns one string into a list of them.
+## Step 2: A record is a row of fields
+
+This is a real account line, seven fields separated by colons. Split it once, then read three of them.
 
 <PyBlanks
-  title="First field"
+  title="Read a record"
   scaffold={`line = "root:x:0:0:root:/root:/bin/sh"
 fields = line.@1(":")
-print(fields[0])`}
-  pieces={['join', 'split', 'strip']}
-  answers={[1]}
-  expect="root"
-  hint="Which of those three takes a string apart rather than putting it together?"
+
+name = @2
+uid = @3
+home = fields[5]
+
+print(name, uid, home)`}
+  pieces={['fields[0]', 'split', 'fields[2]', 'fields[1]']}
+  answers={[1, 0, 2]}
+  expect="root 0 /root"
+  hint="The name is the first field. The user id is the third, because there is a password field in between."
 />
 
-`fields` is now a list of seven strings, and `fields[0]` is the first. This is the Python version of `cut -d: -f1`, with one difference worth remembering: in the shell you write a new pipeline for each field, while here you split once and index the list as often as you like.
+Eight lines. `fields` is a list of seven strings, and the three reads pick out the name, the user id and the home directory. The password field sits at position one, which is why the id is at two and not at one.
 
-## Step 4: Join fields back together
+This is the Python version of `cut -d: -f1`, with a difference worth remembering: in the shell you write a new pipeline for each field, while here you split once and index the list as often as you like.
 
-`join` is the reverse. It takes a list and a separator, and it is written the way round that surprises people: the separator comes first.
+## Step 3: Join, and the way round it goes
+
+`join` is the reverse of `split`, and it is written the way round that surprises everyone: the separator comes first.
 
 <PyBlanks
-  title="Join with dashes"
+  title="Two ways to join"
   scaffold={`parts = ["one", "two", "three"]
-print(@1)`}
-  pieces={['parts.join("-")', '"-".join(parts)', '"-" + parts']}
-  answers={[1]}
-  expect="one-two-three"
-  hint="The separator is the thing doing the joining, so it goes first."
+
+dashed = @1
+spaced = @2
+
+print(dashed)
+print(spaced)`}
+  pieces={['parts.join("-")', '" ".join(parts)', '"-".join(parts)']}
+  answers={[2, 1]}
+  expect={`one-two-three
+one two three`}
+  hint="The separator is the thing doing the joining, so it goes first, and it is a string."
 />
 
 `"-".join(parts)` says: take this dash and use it to join this list. `parts.join("-")` is the natural guess and it fails, because a list has no such method. That is worth remembering, because it is the mistake almost everyone makes first.
 
-## Step 5: Build text with an f-string
+The separator is a string, so `" ".join(parts)` uses a space and `"".join(parts)` glues the pieces with nothing between them.
 
-Gluing strings with `+` gets unreadable fast, and it breaks outright when one of the pieces is a number. An f-string puts the values inside the text.
+## Step 4: f-strings, and a method that returns something new
+
+Gluing strings with `+` gets unreadable fast and breaks when one piece is a number. An f-string puts the values inside the text.
 
 <PyBlanks
-  title="An f-string"
+  title="Build a line, then change it"
   scaffold={`name = "Termux"
 version = 0.118
-print(@1)`}
-  pieces={['"{name} {version}"', 'f"{name} {version}"', 'name + " " + version']}
-  answers={[1]}
-  expect="Termux 0.118"
-  hint="Only one of those three puts the values into the text. One of them raises an error instead."
+
+line = @1
+upper = @2
+
+print(line)
+print(upper)`}
+  pieces={['line.upper()', 'f"{name} {version}"', '"{name} {version}"', 'line.upper']}
+  answers={[1, 0]}
+  expect={`Termux 0.118
+TERMUX 0.118`}
+  hint="One gap needs the f. The other needs brackets, or it hands back the method instead of calling it."
 />
 
-The `f` before the quote is the whole trick. Without it the braces are literal characters. And `name + " " + version` raises a `TypeError`, because you cannot glue a string to a number with `+`. The f-string converts for you.
+The `f` before the quote is the whole trick: without it the braces are literal characters. And `upper()` with brackets **returns** a new string; `line` itself is untouched, which is why the first print still shows the original.
 
-## Step 6: A method never changes the string
+## Step 5: Clean a field before you split it
 
-This one catches people coming from other languages. A method returns a **new** string and leaves the original alone.
+Real data arrives with stray spaces. `strip` removes them from both ends.
 
 <PyBlanks
-  title="Clean a field"
-  scaffold={`raw = "  Admin  "
-print(@1)`}
-  pieces={['raw.strip().lower()', 'raw.strip().lower', 'raw.strip']}
-  answers={[0]}
-  expect="admin"
-  hint="Two of those are missing the brackets, so they hand back the method rather than calling it."
+  title="Clean, then split"
+  scaffold={`raw = "  admin:user  "
+
+clean = @1
+left, right = @2
+
+print(left)
+print(right)`}
+  pieces={['clean.split(":")', 'raw.strip()', 'raw.split(":")']}
+  answers={[1, 0]}
+  expect={`admin
+user`}
+  hint="One gap removes the spaces. The other takes the cleaned value apart."
 />
 
-`raw.strip()` removes the spaces from both ends, and `.lower()` folds the capitals. Both return a new string; `raw` itself is untouched. Chaining works because each call returns something the next one can use.
+Six lines. `raw.strip()` gives `admin:user`, and then the split gives the two halves. `left, right = ...` unpacks a two-item list into two names in one go, which is the tidy way to do it.
 
-Without the brackets you get a description of the method rather than its result, which is a confusing thing to see printed.
+`raw.split(":")` on the uncleaned value would give `"  admin"` with the spaces still attached, and the print would show them. That is the quiet kind of bug that only shows up in the output.
+
+## Step 6: Loop over lines and build a list
+
+The pattern that most scripts come down to: take a list of lines, keep one field from each, collect the results.
+
+<PyBlanks
+  title="Collect one field from each line"
+  scaffold={`lines = ["root:x:0", "daemon:x:1", "bin:x:2"]
+
+names = []
+for line in lines:
+    fields = @1
+    @2
+
+print(names)`}
+  pieces={['names.append(fields[0])', 'line.split(":")', 'names.append(line)']}
+  answers={[1, 0]}
+  expect="['root', 'daemon', 'bin']"
+  hint="Split the line first, then keep the first field of it."
+/>
+
+Eight lines, and this is the shape of a hundred real scripts. `names = []` starts an empty list, the loop takes each line, splits it, and appends the first field. The print at the end shows the list with its brackets and quotes, which is how Python writes a list.
+
+`names.append(line)` would keep the whole line instead of the name, and the output would show the colons.
 
 ## Step 7: Type one yourself
 
-The shapes are the same. Now write one without the palette, using `split` and `join` together to turn a dotted address into a dashed one.
+Turn a dotted address into a dashed one, using `split` and `join` together.
 
 <PyCell
   title="Dots to dashes"
@@ -143,7 +183,7 @@ print("-".join(address.split(".")))`}
 
 ## Step 8: A mistake to find
 
-One character is wrong here. Press Run and read the last line.
+The code runs and prints something, but it is wrong. Press Run and look at the output closely.
 
 <PyCell
   variant="fix"
@@ -156,21 +196,22 @@ print("".join(line.split(":")))`}
 print(":".join(line.split(":")))`}
 />
 
-It prints `adminuser`, with the colon gone, because the string inside the brackets is what goes between the pieces and that string is empty. Put the colon back and the two halves are joined properly. This is the quiet kind of mistake: the code runs, nothing raises, and the only clue is the output.
+It prints `adminuser`, with the colon gone, because the string inside the brackets is what goes between the pieces and that string is empty. Nothing raises, so the output is the only clue.
 
 ## Quick reference
 
 | Piece | What it does |
 | --- | --- |
-| `word[0]` | the first character |
-| `word[-1]` | the last character |
 | `code[:3]` | the first three characters |
-| `code[3:]` | everything from position three |
+| `code[4:8]` | four characters starting at position four |
+| `code[-4:]` | the last four characters |
 | `line.split(":")` | a string into a list of fields |
-| `"-".join(parts)` | a list of fields into a string |
+| `"-".join(parts)` | a list into a string, separator first |
 | `f"{name} {version}"` | values inside the text |
-| `raw.strip().lower()` | methods chain, and each returns something new |
-| the last line of a traceback | what actually went wrong |
+| `raw.strip()` | remove spaces from both ends |
+| `left, right = ...` | unpack a two-item list into two names |
+| `names.append(x)` | add to the end of a list |
+| `line.upper()` | returns a new string, leaves the original alone |
 
 ## Next steps
 
