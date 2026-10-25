@@ -1,0 +1,100 @@
+---
+title: "The phases of a security assessment"
+description: "Work through the phases of a security assessment on a device you own: fix the scope, record a baseline, enumerate what is listening, and judge what you find."
+excerpt: "Learn the order that security work happens in, and run the first steps on your own phone."
+category: "Recon"
+track: "recon"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 26
+level: Intermediate
+tags: [recon, assessment, scope]
+---
+
+import Callout from '../../components/Callout.astro';
+
+A security assessment is not one action. It is a short sequence of steps, and the order matters, because each step depends on the one before it. In this lesson you will work through those phases on a device you own. You will fix the scope, record a starting point, and list what is listening before you judge anything. By the end you will be able to say where you are in an assessment and what that step is meant to produce.
+
+## What you'll be able to do
+
+- Name the phases of a security assessment and what each one produces.
+- Fix the scope and confirm what you are allowed to touch.
+- Record a starting point so you can tell later what has changed.
+- List what is listening on your own device before you change anything.
+
+## Step 1: Fix the scope first
+
+The first phase is scope. You decide what you are assessing and you confirm that you are allowed to touch it. On a phone the answer is simple, because the device in your hand is yours. Confirm the basics anyway, so the record is honest.
+
+```bash
+hostname; id; uname -srm
+```
+
+```text
+localhost
+uid=10231(u0_a231) gid=10231(u0_a231) groups=10231(u0_a231),3003(inet)
+Linux 5.10.209-android13-4 aarch64
+```
+
+`hostname` prints the name the device calls itself, which here is `localhost`. `id` prints your user id and the groups you belong to. Note that the id is an ordinary app id such as `u0_a231`, not `0` and not `root`. That single fact decides most of what you can and cannot do later. `uname -srm` names the kernel, its release and the processor, which is the `aarch64` at the end. Your own values will differ, and that is the point: this is a record of your device, not a fixed string.
+
+<Callout type="warning" title="Assess only what you own">
+Running scans or probes against a system you do not control can breach its terms of service and, in many countries, is a criminal offence. Your own phone, your own router and your own other devices are the whole of your scope. Everything in this track stays inside that line.
+</Callout>
+
+## Step 2: Record a starting point
+
+The second phase is the baseline. Before you change anything, write down what the device looks like now, with the time attached.
+
+```bash
+date -u +%Y-%m-%dT%H:%M:%SZ; uname -r
+```
+
+```text
+2026-10-25T04:33:04Z
+5.10.209-android13-4
+```
+
+`date -u` prints the time in UTC, so the record does not depend on your timezone. `uname -r` prints the kernel release on its own. The two lines together say when the assessment started and what was running. Later, when you have changed a setting or updated a package, you can look back and see the difference. An assessment without a starting point is a set of observations you cannot compare against anything.
+
+## Step 3: Enumerate before you assess
+
+The third phase is enumeration: listing what is actually there, without judging it yet. On your own device the first thing to enumerate is what is listening.
+
+```bash
+ss -tln
+```
+
+```text
+State  Recv-Q Send-Q Local Address:Port Peer Address:Port
+LISTEN 0      0          127.0.0.1:8022      0.0.0.0:*
+```
+
+The `-t` and `-l` flags ask for TCP sockets that are listening, and `-n` prints numbers rather than looking up names. The header names the columns. The single row says that something is listening on port `8022`, and the address `127.0.0.1` in front of it says it accepts connections only from this device. That is the Termux SSH server, and the address is what keeps it private. A row reading `0.0.0.0:8022` would mean the opposite: reachable from anywhere on your network. Read the address column before the port column.
+
+If the list is empty, that is a good result rather than a broken command. It means nothing is listening, so there is nothing here for anyone to reach.
+
+## Step 4: Assess, judge and act
+
+The remaining phases follow the same order every time. You assess: you take each thing you enumerated and ask what it is and how old it is. That is where version numbers come in, and the next two lessons cover reading them. You judge: you decide whether it is reachable, whether it is out of date, and whether the consequence of leaving it matters. You act: you patch it, turn it off, or accept it on purpose, having written down why. Then you report, even if the report is only for yourself, because an assessment nobody recorded is an assessment nobody can repeat.
+
+<Callout type="tip" title="Not every phase needs root">
+Enumerating, reading versions and judging what you find all work as an ordinary app. Only some fixes, such as binding a port below 1024, need root, and where one does this track gives you the non-root alternative.
+</Callout>
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `hostname` | Prints the name of the device |
+| `id` | Prints your user id and the groups you are in |
+| `uname -srm` | Prints the kernel name, release and machine |
+| `date -u +%Y-%m-%dT%H:%M:%SZ` | Prints the time in UTC |
+| `uname -r` | Prints the kernel release on its own |
+| `ss -tln` | Lists listening TCP ports with numbers |
+
+## Next steps
+
+- [Taking inventory of your own devices](/learn/inventory-your-devices/) turns the enumeration phase into a full list of what you have.
+- [Reading a port scan properly](/learn/reading-a-port-scan/) shows how to read the ports a scan reports.
+- [Finding and judging a vulnerability](/learn/finding-a-vulnerability/) covers the judgement phase in detail.
