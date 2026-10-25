@@ -30,6 +30,18 @@ const forClient = JSON.stringify({ id: task.id, rules: task.rules });
   <h3 class="task__title">{task.title}</h3>
   <p>{task.prompt}</p>
 
+  {/*
+    Rendered for every task rather than written into each prompt, so no task
+    can ever ship without saying where the command is meant to run. A command
+    box on a web page is ambiguous on its own: it looks like something the
+    page might do for you.
+  */}
+  <p class="task__where">
+    <span class="task__where-mark">Run this in Termux</span>
+    On your own device. Nothing on this page executes it. The command runs in
+    your terminal, and this box only reads what you paste back.
+  </p>
+
   <Cmd cmd={task.command} />
 
   {task.hint && (
