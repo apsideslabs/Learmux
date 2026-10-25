@@ -1,0 +1,183 @@
+---
+title: "Hashing and encoding in Python"
+description: "Encode text to bytes, read hex, hash a message with hashlib and move data with base64 and base64url, all in the browser with runnable Python cells."
+excerpt: "Cross the line between str and bytes, hash with sha256, and encode with base64 and base64url, in cells that run in the page."
+category: "Python"
+track: "python"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 16
+level: "Beginner"
+tags: [python, interactive]
+---
+
+import PyCell from '../../components/PyCell.astro';
+
+Python keeps text and raw bytes in two separate types, and almost every encoding job is really about crossing the line between them. In this lesson you will encode text to bytes and decode it back, read and write hex, hash a message with `hashlib.sha256`, compare two digests, and move binary through a text-only channel with `base64` and its URL-safe variant. Every cell runs Python inside this page, so you can edit the code and run it again without installing anything.
+
+If you have already met these tools in the shell, the ideas will be familiar: the [Encoding and hashes](/learn/encoding-and-hashes/) lesson does the same work with `base64` and `sha256sum` at a prompt. The difference here is that Python makes you name the type. A `str` is text and a `bytes` is raw data, and the two do not mix by accident.
+
+## What you'll be able to do
+
+- Explain why `str` and `bytes` are different types, and why that matters.
+- Encode text with `.encode()` and turn bytes back into text with `.decode()`.
+- Show bytes as hex and read hex back into bytes.
+- Hash a message with SHA-256 and compare two digests for equality.
+- Encode and decode with `base64`, and reach for `base64url` when the output has to survive a URL.
+
+## Step 1: Text is not bytes
+
+A Python `str` is a sequence of characters. A `bytes` object is a sequence of raw byte values. They are not interchangeable, and the length of the two can differ, because one character is not always one byte.
+
+<PyCell
+  title="Characters and bytes"
+  code={`text = "café"
+print(len(text), type(text).__name__)
+data = text.encode()
+print(len(data), type(data).__name__)`}
+/>
+
+The string is four characters, so `len` reports 4. The encoded form is five bytes, because the accented `é` needs two bytes in UTF-8. This is the whole reason `.encode()` exists: the moment text leaves Python for a file, a socket or a hash function, it has to become bytes first, and the encoding decides how.
+
+## Step 2: Encode and decode
+
+`.encode()` turns a `str` into `bytes` using UTF-8 unless you say otherwise. `.decode()` is the reverse. Round trip a plain string and you get it straight back.
+
+<PyCell
+  title="Encode then decode"
+  code={`message = "hello termux"
+data = message.encode()
+print(data)
+print(data.decode())`}
+/>
+
+The first line prints `b'hello termux'`. The `b` and the quotes are Python showing you that this is a `bytes` object, not text. The second line decodes those bytes back into a `str` and prints it plainly. Decoding is where things can go wrong: if the bytes are not valid UTF-8, `.decode()` raises `UnicodeDecodeError` rather than guessing.
+
+## Step 3: How many bytes?
+
+`len` on a `str` counts characters. `len` on the encoded form counts bytes. For plain ASCII the two happen to agree, which is why it is easy to forget they are different things.
+
+<PyCell
+  title="Bytes in a word"
+  expect="5"
+  hint="Encode the word first, then take its length."
+  code={`word = "hello"
+print(len(word.encode()))`}
+/>
+
+`hello` is five ASCII characters, so it is five bytes. Encode `café` from Step 1 the same way and you would get 5 from four characters, because of that accented letter. The number you get from `len(text)` and the number you get from `len(text.encode())` are answers to two different questions.
+
+## Step 4: Hex is bytes in pairs
+
+Hexadecimal is a way of writing bytes with two characters each. Python gives every `bytes` object a `.hex()` method, and `bytes.fromhex()` goes the other way.
+
+<PyCell
+  title="Bytes as hex"
+  code={`data = "Hi".encode()
+print(data.hex())
+print(bytes.fromhex("4869"))`}
+/>
+
+`4869` is four hex characters, so two bytes: `48` is the ASCII code for `H` and `69` is the code for `i`. The reverse call reads those pairs back and prints `b'Hi'`. Hex turns up everywhere a hash or a key is written down, because two characters per byte is easy to read and impossible to confuse with ordinary text.
+
+## Step 5: Hash a message with SHA-256
+
+A hash turns any input into a fixed-length fingerprint. `hashlib.sha256` gives you a hash object; `.hexdigest()` renders the result as hex text.
+
+<PyCell
+  title="SHA-256 of a message"
+  code={`import hashlib
+digest = hashlib.sha256(b"hello termux").hexdigest()
+print(digest)`}
+/>
+
+Notice the `b` before the string: the argument is a `bytes` object, because a hash function works on bytes and not on text. The result is always sixty-four hex characters, whatever the size of the input. Run the cell again and you get the same digest, because SHA-256 is deterministic. Change one character and the whole digest changes.
+
+## Step 6: Comparing digests
+
+Hashing the same input twice gives the same digest. Hashing anything different gives something unrelated. That is what makes a hash useful for checking a file arrived intact.
+
+<PyCell
+  title="Two digests compared"
+  expect={`True\nFalse`}
+  hint="Both comparisons print a boolean, one per line."
+  code={`import hashlib
+a = hashlib.sha256(b"hello termux").hexdigest()
+b = hashlib.sha256(b"hello termux").hexdigest()
+print(a == b)
+print(a == hashlib.sha256(b"hello termux!").hexdigest())`}
+/>
+
+The first comparison is `True`, because the two inputs are identical. The second is `False`, even though the inputs differ by a single `!`. There is no partial match and no near miss: two different inputs produce digests that share nothing you can spot. That is why a hash check is all or nothing, and why a download that fails its check is treated as corrupt rather than probably fine.
+
+## Step 7: Find the mistake
+
+This cell raises an error. Read the message, work out why, and fix it.
+
+<PyCell
+  variant="fix"
+  title="Find the mistake"
+  expect="ba5223902303e1e372e694a564d1df1f32e87d70ccf5139ccc79bd8bb39da20d"
+  hint="A hash works on bytes. A Python string is not bytes yet."
+  code={`import hashlib
+digest = hashlib.sha256("hello termux").hexdigest()
+print(digest)`}
+  solution={`import hashlib
+digest = hashlib.sha256("hello termux".encode()).hexdigest()
+print(digest)`}
+/>
+
+The error is `TypeError: Strings must be encoded before hashing`. `hashlib.sha256` wants a `bytes` object, and `"hello termux"` is a `str`. Calling `.encode()` on it first fixes the type, and the digest then matches the one from Step 5, because the bytes are the same either way.
+
+## Step 8: Base64 round trip
+
+Base64 rewrites bytes using sixty-four safe characters, so binary data can travel through systems that only carry text. The `base64` module does both directions.
+
+<PyCell
+  title="Base64 encode and decode"
+  code={`import base64
+data = "hello termux".encode()
+encoded = base64.b64encode(data)
+print(encoded)
+print(base64.b64decode(encoded).decode())`}
+/>
+
+`b64encode` takes `bytes` and returns `bytes`, so the first line prints `b'aGVsbG8gdGVybXV4'`. `b64decode` reverses it, and `.decode()` at the end turns the result back into text for printing. This is the same round trip as `echo "hello termux" | base64` in the shell lesson. Base64 hides nothing: anyone holding the encoded string decodes it in one call.
+
+## Step 9: An alphabet that travels
+
+Standard base64 uses `+` and `/`, which have meanings of their own inside a URL and a query string. `base64url` swaps those two characters for `-` and `_` so the result can be pasted into a link safely.
+
+<PyCell
+  title="Base64url"
+  expect="b'____'"
+  hint="There is a url-safe version of the encode function in the base64 module."
+  code={`import base64
+data = bytes([255, 255, 255])
+print(base64.b64encode(data))`}
+  solution={`import base64
+data = bytes([255, 255, 255])
+print(base64.urlsafe_b64encode(data))`}
+/>
+
+The starter prints `b'////'`, because three bytes set to `255` encode to four `/` characters in the standard alphabet. `base64.urlsafe_b64encode` produces `b'____'` for the same bytes. The bytes are identical; only the alphabet that spells them out has changed. This is the encoding you will see inside a JWT, which is covered in the [JWT inspector](/learn/build-a-jwt-inspector/) lesson.
+
+## Quick reference
+
+| Piece | What it does |
+| --- | --- |
+| `text.encode()` | Turn a `str` into `bytes` with UTF-8 |
+| `data.decode()` | Turn `bytes` back into a `str` |
+| `data.hex()` | Write bytes as hex text |
+| `bytes.fromhex("4869")` | Read hex text back into bytes |
+| `hashlib.sha256(b"...")` | Build a SHA-256 hash object from bytes |
+| `.hexdigest()` | Render a hash object as hex text |
+| `base64.b64encode(data)` | Encode bytes as standard base64 |
+| `base64.b64decode(text)` | Decode standard base64 back to bytes |
+| `base64.urlsafe_b64encode(data)` | Encode with the URL-safe alphabet |
+
+## Next steps
+
+- [Encoding and hashes](/learn/encoding-and-hashes/) is the shell version of this lesson, with `base64`, `xxd` and `sha256sum`.
+- [Build a hash tool](/learn/build-a-hash-tool/) turns the hashing idea into a tool you write yourself.
+- [Build a JWT inspector](/learn/build-a-jwt-inspector/) is where base64url shows up in a real token.
