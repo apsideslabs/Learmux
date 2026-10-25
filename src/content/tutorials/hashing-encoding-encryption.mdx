@@ -1,0 +1,162 @@
+---
+title: "Hashing, encoding and encryption are three different things"
+description: "Tell a one-way hash from a reversible encoding and from encryption that needs a key, using sha256sum, openssl dgst, base64 and openssl enc on your phone."
+excerpt: "Hashing is one way, encoding is not secret, and encryption needs a key. See the difference in three short commands."
+category: "Cryptography"
+track: "cryptography"
+author: "The Study Cipher"
+date: "2026-10-25"
+order: 36
+level: Intermediate
+tags: [cryptography, hashing, encoding]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Three words get used as if they mean the same thing, and they do not. A hash is one way and cannot be undone. An encoding is a public rule that reverses in a single command. Encryption is meant to be undone, but only by someone who holds the key. Mixing these up is how people store passwords in base64 and call them safe. This lesson runs all three on your phone, side by side, so the difference is something you have seen rather than something you have read.
+
+## What you'll be able to do
+
+- Say plainly which of the three is one way, which anyone can reverse, and which needs a key.
+- Hash text with `sha256sum` and `openssl dgst -sha256` and read the 64-character result.
+- Encode and decode with `base64` and show that no key is involved.
+- Encrypt and decrypt with `openssl enc` and a passphrase, and read the warning it prints.
+- Recognise the `U2FsdGVkX1` prefix and say what it tells you.
+
+## Step 1: A hash is one way
+
+A hash turns any input into a short fingerprint of fixed length. Two tools on your phone do the same job. The first is `sha256sum`, which you met in the encoding and hashes lesson.
+
+```bash
+$ echo -n "hello termux" | sha256sum
+```
+
+```text
+ba5223902303e1e372e694a564d1df1f32e87d70ccf5139ccc79bd8bb39da20d  -
+```
+
+The `-n` stops `echo` adding a newline, so you hash exactly the characters you typed. The second tool is `openssl dgst`, and it prints the same digest with a label in front.
+
+```bash
+$ echo -n "hello termux" | openssl dgst -sha256
+```
+
+```text
+SHA2-256(stdin)= ba5223902303e1e372e694a564d1df1f32e87d70ccf5139ccc79bd8bb39da20d
+```
+
+Both lines carry the same 64 hexadecimal characters, which is 256 bits. Change one character of the input and the whole digest changes.
+
+```bash
+$ echo -n "hello termux!" | sha256sum
+```
+
+```text
+e78826b31dc247827a7d42d8c732639878bc744f6af4024a957ce0336188bfc0  -
+```
+
+The two digests share nothing. There is no command that turns a digest back into its input, and there cannot be one: a digest is shorter than most inputs, so many inputs share a digest and none of them can be picked out from it. That is what one way means here. It is not that reversing is merely difficult with today's phones; the operation throws information away.
+
+## Step 2: An encoding is reversible, and it is not a secret
+
+Base64 exists so that binary data can travel through systems that carry text only. It is a public rule with no key.
+
+```bash
+$ echo -n "hello termux" | base64
+```
+
+```text
+aGVsbG8gdGVybXV4
+```
+
+Anyone can reverse it, and the command to do so is the same tool with `-d`.
+
+```bash
+$ echo -n "aGVsbG8gdGVybXV4" | base64 -d
+```
+
+```text
+hello termux
+```
+
+You get the original back with no password, no key and no special knowledge. The encoded string looks scrambled, and that is the whole of the trick. It is scrambling that everyone knows how to undo.
+
+<Callout type="warning" title="Base64 is not protection">
+A string that looks unreadable is not the same as a string that is protected. If you can decode it without a key, so can anyone who finds it. Never keep a password, a token or a key in base64 and treat it as safe.
+</Callout>
+
+## Step 3: Encryption needs a key
+
+Encryption is the one that is meant to be undone, but only by a key holder. `openssl enc` takes a passphrase and produces ciphertext that you cannot read without it.
+
+```bash
+$ echo "hello termux" | openssl enc -aes-256-cbc -pbkdf2 -pass pass:hunter2 -base64
+```
+
+```text
+U2FsdGVkX1+CSsjKSkOsZX0Y0i6kuLm/gmwF6iN1ujs=
+```
+
+The output changes on every run, because a fresh random salt is mixed in each time. To reverse it you supply the same passphrase and add `-d`.
+
+```bash
+$ echo "U2FsdGVkX1+CSsjKSkOsZX0Y0i6kuLm/gmwF6iN1ujs=" | openssl enc -d -aes-256-cbc -pbkdf2 -pass pass:hunter2 -base64
+```
+
+```text
+hello termux
+```
+
+Get the passphrase wrong and you get an error instead of text, because the key derived from the passphrase does not match the one used to encrypt.
+
+```bash
+$ echo "U2FsdGVkX1+CSsjKSkOsZX0Y0i6kuLm/gmwF6iN1ujs=" | openssl enc -d -aes-256-cbc -pbkdf2 -pass pass:wrong -base64
+```
+
+```text
+bad decrypt
+```
+
+The `U2FsdGVkX1` at the start of the ciphertext is base64 for the word `Salted__`. It is not part of your message. It is a header that says a salt was used, which is why the same passphrase gives different ciphertext each time. If you leave out `-pbkdf2`, OpenSSL still works but warns you, because the older way of turning a passphrase into a key is weaker.
+
+```bash
+$ echo "hello termux" | openssl enc -aes-256-cbc -pass pass:hunter2 -base64
+```
+
+```text
+*** WARNING : deprecated key derivation used.
+Using -iter or -pbkdf2 would be better.
+U2FsdGVkX18iySzPayt+NGkmiV8na0satMF7m4uTiOA=
+```
+
+## Step 4: The same bytes, three treatments
+
+Put the three side by side and the differences are plain.
+
+| | Reversible by anyone | Needs a key | Length of output |
+| --- | --- | --- | --- |
+| `sha256sum` | No | No | Always 256 bits |
+| `base64` | Yes | No | Grows by about a third |
+| `openssl enc` | No | Yes | Grows by about a third, plus a header |
+
+Only one of the three hides anything, and it is the one that needs a key. A hash does not hide data, it summarises it. An encoding does not hide data, it rewrites it.
+
+## Quick reference
+
+| Command | What it does |
+| --- | --- |
+| `sha256sum FILE` | Prints the SHA-256 hash of a file or of what you pipe in |
+| `openssl dgst -sha256` | The same digest, with a `SHA2-256(stdin)=` label |
+| `base64` | Encodes input as base64 text, with no key |
+| `base64 -d` | Decodes base64 text back to its bytes |
+| `openssl enc -aes-256-cbc -pbkdf2 -pass pass:X -base64` | Encrypts with a passphrase |
+| `openssl enc -d -aes-256-cbc -pbkdf2 -pass pass:X -base64` | Decrypts with the same passphrase |
+| `U2FsdGVkX1` | The base64 of `Salted__`, the header on a salted ciphertext |
+
+## Next steps
+
+- [Symmetric and asymmetric keys](/learn/symmetric-and-asymmetric/) takes the key idea further and shows a key pair.
+- [Passwords, keys and secrets](/learn/passwords-and-keys/) covers why a hash is the right thing for a password, and a wrong thing for a message.
+- [Encoding and hashes](/learn/encoding-and-hashes/) is the earlier lesson on base64, `xxd` and `sha256sum`.
+
+If `openssl` is missing, install it with `pkg install openssl`. It is a small package and works with no network once it is installed.
