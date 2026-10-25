@@ -1,7 +1,7 @@
 ---
 title: "Build a JWT inspector"
-description: "Build a token decoder on your phone: split a JWT on its dots, decode the base64url segments, pretty-print the payload with jq, and verify the signature with openssl."
-excerpt: "Split a token, decode its base64url parts, read the claims with jq, and check the signature, all from the shell."
+description: "Build jwt.sh on your phone, one small step at a time: split a token on its dots, decode the base64url parts, pretty-print the claims with python3, date the time claims, and verify an HMAC signature with openssl. The whole script is at the end."
+excerpt: "Grow a single cut command into a token inspector, step by step, then copy the finished script."
 category: "Utilities"
 track: "utilities"
 author: "The Study Cipher"
@@ -13,62 +13,40 @@ tags: [utilities, tokens]
 
 import Callout from '../../components/Callout.astro';
 
-This lesson builds the same token decoder as the [JWT inspector](/utilities/jwt/), so you can do the whole job from the shell without opening it. By the end you will be able to split a token into its three parts, decode the header and the payload with no key at all, pretty-print the claims with `jq`, and verify an HS256 signature by hand with `openssl`. You will also see what an `alg: none` token looks like, and why decoding is not verification. Everything runs offline in Termux, with no root and no network.
+In this lesson you build `jwt.sh`, a token inspector for your phone. You start with a single `cut` command and grow it, one small step at a time, until it can split a token, decode the header and payload, pretty-print the claims, turn the time claims into dates, and verify an HS256, HS384 or HS512 signature given a secret. Each step shows the whole file as it stands and the real output it prints, so you can run it after every step. The finished program sits in [The whole script](#the-whole-script) at the end: copy that one block into a file and you have the working tool. If you would rather use the tool than build it, the [JWT inspector](/utilities/jwt/) does the same job in the browser. Everything here runs offline in Termux as an ordinary app, with no root and no network.
 
 ## What you'll be able to do
 
 - Name the three parts of a JWT and say what each one carries.
 - Split a token on its dots with `cut`.
 - Decode a base64url segment with `tr`, a padding loop and `base64 -d`.
-- Pretty-print the payload with `jq`.
-- Recompute an HS256 signature with `openssl` and compare it.
+- Pretty-print the payload with `python3 -m json.tool`, which needs no package.
+- Turn the `iat`, `nbf` and `exp` claims into dates with `date`.
+- Recompute an HS256, HS384 or HS512 signature with `openssl` and compare it.
 - Explain what an `alg: none` token is and why a verifier must not trust the header.
 
-## Step 1: What a token is made of
+## Step 1: Split the token on its dots
 
-A JSON Web Token is three blocks of text joined by dots. The first is the header, the second is the payload, the third is the signature. The first two are base64url-encoded JSON. Base64url is base64 with two changes: `+` becomes `-`, `/` becomes `_`, and the trailing `=` padding is dropped, so the text can travel inside a URL or a cookie without escaping. The signature is base64url too.
-
-Here is a real HS256 token. Write it into a file so the commands stay short.
+A JSON Web Token is three blocks of text joined by dots. The first is the header, the second is the payload, the third is the signature. Write a real HS256 token into a file so the commands stay short; it was signed with the secret `termux-demo-secret`, which you use again in Step 7. Then pull out each part with `cut`, where `-d` sets the delimiter and `-f` picks the field.
 
 ```bash
 printf '%s\n' 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1pcmEiLCJhZG1pbiI6ZmFsc2UsImlhdCI6MTc1MDAwMDAwMH0.LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY' > token.txt
-```
-
-It was signed with the secret `termux-demo-secret`, which you will use again in Step 6. Nothing so far needs a key: the header and payload are only encoded.
-
-## Step 2: Split it on the dots
-
-`cut` with a dot as the delimiter pulls out each part: `-d` sets the delimiter and `-f` picks the field.
-
-```bash
 cut -d. -f1 token.txt
-```
-
-```text
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
-```
-
-```bash
 cut -d. -f2 token.txt
-```
-
-```text
-eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1pcmEiLCJhZG1pbiI6ZmFsc2UsImlhdCI6MTc1MDAwMDAwMH0
-```
-
-```bash
 cut -d. -f3 token.txt
 ```
 
 ```text
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1pcmEiLCJhZG1pbiI6ZmFsc2UsImlhdCI6MTc1MDAwMDAwMH0
 LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
 ```
 
-Field one is the header, field two is the payload, field three is the signature. If a token is malformed and a field is missing, `cut` returns whatever it finds, so a token with no signature shows an empty third field rather than an error.
+Field one is the header, field two is the payload, field three is the signature. A malformed token that is missing a field returns whatever `cut` finds, so a token with no signature shows an empty third field rather than an error.
 
-## Step 3: Decode a base64url segment
+## Step 2: Decode one base64url segment
 
-The header decodes with a straight pipeline. `tr` maps the two base64url characters back to their base64 forms, then `base64 -d` decodes the result.
+The header and payload are base64url-encoded JSON. Base64url is base64 with two changes: `+` becomes `-`, `/` becomes `_`, and the trailing `=` padding is dropped, so the text travels inside a URL or a cookie without escaping. To decode, map the two characters back with `tr`, then decode with `base64 -d`. The header decodes in one pipeline.
 
 ```bash
 cut -d. -f1 token.txt | tr '_-' '/+' | base64 -d
@@ -78,7 +56,11 @@ cut -d. -f1 token.txt | tr '_-' '/+' | base64 -d
 {"alg":"HS256","typ":"JWT"}
 ```
 
-That is the header. It names the algorithm, HS256, which is HMAC with SHA-256. The header segment is 36 characters, a multiple of four, so it decodes cleanly. The payload is a different length, which matters. Try it.
+That is the header. It names the algorithm, HS256, which is HMAC with SHA-256. The header segment is 36 characters, a multiple of four, so it decodes with no padding at all. Nothing so far needed a key, because the header is only encoded.
+
+## Step 3: Add the padding the payload needs
+
+The payload is a different length, and that matters. Base64url drops the trailing `=` that standard base64 uses to fill the final group to four, so add them back in a loop before decoding.
 
 ```bash
 seg=$(cut -d. -f2 token.txt | tr '_-' '/+')
@@ -90,109 +72,1029 @@ printf '%s' "$seg" | base64 -d
 {"sub":"1234567890","name":"Mira","admin":false,"iat":1750000000}
 ```
 
-The loop appends `=` until the length is a multiple of four, which is exactly the padding base64url removed. The payload segment is 87 characters, a remainder of three, so one `=` is added. Without it, `base64 -d` still prints the JSON but tacks `base64: invalid input` onto the end of the line and exits non-zero. The header needed no padding, as its length already divided by four. `${#seg}` is the length of the string, and the arithmetic works in sh as well as bash.
+The loop appends `=` until the length is a multiple of four, which is exactly the padding base64url removed. The payload segment is 87 characters, a remainder of three, so one `=` is added. Without it, `base64 -d` still prints the JSON but tacks `base64: invalid input` onto the end of the line and exits non-zero. `${#seg}` is the length of the string, and the arithmetic works in `sh` as well as in `bash`.
 
-## Step 4: Pretty-print the payload with jq
+## Step 4: Pretty-print with python3 -m json.tool
 
-The raw JSON is one dense line. `jq` reads it and prints it indented, one claim per line. Install it first.
-
-```bash
-pkg install jq
-```
-
-Then pipe the decoded payload into `jq`.
+The raw JSON is one dense line. `python3 -m json.tool` ships with Python, so there is no package to install, and it prints the same JSON indented, one claim per line.
 
 ```bash
 seg=$(cut -d. -f2 token.txt | tr '_-' '/+')
 while [ $(( ${#seg} % 4 )) -ne 0 ]; do seg="$seg="; done
-printf '%s' "$seg" | base64 -d | jq .
+printf '%s' "$seg" | base64 -d | python3 -m json.tool
 ```
 
 ```text
 {
-  "sub": "1234567890",
-  "name": "Mira",
-  "admin": false,
-  "iat": 1750000000
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": false,
+    "iat": 1750000000
 }
 ```
 
-The `.` filter means the whole document. To pick out one claim, `jq -r .name` prints `Mira` with the quotes removed; `-r` is raw output, which is what you want when the value feeds another command.
+The indentation makes the claims easy to scan, which is the whole point of an inspector. Python is on every Termux install, so this step costs you nothing to set up.
 
-## Step 5: Decoding needs no key
+## Step 5: Decode all three parts
 
-Everything so far used no secret at all. The payload is only encoded, not encrypted, so anyone holding the token can read every claim inside it. A token carrying a user id, a role or an email shows that information to whoever holds it, including anyone who intercepts it. The signature does not hide the contents. It only proves who wrote them.
-
-That is why a token should never carry a password, a card number, or anything you would not write on a postcard. Read any token you are handed and treat every claim as public.
-
-## Step 6: Verify the signature for real
-
-The third part is a signature over the first two, and it is the only part that protects anything. For HS256 the signature is an HMAC of the string `header.payload` using the shared secret. It is not decoded but recomputed and compared. Build the signing input, hash it, and encode the result as base64url.
+That pipeline is three commands each time. Put the decoding in a script so the pieces can be reused. This first version takes the token as an argument, splits the three parts, and decodes the header and the payload through a small function.
 
 ```bash
-SECRET='termux-demo-secret'
-signing_input=$(cut -d. -f1,2 token.txt)
-given=$(cut -d. -f3 token.txt)
-calc=$(printf '%s' "$signing_input" | openssl dgst -sha256 -hmac "$SECRET" -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')
-echo "given: $given"
-echo "calc:  $calc"
-[ "$given" = "$calc" ] && echo "signature valid" || echo "signature invalid"
+#!/bin/sh
+# jwt.sh - decode a JSON Web Token and check its HMAC signature.
+
+usage() {
+  cat <<'EOF'
+jwt.sh - decode a JWT and, when given a secret, check its HMAC signature
+
+Usage:
+  jwt.sh [options] TOKEN
+
+The token may also be piped in on standard input.
+
+Options:
+  -s, --secret SECRET   the HMAC secret to check the signature with
+  -h, --help            show this message
+
+Without --secret the token is decoded, but the signature is not checked.
+
+Examples:
+  jwt.sh TOKEN
+  jwt.sh --secret SECRET TOKEN
+  cat token.txt | jwt.sh --secret SECRET
+EOF
+}
+
+token=$1
+secret=termux-demo-secret
+
+# Decode one base64url segment, adding back the padding base64url drops.
+b64url_decode() {
+  seg=$(printf '%s' "$1" | tr '_-' '/+')
+  while [ $(( ${#seg} % 4 )) -ne 0 ]; do
+    seg="$seg="
+  done
+  printf '%s' "$seg" | base64 -d 2>/dev/null
+}
+
+header=$(printf '%s' "$token" | cut -d. -f1)
+payload=$(printf '%s' "$token" | cut -d. -f2)
+signature=$(printf '%s' "$token" | cut -d. -f3)
+
+header_json=$(b64url_decode "$header")
+payload_json=$(b64url_decode "$payload")
+
+echo "== Header =="
+printf '%s' "$header_json" | python3 -m json.tool 2>/dev/null || printf '%s\n' "$header_json"
+echo
+echo "== Payload =="
+printf '%s' "$payload_json" | python3 -m json.tool 2>/dev/null || printf '%s\n' "$payload_json"
+echo
+
+alg=$(printf '%s' "$header_json" | python3 -c "import sys, json
+try:
+    print(json.load(sys.stdin).get('alg', ''))
+except Exception:
+    print('')" 2>/dev/null)
+
+echo "== Signature =="
+echo "  segment: $signature"
+```
+
+```bash
+token=$(cat token.txt)
+sh jwt.sh "$token"
 ```
 
 ```text
-given: LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
-calc:  LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
-signature valid
+== Header ==
+{
+    "alg": "HS256",
+    "typ": "JWT"
+}
+
+== Payload ==
+{
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": false,
+    "iat": 1750000000
+}
+
+== Signature ==
+  segment: LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
 ```
 
-Walk through it. `cut -d. -f1,2` gives the header and payload joined by a dot, which is the exact text that was signed. `openssl dgst -sha256 -hmac "$SECRET"` computes the HMAC, and `-binary` stops it printing hex, so the raw digest bytes come out. `openssl base64 -A` encodes those bytes on one line, and the two `tr` calls turn base64 into base64url. Then it is a plain string comparison. Now run the same thing with the wrong secret.
+The `b64url_decode` function wraps the `tr`, the padding loop and `base64 -d` in one place, so the header and the payload both go through the same code. The signature is base64url too, but it is not JSON, so for now it is only printed. Everything so far used no secret, because the payload is only encoded, not encrypted.
+
+<Callout type="warning" title="A token payload is public">
+Anyone holding the token can decode the payload, because decoding needs no key. The signature does not hide the claims; it only proves who wrote them. Read any token you are handed and treat every claim as public, and never put a password, a card number or anything else sensitive inside one.
+</Callout>
+
+## Step 6: List the time claims as dates
+
+A payload often carries three time claims: `iat` for issued at, `nbf` for not before, and `exp` for expires at. They are Unix seconds, so `date` with the `-d` flag and an `@` turns each one into a date you can read.
 
 ```bash
-calc=$(printf '%s' "$signing_input" | openssl dgst -sha256 -hmac 'wrong-secret' -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')
-echo "calc:  $calc"
-[ "$given" = "$calc" ] && echo "signature valid" || echo "signature invalid"
+#!/bin/sh
+# jwt.sh - decode a JSON Web Token and check its HMAC signature.
+
+usage() {
+  cat <<'EOF'
+jwt.sh - decode a JWT and, when given a secret, check its HMAC signature
+
+Usage:
+  jwt.sh [options] TOKEN
+
+The token may also be piped in on standard input.
+
+Options:
+  -s, --secret SECRET   the HMAC secret to check the signature with
+  -h, --help            show this message
+
+Without --secret the token is decoded, but the signature is not checked.
+
+Examples:
+  jwt.sh TOKEN
+  jwt.sh --secret SECRET TOKEN
+  cat token.txt | jwt.sh --secret SECRET
+EOF
+}
+
+token=$1
+secret=termux-demo-secret
+
+# Decode one base64url segment, adding back the padding base64url drops.
+b64url_decode() {
+  seg=$(printf '%s' "$1" | tr '_-' '/+')
+  while [ $(( ${#seg} % 4 )) -ne 0 ]; do
+    seg="$seg="
+  done
+  printf '%s' "$seg" | base64 -d 2>/dev/null
+}
+
+header=$(printf '%s' "$token" | cut -d. -f1)
+payload=$(printf '%s' "$token" | cut -d. -f2)
+signature=$(printf '%s' "$token" | cut -d. -f3)
+
+header_json=$(b64url_decode "$header")
+payload_json=$(b64url_decode "$payload")
+
+echo "== Header =="
+printf '%s' "$header_json" | python3 -m json.tool 2>/dev/null || printf '%s\n' "$header_json"
+echo
+echo "== Payload =="
+printf '%s' "$payload_json" | python3 -m json.tool 2>/dev/null || printf '%s\n' "$payload_json"
+echo
+
+echo "== Times =="
+for claim in iat nbf exp; do
+  value=$(printf '%s' "$payload_json" | python3 -c "import sys, json
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    data = {}
+v = data.get('$claim')
+print(v if v is not None else '')" 2>/dev/null)
+  if [ -n "$value" ]; then
+    when=$(date -d "@$value" '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null)
+    printf '  %s = %s  (%s)\n' "$claim" "$value" "${when:-unreadable}"
+  fi
+done
+echo
+
+alg=$(printf '%s' "$header_json" | python3 -c "import sys, json
+try:
+    print(json.load(sys.stdin).get('alg', ''))
+except Exception:
+    print('')" 2>/dev/null)
+
+echo "== Signature =="
+echo "  segment: $signature"
+```
+
+```bash
+sh jwt.sh "$token"
 ```
 
 ```text
-calc:  QauPL9ocpuG2nKKT-0o14VaogXNciiIQ-f_foQ4Mmh0
-signature invalid
+== Header ==
+{
+    "alg": "HS256",
+    "typ": "JWT"
+}
+
+== Payload ==
+{
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": false,
+    "iat": 1750000000
+}
+
+== Times ==
+  iat = 1750000000  (2025-06-15 15:06:40 UTC)
+
+== Signature ==
+  segment: LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
 ```
 
-One wrong character in the secret gives a completely different signature. Only someone who knows the secret can produce one that matches.
+`date -d @1750000000` reads the number of seconds since the start of 1970 and prints the moment it names. The zone shown is your phone's own, so on a device set to Indian time the same line reads IST instead of UTC. This token carries only `iat`; a token with `exp` would show a second line, and a token that has already expired would show a time in the past.
 
-<Callout type="warning" title="The signing input must be exact">
+## Step 7: Verify the HMAC signature with openssl
+
+The third part is the only part that protects anything. For HS256 the signature is an HMAC of the string `header.payload` using the shared secret. It is not decoded but recomputed and compared. `openssl dgst -sha256 -hmac` computes the HMAC, `-binary` stops it printing hex so the raw bytes come out, `openssl base64 -A` encodes those bytes on one line, and two `tr` calls turn base64 into base64url.
+
+```bash
+#!/bin/sh
+# jwt.sh - decode a JSON Web Token and check its HMAC signature.
+
+usage() {
+  cat <<'EOF'
+jwt.sh - decode a JWT and, when given a secret, check its HMAC signature
+
+Usage:
+  jwt.sh [options] TOKEN
+
+The token may also be piped in on standard input.
+
+Options:
+  -s, --secret SECRET   the HMAC secret to check the signature with
+  -h, --help            show this message
+
+Without --secret the token is decoded, but the signature is not checked.
+
+Examples:
+  jwt.sh TOKEN
+  jwt.sh --secret SECRET TOKEN
+  cat token.txt | jwt.sh --secret SECRET
+EOF
+}
+
+token=$1
+secret=termux-demo-secret
+
+# Decode one base64url segment, adding back the padding base64url drops.
+b64url_decode() {
+  seg=$(printf '%s' "$1" | tr '_-' '/+')
+  while [ $(( ${#seg} % 4 )) -ne 0 ]; do
+    seg="$seg="
+  done
+  printf '%s' "$seg" | base64 -d 2>/dev/null
+}
+
+header=$(printf '%s' "$token" | cut -d. -f1)
+payload=$(printf '%s' "$token" | cut -d. -f2)
+signature=$(printf '%s' "$token" | cut -d. -f3)
+
+header_json=$(b64url_decode "$header")
+payload_json=$(b64url_decode "$payload")
+
+echo "== Header =="
+printf '%s' "$header_json" | python3 -m json.tool 2>/dev/null || printf '%s\n' "$header_json"
+echo
+echo "== Payload =="
+printf '%s' "$payload_json" | python3 -m json.tool 2>/dev/null || printf '%s\n' "$payload_json"
+echo
+
+echo "== Times =="
+for claim in iat nbf exp; do
+  value=$(printf '%s' "$payload_json" | python3 -c "import sys, json
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    data = {}
+v = data.get('$claim')
+print(v if v is not None else '')" 2>/dev/null)
+  if [ -n "$value" ]; then
+    when=$(date -d "@$value" '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null)
+    printf '  %s = %s  (%s)\n' "$claim" "$value" "${when:-unreadable}"
+  fi
+done
+echo
+
+alg=$(printf '%s' "$header_json" | python3 -c "import sys, json
+try:
+    print(json.load(sys.stdin).get('alg', ''))
+except Exception:
+    print('')" 2>/dev/null)
+
+echo "== Signature =="
+signing_input="$header.$payload"
+calc=$(printf '%s' "$signing_input" | openssl dgst -sha256 -hmac "$secret" -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+echo "  given: $signature"
+echo "  calc:  $calc"
+[ "$signature" = "$calc" ] && echo "  match" || echo "  differ"
+```
+
+```bash
+sh jwt.sh "$token"
+```
+
+```text
+== Header ==
+{
+    "alg": "HS256",
+    "typ": "JWT"
+}
+
+== Payload ==
+{
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": false,
+    "iat": 1750000000
+}
+
+== Times ==
+  iat = 1750000000  (2025-06-15 15:06:40 UTC)
+
+== Signature ==
+  given: LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+  calc:  LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+  match
+```
+
+The `given` line is the signature carried in the token; the `calc` line is the one you computed. Here they are equal, so the token was signed with `termux-demo-secret` and its header and payload are exactly as the signer left them. This is the first step in the whole lesson that proves anything about the token.
+
+## Step 8: Take the secret as an option
+
+A secret baked into the script is not much use, so read it from the command line. Add an option parser for `--secret`, a usage message for `-h`, and an error for an unknown option.
+
+```bash
+#!/bin/sh
+# jwt.sh - decode a JSON Web Token and check its HMAC signature.
+
+usage() {
+  cat <<'EOF'
+jwt.sh - decode a JWT and, when given a secret, check its HMAC signature
+
+Usage:
+  jwt.sh [options] TOKEN
+
+The token may also be piped in on standard input.
+
+Options:
+  -s, --secret SECRET   the HMAC secret to check the signature with
+  -h, --help            show this message
+
+Without --secret the token is decoded, but the signature is not checked.
+
+Examples:
+  jwt.sh TOKEN
+  jwt.sh --secret SECRET TOKEN
+  cat token.txt | jwt.sh --secret SECRET
+EOF
+}
+
+secret=
+token=
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -s|--secret)
+      if [ $# -lt 2 ]; then echo "jwt.sh: --secret needs a value" >&2; exit 2; fi
+      secret=$2; shift 2 ;;
+    -h|--help)
+      usage; exit 0 ;;
+    --)
+      shift; break ;;
+    -*)
+      echo "jwt.sh: unknown option: $1" >&2
+      echo "try: jwt.sh --help" >&2
+      exit 2 ;;
+    *)
+      token=$1; shift ;;
+  esac
+done
+
+if [ -z "$token" ]; then
+  read -r token
+fi
+
+if [ -z "$token" ]; then
+  echo "jwt.sh: no token given" >&2
+  echo "try: jwt.sh --help" >&2
+  exit 2
+fi
+
+# Decode one base64url segment, adding back the padding base64url drops.
+b64url_decode() {
+  seg=$(printf '%s' "$1" | tr '_-' '/+')
+  while [ $(( ${#seg} % 4 )) -ne 0 ]; do
+    seg="$seg="
+  done
+  printf '%s' "$seg" | base64 -d 2>/dev/null
+}
+
+header=$(printf '%s' "$token" | cut -d. -f1)
+payload=$(printf '%s' "$token" | cut -d. -f2)
+signature=$(printf '%s' "$token" | cut -d. -f3)
+
+header_json=$(b64url_decode "$header")
+payload_json=$(b64url_decode "$payload")
+
+echo "== Header =="
+printf '%s' "$header_json" | python3 -m json.tool 2>/dev/null || printf '%s\n' "$header_json"
+echo
+echo "== Payload =="
+printf '%s' "$payload_json" | python3 -m json.tool 2>/dev/null || printf '%s\n' "$payload_json"
+echo
+
+echo "== Times =="
+for claim in iat nbf exp; do
+  value=$(printf '%s' "$payload_json" | python3 -c "import sys, json
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    data = {}
+v = data.get('$claim')
+print(v if v is not None else '')" 2>/dev/null)
+  if [ -n "$value" ]; then
+    when=$(date -d "@$value" '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null)
+    printf '  %s = %s  (%s)\n' "$claim" "$value" "${when:-unreadable}"
+  fi
+done
+echo
+
+alg=$(printf '%s' "$header_json" | python3 -c "import sys, json
+try:
+    print(json.load(sys.stdin).get('alg', ''))
+except Exception:
+    print('')" 2>/dev/null)
+
+echo "== Signature =="
+signing_input="$header.$payload"
+calc=$(printf '%s' "$signing_input" | openssl dgst -sha256 -hmac "$secret" -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+echo "  given: $signature"
+echo "  calc:  $calc"
+[ "$signature" = "$calc" ] && echo "  match" || echo "  differ"
+```
+
+```bash
+sh jwt.sh --secret termux-demo-secret "$token"
+sh jwt.sh --secret wrong-secret "$token"
+```
+
+```text
+== Header ==
+{
+    "alg": "HS256",
+    "typ": "JWT"
+}
+
+== Payload ==
+{
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": false,
+    "iat": 1750000000
+}
+
+== Times ==
+  iat = 1750000000  (2025-06-15 15:06:40 UTC)
+
+== Signature ==
+  given: LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+  calc:  LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+  match
+== Header ==
+{
+    "alg": "HS256",
+    "typ": "JWT"
+}
+
+== Payload ==
+{
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": false,
+    "iat": 1750000000
+}
+
+== Times ==
+  iat = 1750000000  (2025-06-15 15:06:40 UTC)
+
+== Signature ==
+  given: LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+  calc:  QauPL9ocpuG2nKKT-0o14VaogXNciiIQ-f_foQ4Mmh0
+  differ
+```
+
+One wrong character in the secret gives a completely different signature, so the two lines differ and the token does not verify. Only someone who knows the secret can produce a `calc` that matches the `given`.
+
+<Callout type="tip" title="The signing input must be exact">
 The HMAC is over the header and payload as they arrived, character for character. Decode the header and re-encode it and the bytes differ, so the signature fails even though the token is genuine. Sign the original text, not your cleaned-up copy.
 </Callout>
 
-## Step 7: A token that says alg none
+## Step 9: Give a clear verdict
 
-The header is part of the token, and the token is what an attacker controls. A well-known attack sets the algorithm to `none`, which means there is no signature at all. Write one and look at it.
+A check is worth little unless it says plainly what it found. Replace the raw `given` and `calc` lines with a verdict: `VALID` when the HMAC matches, `INVALID` when it does not, and `NOT CHECKED` when no secret was given, so the tool never implies it verified something it did not. The algorithm is read from the header only to pick the digest for HS256, HS384 or HS512, and a token that asks for `none` is refused outright.
+
+```bash
+#!/bin/sh
+# jwt.sh - decode a JSON Web Token and check its HMAC signature.
+
+usage() {
+  cat <<'EOF'
+jwt.sh - decode a JWT and, when given a secret, check its HMAC signature
+
+Usage:
+  jwt.sh [options] TOKEN
+
+The token may also be piped in on standard input.
+
+Options:
+  -s, --secret SECRET   the HMAC secret to check the signature with
+  -h, --help            show this message
+
+Without --secret the token is decoded, but the signature is not checked.
+
+Examples:
+  jwt.sh TOKEN
+  jwt.sh --secret SECRET TOKEN
+  cat token.txt | jwt.sh --secret SECRET
+EOF
+}
+
+secret=
+token=
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -s|--secret)
+      if [ $# -lt 2 ]; then echo "jwt.sh: --secret needs a value" >&2; exit 2; fi
+      secret=$2; shift 2 ;;
+    -h|--help)
+      usage; exit 0 ;;
+    --)
+      shift; break ;;
+    -*)
+      echo "jwt.sh: unknown option: $1" >&2
+      echo "try: jwt.sh --help" >&2
+      exit 2 ;;
+    *)
+      token=$1; shift ;;
+  esac
+done
+
+if [ -z "$token" ]; then
+  read -r token
+fi
+
+if [ -z "$token" ]; then
+  echo "jwt.sh: no token given" >&2
+  echo "try: jwt.sh --help" >&2
+  exit 2
+fi
+
+# Decode one base64url segment, adding back the padding base64url drops.
+b64url_decode() {
+  seg=$(printf '%s' "$1" | tr '_-' '/+')
+  while [ $(( ${#seg} % 4 )) -ne 0 ]; do
+    seg="$seg="
+  done
+  printf '%s' "$seg" | base64 -d 2>/dev/null
+}
+
+if [ "$(printf '%s' "$token" | tr -cd '.' | wc -c)" -ne 2 ]; then
+  echo "jwt.sh: not a JWT: expected three dot-separated parts" >&2
+  echo "try: jwt.sh --help" >&2
+  exit 2
+fi
+
+header=$(printf '%s' "$token" | cut -d. -f1)
+payload=$(printf '%s' "$token" | cut -d. -f2)
+signature=$(printf '%s' "$token" | cut -d. -f3)
+
+header_json=$(b64url_decode "$header")
+payload_json=$(b64url_decode "$payload")
+
+if ! printf '%s' "$header_json" | python3 -m json.tool >/dev/null 2>&1; then
+  echo "jwt.sh: the header did not decode to JSON; is this really a JWT?" >&2
+  exit 2
+fi
+
+echo "== Header =="
+printf '%s' "$header_json" | python3 -m json.tool 2>/dev/null || printf '%s\n' "$header_json"
+echo
+echo "== Payload =="
+printf '%s' "$payload_json" | python3 -m json.tool 2>/dev/null || printf '%s\n' "$payload_json"
+echo
+
+echo "== Times =="
+for claim in iat nbf exp; do
+  value=$(printf '%s' "$payload_json" | python3 -c "import sys, json
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    data = {}
+v = data.get('$claim')
+print(v if v is not None else '')" 2>/dev/null)
+  if [ -n "$value" ]; then
+    when=$(date -d "@$value" '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null)
+    printf '  %s = %s  (%s)\n' "$claim" "$value" "${when:-unreadable}"
+  fi
+done
+echo
+
+alg=$(printf '%s' "$header_json" | python3 -c "import sys, json
+try:
+    print(json.load(sys.stdin).get('alg', ''))
+except Exception:
+    print('')" 2>/dev/null)
+
+echo "== Signature =="
+echo "  algorithm in header: ${alg:-none}"
+echo "  signature segment:   ${signature:-<empty>}"
+
+if [ -z "$secret" ]; then
+  echo "  result: NOT CHECKED (no secret given; decoding is not verification)"
+  exit 0
+fi
+
+case "$alg" in
+  HS256) dgst=sha256 ;;
+  HS384) dgst=sha384 ;;
+  HS512) dgst=sha512 ;;
+  *)
+    echo "  result: NOT CHECKED (the header asks for '$alg', which this tool will not sign with)"
+    echo "  a real verifier fixes the algorithm it expects and never trusts this field"
+    exit 1 ;;
+esac
+
+signing_input="$header.$payload"
+calc=$(printf '%s' "$signing_input" | openssl dgst -"$dgst" -hmac "$secret" -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+
+if [ "$signature" = "$calc" ]; then
+  echo "  result: VALID (the HMAC matches)"
+  exit 0
+else
+  echo "  result: INVALID (the HMAC does not match)"
+  exit 1
+fi
+```
+
+Decode a token with no secret, then check it, then check it with the wrong secret.
+
+```bash
+sh jwt.sh "$token"
+sh jwt.sh --secret termux-demo-secret "$token"
+sh jwt.sh --secret wrong-secret "$token"
+```
+
+```text
+== Header ==
+{
+    "alg": "HS256",
+    "typ": "JWT"
+}
+
+== Payload ==
+{
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": false,
+    "iat": 1750000000
+}
+
+== Times ==
+  iat = 1750000000  (2025-06-15 15:06:40 UTC)
+
+== Signature ==
+  algorithm in header: HS256
+  signature segment:   LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+  result: NOT CHECKED (no secret given; decoding is not verification)
+== Header ==
+{
+    "alg": "HS256",
+    "typ": "JWT"
+}
+
+== Payload ==
+{
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": false,
+    "iat": 1750000000
+}
+
+== Times ==
+  iat = 1750000000  (2025-06-15 15:06:40 UTC)
+
+== Signature ==
+  algorithm in header: HS256
+  signature segment:   LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+  result: VALID (the HMAC matches)
+== Header ==
+{
+    "alg": "HS256",
+    "typ": "JWT"
+}
+
+== Payload ==
+{
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": false,
+    "iat": 1750000000
+}
+
+== Times ==
+  iat = 1750000000  (2025-06-15 15:06:40 UTC)
+
+== Signature ==
+  algorithm in header: HS256
+  signature segment:   LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+  result: INVALID (the HMAC does not match)
+```
+
+Without a secret the tool says `NOT CHECKED` and stops, because reading a token is not the same as trusting it. Now look at the attack the last change guards against. A header can ask for the algorithm `none`, which means there is no signature at all, and the token carries an empty third field.
 
 ```bash
 printf '%s\n' 'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1pcmEiLCJhZG1pbiI6dHJ1ZX0.' > none.txt
-seg=$(cut -d. -f1 none.txt | tr '_-' '/+')
-while [ $(( ${#seg} % 4 )) -ne 0 ]; do seg="$seg="; done
-printf '%s' "$seg" | base64 -d
+sh jwt.sh --secret termux-demo-secret "$(cat none.txt)"
 ```
 
 ```text
-{"alg":"none","typ":"JWT"}
+== Header ==
+{
+    "alg": "none",
+    "typ": "JWT"
+}
+
+== Payload ==
+{
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": true
+}
+
+== Times ==
+
+== Signature ==
+  algorithm in header: none
+  signature segment:   <empty>
+  result: NOT CHECKED (the header asks for 'none', which this tool will not sign with)
+  a real verifier fixes the algorithm it expects and never trusts this field
 ```
 
-This header is 35 characters, so it needs one `=` of padding, by the same rule. The header asks for `none`, and the third field is empty.
+This header asks for `none`, and its payload claims `admin` is true. A verifier that read the algorithm from the header, saw `none`, and then decided no signature was needed would accept this forged token as valid. That is the whole attack. The defence is short and firm: the verifier chooses the algorithm it expects and rejects any token that asks for a different one, `none` above all. The token never gets a vote on how it is checked. Reading a token is not the same as trusting it, because anyone can write the header and the payload, and only the signature check proves anything.
+
+## The whole script
+
+Here is the finished file in one piece. Save it as `jwt.sh`, or copy this block into a file of that name, and it runs exactly as it stands.
 
 ```bash
-cut -d. -f3 none.txt
+#!/bin/sh
+# jwt.sh - decode a JSON Web Token and check its HMAC signature.
+
+usage() {
+  cat <<'EOF'
+jwt.sh - decode a JWT and, when given a secret, check its HMAC signature
+
+Usage:
+  jwt.sh [options] TOKEN
+
+The token may also be piped in on standard input.
+
+Options:
+  -s, --secret SECRET   the HMAC secret to check the signature with
+  -h, --help            show this message
+
+Without --secret the token is decoded, but the signature is not checked.
+
+Examples:
+  jwt.sh TOKEN
+  jwt.sh --secret SECRET TOKEN
+  cat token.txt | jwt.sh --secret SECRET
+EOF
+}
+
+secret=
+token=
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -s|--secret)
+      if [ $# -lt 2 ]; then echo "jwt.sh: --secret needs a value" >&2; exit 2; fi
+      secret=$2; shift 2 ;;
+    -h|--help)
+      usage; exit 0 ;;
+    --)
+      shift; break ;;
+    -*)
+      echo "jwt.sh: unknown option: $1" >&2
+      echo "try: jwt.sh --help" >&2
+      exit 2 ;;
+    *)
+      token=$1; shift ;;
+  esac
+done
+
+if [ -z "$token" ]; then
+  read -r token
+fi
+
+if [ -z "$token" ]; then
+  echo "jwt.sh: no token given" >&2
+  echo "try: jwt.sh --help" >&2
+  exit 2
+fi
+
+# Decode one base64url segment, adding back the padding base64url drops.
+b64url_decode() {
+  seg=$(printf '%s' "$1" | tr '_-' '/+')
+  while [ $(( ${#seg} % 4 )) -ne 0 ]; do
+    seg="$seg="
+  done
+  printf '%s' "$seg" | base64 -d 2>/dev/null
+}
+
+if [ "$(printf '%s' "$token" | tr -cd '.' | wc -c)" -ne 2 ]; then
+  echo "jwt.sh: not a JWT: expected three dot-separated parts" >&2
+  echo "try: jwt.sh --help" >&2
+  exit 2
+fi
+
+header=$(printf '%s' "$token" | cut -d. -f1)
+payload=$(printf '%s' "$token" | cut -d. -f2)
+signature=$(printf '%s' "$token" | cut -d. -f3)
+
+header_json=$(b64url_decode "$header")
+payload_json=$(b64url_decode "$payload")
+
+if ! printf '%s' "$header_json" | python3 -m json.tool >/dev/null 2>&1; then
+  echo "jwt.sh: the header did not decode to JSON; is this really a JWT?" >&2
+  exit 2
+fi
+
+echo "== Header =="
+printf '%s' "$header_json" | python3 -m json.tool 2>/dev/null || printf '%s\n' "$header_json"
+echo
+echo "== Payload =="
+printf '%s' "$payload_json" | python3 -m json.tool 2>/dev/null || printf '%s\n' "$payload_json"
+echo
+
+echo "== Times =="
+for claim in iat nbf exp; do
+  value=$(printf '%s' "$payload_json" | python3 -c "import sys, json
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    data = {}
+v = data.get('$claim')
+print(v if v is not None else '')" 2>/dev/null)
+  if [ -n "$value" ]; then
+    when=$(date -d "@$value" '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null)
+    printf '  %s = %s  (%s)\n' "$claim" "$value" "${when:-unreadable}"
+  fi
+done
+echo
+
+alg=$(printf '%s' "$header_json" | python3 -c "import sys, json
+try:
+    print(json.load(sys.stdin).get('alg', ''))
+except Exception:
+    print('')" 2>/dev/null)
+
+echo "== Signature =="
+echo "  algorithm in header: ${alg:-none}"
+echo "  signature segment:   ${signature:-<empty>}"
+
+if [ -z "$secret" ]; then
+  echo "  result: NOT CHECKED (no secret given; decoding is not verification)"
+  exit 0
+fi
+
+case "$alg" in
+  HS256) dgst=sha256 ;;
+  HS384) dgst=sha384 ;;
+  HS512) dgst=sha512 ;;
+  *)
+    echo "  result: NOT CHECKED (the header asks for '$alg', which this tool will not sign with)"
+    echo "  a real verifier fixes the algorithm it expects and never trusts this field"
+    exit 1 ;;
+esac
+
+signing_input="$header.$payload"
+calc=$(printf '%s' "$signing_input" | openssl dgst -"$dgst" -hmac "$secret" -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+
+if [ "$signature" = "$calc" ]; then
+  echo "  result: VALID (the HMAC matches)"
+  exit 0
+else
+  echo "  result: INVALID (the HMAC does not match)"
+  exit 1
+fi
+```
+
+## Using it
+
+Decode a token, check its signature, and check it with the wrong secret.
+
+```bash
+token=$(cat token.txt)
+sh jwt.sh "$token"
+sh jwt.sh --secret termux-demo-secret "$token"
+sh jwt.sh --secret wrong-secret "$token"
 ```
 
 ```text
+== Header ==
+{
+    "alg": "HS256",
+    "typ": "JWT"
+}
+
+== Payload ==
+{
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": false,
+    "iat": 1750000000
+}
+
+== Times ==
+  iat = 1750000000  (2025-06-15 15:06:40 UTC)
+
+== Signature ==
+  algorithm in header: HS256
+  signature segment:   LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+  result: NOT CHECKED (no secret given; decoding is not verification)
+== Header ==
+{
+    "alg": "HS256",
+    "typ": "JWT"
+}
+
+== Payload ==
+{
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": false,
+    "iat": 1750000000
+}
+
+== Times ==
+  iat = 1750000000  (2025-06-15 15:06:40 UTC)
+
+== Signature ==
+  algorithm in header: HS256
+  signature segment:   LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+  result: VALID (the HMAC matches)
+== Header ==
+{
+    "alg": "HS256",
+    "typ": "JWT"
+}
+
+== Payload ==
+{
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": false,
+    "iat": 1750000000
+}
+
+== Times ==
+  iat = 1750000000  (2025-06-15 15:06:40 UTC)
+
+== Signature ==
+  algorithm in header: HS256
+  signature segment:   LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+  result: INVALID (the HMAC does not match)
 ```
 
-The payload claims `admin` is true. A verifier that reads the algorithm from the header, sees `none`, and then decides no signature is needed would accept this forged token as valid. That is the whole attack. The fix is short and firm: the verifier chooses the algorithm it expects and rejects any token whose header asks for anything else, `none` above all. The token never gets a vote on how it is checked.
+The tool also takes the token on standard input, which is handy in a pipeline.
 
-## Step 8: Decoding is not verification
+```bash
+cat token.txt | sh jwt.sh --secret termux-demo-secret
+```
 
-The lesson to carry away is one line: reading a token is not the same as trusting it. Splitting and decoding prove nothing about who wrote the token, because anyone can write those parts. Only the signature check in Step 6 proves anything, and only when the verifier fixed the algorithm and holds the right secret. An inspector that shows the claims is a useful window, not a gate. Never accept a token just because it decoded cleanly.
+```text
+== Header ==
+{
+    "alg": "HS256",
+    "typ": "JWT"
+}
+
+== Payload ==
+{
+    "sub": "1234567890",
+    "name": "Mira",
+    "admin": false,
+    "iat": 1750000000
+}
+
+== Times ==
+  iat = 1750000000  (2025-06-15 15:06:40 UTC)
+
+== Signature ==
+  algorithm in header: HS256
+  signature segment:   LEqKJqaAnM91I32zKqTjqgBXHshwwisBvLXB77iDaXY
+  result: VALID (the HMAC matches)
+```
 
 ## Quick reference
 
@@ -203,11 +1105,13 @@ The lesson to carry away is one line: reading a token is not the same as trustin
 | `cut -d. -f3 token.txt` | Prints the signature segment |
 | `tr '_-' '/+'` | Turns base64url characters back into base64 |
 | `base64 -d` | Decodes a base64 segment to its bytes |
-| `pkg install jq` | Installs the jq JSON tool |
-| `... \| jq .` | Pretty-prints the decoded payload |
+| `python3 -m json.tool` | Pretty-prints the decoded JSON, no package needed |
+| `date -d @1750000000` | Turns a Unix time claim into a date |
 | `openssl dgst -sha256 -hmac "$secret" -binary` | Computes the HS256 HMAC of the signing input |
 | `openssl base64 -A` | Encodes the raw digest on a single line |
 | `tr '+/' '-_'` then `tr -d '='` | Converts base64 into base64url |
+| `sh jwt.sh --secret SECRET TOKEN` | Decodes and checks the signature |
+| `sh jwt.sh --help` | Prints the usage message |
 
 ## Next steps
 
