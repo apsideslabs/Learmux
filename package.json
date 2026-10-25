@@ -11,6 +11,7 @@
     "preview": "astro preview",
     "generate": "node scripts/generate-challenges.mjs",
     "generate:thumbs": "node scripts/generate-thumbs.mjs",
+    "generate:og": "node scripts/generate-og.mjs",
     "test": "node scripts/run-tests.mjs",
     "test:utilities": "node scripts/test-utilities.mjs",
     "test:validator": "node scripts/test-validator.mjs",
