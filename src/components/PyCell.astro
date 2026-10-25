@@ -96,13 +96,14 @@ const isCheckpoint = typeof expect === 'string' && expect !== '';
   <div class="pycell__verdict" data-verdict hidden></div>
 
   <p class="pycell__note" data-note>
-    This runs in your browser. Nothing is sent anywhere, and the first run downloads the
-    Python runtime, about ten megabytes, which the browser then keeps.
+    Runs in your browser, and nothing is sent anywhere. Python starts loading in the
+    background as you reach this cell, about six megabytes once. After that every cell
+    on the site runs instantly until you close the tab.
   </p>
 </div>
 
 <script>
-  import { runPython, onLoadState, resetNamespace, retryRuntime } from '../lib/py/runtime';
+  import { runPython, ensureRuntime, onLoadState, resetNamespace, retryRuntime } from '../lib/py/runtime';
   import { checkOutput, checkpointId, type MatchMode } from '../lib/py/cells';
   import { isSolved, markSolved } from '../lib/progress';
 
@@ -290,7 +291,24 @@ const isCheckpoint = typeof expect === 'string' && expect !== '';
       });
     });
 
-    // Warm nothing up front: the runtime is only fetched on the first Run.
+    // Start the runtime when the first cell is about to be seen, not on page
+    // load. The download and the WebAssembly compile then overlap with reading
+    // instead of with the first press of Run, and somebody who only wanted to
+    // read never pays for six megabytes they did not ask for.
+    if ('IntersectionObserver' in window) {
+      const warm = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            warm.disconnect();
+            ensureRuntime().catch(() => {
+              /* the failure is reported when Run is pressed */
+            });
+          }
+        },
+        { rootMargin: '300px' },
+      );
+      warm.observe(cells[0]);
+    }
   }
 
   function escapeHtml(s: string): string {
