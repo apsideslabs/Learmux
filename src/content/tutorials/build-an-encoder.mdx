@@ -1,7 +1,7 @@
 ---
 title: "Build an encoder and decoder"
-description: "Encode and decode base64, hex and URL text at the Termux prompt, and confirm that a decode really worked."
-excerpt: "Turn text into base64, hex and URL form and back, and check the round trip."
+description: "Build encdec.sh, a Termux tool that converts text between plain, base64, base64url, hex, URL, ROT13 and binary in both directions, one small step at a time."
+excerpt: "Build an encoder and decoder in the shell, step by step, and learn to check a decode instead of trusting it."
 category: "Utilities"
 track: "utilities"
 author: "The Study Cipher"
@@ -13,49 +13,90 @@ tags: [utilities, shell]
 
 import Callout from '../../components/Callout.astro';
 
-You will build the conversions that change how text is written down and change it back again. Encoding does not hide anything, it only rewrites the same bytes in a different alphabet, so the same tools decode as easily as they encode. By the end you can move a value through base64, hex and URL form, check that a decode actually worked, and see the one place where a phone quietly disagrees with a desktop. This lesson builds the same conversions as the interactive encoder and decoder in the Utilities section, so you can do the same work by hand without the tool.
+You will build `encdec.sh`, a tool that rewrites a value between plain text, base64, base64url, hex, URL percent-encoding, ROT13 and binary, in both directions. Encoding does not hide anything, it only writes the same bytes in a different alphabet, so the same tools decode as easily as they encode. Along the way you will meet the three traps that catch people: a decode that succeeds and is still wrong, a newline that breaks a round trip, and the belief that an encoded value is a secret. The script is grown a few lines at a time, and the finished file sits in one block at the end, ready to copy and run. Nothing here needs a package beyond the Termux base install.
 
-If you would rather click than type, that tool lives at [the encoder and decoder](/utilities/encode-decode/). Everything below does the same work in the shell.
+The same conversions also live as a page you can click, at [the encoder and decoder](/utilities/encode-decode/). Everything below builds it by hand.
 
 ## What you'll be able to do
 
-- Encode and decode text with `base64` and `base64 -d`.
-- Spot why a decode can succeed and still be wrong, and confirm a round trip.
-- Explain why `printf '%s'` and `echo` give different results.
-- Turn text into hex with `xxd -p` and `od -An -tx1`.
-- Do the same conversions in one line of Python, including URL quoting and ROT13.
-- Show why the character encoding matters, and why an encoded value is not a secret.
+- Encode and decode with `base64`, and check a decode rather than trusting its exit code.
+- Turn text into hex with `od -An -tx1` and read it back.
+- Swap in the URL safe base64 alphabet with `tr`, and put the padding back to decode.
+- Percent encode and decode a value for a URL.
+- Shift letters with `tr` for ROT13, and say why it is a toy.
+- Show a value as eight bit groups, and read the bytes back.
+- Wire every format together behind a `--to` option, and read from a file or from standard input.
 
-## Step 1: Encode and decode with base64
+## Step 1: Encode with base64
 
-`base64` reads from standard input and writes the encoded text. Give it a short string.
+`base64` reads standard input and writes the encoded text. Put this in a file called `encdec.sh`:
 
 ```bash
-printf '%s' 'hello termux' | base64
+#!/data/data/com.termux/files/usr/bin/bash
+printf '%s' "$1" | base64
+```
+
+Run it with a short string:
+
+```bash
+bash encdec.sh 'hello termux'
 ```
 
 ```text
 aGVsbG8gdGVybXV4
 ```
 
-To reverse it, pass `-d` and feed the encoded text back in.
+The script uses `printf '%s'` rather than `echo`, and that choice matters more than it looks. `echo` appends a newline to whatever it prints, and that newline is a byte like any other, so it gets encoded along with the text.
 
 ```bash
-printf '%s' 'hello termux' | base64 | base64 -d
+echo 'hello termux' | base64
+printf '%s' 'hello termux' | base64
 ```
 
 ```text
+aGVsbG8gdGVybXV4Cg==
+aGVsbG8gdGVybXV4
+```
+
+The first value ends in `Cg==`, which is the newline. The second does not. `printf '%s'` writes exactly the characters you gave it and no more, so it is the right tool for anything that has to survive a round trip. A newline that crept in at one end and not the other is the most common reason a value will not match after decoding.
+
+## Step 2: Decode it back, and the trap
+
+To reverse base64, pass `-d` and feed the encoded text in. Replace the whole script with this:
+
+```bash
+#!/data/data/com.termux/files/usr/bin/bash
+if [ "${1:-}" = "-d" ]; then
+  input="$2"
+  printf '%s' "$input" | base64 -d
+else
+  input="$1"
+  printf '%s' "$input" | base64
+fi
+```
+
+Run it both ways:
+
+```bash
+bash encdec.sh 'hello termux'
+bash encdec.sh -d 'aGVsbG8gdGVybXV4'
+```
+
+```text
+aGVsbG8gdGVybXV4
 hello termux
 ```
 
-The round trip needs no key, because base64 is a public rule rather than a lock. It exists so that bytes which a text only system would mangle, such as a binary file or an image, can travel inside something that carries text. Nothing about it is secret.
+The round trip needs no key, because base64 is a public rule rather than a lock. That is the point the whole lesson rests on, and you can prove it by decoding a value in front of yourself. Nothing was hidden: anyone holding that string reads it in one command, exactly as you just did.
 
-## Step 2: The decode that quietly succeeds
+<Callout type="warning" title="An encoded value is not a secret">
+Never store a password, a token or a key in base64, hex, URL form or ROT13 and call it protected. Every one of them is a public rule with no key. Use a password manager or a real secrets store instead.
+</Callout>
 
-The trap with `base64 -d` is that it does not ask whether the input was base64, only whether it could be. Hand it something malformed and it complains, and the exit code tells you.
+Now the trap. `base64 -d` does not ask whether the input was base64, only whether it could be. Hand it something with characters outside the alphabet and it complains, and the exit code tells you.
 
 ```bash
-printf '%s' 'notbase64!!' | base64 -d > /dev/null 2>&1; echo "exit $?"
+printf '%s' 'notbase64!!' | base64 -d >/dev/null 2>&1; echo "exit $?"
 ```
 
 ```text
@@ -65,189 +106,907 @@ exit 1
 So always check the exit code. But a zero exit code is not proof that the value was base64. An ordinary word of the right length passes without a murmur.
 
 ```bash
-printf 'password' | base64 -d > /dev/null; echo "exit $?"
+printf 'password' | base64 -d >/dev/null 2>&1; echo "exit $?"
 ```
 
 ```text
 exit 0
 ```
 
-`password` is eight characters, and every one of them is a valid base64 character, so the decoder accepts it and produces eight bytes that mean nothing at all. To confirm that a string really is base64, decode it and encode the result again, then compare.
+`password` is eight characters, and every one of them is a valid base64 character, so the decoder accepts it and produces six bytes that mean nothing at all.
 
 ```bash
-S='aGVsbG8gdGVybXV4'; R=$(printf '%s' "$S" | base64 -d | base64); [ "$R" = "$S" ] && echo "round trip matches" || echo "does not match"
+printf 'password' | base64 -d | od -An -tx1
 ```
 
 ```text
-round trip matches
+ a5 ab 2c c2 8a dd
 ```
 
-Run the same check on a string that is not base64 and it fails, which is the signal you want.
+That is why the finished tool carries a round trip check, added in Step 10: decode the value and encode the result again, then compare. Two checks catch different faults. The exit code catches input that is not base64 at all, and the round trip catches input that was mangled on the way, because re-encoding gives something different from what you started with.
+
+## Step 3: Hex with od
+
+Hex is another alphabet for the same bytes. `od -An -tx1` prints one byte per value, in hex, and it is always available because it comes with the base system. Add these two functions to the script, above the code that uses them:
 
 ```bash
-S='hello!!'; R=$(printf '%s' "$S" | base64 -d 2>/dev/null | base64); [ "$R" = "$S" ] && echo "round trip matches" || echo "does not match: got $R"
+hexenc() {
+  printf '%s' "$1" | od -An -tx1 | tr -s ' \n' ' ' | sed 's/^ //; s/ $//'
+}
+
+hexdec() {
+  local s out="" i=0 pair byte n
+  s=$(printf '%s' "$1" | tr -d ' \t\n')
+  n=${#s}
+  [ $(( n % 2 )) -eq 0 ] || { printf 'encdec: hex input needs an even number of digits\n' >&2; exit 1; }
+  while [ "$i" -lt "$n" ]; do
+    pair="${s:$i:2}"
+    case "$pair" in
+      *[!0-9a-fA-F]*) printf 'encdec: %s is not a hex pair\n' "$pair" >&2; exit 1 ;;
+    esac
+    printf -v byte '%b' "\\x${pair}"
+    out="${out}${byte}"
+    i=$(( i + 2 ))
+  done
+  printf '%s' "$out"
+}
+```
+
+The `-An` drops the offset column that `od` normally prints, and `-tx1` asks for one byte per value in hex. `tr -s` squeezes the runs of spaces and newlines, and the `sed` trims the space at each end. To read hex back, `hexdec` strips the spaces, checks that what is left is pairs of hex digits, and turns each pair into a byte with `printf '%b'`. Now introduce the `--to` option, so the format is chosen rather than fixed. Replace everything after the shebang with this:
+
+```bash
+fmt=base64
+decode=0
+text=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --to)
+      fmt="$2"
+      shift 2
+      ;;
+    -d)
+      decode=1
+      shift
+      ;;
+    *)
+      text="$1"
+      shift
+      ;;
+  esac
+done
+
+input="$text"
+
+if [ "$decode" -eq 1 ]; then
+  if [ "$fmt" = base64 ]; then
+    out=$(printf '%s' "$input" | base64 -d)
+  elif [ "$fmt" = hex ]; then
+    out=$(hexdec "$input")
+  fi
+else
+  if [ "$fmt" = base64 ]; then
+    out=$(printf '%s' "$input" | base64 | tr -d '\n')
+  elif [ "$fmt" = hex ]; then
+    out=$(hexenc "$input")
+  fi
+fi
+printf '%s\n' "$out"
+```
+
+Run it:
+
+```bash
+bash encdec.sh --to hex 'hello termux'
+bash encdec.sh -d --to hex '68 65 6c 6c 6f 20 74 65 72 6d 75 78'
 ```
 
 ```text
-does not match: got hell
-```
-
-<Callout type="warning" title="Check the exit code, then check the round trip">
-Two checks catch different faults. The exit code catches input that is not base64 at all. The round trip catches input that was mangled on the way, because re-encoding gives something different from what you started with. Do both before you trust a decode.
-</Callout>
-
-## Step 3: printf versus echo
-
-Look back at Step 1 and you will see `printf '%s'` rather than `echo`. That choice matters more than it looks. `echo` adds a newline to the end of its output.
-
-```bash
-echo 'hello termux' | base64
-```
-
-```text
-aGVsbG8gdGVybXV4Cg==
-```
-
-Compare that with the first encode, `aGVsbG8gdGVybXV4`. The extra `Cg==` on the end is the newline that `echo` added, encoded along with the text. `printf '%s'` writes exactly the characters you gave it and no more, so it is the right tool for anything that has to survive a round trip. A newline that crept in at one end and not the other is the most common reason a value will not match the original after decoding.
-
-## Step 4: Hex with xxd and od
-
-Hex is another alphabet for the same bytes. `xxd -p` prints plain hex, with no offset column and no ASCII view, so it is easy to read and easy to feed back in.
-
-```bash
-printf '%s' 'hello termux' | xxd -p
-```
-
-```text
-68656c6c6f207465726d7578
-```
-
-Reverse it with `xxd -r -p`, which reads plain hex and writes the original bytes.
-
-```bash
-printf '%s' '68656c6c6f207465726d7578' | xxd -r -p; echo
-```
-
-```text
+68 65 6c 6c 6f 20 74 65 72 6d 75 78
 hello termux
 ```
 
-`xxd` may not be installed on your phone. If it is missing, run `pkg install xxd`. The other option is `od`, which comes with coreutils in the base install, so it is always there.
+Eleven bytes become eleven hex pairs. The spaces in the encoded value are ignored on the way back, so the output of `hexenc` feeds straight into `hexdec`.
+
+## Step 4: The URL safe base64 alphabet
+
+Standard base64 uses `+` and `/`, and both of those mean something in a URL. The URL safe variant, base64url, swaps them for `-` and `_`, and drops the `=` padding. Add these two functions:
 
 ```bash
-printf '%s' 'hello termux' | od -An -tx1
+b64url_enc() {
+  printf '%s' "$1" | base64 | tr -d '\n=' | tr '+/' '-_'
+}
+
+b64url_dec() {
+  local s
+  s=$(printf '%s' "$1" | tr -d ' \t\n' | tr '_-' '/+')
+  while [ $(( ${#s} % 4 )) -ne 0 ]; do s="${s}="; done
+  printf '%s' "$s" | base64 -d
+}
+```
+
+Then add a `base64url` branch to each arm of the dispatch, next to the hex one:
+
+```bash
+  elif [ "$fmt" = base64url ]; then
+    out=$(b64url_dec "$input")
+```
+
+and in the encode arm:
+
+```bash
+  elif [ "$fmt" = base64url ]; then
+    out=$(b64url_enc "$input")
+```
+
+Run it on a value whose standard base64 contains a slash:
+
+```bash
+bash encdec.sh --to base64url 'hi?>'
+bash encdec.sh -d --to base64url 'aGk_Pg'
 ```
 
 ```text
- 68 65 6c 6c 6f 20 74 65 72 6d 75 78
+aGk_Pg
+hi?>
 ```
 
-The `-An` drops the leading offset column and `-tx1` asks for one byte per value in hex. You get one byte per column, separated by spaces, with a single leading space on each line. It is a little harder to read than `xxd -p` and a little harder to feed back in, but it never needs a package, which on a phone is often the deciding factor.
+The standard base64 of `hi?>` is `aGk/Pg==`, and base64url writes it as `aGk_Pg`, with the slash turned into an underscore and the padding gone. Decoding has to put the padding back before `base64 -d` will accept it, which is what the `while` loop in `b64url_dec` does: it adds `=` until the length is a multiple of four.
 
-## Step 5: The Python one-liners
+## Step 5: Percent encoding for a URL
 
-Python does all of these conversions in a single line, which is handy when you want to chain one into a script. It needs `pkg install python` if `python3` is not already there.
+A URL cannot carry a space or an ampersand as themselves. Percent encoding writes each byte that is not safe as a `%` followed by two hex digits. Add these two functions:
 
 ```bash
-python3 -c "import base64; print(base64.b64encode('hello termux'.encode()).decode())"
+urlencode() {
+  local out="" b ch esc
+  for b in $(printf '%s' "$1" | od -An -tu1); do
+    if { [ "$b" -ge 48 ] && [ "$b" -le 57 ]; } ||
+       { [ "$b" -ge 65 ] && [ "$b" -le 90 ]; } ||
+       { [ "$b" -ge 97 ] && [ "$b" -le 122 ]; } ||
+       [ "$b" -eq 45 ] || [ "$b" -eq 46 ] || [ "$b" -eq 95 ] || [ "$b" -eq 126 ]; then
+      printf -v ch "\\$(printf '%03o' "$b")"
+      out="${out}${ch}"
+    else
+      printf -v esc '%%%02X' "$b"
+      out="${out}${esc}"
+    fi
+  done
+  printf '%s' "$out"
+}
+
+urldecode() {
+  local s="$1" out="" i=0 ch pair byte n
+  n=${#s}
+  while [ "$i" -lt "$n" ]; do
+    ch="${s:$i:1}"
+    if [ "$ch" = '%' ] && [ "$i" -le $(( n - 3 )) ]; then
+      pair="${s:$(( i + 1 )):2}"
+      case "$pair" in
+        *[!0-9a-fA-F]*) printf 'encdec: %% is not followed by two hex digits\n' >&2; exit 1 ;;
+      esac
+      printf -v byte '%b' "\\x${pair}"
+      out="${out}${byte}"
+      i=$(( i + 3 ))
+    elif [ "$ch" = '+' ]; then
+      out="${out} "
+      i=$(( i + 1 ))
+    else
+      out="${out}${ch}"
+      i=$(( i + 1 ))
+    fi
+  done
+  printf '%s' "$out"
+}
 ```
 
-```text
-aGVsbG8gdGVybXV4
-```
-
-URL quoting turns the characters that would confuse a web address into percent escapes. A space becomes `%20` and an ampersand becomes `%26`.
+`urlencode` walks the bytes of the string with `od -An -tu1`. A byte in the unreserved set, which is the letters, the digits and `.`, `-`, `_`, `~`, is written as itself; everything else becomes `%XX`. Because it works a byte at a time, a letter with an accent, which is two bytes in UTF-8, is encoded as two escapes. Add the `url` branches to the dispatch, in both arms, and run it:
 
 ```bash
-python3 -c "import urllib.parse; print(urllib.parse.quote('hello termux & tea'))"
+bash encdec.sh --to url 'hello termux & tea'
+bash encdec.sh -d --to url 'hello%20termux%20%26%20tea'
 ```
 
 ```text
 hello%20termux%20%26%20tea
+hello termux & tea
 ```
 
-`unquote` takes it back.
+A space becomes `%20` and an ampersand becomes `%26`. `urldecode` reads `%` and the two digits after it, and turns a `+` into a space, which is what a form does.
+
+## Step 6: ROT13 with tr
+
+ROT13 shifts each letter thirteen places through the alphabet. `tr` maps one set of characters onto another, and because thirteen is half of twenty six, the same shift undoes it. Add a `rot13` branch to each arm of the dispatch, the same way as the ones before it, and run it:
 
 ```bash
-python3 -c "import urllib.parse; print(urllib.parse.unquote('hello%20termux'))"
-```
-
-```text
-hello termux
-```
-
-ROT13 shifts each letter thirteen places through the alphabet, which is half of twenty six, so the same operation undoes it.
-
-```bash
-python3 -c "import codecs; print(codecs.encode('Hello termux', 'rot13'))"
+bash encdec.sh --to rot13 'Hello termux'
 ```
 
 ```text
 Uryyb grezhk
 ```
 
-Run `codecs.decode` with the same name on `Uryyb grezhk` and you are back to `Hello termux`. ROT13 hides a spoiler in a forum post. It stops nobody who wants to read your data, and it is not encryption.
+Only the letters move, so the space between the two words is untouched. ROT13 hides a spoiler in a forum post. It stops nobody who wants to read your data, and it is not encryption.
 
-## Step 6: UTF-8, and why an encoded value is not a secret
+## Step 7: Eight bit groups
 
-One thing trips people up when they move a value between a phone and a desktop. The letter e with an acute accent is not one byte in the encoding most systems use now. In UTF-8 it is two.
+The last format is the plainest: each byte written as eight ones and zeros. Add these two functions:
 
 ```bash
-printf '%s' 'café' | base64
+tobin() {
+  local out="" b bits k
+  for b in $(printf '%s' "$1" | od -An -tu1); do
+    bits=""
+    k=7
+    while [ "$k" -ge 0 ]; do
+      if [ $(( (b >> k) & 1 )) -eq 1 ]; then bits="${bits}1"; else bits="${bits}0"; fi
+      k=$(( k - 1 ))
+    done
+    if [ -z "$out" ]; then out="$bits"; else out="${out} ${bits}"; fi
+  done
+  printf '%s' "$out"
+}
+
+frombin() {
+  local s out="" i=0 byte j bit ch n
+  s=$(printf '%s' "$1" | tr -d ' \t\n')
+  n=${#s}
+  [ "$n" -gt 0 ] || { printf 'encdec: no binary input\n' >&2; exit 1; }
+  [ $(( n % 8 )) -eq 0 ] || { printf 'encdec: binary input needs a whole number of eight bit groups\n' >&2; exit 1; }
+  while [ "$i" -lt "$n" ]; do
+    byte=0
+    j=0
+    while [ "$j" -lt 8 ]; do
+      bit="${s:$(( i + j )):1}"
+      case "$bit" in
+        0) byte=$(( byte << 1 )) ;;
+        1) byte=$(( (byte << 1) | 1 )) ;;
+        *) printf 'encdec: binary input may only hold 0 and 1\n' >&2; exit 1 ;;
+      esac
+      j=$(( j + 1 ))
+    done
+    printf -v ch "\\$(printf '%03o' "$byte")"
+    out="${out}${ch}"
+    i=$(( i + 8 ))
+  done
+  printf '%s' "$out"
+}
+```
+
+`tobin` shifts each byte down one bit at a time, from the seventh bit to the zeroth, and writes a `1` or a `0`. `frombin` does the reverse, building each byte up by shifting left and setting the low bit. Add the `binary` branches and run it:
+
+```bash
+bash encdec.sh --to binary 'hi'
+bash encdec.sh -d --to binary '01101000 01101001'
 ```
 
 ```text
-Y2Fmw6k=
+01101000 01101001
+hi
 ```
 
-The bytes behind that base64 are `c3` and `a9`, which is the UTF-8 for the accented letter. A tool that treats the same text as latin-1, where that letter is a single byte, would use `e9` instead and produce a different string.
+`h` is 104, which is `01101000` in binary, and `i` is 105, which is `01101001`.
+
+## Step 8: Tidy the dispatch into a case
+
+The chain of `if` and `elif` has grown one branch per format, and it is now hard to read. A `case` says the same thing in one line per format, and it is what a shell tool normally uses. While tidying it, add a `plain` format, which passes the value through untouched; it is what lets the script act as a filter that leaves some values alone. Replace both dispatch arms with this:
 
 ```bash
-python3 -c "import base64; print(base64.b64encode('café'.encode('latin-1')).decode())"
+if [ "$decode" -eq 1 ]; then
+  case "$fmt" in
+    plain)     out="$input" ;;
+    base64)    out=$(printf '%s' "$input" | base64 -d) ;;
+    base64url) out=$(b64url_dec "$input") ;;
+    hex)       out=$(hexdec "$input") ;;
+    url)       out=$(urldecode "$input") ;;
+    rot13)     out=$(printf '%s' "$input" | tr 'A-Za-z' 'N-ZA-Mn-za-m') ;;
+    binary)    out=$(frombin "$input") ;;
+  esac
+else
+  case "$fmt" in
+    plain)     out="$input" ;;
+    base64)    out=$(printf '%s' "$input" | base64 | tr -d '\n') ;;
+    base64url) out=$(b64url_enc "$input") ;;
+    hex)       out=$(hexenc "$input") ;;
+    url)       out=$(urlencode "$input") ;;
+    rot13)     out=$(printf '%s' "$input" | tr 'A-Za-z' 'N-ZA-Mn-za-m') ;;
+    binary)    out=$(tobin "$input") ;;
+  esac
+fi
+printf '%s\n' "$out"
+```
+
+Run it on a word with an accent, which shows the bytes plainly:
+
+```bash
+bash encdec.sh --to hex 'café'
 ```
 
 ```text
-Y2Fm6Q==
+63 61 66 c3 a9
 ```
 
-`od` shows the difference in the bytes themselves.
+Four letters become five bytes, because the letter e with an acute accent is two bytes, `c3` and `a9`, in UTF-8. A tool that treated the same text as latin-1 would use a single byte, `e9`, for that letter and print a shorter line. When a value decodes to the wrong characters, the usual cause is that one end wrote it as UTF-8 and the other read it as latin-1, and the hex output is how you tell.
+
+## Step 9: Read from a file or from standard input
+
+A value that arrives from a pipeline, or from a file, should not have to be pasted onto the command line. Add `-f` to the parsing loop, and choose the input from the argument, the file or standard input. Replace the parsing block and the `input="$text"` line with this:
 
 ```bash
-printf '%s' 'café' | od -An -tx1
+fmt=base64
+decode=0
+file=""
+text=""
+has_text=0
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --to)
+      fmt="$2"
+      shift 2
+      ;;
+    -d)
+      decode=1
+      shift
+      ;;
+    -f)
+      file="$2"
+      shift 2
+      ;;
+    *)
+      text="$1"
+      has_text=1
+      shift
+      ;;
+  esac
+done
+
+if [ -n "$file" ]; then
+  input=$(cat "$file")
+elif [ "$has_text" -eq 1 ]; then
+  input="$text"
+else
+  input=$(cat)
+fi
+```
+
+Run it from a pipeline, and then from a file:
+
+```bash
+printf '%s' 'hello termux' | bash encdec.sh --to base64
 ```
 
 ```text
- 63 61 66 c3 a9
+aGVsbG8gdGVybXV4
 ```
 
-If a value decodes to the wrong characters, the usual cause is that one end wrote it as UTF-8 and the other read it as latin-1, not that the value is wrong. Check the bytes with `od` before you change anything else.
+With nothing on the command line, the script reads standard input, so a value flows straight in from another command. With `-f` it reads a named file instead, and `has_text` records whether a value was given so the three cases can be told apart.
 
-Finally, the point the whole lesson rests on. An encoded value is not a secret, and you can prove it by decoding it in front of yourself.
+## Step 10: A round trip check, a usage message and clean errors
+
+The trap from Step 2 is that `base64 -d` can succeed on input that was never base64. The exit code catches malformed input, but not a value that happens to be spelled in base64 characters. The tool can do the second check for you. The finishing touches are a `die` helper, a `usage` message, guards on the options that take a value, and the round trip check itself.
+
+Add the two helpers near the top of the script, above the functions:
 
 ```bash
-printf '%s' 'Y2Fmw6k=' | base64 -d; echo
+die() {
+  printf 'encdec: %s\n' "$1" >&2
+  exit 1
+}
+
+usage() {
+  cat <<'EOF'
+encdec.sh - move a value between plain text and several encodings.
+
+Usage: encdec.sh [options] [TEXT]
+
+  --to FORMAT   the format to work in (default base64):
+                  plain base64 base64url hex url rot13 binary
+  -d            decode instead of encode: read FORMAT, write plain text
+  -c            after decoding, re-encode and report whether it round trips
+  -f FILE       read the input from FILE instead of the argument or stdin
+  -h            print this help and exit
+
+The input is the TEXT argument if you give one, else the file named with -f,
+else whatever arrives on standard input.
+
+Examples:
+  encdec.sh --to base64 'hello termux'
+  encdec.sh -d --to base64 'aGVsbG8gdGVybXV4'
+  encdec.sh --to url 'hello termux & tea'
+  printf '%s' 'hello' | encdec.sh --to binary
+EOF
+}
+```
+
+The script also starts with `set -u`, just under the shebang, so it stops rather than carrying on with a value that was never set:
+
+```bash
+set -u
+```
+
+Now replace the parsing loop and the input selection from Step 9 with the finished versions. Each option that takes a value checks that the value is there, an unknown option is named, the format is checked before any work is done, and the file is checked before it is read:
+
+```bash
+fmt=base64
+decode=0
+check=0
+file=""
+text=""
+has_text=0
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --to)
+      [ $# -ge 2 ] || die "--to needs a format"
+      fmt="$2"
+      shift 2
+      ;;
+    -d|--decode)
+      decode=1
+      shift
+      ;;
+    -c|--check)
+      check=1
+      shift
+      ;;
+    -f|--file)
+      [ $# -ge 2 ] || die "-f needs a file name"
+      file="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -*)
+      die "unknown option '$1' (try -h)"
+      ;;
+    *)
+      [ "$has_text" -eq 0 ] || die "unexpected extra argument '$1'"
+      text="$1"
+      has_text=1
+      shift
+      ;;
+  esac
+done
+
+case "$fmt" in
+  plain|base64|base64url|hex|url|rot13|binary) ;;
+  *) die "unknown format '$fmt' (use plain, base64, base64url, hex, url, rot13 or binary)" ;;
+esac
+
+if [ -n "$file" ] && [ "$has_text" -eq 1 ]; then
+  die "give either a value or -f, not both"
+fi
+
+if [ -n "$file" ]; then
+  [ -f "$file" ] || die "no such file: $file"
+  input=$(cat "$file")
+elif [ "$has_text" -eq 1 ]; then
+  input="$text"
+else
+  input=$(cat)
+fi
+```
+
+One more thing on the decode arm. `base64 -d` reports malformed input through its exit code, so the arm should check it rather than letting a failure pass as empty output. Replace the decode arm of the dispatch with this:
+
+```bash
+    base64)    out=$(printf '%s' "$input" | base64 -d) || die "input is not valid base64" ;;
+    base64url) out=$(b64url_dec "$input") || die "input is not valid base64url" ;;
+    hex)       out=$(hexdec "$input") || exit 1 ;;
+    url)       out=$(urldecode "$input") || exit 1 ;;
+    binary)    out=$(frombin "$input") || exit 1 ;;
+```
+
+The three that `exit 1` already print their own message from inside the helper, so the outer arm only has to stop. The two base64 arms have nothing to say for themselves, so `die` speaks for them.
+
+And replace the final `printf '%s\n' "$out"` with this block, which re-encodes the result when `-c` is given and compares it with what came in:
+
+```bash
+if [ "$check" -eq 1 ] && [ "$decode" -eq 1 ]; then
+  case "$fmt" in
+    base64)    re=$(printf '%s' "$out" | base64 | tr -d '\n') ;;
+    base64url) re=$(b64url_enc "$out") ;;
+    hex)       re=$(hexenc "$out") ;;
+    *)         re="" ;;
+  esac
+  if [ -z "$re" ]; then
+    printf '%s  [round trip check not supported for %s]\n' "$out" "$fmt"
+  elif [ "$(printf '%s' "$re" | tr -d ' \t\n')" = "$(printf '%s' "$input" | tr -d ' \t\n')" ]; then
+    printf '%s  [round trip ok]\n' "$out"
+  else
+    printf '%s  [round trip FAILED]\n' "$out"
+  fi
+else
+  printf '%s\n' "$out"
+fi
+```
+
+Run it on a value that looks like base64 but is not the canonical spelling of anything:
+
+```bash
+bash encdec.sh -d -c --to base64 'aGl='
 ```
 
 ```text
+hi  [round trip FAILED]
+```
+
+`aGl=` decodes to `hi`, but the canonical base64 of `hi` is `aGk=`, so the check catches the difference and reports it rather than staying silent. Be honest about the limit, though: `password` both decodes and re-encodes cleanly, and still means nothing. The round trip confirms that a value was not mangled, not that it was ever meant as base64. For that, you have to know where the value came from.
+
+Try a bad format and a bad argument:
+
+```bash
+bash encdec.sh --to rot99 'hi'
+bash encdec.sh -d --to hex 'zz'
+bash encdec.sh --nope
+```
+
+```text
+encdec: unknown format 'rot99' (use plain, base64, base64url, hex, url, rot13 or binary)
+encdec: zz is not a hex pair
+encdec: unknown option '--nope' (try -h)
+```
+
+Every message names the problem and goes to standard error, and the script exits with a non zero status, so it composes properly in a pipeline.
+
+## The whole script
+
+```bash
+#!/data/data/com.termux/files/usr/bin/bash
+# encdec.sh - move a value between plain text and several encodings.
+#
+# Runs in Termux on Android as an ordinary app: no root, no network, and
+# nothing to install beyond what the base system already has.
+#
+# Formats: plain base64 base64url hex url rot13 binary
+#
+# Examples:
+#     bash encdec.sh --to base64 'hello termux'
+#     bash encdec.sh --to hex 'cafe'
+#     bash encdec.sh -d --to base64url 'aGVsbG8gdGVybXV4'
+#     printf '%s' 'hello' | bash encdec.sh --to binary
+
+set -u
+
+fmt=base64
+decode=0
+check=0
+file=""
+text=""
+has_text=0
+
+usage() {
+  cat <<'EOF'
+encdec.sh - move a value between plain text and several encodings.
+
+Usage: encdec.sh [options] [TEXT]
+
+  --to FORMAT   the format to work in (default base64):
+                  plain base64 base64url hex url rot13 binary
+  -d            decode instead of encode: read FORMAT, write plain text
+  -c            after decoding, re-encode and report whether it round trips
+  -f FILE       read the input from FILE instead of the argument or stdin
+  -h            print this help and exit
+
+The input is the TEXT argument if you give one, else the file named with -f,
+else whatever arrives on standard input.
+
+Examples:
+  encdec.sh --to base64 'hello termux'
+  encdec.sh -d --to base64 'aGVsbG8gdGVybXV4'
+  encdec.sh --to url 'hello termux & tea'
+  printf '%s' 'hello' | encdec.sh --to binary
+EOF
+}
+
+die() {
+  printf 'encdec: %s\n' "$1" >&2
+  exit 1
+}
+
+# plain text -> "68 65 6c 6c 6f", one byte per value in hex.
+hexenc() {
+  printf '%s' "$1" | od -An -tx1 | tr -s ' \n' ' ' | sed 's/^ //; s/ $//'
+}
+
+# "68 65 6c" -> plain text. Spaces and newlines are ignored, so the output of
+# hexenc feeds straight back in.
+hexdec() {
+  local s out="" i=0 pair byte n
+  s=$(printf '%s' "$1" | tr -d ' \t\n')
+  n=${#s}
+  [ $(( n % 2 )) -eq 0 ] || { printf 'encdec: hex input needs an even number of digits\n' >&2; exit 1; }
+  while [ "$i" -lt "$n" ]; do
+    pair="${s:$i:2}"
+    case "$pair" in
+      *[!0-9a-fA-F]*) printf 'encdec: %s is not a hex pair\n' "$pair" >&2; exit 1 ;;
+    esac
+    printf -v byte '%b' "\\x${pair}"
+    out="${out}${byte}"
+    i=$(( i + 2 ))
+  done
+  printf '%s' "$out"
+}
+
+# plain text -> "01101000 01101001", one byte as eight bits.
+tobin() {
+  local out="" b bits k
+  for b in $(printf '%s' "$1" | od -An -tu1); do
+    bits=""
+    k=7
+    while [ "$k" -ge 0 ]; do
+      if [ $(( (b >> k) & 1 )) -eq 1 ]; then bits="${bits}1"; else bits="${bits}0"; fi
+      k=$(( k - 1 ))
+    done
+    if [ -z "$out" ]; then out="$bits"; else out="${out} ${bits}"; fi
+  done
+  printf '%s' "$out"
+}
+
+# "01101000 01101001" -> plain text. Spaces and newlines are ignored.
+frombin() {
+  local s out="" i=0 byte j bit ch n
+  s=$(printf '%s' "$1" | tr -d ' \t\n')
+  n=${#s}
+  [ "$n" -gt 0 ] || { printf 'encdec: no binary input\n' >&2; exit 1; }
+  [ $(( n % 8 )) -eq 0 ] || { printf 'encdec: binary input needs a whole number of eight bit groups\n' >&2; exit 1; }
+  while [ "$i" -lt "$n" ]; do
+    byte=0
+    j=0
+    while [ "$j" -lt 8 ]; do
+      bit="${s:$(( i + j )):1}"
+      case "$bit" in
+        0) byte=$(( byte << 1 )) ;;
+        1) byte=$(( (byte << 1) | 1 )) ;;
+        *) printf 'encdec: binary input may only hold 0 and 1\n' >&2; exit 1 ;;
+      esac
+      j=$(( j + 1 ))
+    done
+    printf -v ch "\\$(printf '%03o' "$byte")"
+    out="${out}${ch}"
+    i=$(( i + 8 ))
+  done
+  printf '%s' "$out"
+}
+
+# plain text -> percent encoding. Everything outside the unreserved set is
+# turned into %XX, one byte at a time, so multi byte text is handled too.
+urlencode() {
+  local out="" b ch esc
+  for b in $(printf '%s' "$1" | od -An -tu1); do
+    if { [ "$b" -ge 48 ] && [ "$b" -le 57 ]; } ||
+       { [ "$b" -ge 65 ] && [ "$b" -le 90 ]; } ||
+       { [ "$b" -ge 97 ] && [ "$b" -le 122 ]; } ||
+       [ "$b" -eq 45 ] || [ "$b" -eq 46 ] || [ "$b" -eq 95 ] || [ "$b" -eq 126 ]; then
+      printf -v ch "\\$(printf '%03o' "$b")"
+      out="${out}${ch}"
+    else
+      printf -v esc '%%%02X' "$b"
+      out="${out}${esc}"
+    fi
+  done
+  printf '%s' "$out"
+}
+
+# percent encoding -> plain text. A plus becomes a space, as it does in a form.
+urldecode() {
+  local s="$1" out="" i=0 ch pair byte n
+  n=${#s}
+  while [ "$i" -lt "$n" ]; do
+    ch="${s:$i:1}"
+    if [ "$ch" = '%' ] && [ "$i" -le $(( n - 3 )) ]; then
+      pair="${s:$(( i + 1 )):2}"
+      case "$pair" in
+        *[!0-9a-fA-F]*) printf 'encdec: %% is not followed by two hex digits\n' >&2; exit 1 ;;
+      esac
+      printf -v byte '%b' "\\x${pair}"
+      out="${out}${byte}"
+      i=$(( i + 3 ))
+    elif [ "$ch" = '+' ]; then
+      out="${out} "
+      i=$(( i + 1 ))
+    else
+      out="${out}${ch}"
+      i=$(( i + 1 ))
+    fi
+  done
+  printf '%s' "$out"
+}
+
+# base64 -> base64url: the two characters that are awkward in a URL are swapped
+# for two that are not, and the padding is dropped.
+b64url_enc() {
+  printf '%s' "$1" | base64 | tr -d '\n=' | tr '+/' '-_'
+}
+
+# base64url -> plain text. The padding is put back before the decoder sees it.
+b64url_dec() {
+  local s
+  s=$(printf '%s' "$1" | tr -d ' \t\n' | tr '_-' '/+')
+  while [ $(( ${#s} % 4 )) -ne 0 ]; do s="${s}="; done
+  printf '%s' "$s" | base64 -d
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --to)
+      [ $# -ge 2 ] || die "--to needs a format"
+      fmt="$2"
+      shift 2
+      ;;
+    -d|--decode)
+      decode=1
+      shift
+      ;;
+    -c|--check)
+      check=1
+      shift
+      ;;
+    -f|--file)
+      [ $# -ge 2 ] || die "-f needs a file name"
+      file="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -*)
+      die "unknown option '$1' (try -h)"
+      ;;
+    *)
+      [ "$has_text" -eq 0 ] || die "unexpected extra argument '$1'"
+      text="$1"
+      has_text=1
+      shift
+      ;;
+  esac
+done
+
+case "$fmt" in
+  plain|base64|base64url|hex|url|rot13|binary) ;;
+  *) die "unknown format '$fmt' (use plain, base64, base64url, hex, url, rot13 or binary)" ;;
+esac
+
+if [ -n "$file" ] && [ "$has_text" -eq 1 ]; then
+  die "give either a value or -f, not both"
+fi
+
+if [ -n "$file" ]; then
+  [ -f "$file" ] || die "no such file: $file"
+  input=$(cat "$file")
+elif [ "$has_text" -eq 1 ]; then
+  input="$text"
+else
+  input=$(cat)
+fi
+
+if [ "$decode" -eq 1 ]; then
+  case "$fmt" in
+    plain)     out="$input" ;;
+    base64)    out=$(printf '%s' "$input" | base64 -d) || die "input is not valid base64" ;;
+    base64url) out=$(b64url_dec "$input") || die "input is not valid base64url" ;;
+    hex)       out=$(hexdec "$input") || exit 1 ;;
+    url)       out=$(urldecode "$input") || exit 1 ;;
+    rot13)     out=$(printf '%s' "$input" | tr 'A-Za-z' 'N-ZA-Mn-za-m') ;;
+    binary)    out=$(frombin "$input") || exit 1 ;;
+  esac
+else
+  case "$fmt" in
+    plain)     out="$input" ;;
+    base64)    out=$(printf '%s' "$input" | base64 | tr -d '\n') ;;
+    base64url) out=$(b64url_enc "$input") ;;
+    hex)       out=$(hexenc "$input") ;;
+    url)       out=$(urlencode "$input") ;;
+    rot13)     out=$(printf '%s' "$input" | tr 'A-Za-z' 'N-ZA-Mn-za-m') ;;
+    binary)    out=$(tobin "$input") ;;
+  esac
+fi
+
+if [ "$check" -eq 1 ] && [ "$decode" -eq 1 ]; then
+  case "$fmt" in
+    base64)    re=$(printf '%s' "$out" | base64 | tr -d '\n') ;;
+    base64url) re=$(b64url_enc "$out") ;;
+    hex)       re=$(hexenc "$out") ;;
+    *)         re="" ;;
+  esac
+  if [ -z "$re" ]; then
+    printf '%s  [round trip check not supported for %s]\n' "$out" "$fmt"
+  elif [ "$(printf '%s' "$re" | tr -d ' \t\n')" = "$(printf '%s' "$input" | tr -d ' \t\n')" ]; then
+    printf '%s  [round trip ok]\n' "$out"
+  else
+    printf '%s  [round trip FAILED]\n' "$out"
+  fi
+else
+  printf '%s\n' "$out"
+fi
+```
+
+## Using it
+
+Encode a short string, then decode it back:
+
+```bash
+bash encdec.sh --to base64 'hello termux'
+bash encdec.sh -d --to base64 'aGVsbG8gdGVybXV4'
+```
+
+```text
+aGVsbG8gdGVybXV4
+hello termux
+```
+
+Move a value through hex, and see the bytes behind an accented letter:
+
+```bash
+bash encdec.sh --to hex 'café'
+bash encdec.sh -d --to hex '63 61 66 c3 a9'
+```
+
+```text
+63 61 66 c3 a9
 café
 ```
 
-Anyone holding that string decodes it in one command, exactly as you just did. Base64, hex, URL quoting and ROT13 are all public rules with no key. Never store a password, a token or a key in any of them and call it protected. Use a password manager or a real secrets store instead.
+Percent encode a value for a URL, and read it back:
+
+```bash
+bash encdec.sh --to url 'hello termux & tea'
+bash encdec.sh -d --to url 'hello%20termux%20%26%20tea'
+```
+
+```text
+hello%20termux%20%26%20tea
+hello termux & tea
+```
+
+The URL safe alphabet, where a slash becomes an underscore:
+
+```bash
+bash encdec.sh --to base64url 'hi?>'
+```
+
+```text
+aGk_Pg
+```
+
+A value straight out of a pipeline:
+
+```bash
+printf '%s' 'hello termux' | bash encdec.sh --to binary
+```
+
+```text
+01101000 01100101 01101100 01101100 01101111 00100000 01110100 01100101 01110010 01101101 01110101 01111000
+```
+
+And the round trip check catching a value that decodes but does not re-encode to itself:
+
+```bash
+bash encdec.sh -d -c --to base64 'aGl='
+```
+
+```text
+hi  [round trip FAILED]
+```
 
 ## Quick reference
 
 | Command | What it does |
 | --- | --- |
-| `printf '%s' 'text' \| base64` | Encode text as base64 with no trailing newline |
+| `printf '%s' 'text' \| base64` | Encode text as base64, with no trailing newline |
 | `base64 -d` | Decode base64 back to its bytes |
-| `printf 'x' \| base64 -d \| base64` | Confirm a round trip, then compare with the original |
-| `echo 'text' \| base64` | Encode text with a newline included, the usual mistake |
-| `xxd -p` | Plain hex, no offsets and no ASCII column |
-| `xxd -r -p` | Read plain hex back into bytes |
+| `echo 'text' \| base64` | Encode with a newline included, the usual mistake |
 | `od -An -tx1` | One byte per column in hex, always available |
-| `python3 -c "import base64; ..."` | Encode or decode in one line |
-| `urllib.parse.quote` and `unquote` | Percent escape a value for a URL, and back |
-| `codecs.encode('x', 'rot13')` | Shift letters by thirteen, and the same to undo it |
+| `printf -v byte '%b' "\\x63"` | Turn a hex pair into a byte |
+| `tr '+/' '-_'` | Swap in the URL safe base64 alphabet |
+| `tr -d '='` | Drop the base64 padding |
+| `tr 'A-Za-z' 'N-ZA-Mn-za-m'` | Apply ROT13 to letters |
+| `printf '%%%02X' 32` | The percent escape for a byte value |
+| `bash encdec.sh -d -c --to base64 'aGl='` | Decode and report whether the value round trips |
 
 ## Next steps
 
