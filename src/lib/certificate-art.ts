@@ -1,48 +1,50 @@
 /**
  * The certificate artwork.
  *
- * This module returns the *inside* of the SVG: the frame, the engraved band,
- * the corner ornaments, the seal, and the five pieces of text that change. The
- * page drops it into an <svg> with `set:html`, and the profile script rewrites
- * those nodes as the reader types.
+ * ## The form
  *
- * ## The palette, and why it is not the site's palette
+ * A framed diploma, not a page with a border. The sheet is a deep navy mount
+ * with gold foil and an engraved security pattern, and the certificate itself
+ * sits on an ivory panel inside it. That gives three things a flat pale sheet
+ * cannot: real colour contrast, a visible focal frame, and a mount that reads as
+ * substantial the way a bevelled card mount does.
  *
- * A certificate is a document, not a page section, and the conventions are old
- * and specific: deep navy, metallic gold, warm ivory paper. Bright green on
- * white reads as a dashboard, which is exactly what this should not be. So the
- * brand is carried by navy and by one deliberate use of the site green in the
- * seal, and the gold does the ceremonial work.
+ * It also keeps the document printable. The panel is ivory, so all the type is
+ * dark on light and a home printer copes; only the margin carries ink.
  *
- * ## Fonts are chosen for the rasteriser, not for the page
+ * ## The palette
  *
- * The PNG export draws this SVG into a canvas through an <img>, and an SVG in
- * an <img> cannot load a webfont: it gets the system fonts and nothing else.
- * So the type stacks here name faces that are installed everywhere (Georgia,
- * Helvetica, Arial) rather than Poppins and Inter. That way the preview, the
- * downloaded SVG and the downloaded PNG are the same document, instead of three
- * near-misses.
+ * Navy and gold on ivory, which is the classic pair for this kind of document.
+ * Four colours total: navy, gold, ivory, and one deliberate green in the seal,
+ * which is the only place the site's own colour appears.
  *
- * ## Two rules the artwork obeys
+ * ## Fonts are chosen for the rasteriser
  *
- * Every value is an attribute, never a class: a downloaded SVG has no
- * stylesheet beside it.
+ * The PNG export draws this through an <img>, and an SVG in an <img> cannot load
+ * a webfont. So the stacks name faces installed everywhere (Georgia, Helvetica,
+ * Courier). The preview, the SVG and the PNG are then the same document.
  *
- * Every `data-` attribute has a value, even an empty one. HTML allows a
- * valueless attribute; XML does not, and an SVG is XML.
+ * ## Two rules
+ *
+ * Every value is an attribute, never a class: a delivered SVG has no stylesheet.
+ * Every `data-` attribute has a value: an SVG is XML, and XML has no valueless
+ * attributes.
  */
 
-const PAPER = '#fbf7ee';
-const PAPER_EDGE = '#f4eddd';
-const NAVY = '#14203a';
-const NAVY_2 = '#1f2d4d';
-const GOLD_DARK = '#8a6a1f';
+const NAVY = '#0b1424';
+const NAVY_2 = '#16243d';
+const NAVY_3 = '#1e3050';
+const IVORY = '#fbf7ee';
+const IVORY_2 = '#f6f0e1';
+const GOLD_DEEP = '#7a5c16';
 const GOLD = '#c9a227';
-const GOLD_LIGHT = '#f0dfa8';
+const GOLD_BRIGHT = '#f3e2a4';
 const GREEN = '#20d65a';
 const GREEN_DEEP = '#0e7a34';
-const INK = '#2a2a33';
+const INK = '#1a2233';
 const MUTED = '#6b6455';
+const ON_NAVY = '#e8e2d2';
+const ON_NAVY_MUTED = '#9a917c';
 
 const SERIF = "Georgia, 'Times New Roman', serif";
 const SANS = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -50,95 +52,92 @@ const MONO = "'Courier New', Courier, monospace";
 
 const n = (v: number) => Math.round(v * 100) / 100;
 
-/** A quarter fan of arcs in one corner, in gold. */
+/** A corner flourish: nested arcs, a diagonal, and a gilt bead. */
 function corner(x: number, y: number, sx: number, sy: number): string {
   const arcs: string[] = [];
-  for (const r of [14, 22, 30, 38]) {
+  for (const r of [12, 19, 26, 33, 40]) {
     const sweep = sx * sy > 0 ? 1 : 0;
     arcs.push(
-      `<path d="M${x + sx * r} ${y} A${r} ${r} 0 0 ${sweep} ${x} ${y + sy * r}" stroke-width="1"/>`,
+      `<path d="M${x + sx * r} ${y} A${r} ${r} 0 0 ${sweep} ${x} ${y + sy * r}" stroke-width="1.1"/>`,
     );
   }
   return [
-    `<g fill="none" stroke="url(#lx-gold)" stroke-opacity="0.95">${arcs.join('')}</g>`,
-    `<path d="M${x + sx * 44} ${y} L${x} ${y + sy * 44}" stroke="url(#lx-gold)" stroke-opacity="0.5" stroke-width="0.9"/>`,
-    `<circle cx="${x + sx * 7}" cy="${y + sy * 7}" r="2.6" fill="${GOLD_DARK}"/>`,
+    `<g fill="none" stroke="url(#gold)" stroke-opacity="0.9">${arcs.join('')}</g>`,
+    `<path d="M${x + sx * 47} ${y} L${x} ${y + sy * 47}" stroke="url(#gold)" stroke-opacity="0.45" stroke-width="0.9"/>`,
+    `<circle cx="${x + sx * 8}" cy="${y + sy * 8}" r="2.8" fill="${GOLD}"/>`,
+    `<circle cx="${x + sx * 8}" cy="${y + sy * 8}" r="1.2" fill="${GOLD_DEEP}"/>`,
   ].join('');
 }
 
 /**
- * A rosette: gold ribbon tails, a gilt ring of ticks, and a green centre.
+ * The seal: a solid gilt disc with an embossed ring, a ring of beads, ribbon
+ * tails, and a green centre holding a check.
  *
- * The green is the one place the site colour appears. A seal wants a single
- * saturated point and this is it.
+ * It is solid rather than an outline on purpose. A thin ring reads as a circle
+ * somebody drew; a filled disc with light and shade reads as a stamp.
  */
 function seal(cx: number, cy: number): string {
   const out: string[] = [];
 
-  // ribbon tails, behind the disc
+  // ribbon tails first, so the disc covers their tops
   out.push(
-    `<path d="M${cx - 27} ${cy + 40} L${cx - 38} ${cy + 100} L${cx - 25} ${cy + 90} ` +
-      `L${cx - 12} ${cy + 102} L${cx - 4} ${cy + 50} Z" fill="url(#lx-gold)"/>`,
+    `<path d="M${cx - 30} ${cy + 38} L${cx - 44} ${cy + 106} L${cx - 27} ${cy + 94} ` +
+      `L${cx - 11} ${cy + 108} L${cx - 2} ${cy + 48} Z" fill="url(#gold)"/>`,
   );
   out.push(
-    `<path d="M${cx + 27} ${cy + 40} L${cx + 38} ${cy + 100} L${cx + 25} ${cy + 90} ` +
-      `L${cx + 12} ${cy + 102} L${cx + 4} ${cy + 50} Z" fill="url(#lx-gold)"/>`,
+    `<path d="M${cx + 30} ${cy + 38} L${cx + 44} ${cy + 106} L${cx + 27} ${cy + 94} ` +
+      `L${cx + 11} ${cy + 108} L${cx + 2} ${cy + 48} Z" fill="url(#gold)"/>`,
   );
 
-  out.push(`<circle cx="${cx}" cy="${cy}" r="52" fill="${PAPER}"/>`);
-  out.push(`<circle cx="${cx}" cy="${cy}" r="52" fill="none" stroke="url(#lx-gold)" stroke-width="3"/>`);
-  out.push(`<circle cx="${cx}" cy="${cy}" r="46" fill="none" stroke="${GOLD_DARK}" stroke-opacity="0.5" stroke-width="0.7"/>`);
+  // the disc: gold rim, dark inner shadow, ivory face
+  out.push(`<circle cx="${cx}" cy="${cy}" r="56" fill="url(#gold)"/>`);
+  out.push(`<circle cx="${cx}" cy="${cy}" r="56" fill="none" stroke="${GOLD_DEEP}" stroke-width="1" stroke-opacity="0.55"/>`);
+  out.push(`<circle cx="${cx}" cy="${cy}" r="49" fill="${NAVY_2}"/>`);
+  out.push(`<circle cx="${cx}" cy="${cy}" r="47" fill="none" stroke="${GOLD_BRIGHT}" stroke-width="1.4" stroke-opacity="0.85"/>`);
 
-  // the tick ring
-  const ticks: string[] = [];
-  for (let i = 0; i < 56; i++) {
-    const a = (i / 56) * 2 * Math.PI;
-    const r1 = 40;
-    const r2 = i % 4 === 0 ? 45 : 43;
-    ticks.push(
-      `<path d="M${n(cx + r1 * Math.cos(a))} ${n(cy + r1 * Math.sin(a))} ` +
-        `L${n(cx + r2 * Math.cos(a))} ${n(cy + r2 * Math.sin(a))}"/>`,
-    );
+  // a ring of beads, gold on navy
+  const beads: string[] = [];
+  for (let i = 0; i < 48; i++) {
+    const a = (i / 48) * 2 * Math.PI;
+    beads.push(`<circle cx="${n(cx + 43 * Math.cos(a))}" cy="${n(cy + 43 * Math.sin(a))}" r="1.15"/>`);
   }
-  out.push(`<g stroke="${GOLD_DARK}" stroke-opacity="0.75" stroke-width="0.8">${ticks.join('')}</g>`);
+  out.push(`<g fill="${GOLD_BRIGHT}" fill-opacity="0.75">${beads.join('')}</g>`);
 
   // the green centre
   out.push(`<circle cx="${cx}" cy="${cy}" r="34" fill="${GREEN_DEEP}"/>`);
-  out.push(`<circle cx="${cx}" cy="${cy}" r="34" fill="none" stroke="url(#lx-gold)" stroke-width="1.6"/>`);
-  out.push(`<circle cx="${cx}" cy="${cy}" r="29" fill="none" stroke="${GREEN}" stroke-opacity="0.55" stroke-width="1"/>`);
-
-  // a check drawn as a path, so it needs no font
+  out.push(`<circle cx="${cx}" cy="${cy}" r="34" fill="none" stroke="url(#gold)" stroke-width="2"/>`);
+  out.push(`<circle cx="${cx}" cy="${cy}" r="29" fill="none" stroke="${GREEN}" stroke-opacity="0.6" stroke-width="1"/>`);
   out.push(
     `<path d="M${cx - 12} ${cy + 1} l8 8 l17 -19" fill="none" stroke="${GREEN}" ` +
-      `stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>`,
+      `stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>`,
   );
   return out.join('');
 }
 
-/** A watermark rosette, for depth behind the type. */
-function watermark(cx: number, cy: number, r: number): string {
+/** A large engraved rosette, for the mount behind the panel. */
+function rosette(cx: number, cy: number, r: number): string {
   const rings: string[] = [];
-  for (const k of [1, 0.82, 0.64, 0.46]) {
+  for (const k of [1, 0.87, 0.74, 0.61, 0.48]) {
     rings.push(`<circle cx="${cx}" cy="${cy}" r="${n(r * k)}"/>`);
   }
-  const ticks: string[] = [];
-  for (let i = 0; i < 72; i++) {
-    const a = (i / 72) * 2 * Math.PI;
-    ticks.push(
-      `<path d="M${n(cx + r * 0.88 * Math.cos(a))} ${n(cy + r * 0.88 * Math.sin(a))} ` +
+  const spokes: string[] = [];
+  for (let i = 0; i < 96; i++) {
+    const a = (i / 96) * 2 * Math.PI;
+    spokes.push(
+      `<path d="M${n(cx + r * 0.9 * Math.cos(a))} ${n(cy + r * 0.9 * Math.sin(a))} ` +
         `L${n(cx + r * Math.cos(a))} ${n(cy + r * Math.sin(a))}"/>`,
     );
   }
   return (
-    `<g fill="none" stroke="${GOLD_DARK}" stroke-width="1.1">${rings.join('')}</g>` +
-    `<g stroke="${GOLD_DARK}" stroke-width="0.7">${ticks.join('')}</g>`
+    `<g fill="none" stroke="${GOLD}" stroke-width="1.1">${rings.join('')}</g>` +
+    `<g stroke="${GOLD}" stroke-width="0.7">${spokes.join('')}</g>`
   );
 }
 
-const diamond = (cx: number, cy: number, r = 3.4, fill = GOLD_DARK) =>
+const lozenge = (cx: number, cy: number, r = 3.6, fill = GOLD) =>
   `<path d="M${cx} ${cy - r} L${cx + r} ${cy} L${cx} ${cy + r} L${cx - r} ${cy} Z" fill="${fill}"/>`;
 
-const rule = (x1: number, x2: number, y: number, paint = 'url(#lx-gold)', width = 1) =>
+const rule = (x1: number, x2: number, y: number, paint = 'url(#gold)', width = 1) =>
   `<path d="M${x1} ${y} H${x2}" stroke="${paint}" stroke-width="${width}"/>`;
 
 export interface ArtOptions {
@@ -155,124 +154,129 @@ export function certificateArt(o: ArtOptions): string {
 
   p.push(
     `<defs>` +
-      // the foil. Five stops, dark to light and back, so the rules read as metal
-      // rather than as a flat yellow line.
-      `<linearGradient id="lx-gold" x1="0" y1="0" x2="1" y2="1">` +
-      `<stop offset="0" stop-color="${GOLD_DARK}"/>` +
-      `<stop offset="0.22" stop-color="${GOLD}"/>` +
-      `<stop offset="0.5" stop-color="${GOLD_LIGHT}"/>` +
-      `<stop offset="0.78" stop-color="${GOLD}"/>` +
-      `<stop offset="1" stop-color="${GOLD_DARK}"/>` +
+      // foil: dark to bright and back, so it reads as metal rather than yellow
+      `<linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">` +
+      `<stop offset="0" stop-color="${GOLD_DEEP}"/>` +
+      `<stop offset="0.2" stop-color="${GOLD}"/>` +
+      `<stop offset="0.5" stop-color="${GOLD_BRIGHT}"/>` +
+      `<stop offset="0.8" stop-color="${GOLD}"/>` +
+      `<stop offset="1" stop-color="${GOLD_DEEP}"/>` +
       `</linearGradient>` +
-      `<radialGradient id="lx-paper" cx="0.5" cy="0.42" r="0.78">` +
-      `<stop offset="0" stop-color="#fffdf7"/>` +
-      `<stop offset="0.62" stop-color="${PAPER}"/>` +
-      `<stop offset="1" stop-color="${PAPER_EDGE}"/>` +
+      // the mount, lit from above the centre
+      `<radialGradient id="mount" cx="0.5" cy="0.4" r="0.8">` +
+      `<stop offset="0" stop-color="${NAVY_3}"/>` +
+      `<stop offset="0.55" stop-color="${NAVY_2}"/>` +
+      `<stop offset="1" stop-color="${NAVY}"/>` +
       `</radialGradient>` +
-      // the engraved band: interlocking circles, the pattern on a banknote
-      `<pattern id="lx-guilloche" width="10" height="10" patternUnits="userSpaceOnUse">` +
-      `<path d="M0 5 A5 5 0 0 1 10 5 A5 5 0 0 1 0 5" fill="none" stroke="${GOLD_DARK}" stroke-opacity="0.42" stroke-width="0.45"/>` +
-      `<path d="M5 0 A5 5 0 0 1 5 10 A5 5 0 0 1 5 0" fill="none" stroke="${GOLD_DARK}" stroke-opacity="0.42" stroke-width="0.45"/>` +
+      // the panel, faintly warmer in the middle
+      `<radialGradient id="panel" cx="0.5" cy="0.42" r="0.8">` +
+      `<stop offset="0" stop-color="#fffdf7"/>` +
+      `<stop offset="0.7" stop-color="${IVORY}"/>` +
+      `<stop offset="1" stop-color="${IVORY_2}"/>` +
+      `</radialGradient>` +
+      // the engraved pattern, for the mount margin
+      `<pattern id="engine" width="12" height="12" patternUnits="userSpaceOnUse">` +
+      `<path d="M0 6 A6 6 0 0 1 12 6 A6 6 0 0 1 0 6" fill="none" stroke="${GOLD}" stroke-opacity="0.5" stroke-width="0.5"/>` +
+      `<path d="M6 0 A6 6 0 0 1 6 12 A6 6 0 0 1 6 0" fill="none" stroke="${GOLD}" stroke-opacity="0.5" stroke-width="0.5"/>` +
       `</pattern>` +
-      `<clipPath id="lx-band">` +
-      `<path d="M20 20 H980 V687 H20 Z M48 48 V659 H952 V48 Z" clip-rule="evenodd"/>` +
+      `<clipPath id="margin">` +
+      `<path d="M0 0 H1000 V707 H0 Z M40 40 V667 H960 V40 Z" clip-rule="evenodd"/>` +
       `</clipPath>` +
+      // a soft drop shadow under the panel, so the mount has depth
+      `<filter id="lift" x="-8%" y="-8%" width="116%" height="116%">` +
+      `<feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.45"/>` +
+      `</filter>` +
       `</defs>`,
   );
 
-  p.push(`<rect width="1000" height="707" fill="url(#lx-paper)"/>`);
+  // ── the mount ──────────────────────────────────────────────────────────
+  p.push(`<rect width="1000" height="707" fill="url(#mount)"/>`);
+  p.push(`<g clip-path="url(#margin)"><rect width="1000" height="707" fill="url(#engine)"/></g>`);
+  p.push(`<g clip-path="url(#margin)" opacity="0.16">${rosette(500, 353, 470)}</g>`);
 
-  // the watermark, under everything
-  p.push(`<g opacity="0.04">${watermark(500, 470, 232)}</g>`);
+  // ── the panel ──────────────────────────────────────────────────────────
+  p.push(`<rect x="40" y="40" width="920" height="627" fill="url(#panel)" filter="url(#lift)"/>`);
+  p.push(`<rect x="40" y="40" width="920" height="627" fill="none" stroke="url(#gold)" stroke-width="2.4"/>`);
+  p.push(`<rect x="48" y="48" width="904" height="611" fill="none" stroke="${GOLD_DEEP}" stroke-opacity="0.45" stroke-width="0.9"/>`);
 
-  // ── the frame: gilt rule, hairline, engraved band, gilt rule, hairline ──
-  p.push(`<rect x="20" y="20" width="960" height="667" fill="url(#lx-guilloche)" clip-path="url(#lx-band)"/>`);
-  p.push(`<rect x="20" y="20" width="960" height="667" fill="none" stroke="url(#lx-gold)" stroke-width="2.6"/>`);
-  p.push(`<rect x="28" y="28" width="944" height="651" fill="none" stroke="${NAVY}" stroke-opacity="0.75" stroke-width="0.9"/>`);
-  p.push(`<rect x="48" y="48" width="904" height="611" fill="none" stroke="url(#lx-gold)" stroke-width="1.1"/>`);
-  p.push(`<rect x="56" y="56" width="888" height="595" fill="none" stroke="${NAVY}" stroke-opacity="0.4" stroke-width="0.8"/>`);
+  // corner flourishes on the panel
+  p.push(corner(48, 48, 1, 1));
+  p.push(corner(952, 48, -1, 1));
+  p.push(corner(48, 659, 1, -1));
+  p.push(corner(952, 659, -1, -1));
 
-  // corner ornaments
-  p.push(corner(56, 56, 1, 1));
-  p.push(corner(944, 56, -1, 1));
-  p.push(corner(56, 651, 1, -1));
-  p.push(corner(944, 651, -1, -1));
-
-  // ── letterhead ──
+  // ── letterhead ─────────────────────────────────────────────────────────
   p.push(
-    `<text x="500" y="104" font-family="${SANS}" font-size="10.5" font-weight="700" letter-spacing="5.4" fill="${MUTED}" text-anchor="middle">APSIDES LABS</text>`,
+    `<text x="500" y="112" font-family="${SANS}" font-size="10" font-weight="700" letter-spacing="5.6" fill="${MUTED}" text-anchor="middle">APSIDES LABS</text>`,
   );
   p.push(
-    `<text x="500" y="136" font-family="${SERIF}" font-size="25" letter-spacing="8" fill="${NAVY}" text-anchor="middle">LEARMUX</text>`,
+    `<text x="500" y="146" font-family="${SERIF}" font-size="27" letter-spacing="10" fill="${INK}" text-anchor="middle">LEARMUX</text>`,
   );
-  p.push(rule(400, 600, 154, 'url(#lx-gold)', 1));
-  p.push(diamond(500, 154, 4));
+  p.push(rule(392, 596, 162));
+  p.push(lozenge(500, 162, 4.2));
 
-  // ── title ──
+  // ── title, as one confident line ───────────────────────────────────────
   p.push(
-    `<text x="500" y="212" font-family="${SERIF}" font-size="29" letter-spacing="5.5" fill="${NAVY}" text-anchor="middle">CERTIFICATE</text>`,
+    `<text x="500" y="222" font-family="${SERIF}" font-size="31" letter-spacing="6" fill="${INK}" text-anchor="middle">CERTIFICATE OF COMPLETION</text>`,
   );
-  p.push(
-    `<text x="500" y="240" font-family="${SANS}" font-size="9.5" font-weight="700" letter-spacing="4.6" fill="${MUTED}" text-anchor="middle">OF COMPLETION</text>`,
-  );
-  p.push(rule(330, 452, 262, 'url(#lx-gold)', 1.4));
-  p.push(rule(548, 670, 262, 'url(#lx-gold)', 1.4));
-  p.push(diamond(500, 262, 4.4));
+  p.push(rule(300, 452, 244, 'url(#gold)', 1.6));
+  p.push(rule(548, 700, 244, 'url(#gold)', 1.6));
+  p.push(lozenge(500, 244, 4.6));
 
   p.push(
-    `<text x="500" y="292" font-family="${SANS}" font-size="9.5" font-weight="600" letter-spacing="3.2" fill="${MUTED}" text-anchor="middle">THIS IS TO CERTIFY THAT</text>`,
+    `<text x="500" y="276" font-family="${SANS}" font-size="9" font-weight="700" letter-spacing="3.4" fill="${MUTED}" text-anchor="middle">THIS IS TO CERTIFY THAT</text>`,
   );
 
-  // ── the recipient, the largest thing on the sheet ──
+  // ── the recipient ──────────────────────────────────────────────────────
   p.push(
-    `<text x="500" y="352" font-family="${SERIF}" font-size="50" fill="${NAVY}" text-anchor="middle" data-cert-name="">${esc(o.name)}</text>`,
+    `<text x="500" y="336" font-family="${SERIF}" font-size="53" fill="${INK}" text-anchor="middle" data-cert-name="">${esc(o.name)}</text>`,
   );
-  p.push(rule(240, 760, 372, 'url(#lx-gold)', 1));
-  p.push(diamond(500, 372, 2.8, NAVY_2));
+  p.push(rule(230, 770, 358, 'url(#gold)', 1.2));
+  p.push(lozenge(500, 358, 3, GOLD_DEEP));
 
-  // ── the claim ──
+  // ── the claim ──────────────────────────────────────────────────────────
   p.push(
-    `<text x="500" y="404" font-family="${SANS}" font-size="15" fill="${INK}" text-anchor="middle" data-cert-headline="">${esc(o.headline)}</text>`,
+    `<text x="500" y="392" font-family="${SANS}" font-size="15" fill="${INK}" text-anchor="middle" data-cert-headline="">${esc(o.headline)}</text>`,
   );
   p.push(
-    `<text x="500" y="426" font-family="${SANS}" font-size="12" fill="${MUTED}" text-anchor="middle" data-cert-detail="">${esc(o.detail)}</text>`,
-  );
-
-  // ── date and identifier ──
-  p.push(rule(112, 392, 462, 'url(#lx-gold)', 0.9));
-  p.push(rule(608, 888, 462, 'url(#lx-gold)', 0.9));
-  p.push(
-    `<text x="112" y="484" font-family="${SANS}" font-size="8.5" font-weight="700" letter-spacing="2.6" fill="${MUTED}">DATE</text>`,
-  );
-  p.push(
-    `<text x="112" y="506" font-family="${SERIF}" font-size="15" fill="${NAVY}" data-cert-date="">${esc(o.date)}</text>`,
-  );
-  p.push(
-    `<text x="888" y="484" font-family="${SANS}" font-size="8.5" font-weight="700" letter-spacing="2.6" fill="${MUTED}" text-anchor="end">CERTIFICATE ID</text>`,
-  );
-  p.push(
-    `<text x="888" y="506" font-family="${MONO}" font-size="15" font-weight="700" letter-spacing="1.8" fill="${NAVY}" text-anchor="end" data-cert-id="">${esc(o.id)}</text>`,
+    `<text x="500" y="414" font-family="${SANS}" font-size="11.5" fill="${MUTED}" text-anchor="middle" data-cert-detail="">${esc(o.detail)}</text>`,
   );
 
-  // ── the seal ──
-  p.push(seal(500, 520));
+  // ── date and identifier ────────────────────────────────────────────────
+  p.push(rule(96, 372, 444));
+  p.push(rule(628, 904, 444));
+  p.push(
+    `<text x="96" y="466" font-family="${SANS}" font-size="8" font-weight="700" letter-spacing="2.6" fill="${MUTED}">DATE</text>`,
+  );
+  p.push(
+    `<text x="96" y="488" font-family="${SERIF}" font-size="15" fill="${INK}" data-cert-date="">${esc(o.date)}</text>`,
+  );
+  p.push(
+    `<text x="904" y="466" font-family="${SANS}" font-size="8" font-weight="700" letter-spacing="2.6" fill="${MUTED}" text-anchor="end">CERTIFICATE ID</text>`,
+  );
+  p.push(
+    `<text x="904" y="488" font-family="${MONO}" font-size="15" font-weight="700" letter-spacing="2" fill="${INK}" text-anchor="end" data-cert-id="">${esc(o.id)}</text>`,
+  );
 
-  // ── signature ──
-  p.push(rule(112, 300, 578, NAVY, 0.9));
+  // ── the seal, centred on the foot ──────────────────────────────────────
+  p.push(seal(500, 544));
+
+  // ── signature ──────────────────────────────────────────────────────────
+  p.push(rule(96, 300, 588, INK, 0.9));
   p.push(
-    `<text x="112" y="602" font-family="${SERIF}" font-size="17" fill="${NAVY}">The Study Cipher</text>`,
+    `<text x="96" y="612" font-family="${SERIF}" font-size="17" fill="${INK}">The Study Cipher</text>`,
   );
   p.push(
-    `<text x="112" y="620" font-family="${SANS}" font-size="10.5" fill="${MUTED}">Apsides Labs</text>`,
+    `<text x="96" y="629" font-family="${SANS}" font-size="10" fill="${MUTED}">Apsides Labs</text>`,
   );
 
-  // ── verification ──
-  p.push(`<rect x="798" y="556" width="90" height="90" fill="${PAPER}" stroke="url(#lx-gold)" stroke-width="1.1"/>`);
+  // ── verification, on its own quiet zone so it scans ────────────────────
+  p.push(`<rect x="800" y="548" width="92" height="92" fill="#ffffff" stroke="url(#gold)" stroke-width="1.2"/>`);
   p.push(
-    `<g data-cert-qr="" transform="translate(806 562) scale(2.45)" shape-rendering="crispEdges"></g>`,
+    `<g data-cert-qr="" transform="translate(808 556) scale(2.51)" shape-rendering="crispEdges"></g>`,
   );
   p.push(
-    `<text x="843" y="546" font-family="${SANS}" font-size="8" font-weight="600" letter-spacing="1.6" fill="${MUTED}" text-anchor="middle">SCAN TO VERIFY</text>`,
+    `<text x="846" y="538" font-family="${SANS}" font-size="7.5" font-weight="700" letter-spacing="1.6" fill="${MUTED}" text-anchor="middle">SCAN TO VERIFY</text>`,
   );
 
   return p.join('');
