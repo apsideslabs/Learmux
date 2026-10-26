@@ -1,0 +1,203 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import '../../styles/glossary.css';
+import { terms, categories, countIn, initials, haystack, totalTerms } from '../../data/glossary';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+
+// Group by initial so the A to Z bar has something to jump to.
+const byLetter = new Map<string, typeof terms>();
+for (const t of terms) {
+  const letter = t.term.replace(/^the\s+/i, '').charAt(0).toUpperCase();
+  if (!byLetter.has(letter)) byLetter.set(letter, []);
+  byLetter.get(letter)!.push(t);
+}
+const groups = [...byLetter.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+const letters = initials();
+
+const lessonHref = (slug: string) => `${base}learn/${slug}/`;
+---
+
+<BaseLayout
+  title="Glossary"
+  description={`${totalTerms} cybersecurity, IT and computer science terms defined plainly, each linked to the lesson that teaches it.`}
+>
+  <section class="wrap gloss">
+    <header class="gloss__head">
+      <p class="eyebrow">Glossary</p>
+      <h1>Every term this course uses, defined</h1>
+      <p class="lede">
+        {totalTerms} words from cybersecurity, IT and computer science. Each one gets a definition you
+        can act on and, where the course covers it, a link to the lesson that teaches it properly.
+      </p>
+    </header>
+
+    <div class="gloss__controls">
+      <div class="gloss__search">
+        <label for="gloss-q" class="visually-hidden">Search the glossary</label>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"></circle>
+          <path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+        </svg>
+        <input
+          id="gloss-q"
+          type="search"
+          data-q
+          placeholder="Search a term, an abbreviation, or a word from a definition"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button class="gloss__clear" type="button" data-clear hidden aria-label="Clear the search">
+          Clear
+        </button>
+      </div>
+
+      <div class="gloss__filters" role="group" aria-label="Filter by subject">
+        <button class="chip chip--on" type="button" data-gloss-cat="all" aria-pressed="true">
+          All <span class="chip__n">{totalTerms}</span>
+        </button>
+        {categories.map((c) => (
+          <button class="chip" type="button" data-gloss-cat={c.id} aria-pressed="false">
+            {c.label} <span class="chip__n">{countIn(c.id)}</span>
+          </button>
+        ))}
+      </div>
+
+      <nav class="gloss__az" aria-label="Jump to a letter">
+        {letters.map((l) => (
+          <a href={`#letter-${l}`} data-az={l}>{l}</a>
+        ))}
+      </nav>
+
+      <p class="gloss__count" data-count aria-live="polite">
+        Showing all {totalTerms} terms
+      </p>
+    </div>
+
+    <div class="gloss__body" data-body>
+      {groups.map(([letter, list]) => (
+        <section class="gloss__letter" data-letter={letter} id={`letter-${letter}`}>
+          <h2 class="gloss__letter-head">{letter}</h2>
+          <div class="gloss__grid">
+            {list.map((t) => (
+              <article class="term" data-term data-category={t.category} data-search={haystack(t)}>
+                <h3 class="term__name">
+                  {t.term}
+                  {t.also && t.also.length > 0 && (
+                    <span class="term__also">{t.also.join(' · ')}</span>
+                  )}
+                </h3>
+                <p class="term__short">{t.short}</p>
+                {t.detail && <p class="term__detail">{t.detail}</p>}
+                {t.see && (
+                  <a class="term__see" href={lessonHref(t.see)}>
+                    Read the lesson
+                  </a>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+
+    <p class="gloss__empty" data-empty hidden>
+      Nothing matches that. Try a shorter word, or clear the filter.
+    </p>
+
+    <p class="gloss__foot">
+      Definitions are written for this course rather than copied from a dictionary, so they say what a
+      term means in the context you will meet it. If one is wrong or out of date, the repository link
+      in the footer is where to say so.
+    </p>
+  </section>
+</BaseLayout>
+
+<script>
+  function initGlossary() {
+    const body = document.querySelector<HTMLElement>('[data-body]');
+    if (!body || body.dataset.wired === '1') return;
+    body.dataset.wired = '1';
+
+    const q = document.querySelector<HTMLInputElement>('[data-q]');
+    const clear = document.querySelector<HTMLButtonElement>('[data-clear]');
+    const chips = [...document.querySelectorAll<HTMLButtonElement>('[data-gloss-cat]')];
+    const cards = [...document.querySelectorAll<HTMLElement>('[data-term]')];
+    const letters = [...document.querySelectorAll<HTMLElement>('[data-letter]')];
+    const azLinks = [...document.querySelectorAll<HTMLAnchorElement>('[data-az]')];
+    const countEl = document.querySelector<HTMLElement>('[data-count]');
+    const empty = document.querySelector<HTMLElement>('[data-empty]');
+    if (!q || !countEl || !empty) return;
+
+    let category = 'all';
+
+    const apply = () => {
+      const needle = q.value.trim().toLowerCase();
+      let shown = 0;
+
+      for (const card of cards) {
+        const matchesCategory = category === 'all' || card.dataset.category === category;
+        const matchesText = needle === '' || (card.dataset.search ?? '').includes(needle);
+        const visible = matchesCategory && matchesText;
+        card.hidden = !visible;
+        if (visible) shown++;
+      }
+
+      // A letter with nothing left under it should not be a heading or a link.
+      const live = new Set<string>();
+      for (const section of letters) {
+        const any = [...section.querySelectorAll<HTMLElement>('[data-term]')].some((c) => !c.hidden);
+        section.hidden = !any;
+        if (any) live.add(section.dataset.letter ?? '');
+      }
+      for (const a of azLinks) a.hidden = !live.has(a.dataset.az ?? '');
+
+      countEl.textContent =
+        shown === cards.length
+          ? `Showing all ${cards.length} terms`
+          : `Showing ${shown} of ${cards.length} terms`;
+      empty.hidden = shown !== 0;
+      if (clear) clear.hidden = needle === '';
+    };
+
+    q.addEventListener('input', apply);
+
+    clear?.addEventListener('click', () => {
+      q.value = '';
+      q.focus();
+      apply();
+    });
+
+    for (const chip of chips) {
+      chip.addEventListener('click', () => {
+        category = chip.dataset.glossCat ?? 'all';
+        for (const other of chips) {
+          const on = other === chip;
+          other.classList.toggle('chip--on', on);
+          other.setAttribute('aria-pressed', String(on));
+        }
+        apply();
+      });
+    }
+
+    // A jump link has to move the page, not just the hash, because the target
+    // may have been hidden a moment ago by a filter.
+    for (const a of azLinks) {
+      a.addEventListener('click', (event) => {
+        const target = document.querySelector<HTMLElement>(`#letter-${a.dataset.az}`);
+        if (!target) return;
+        event.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    // Arriving with ?q= in the URL, so a search can be linked to.
+    const preset = new URLSearchParams(location.search).get('q');
+    if (preset) q.value = preset;
+
+    apply();
+  }
+
+  initGlossary();
+  document.addEventListener('astro:page-load', initGlossary);
+</script>
