@@ -1,0 +1,277 @@
+/* ── the glossary ─────────────────────────────────────────────────────────
+   A reference page, so it optimises for scanning rather than reading. The
+   headword is the only thing at display size, definitions stay at body size,
+   and the cards are narrow enough that two fit on a laptop without the line
+   length getting uncomfortable.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.gloss { padding-block: var(--sp-6) var(--sp-8); }
+
+.gloss__head { max-width: 46rem; margin-bottom: var(--sp-5); }
+.gloss__head h1 { margin: var(--sp-1) 0 var(--sp-3); }
+
+/* ── controls ───────────────────────────────────────────────────────────── */
+.gloss__controls {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin-bottom: var(--sp-5);
+  padding: var(--sp-3) 0 var(--sp-2);
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+
+.gloss__search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #cfcfda;
+  border-radius: var(--r-lg);
+  background: #fff;
+  color: var(--muted);
+}
+.gloss__search:focus-within {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(32, 214, 90, 0.16);
+}
+.gloss__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: transparent;
+}
+.gloss__search input::placeholder { color: #9a9aa6; }
+.gloss__search input::-webkit-search-cancel-button { display: none; }
+
+.gloss__clear {
+  padding: 0.2rem 0.5rem;
+  font-family: var(--font-head);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.gloss__clear:hover { color: var(--ink); border-color: #b9b9c6; }
+
+.gloss__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: var(--sp-3);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  font-family: var(--font-head);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chip:hover { border-color: #b9b9c6; }
+.chip--on {
+  color: #06301a;
+  background: #eafcef;
+  border-color: var(--green);
+  font-weight: 600;
+}
+.chip__n {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+.chip--on .chip__n { color: var(--ok); }
+
+.gloss__az {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem;
+  margin-top: var(--sp-3);
+}
+.gloss__az a {
+  min-width: 1.6rem;
+  padding: 0.15rem 0.3rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--muted);
+  text-decoration: none;
+  border-radius: var(--r-sm);
+}
+.gloss__az a:hover { color: var(--ink); background: var(--soft); }
+.gloss__az a[hidden] { display: none; }
+
+.gloss__count {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+/* ── the terms ──────────────────────────────────────────────────────────── */
+.gloss__letter { margin-bottom: var(--sp-5); scroll-margin-top: 13rem; }
+.gloss__letter[hidden] { display: none; }
+
+.gloss__letter-head {
+  position: sticky;
+  top: 11.5rem;
+  z-index: 2;
+  margin: 0 0 var(--sp-2);
+  padding: 0.2rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--green-dark);
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+
+.gloss__grid {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+@media (max-width: 820px) {
+  .gloss__grid { grid-template-columns: 1fr; }
+}
+
+.term {
+  padding: var(--sp-3);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+}
+.term[hidden] { display: none; }
+.term:hover { border-color: #d3d3de; }
+
+.term__name {
+  margin: 0 0 var(--sp-2);
+  font-family: var(--font-head);
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.term__also {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.term__short {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.term__detail {
+  margin: var(--sp-2) 0 0;
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.term__see {
+  display: inline-block;
+  margin-top: var(--sp-2);
+  font-family: var(--font-head);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--blue-dark);
+  text-decoration: none;
+}
+.term__see:hover { text-decoration: underline; }
+.term__see::after { content: ' →'; }
+
+.gloss__empty {
+  padding: var(--sp-6) var(--sp-3);
+  text-align: center;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.gloss__foot {
+  max-width: 52rem;
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* The sticky stack is tall on a phone, so it stops sticking and scrolls away. */
+@media (max-width: 720px) {
+  .gloss__controls { position: static; }
+  .gloss__letter-head { position: static; }
+  .gloss__letter { scroll-margin-top: 1rem; }
+}
+
+/* ── the glossary block on the search page ──────────────────────────────── */
+.search-gloss {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: #fff;
+}
+.search-gloss > [hidden] { display: none; }
+
+.search-gloss__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: 0.55rem var(--sp-3);
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: inherit;
+}
+.search-gloss > div:last-child .search-gloss__row { border-bottom: 0; }
+.search-gloss__row:hover { background: var(--soft); }
+
+.search-gloss__name {
+  flex: 0 0 auto;
+  min-width: 9rem;
+  font-family: var(--font-head);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.search-gloss__short {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 620px) {
+  .search-gloss__row { flex-direction: column; gap: 0.15rem; }
+  .search-gloss__name { min-width: 0; }
+  .search-gloss__short { white-space: normal; }
+}
