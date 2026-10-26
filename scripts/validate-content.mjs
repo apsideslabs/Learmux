@@ -59,6 +59,7 @@ async function loadData() {
         `export { tools, toolCategories } from './src/data/tools/index.ts';`,
         `export { tracks, course } from './src/lib/curriculum.ts';`,
         `export { practiceSets } from './src/data/practice/index.ts';`,
+        `export { terms as glossaryTerms, categories as glossaryCategories } from './src/data/glossary/index.ts';`,
       ].join('\n'),
       resolveDir: ROOT,
       loader: 'ts',
@@ -382,6 +383,56 @@ function checkLessons(tracks) {
   return { count: files.length };
 }
 
+// ── glossary ────────────────────────────────────────────────────────────────
+/**
+ * A glossary is only useful if every entry is right and every link works. A
+ * dead "read the lesson" link is worse than no link, because the page looks
+ * authoritative while sending the reader nowhere.
+ */
+function checkGlossary(terms, cats, lessonSlugs) {
+  if (!Array.isArray(terms) || !terms.length) return fail('glossary', 'no terms found');
+
+  const validCats = new Set((cats ?? []).map((c) => c.id));
+  if (validCats.size === 0) return fail('glossary', 'no categories defined');
+
+  const seen = new Map();
+  let withLesson = 0;
+
+  for (const t of terms) {
+    const at = `glossary term "${t.term ?? '(no term)'}"`;
+
+    if (!t.term || !t.term.trim()) fail(at, 'has no headword');
+    if (!t.short || t.short.trim().length < 12) fail(at, 'has no usable definition');
+    if (!validCats.has(t.category)) fail(at, `category "${t.category}" is not one of the six`);
+
+    // A definition that ends mid-thought is a definition somebody will misread.
+    if (t.short && !/[.!?]$/.test(t.short.trim())) fail(at, 'definition does not end in a full stop');
+    if (t.detail && !/[.!?]$/.test(t.detail.trim())) fail(at, 'detail does not end in a full stop');
+
+    const key = t.term.trim().toLowerCase();
+    if (seen.has(key)) fail(at, `duplicate headword, also at "${seen.get(key)}"`);
+    else seen.set(key, t.term);
+
+    // Aliases must not collide with another headword, or search gets confusing.
+    for (const a of t.also ?? []) {
+      if (!a || !a.trim()) fail(at, 'has an empty alias');
+    }
+
+    if (t.see) {
+      withLesson++;
+      if (!lessonSlugs.has(t.see)) fail(at, `links to lesson "${t.see}", which does not exist`);
+    }
+  }
+
+  const counts = {};
+  for (const t of terms) counts[t.category] = (counts[t.category] ?? 0) + 1;
+  for (const id of validCats) {
+    if (!counts[id]) fail('glossary', `category "${id}" has no terms`);
+  }
+
+  return { count: terms.length, withLesson, categories: validCats.size };
+}
+
 // ── practice sets ───────────────────────────────────────────────────────────
 // Each set is keyed by lesson slug, and the lesson page looks its set up by
 // that key. A set whose slug matches no lesson would never be linked from
@@ -594,12 +645,30 @@ try {
   fail('build', `could not load the typed data: ${e.message}`);
 }
 
+/**
+ * Every lesson slug the course actually has, for the glossary to link against.
+ *
+ * The slug is the filename: src/content/tutorials/getting-started.mdx is
+ * served at /learn/getting-started/. Reading the directory is the only honest
+ * source, because the track objects do not list their lessons.
+ */
+function lessonSlugSet() {
+  const dir = join(ROOT, 'src/content/tutorials');
+  if (!existsSync(dir)) return new Set();
+  return new Set(
+    readdirSync(dir)
+      .filter((f) => /\.mdx?$/.test(f))
+      .map((f) => f.replace(/\.mdx?$/, '')),
+  );
+}
+
 if (data) {
   const c = checkChallenges();
   const t = checkTools(data.tools, data.toolCategories);
   const l = checkLessons(data.tracks);
   const x = checkTermuxCatalogue();
   const pr = checkPractice(data.practiceSets);
+  const gl = checkGlossary(data.glossaryTerms, data.glossaryCategories, lessonSlugSet());
   const base = '/Learmux/';
   const links = WANT_LINKS ? checkLinks(base) : null;
   const built = checkBuiltPractice();
@@ -611,6 +680,7 @@ if (data) {
     if (l) bits.push(`${l.count} lessons`);
     if (x) bits.push(`${x.count} Termux CTF challenges (${x.points} pts, tool ${x.version})`);
     if (pr) bits.push(`${pr.count} practice sets (${pr.questions} questions, ${pr.tasks} tasks)`);
+    if (gl) bits.push(`${gl.count} glossary terms (${gl.withLesson} linked to lessons)`);
     if (links && !links.skipped) bits.push(`${links.count} pages linked`);
     if (built) bits.push(`${built.pages} task pages say where to run the command`);
     console.log(`content ok: ${bits.join(', ')}`);
