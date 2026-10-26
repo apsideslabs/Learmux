@@ -82,15 +82,18 @@ const art = certificateArt({
         </div>
 
         <div class="profile__actions">
-          <button class="btn btn--primary" type="button" data-download>
-            Download the SVG
+          <button class="btn btn--primary" type="button" data-download-png>
+            <span data-png-idle>Download the PNG</span>
+            <span data-png-busy hidden>Drawing…</span>
           </button>
+          <button class="btn" type="button" data-download>Download the SVG</button>
           <button class="btn" type="button" data-print>Print or save as PDF</button>
         </div>
 
         <p class="profile__note">
-          The SVG is vector, so it stays sharp at any size. Print gives you a PDF at A4
-          landscape, which is the size the certificate is drawn for.
+          The PNG is 3000 by 2121, which is about 300 dots per inch at A4, so it is sharp
+          enough to print. The SVG is vector and stays sharp at any size. Print gives you a
+          PDF at A4 landscape, the size the certificate is drawn for.
         </p>
       </form>
 
@@ -245,9 +248,6 @@ const art = certificateArt({
           if (attr.name.startsWith('data-') || attr.name === 'class') el.removeAttribute(attr.name);
         }
       }
-      // Nothing else to do: every colour, size and typeface in the artwork is
-      // already an attribute rather than a stylesheet rule, so the clone is
-      // self-contained the moment it is made.
       const source = `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(clone)}`;
       const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
       const a = document.createElement('a');
@@ -258,6 +258,86 @@ const art = certificateArt({
     });
 
     document.querySelector('[data-print]')?.addEventListener('click', () => window.print());
+
+    // ── PNG ───────────────────────────────────────────────────────────────
+    //
+    // The SVG is drawn into a canvas through an <img>, which means the raster
+    // gets the system fonts and nothing else. That is why the artwork names
+    // Georgia and Helvetica rather than the site's webfonts: the PNG comes out
+    // matching the preview instead of quietly losing its typeface.
+    //
+    // The canvas is not tainted, because the SVG is a same-origin blob with no
+    // external references and no foreignObject.
+    const PNG_SCALE = 3;
+
+    document.querySelector('[data-download-png]')?.addEventListener('click', async (event) => {
+      const btn = event.currentTarget as HTMLButtonElement;
+      const idle = btn.querySelector<HTMLElement>('[data-png-idle]');
+      const busy = btn.querySelector<HTMLElement>('[data-png-busy]');
+      btn.disabled = true;
+      if (idle) idle.hidden = true;
+      if (busy) busy.hidden = false;
+
+      try {
+        const blob = await rasterise(svg, PNG_SCALE);
+        if (!blob) throw new Error('the browser could not draw the image');
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName().replace(/\.svg$/, '.png');
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      } catch (e) {
+        console.error('PNG export failed', e);
+      } finally {
+        btn.disabled = false;
+        if (idle) idle.hidden = false;
+        if (busy) busy.hidden = true;
+      }
+    });
+
+    async function rasterise(source: SVGSVGElement, scale: number): Promise<Blob | null> {
+      const clone = clean(source);
+      const markup = `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(clone)}`;
+      const url = URL.createObjectURL(new Blob([markup], { type: 'image/svg+xml;charset=utf-8' }));
+
+      try {
+        const img = new Image();
+        img.decoding = 'sync';
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error('the SVG could not be loaded for drawing'));
+          img.src = url;
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 1000 * scale;
+        canvas.height = 707 * scale;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        // The paper goes on first, so the PNG has no transparent pixels and
+        // opens as a document rather than as a floating shape.
+        ctx.fillStyle = '#fbf7ee';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    /** A clone with the page's hooks and classes removed, ready to be a file. */
+    function clean(source: SVGSVGElement): SVGSVGElement {
+      const clone = source.cloneNode(true) as SVGSVGElement;
+      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      for (const el of [clone, ...clone.querySelectorAll('*')]) {
+        for (const attr of [...el.attributes]) {
+          if (attr.name.startsWith('data-') || attr.name === 'class') el.removeAttribute(attr.name);
+        }
+      }
+      return clone;
+    }
 
     void render();
   }
