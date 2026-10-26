@@ -188,6 +188,29 @@ const art = certificateArt({
 
     let lastQr = '';
 
+    /**
+     * Shrink a line until it fits.
+     *
+     * The name is the largest thing on the sheet, and a long one would run past
+     * the frame at the size a short one deserves. Rather than pick a size that
+     * only works for "Aditi Sharma", the type comes down until it fits, which is
+     * what a typesetter would do.
+     */
+    function fitToWidth(el: SVGTextElement, maxWidth: number, maxSize: number, minSize: number) {
+      let size = maxSize;
+      el.setAttribute('font-size', String(size));
+      // getBBox needs a rendered element; before layout it throws in some
+      // engines, so a failure just leaves the nominal size in place.
+      try {
+        while (size > minSize && el.getBBox().width > maxWidth) {
+          size -= 1;
+          el.setAttribute('font-size', String(size));
+        }
+      } catch {
+        /* not laid out yet */
+      }
+    }
+
     const render = async () => {
       const name = nameInput.value.trim() || 'Your name';
       const date = dateInput.value || '';
@@ -207,9 +230,13 @@ const art = certificateArt({
 
       // the certificate
       nameEl.textContent = name;
+      // 700 is the width the rule beneath the name spans, less a little air.
+      fitToWidth(nameEl, 700, 53, 24);
       const c = claim({ name, date, lessonsDone, lessonsTotal, tracksDone, tracksTotal });
       headlineEl.textContent = c.headline;
+      fitToWidth(headlineEl, 780, 15, 10);
       detailEl.textContent = c.detail;
+      fitToWidth(detailEl, 780, 11.5, 8);
       dateEl.textContent = formatDate(date);
 
       const id = await certificateId(name, date);
