@@ -30,6 +30,7 @@ export const nav = [
   { href: 'practice/', label: 'Test yourself' },
   { href: 'ctf/', label: 'Termux CTF', cta: true },
   { href: 'challenges/', label: 'In-browser' },
+  { href: 'glossary/', label: 'Glossary' },
   { href: 'profile/', label: 'Profile' },
   { href: 'about/', label: 'About us' },
 ];
@@ -81,6 +82,8 @@ export const drawerNav: DrawerGroup[] = [
       { href: 'course/', label: 'Course' },
       { href: 'categories/', label: 'Categories' },
       { href: 'tools/', label: 'Tools' },
+      { href: 'glossary/', label: 'Glossary' },
+
     ],
   },
   {
