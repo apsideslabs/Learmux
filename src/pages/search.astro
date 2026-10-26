@@ -4,6 +4,7 @@ import PostRow from '../components/PostRow.astro';
 import Icon from '../components/Icon.astro';
 import { allTutorials } from '../lib/tutorials';
 import { tools } from '../data/tools';
+import { terms, haystack } from '../data/glossary';
 import '../styles/tools.css';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
@@ -12,18 +13,18 @@ const tutorials = await allTutorials();
 
 <BaseLayout
   title="Search"
-  description="Search the Learmux lessons and the tool directory."
+  description="Search the Learmux lessons, the tool directory and the glossary."
   noindex
 >
   <div class="wrap">
     <header class="section">
       <h1>Search</h1>
-      <p class="lede">Find a lesson or a tool by name, topic or tag.</p>
+      <p class="lede">Find a lesson, a tool or a glossary term by name, topic or tag.</p>
     </header>
 
     <div class="search-box" style="max-width:560px">
       <Icon name="search" size={18} />
-      <label class="visually-hidden" for="q">Search lessons and tools</label>
+      <label class="visually-hidden" for="q">Search lessons, tools and the glossary</label>
       <input id="q" type="search" placeholder="e.g. grep, permissions, nmap" autocomplete="off" />
     </div>
 
@@ -63,6 +64,23 @@ const tutorials = await allTutorials();
     </div>
     </div>
 
+    <div data-gloss-block>
+    <div class="section-label" style="margin-top:2rem"><span>Glossary</span></div>
+    <div class="search-gloss" data-results>
+      {terms.map((t) => (
+        <div
+          data-item
+          data-text={haystack(t)}
+        >
+          <a class="search-gloss__row" href={`${base}glossary/?q=${encodeURIComponent(t.term)}`}>
+            <span class="search-gloss__name">{t.term}</span>
+            <span class="search-gloss__short">{t.short}</span>
+          </a>
+        </div>
+      ))}
+    </div>
+    </div>
+
     <p class="muted" data-empty hidden style="padding:2rem 0">Nothing matched that search.</p>
   </div>
 
@@ -88,11 +106,11 @@ const tutorials = await allTutorials();
           const any = Array.from(grid.querySelectorAll<HTMLElement>('[data-item]')).some((el) => !el.hidden);
           grid.hidden = !any;
         }
-        // and the "Tools" heading that belongs to the tools grid
-        const toolsBlock = document.querySelector<HTMLElement>('[data-tools-block]');
-        if (toolsBlock) {
-          const anyTool = Array.from(toolsBlock.querySelectorAll<HTMLElement>('[data-item]')).some((el) => !el.hidden);
-          toolsBlock.hidden = !anyTool;
+        // the "Tools" and "Glossary" headings belong to their own grids, so a
+        // heading with nothing under it has to go too
+        for (const block of document.querySelectorAll<HTMLElement>('[data-tools-block], [data-gloss-block]')) {
+          const any = Array.from(block.querySelectorAll<HTMLElement>('[data-item]')).some((el) => !el.hidden);
+          block.hidden = !any;
         }
         if (count) count.textContent = q === '' ? `${items.length} items` : `${shown} of ${items.length} items`;
         if (empty) empty.hidden = shown !== 0;
