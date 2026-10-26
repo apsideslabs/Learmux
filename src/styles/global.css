@@ -270,13 +270,19 @@ a:hover { text-decoration: underline; }
   /* Nine destinations and a search do not fit at a full 1rem of padding on a
      laptop. The type comes down a little and the padding more, which keeps one
      row without hiding anything. */
-  @media (max-width: 1400px) {
+  /* Ten destinations do not fit at full padding on a laptop. The type comes
+     down a little and the padding more, in two steps, which keeps one row
+     without hiding anything. */
+  @media (max-width: 1620px) {
     .header-nav a { padding: 0 0.62rem; font-size: 0.86rem; }
     .header-nav .cta { margin-left: 0.3rem; }
   }
-  @media (max-width: 1120px) {
-    .header-nav a { padding: 0 0.45rem; font-size: 0.8rem; }
+  @media (max-width: 1240px) {
+    .header-nav a { padding: 0 0.42rem; font-size: 0.79rem; }
     .header-search span { display: none; }
+  }
+  @media (max-width: 1000px) {
+    .header-nav a { padding: 0 0.3rem; font-size: 0.74rem; }
   }
   .header-nav a:hover { color: #fff; background: var(--navy-2); }
   .header-nav a[aria-current="page"] { color: #fff; box-shadow: inset 0 -2px 0 var(--green); }
