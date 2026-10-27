@@ -15,12 +15,6 @@ export async function allTutorials(): Promise<Tutorial[]> {
   return list.sort((a, b) => a.data.order - b.data.order);
 }
 
-/** Newest first, for the homepage feed. */
-export async function recentTutorials(): Promise<Tutorial[]> {
-  const list = await getCollection('tutorials');
-  return list.sort((a, b) => (a.data.date < b.data.date ? 1 : -1));
-}
-
 export interface TrackGroup {
   track: Track;
   lessons: Tutorial[];
@@ -84,10 +78,3 @@ export async function categoryGroups(): Promise<CategoryGroup[]> {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-}
