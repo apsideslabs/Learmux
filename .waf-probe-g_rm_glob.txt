@@ -1,1 +1,0 @@
-Never run rm *.log in a directory you do not own.
