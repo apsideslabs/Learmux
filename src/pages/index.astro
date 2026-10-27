@@ -6,6 +6,10 @@ import Icon from '../components/Icon.astro';
 import { challenges, totalPoints } from '../lib/challenges';
 import { trackGroups, allTutorials } from '../lib/tutorials';
 import { course } from '../lib/curriculum';
+import { tools } from '../data/tools';
+import { terms } from '../data/glossary';
+import { practiceSets } from '../data/practice';
+import { termuxCount, termuxTotal } from '../lib/termux-ctf';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const groups = await trackGroups();
@@ -19,74 +23,157 @@ const featured = ['getting-started', 'pipes-and-redirection', 'run-your-first-py
   .filter((l): l is NonNullable<typeof l> => Boolean(l));
 
 const demo = challenges.find((c) => c.slug === 'first-steps') ?? challenges[0];
-const topics = new Set(challenges.map((c) => c.category)).size;
 
-// Four things, short enough to read in one pass. A list of seven sentences is
-// a document; this is a signpost.
-const outcomes = [
-  'Find any file and pull what you need out of it.',
-  'Write a script that runs on a schedule.',
-  'Read an HTTP response and a log by hand.',
-  'Run Python without installing anything.',
+const questions = practiceSets.reduce((n, s) => n + (s.questions?.length ?? 0), 0);
+const tasks = practiceSets.reduce((n, s) => n + (s.tasks?.length ?? 0), 0);
+const calculators = 6;
+
+/** The inventory, stated as numbers rather than described in a sentence. */
+const tally = [
+  { n: lessons.length, label: 'lessons' },
+  { n: groups.length, label: 'tracks' },
+  { n: challenges.length + termuxCount(), label: 'challenges' },
+  { n: tools.length, label: 'tools' },
+  { n: terms.length, label: 'glossary terms' },
+  { n: calculators, label: 'calculators' },
+];
+
+const steps = [
+  {
+    title: 'Read the lesson',
+    body: 'Five to ten minutes. Every command is shown with the output it actually produces.',
+  },
+  {
+    title: 'Run it yourself',
+    body: 'Open Termux and type it. The practice task checks your real output, not your memory.',
+  },
+  {
+    title: 'Take the flag',
+    body: 'Finish the practice set, then open a challenge and find the flag in a sandbox.',
+  },
+];
+
+const modes = [
+  {
+    href: 'ctf/',
+    icon: 'shield',
+    title: 'Termux CTF',
+    meta: `${termuxCount()} challenges · ${termuxTotal()} points`,
+    body: 'A real filesystem in a sandbox. Read the briefing, find the flag, submit it.',
+  },
+  {
+    href: 'challenges/',
+    icon: 'grid',
+    title: 'In-browser challenges',
+    meta: `${challenges.length} labs · ${totalPoints} points`,
+    body: 'Twelve labs that run in the page. No install, nothing to set up.',
+  },
+  {
+    href: 'practice/',
+    icon: 'search',
+    title: 'Test yourself',
+    meta: `${practiceSets.length} sets · ${questions} questions · ${tasks} tasks`,
+    body: 'A quiz and an output task for every lesson, so nothing gets skimmed.',
+  },
+];
+
+const shelf = [
+  {
+    href: 'tools/',
+    icon: 'grid',
+    title: 'The tools',
+    meta: `${tools.length} commands`,
+    body: 'Every command the course uses, with its flags, examples and a copy button.',
+  },
+  {
+    href: 'glossary/',
+    icon: 'info',
+    title: 'The glossary',
+    meta: `${terms.length} terms`,
+    body: 'Cybersecurity, IT and computer science, each linked to the lesson that teaches it.',
+  },
+  {
+    href: 'utilities/',
+    icon: 'swap',
+    title: 'The calculators',
+    meta: `${calculators} tools`,
+    body: 'Subnet, hash, JWT, permissions, base64 and password strength. All offline.',
+  },
+];
+
+const faq = [
+  ['Do I need a computer?', 'No. A phone running Termux is the whole setup, and the course was written for it.'],
+  ['Does it need root?', 'No. Nothing here needs a rooted device, and nothing asks you to unlock one.'],
+  ['Do I need to know anything first?', 'No. The first track starts at installing Termux and opening a shell.'],
+  ['Is it free?', 'Yes. The source is on GitHub under the MIT licence, and there is no account.'],
 ];
 ---
 
 <BaseLayout>
-  <!-- ── the promise, and the product next to it ─────────────────────────── -->
+  <!-- ── the promise, and the product beside it ─────────────────────────── -->
   <section class="band band--hero">
     <div class="wrap hero">
       <div class="hero__copy">
-        <p class="eyebrow">Termux · Linux · Security</p>
         <h1>Learn the Linux command line on your phone.</h1>
         <p class="lede">
-          {lessons.length} lessons, {groups.length} tracks, {challenges.length} challenges. Read a
-          short lesson, then type the commands yourself.
+          {lessons.length} lessons, {groups.length} tracks, {challenges.length + termuxCount()} challenges.
+          Read a short lesson, then type the commands yourself.
         </p>
         <div class="actions">
           <a class="btn btn--green" href={`${base}course/`}>Start the course</a>
           <a class="btn btn--outline" href={`${base}challenges/`}>Open the sandbox</a>
         </div>
-        <p class="hero__facts">
-          {course.timeEstimate} · no account · nothing to install to read
-        </p>
+        <p class="hero__facts">{course.timeEstimate} · no account · nothing to install to read</p>
       </div>
 
       <div class="hero__demo">
         <Terminal challenge={demo} compact />
         <p class="hero__demo-note">
-          A real sandbox, running here. <a href={`${base}challenges/`}>All {challenges.length} challenges</a>
+          A real sandbox, running here. <a href={`${base}challenges/`}>All {challenges.length} labs</a>
         </p>
       </div>
     </div>
   </section>
 
-  <!-- ── what it adds up to ──────────────────────────────────────────────── -->
-  <section class="band band--soft">
+  <!-- ── what is actually in here ────────────────────────────────────────── -->
+  <section class="band band--navy band--tight">
     <div class="wrap">
-      <div class="duo">
-        <div class="duo__head">
-          <p class="eyebrow">Outcomes</p>
-          <h2>What you can do at the end</h2>
-          <p class="muted">Not a command reference. Four things you will be able to do.</p>
-        </div>
-        <ul class="outcomes__list outcomes__list--two">
-          {outcomes.map((o) => <li>{o}</li>)}
-        </ul>
+      <dl class="tally">
+        {tally.map((s) => (
+          <div class="tally__item">
+            <dt class="tally__n">{s.n}</dt>
+            <dd class="tally__label">{s.label}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </section>
+
+  <!-- ── how a lesson works ──────────────────────────────────────────────── -->
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>How a lesson works</h2>
+        <p class="section-head__meta">Three steps, every time</p>
       </div>
+      <ol class="steps">
+        {steps.map((s, i) => (
+          <li class="step">
+            <span class="step__n">{String(i + 1).padStart(2, '0')}</span>
+            <span class="step__title">{s.title}</span>
+            <span class="step__body">{s.body}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   </section>
 
   <!-- ── the course ──────────────────────────────────────────────────────── -->
-  <section class="band">
+  <section class="band band--soft">
     <div class="wrap">
       <div class="section-head">
-        <div>
-          <p class="eyebrow">The course</p>
-          <h2>{groups.length} tracks, in order</h2>
-        </div>
-        <p class="section-head__meta">
-          {lessons.length} lessons · {course.timeEstimate}
-        </p>
+        <h2>{groups.length} tracks, in order</h2>
+        <p class="section-head__meta">{lessons.length} lessons · {course.timeEstimate}</p>
       </div>
 
       <div class="path-grid">
@@ -111,17 +198,52 @@ const outcomes = [
     </div>
   </section>
 
-  <!-- ── where to begin ──────────────────────────────────────────────────── -->
+  <!-- ── three ways to practise ──────────────────────────────────────────── -->
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Three ways to practise</h2>
+        <p class="section-head__meta">Reading is not the part that sticks</p>
+      </div>
+      <div class="feature-grid">
+        {modes.map((m) => (
+          <a class="feature" href={`${base}${m.href}`}>
+            <span class="feature__icon"><Icon name={m.icon} size={20} /></span>
+            <span class="feature__title">{m.title}</span>
+            <span class="feature__meta">{m.meta}</span>
+            <span class="feature__body">{m.body}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── the reference shelf ─────────────────────────────────────────────── -->
   <section class="band band--soft">
     <div class="wrap">
       <div class="section-head">
-        <div>
-          <p class="eyebrow">Start here</p>
-          <h2>Three lessons that show the range</h2>
-        </div>
-        <p class="section-head__meta">
-          <a href={`${base}course/`}>All {lessons.length} lessons</a>
-        </p>
+        <h2>Everything else, offline</h2>
+        <p class="section-head__meta">Written for this course, not scraped</p>
+      </div>
+      <div class="feature-grid">
+        {shelf.map((m) => (
+          <a class="feature" href={`${base}${m.href}`}>
+            <span class="feature__icon"><Icon name={m.icon} size={20} /></span>
+            <span class="feature__title">{m.title}</span>
+            <span class="feature__meta">{m.meta}</span>
+            <span class="feature__body">{m.body}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── where to begin ──────────────────────────────────────────────────── -->
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Three lessons that show the range</h2>
+        <p class="section-head__meta"><a href={`${base}course/`}>All {lessons.length} lessons</a></p>
       </div>
       <div class="cards cards--3">
         {featured.map((t) => <ArticleCard entry={t} />)}
@@ -129,56 +251,38 @@ const outcomes = [
     </div>
   </section>
 
-  <!-- ── the second way in ───────────────────────────────────────────────── -->
-  <section class="band band--navy">
-    <div class="wrap ctf-panel ctf-panel--band">
-      <div class="ctf-panel__body">
-        <p class="eyebrow eyebrow--onDark">Practise</p>
-        <h2>Learmux CTF</h2>
-        <p>
-          {challenges.length} challenges across {topics} topics. Each opens its own filesystem. Find
-          the flag to finish it.
-        </p>
-        <div class="ctf-meta">
-          <span data-progress-chip data-total={challenges.length}>0 / {challenges.length} captured</span>
-          <span>{totalPoints} points</span>
-        </div>
-        <div class="progress-line progress-line--onDark">
-          <span data-progress-bar data-total={challenges.length}></span>
-        </div>
-        <a class="btn btn--green" href={`${base}challenges/`}>Play the CTF</a>
+  <!-- ── questions a beginner actually asks ──────────────────────────────── -->
+  <section class="band band--soft">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Before you start</h2>
       </div>
-
-      <!-- What a finished challenge looks like, in the shape you type it. -->
-      <div class="ctf-panel__spec">
-        <pre class="ctf-panel__spec-code"><span class="ctf-panel__prompt">player@termux</span> <span class="ctf-panel__dollar">$</span> ls
-notes.txt
-<span class="ctf-panel__prompt">player@termux</span> <span class="ctf-panel__dollar">$</span> cat notes.txt
-the flag is FLAG&#123;first_steps&#125;
-<span class="ctf-panel__prompt">player@termux</span> <span class="ctf-panel__dollar">$</span> submit FLAG&#123;first_steps&#125;
-<span class="ctf-panel__ok">Correct. 20 points.</span></pre>
+      <div class="faq">
+        {faq.map(([q, a], i) => (
+          <details class="faq__item" open={i === 0}>
+            <summary class="faq__q">{q}</summary>
+            <p class="faq__a">{a}</p>
+          </details>
+        ))}
       </div>
     </div>
   </section>
 
-  <!-- ── the prerequisite ────────────────────────────────────────────────── -->
-  <section class="band">
-    <div class="wrap">
-      <div class="duo duo--middle">
-        <div class="duo__head">
-          <p class="eyebrow">Before you start</p>
-          <h2>You need Termux</h2>
-          <p class="muted">
-            A free terminal for Android. No root, no account. Install it from F-Droid, then work
-            through the course on the phone in your hand.
-          </p>
-        </div>
-        <div class="actions">
-          <a class="btn btn--green" href="https://f-droid.org/en/packages/com.termux/" target="_blank" rel="noopener">
-            Get it on F-Droid
-          </a>
-          <a class="btn btn--outline" href={`${base}learn/getting-started/`}>The setup lesson</a>
-        </div>
+  <!-- ── the prerequisite, as the closing action ─────────────────────────── -->
+  <section class="band band--navy">
+    <div class="wrap final-cta">
+      <div>
+        <h2>Install Termux and start</h2>
+        <p>
+          A free terminal for Android, no root and no account. Install it from F-Droid, then work
+          through the course on the phone in your hand.
+        </p>
+      </div>
+      <div class="actions">
+        <a class="btn btn--green" href="https://f-droid.org/en/packages/com.termux/" target="_blank" rel="noopener">
+          Get it on F-Droid
+        </a>
+        <a class="btn btn--outline btn--onDark" href={`${base}learn/getting-started/`}>The setup lesson</a>
       </div>
     </div>
   </section>
