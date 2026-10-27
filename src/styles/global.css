@@ -805,7 +805,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 
 /* Two classes, because the base .progress-line rule is declared later in this
    file and would otherwise win the tie and paint a light track on a dark panel. */
-.progress-line.progress-line--onDark { background: #2a2a33; height: 6px; border-radius: 3px; }
+.progress-line.progress-line--onDark { background: #34334a; height: 6px; border-radius: 3px; }
 .ctf-panel .btn { margin-top: var(--sp-4); }
 .ctf-panel h2 {
   color: #fff;
@@ -1184,16 +1184,18 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 
 /* ── homepage hero ─────────────────────────────────────────────────────── */
 .hero {
-  padding-block: clamp(1.8rem, 4.5vw, 3rem) clamp(1.4rem, 3vw, 2rem);
   display: grid;
   gap: var(--sp-6);
 }
 .hero__copy { max-width: 60ch; }
 @media (min-width: 980px) {
   .hero {
-    grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+    /* The copy column is deliberately wider than the terminal. At an even
+       split the headline broke after "your", leaving "phone." alone on a third
+       line, which is the one thing a hero headline must not do. */
+    grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr);
     align-items: center;
-    gap: var(--sp-7);
+    gap: clamp(2rem, 4vw, 3.5rem);
   }
 }
 
@@ -1606,7 +1608,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   gap: var(--sp-4);
   flex-wrap: wrap;
 }
-.section-head h2 { font-size: clamp(1.3rem, 3vw, 1.6rem); margin: 0; }
+.section-head h2 { font-size: clamp(1.3rem, 3vw, 1.6rem); margin: var(--sp-1) 0 0; }
 .section-head__meta {
   margin: 0;
   font-family: var(--font-mono);
@@ -1749,3 +1751,68 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
     overflow-wrap: anywhere;
   }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Bands
+
+   The homepage is built from full-bleed bands rather than a stack of tight
+   sections. Two reasons. The vertical gap is what gives the page a rhythm to
+   read down, and a section that carries a background colour marks progress
+   without needing a rule or a heading to say so. Without that alternation the
+   whole page reads as one flat white sheet, which is what it was.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.band { padding-block: clamp(3.5rem, 7vw, 6rem); }
+.band--hero { padding-block: clamp(2.5rem, 5vw, 4.5rem) clamp(3rem, 6vw, 5rem); }
+.band--soft { background: var(--soft); border-block: 1px solid var(--line); }
+.band--navy { background: var(--navy); color: #fff; }
+.band--navy h2 { color: #fff; }
+.band--navy .muted { color: #9a9aa6; }
+
+/* Two columns: a heading block and whatever sits beside it. */
+.duo { display: grid; gap: var(--sp-5); }
+.duo__head h2 { margin: var(--sp-1) 0 var(--sp-2); }
+.duo__head p { max-width: 40ch; }
+@media (min-width: 860px) {
+  .duo {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: start;
+  }
+}
+.duo--middle { align-items: center; }
+
+/* ── a heading and its meta line ───────────────────────────────────────── */
+.section-head { margin-bottom: clamp(1.5rem, 3vw, 2.25rem); }
+
+/* ── outcomes, four short lines rather than seven long ones ────────────── */
+.outcomes__list--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 620px) {
+  .outcomes__list--two { grid-template-columns: 1fr; }
+}
+.outcomes__list--two li { font-size: 0.97rem; color: var(--ink); }
+
+/* ── small pieces the homepage needs ───────────────────────────────────── */
+.eyebrow--onDark { color: var(--green); }
+.actions--end { justify-content: flex-start; margin-top: clamp(1.25rem, 3vw, 2rem); }
+
+/* The CTF panel is a rounded card on six other pages. In a navy band it is
+   the band, so the card chrome comes off. */
+.ctf-panel--band {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+.ctf-panel--band .btn { margin-top: var(--sp-4); }
+
+/* On the six pages that use the panel as a card, the heading is a small
+   uppercase label. In the navy band it is the section heading, so it takes the
+   page scale instead. */
+.ctf-panel--band h2 {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: clamp(1.5rem, 3.2vw, 2rem);
+  margin: var(--sp-1) 0 var(--sp-3);
+}
+.ctf-panel--band p { max-width: 44ch; }
