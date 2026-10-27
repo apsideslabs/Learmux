@@ -631,6 +631,9 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 @media (min-width: 680px) {
   .cards--2 { grid-template-columns: repeat(2, 1fr); }
 }
+@media (min-width: 860px) {
+  .cards--3 { grid-template-columns: repeat(3, 1fr); }
+}
 @media (min-width: 980px) {
   .cards--3 { grid-template-columns: repeat(3, 1fr); }
 }
@@ -758,11 +761,52 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 
 /* ── CTF panel ─────────────────────────────────────────────────────────── */
 .ctf-panel {
+  display: grid;
+  gap: var(--sp-5);
   background: #0e0e14;
   border-radius: var(--r-lg);
-  padding: 1.5rem;
+  padding: clamp(1.5rem, 3vw, 2.25rem);
   color: #fff;
 }
+@media (min-width: 860px) {
+  .ctf-panel { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); align-items: center; }
+}
+.ctf-panel__body { max-width: 44ch; }
+
+/* A worked example, so the panel shows the thing rather than describing it. */
+.ctf-panel__spec {
+  padding: var(--sp-3);
+  background: #14141c;
+  border: 1px solid #262633;
+  border-radius: var(--r);
+}
+.ctf-panel__spec-label {
+  margin: 0 0 var(--sp-2) !important;
+  font-family: var(--font-head);
+  font-size: 0.68rem !important;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6f6f78 !important;
+}
+.ctf-panel__spec-code {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  line-height: 1.75;
+  color: #b9b9c6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ctf-panel__prompt { color: #20d65a; }
+.ctf-panel__tilde { color: #7d8794; }
+.ctf-panel__dollar { color: #eef1f5; }
+.ctf-panel__ok { color: #20d65a; }
+
+/* Two classes, because the base .progress-line rule is declared later in this
+   file and would otherwise win the tie and paint a light track on a dark panel. */
+.progress-line.progress-line--onDark { background: #2a2a33; height: 6px; border-radius: 3px; }
+.ctf-panel .btn { margin-top: var(--sp-4); }
 .ctf-panel h2 {
   color: #fff;
   font-size: 1.15rem;
