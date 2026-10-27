@@ -5,7 +5,7 @@ import ArticleCard from '../../components/ArticleCard.astro';
 import Icon from '../../components/Icon.astro';
 import { findSet } from '../../data/practice';
 import { getCollection, render } from 'astro:content';
-import { allTutorials, categorySlug, formatDate, neighbours, positionInTrack, trackOf } from '../../lib/tutorials';
+import { allTutorials, categorySlug, neighbours, positionInTrack, trackOf } from '../../lib/tutorials';
 
 export async function getStaticPaths() {
   const tutorials = await getCollection('tutorials');
@@ -15,7 +15,7 @@ export async function getStaticPaths() {
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const { entry } = Astro.props;
 const { Content } = await render(entry);
-const { title, description, category, author, date, level, tags } = entry.data;
+const { title, description, category, level, tags } = entry.data;
 
 const track = trackOf(entry);
 const pos = await positionInTrack(entry);
@@ -62,8 +62,6 @@ const related = all.filter((l) => l.data.track === entry.data.track && l.id !== 
         <h1>{title}</h1>
         <p class="lede">{description}</p>
         <div class="byline">
-          <span><Icon name="user" size={15} /> {author}</span>
-          <span><Icon name="calendar" size={15} /> <time datetime={date}>{formatDate(date)}</time></span>
           <span class="chip">{category}</span>
           <span class="chip chip--mono">{level}</span>
         </div>
