@@ -1,20 +1,24 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleCard from '../components/ArticleCard.astro';
-import PostRow from '../components/PostRow.astro';
 import Terminal from '../components/Terminal.astro';
 import Icon from '../components/Icon.astro';
 import { challenges, totalPoints } from '../lib/challenges';
-import { trackGroups, recentTutorials, allTutorials } from '../lib/tutorials';
+import { trackGroups, allTutorials } from '../lib/tutorials';
 import { course } from '../lib/curriculum';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const groups = await trackGroups();
 const lessons = await allTutorials();
-const recent = await recentTutorials();
-const [lead, ...rest] = recent;
-const featured = rest.slice(0, 2);
-const feed = rest.slice(2, 8);
+
+// Three lessons that between them show what the course is: the first thing you
+// ever do, the shell doing real work, and the Python track where code runs in
+// the page. Chosen by hand, because a feed ordered by a date was only ever
+// ordered by a date nobody had.
+const bySlug = new Map(lessons.map((l) => [l.id, l]));
+const featured = ['getting-started', 'pipes-and-redirection', 'run-your-first-python']
+  .map((slug) => bySlug.get(slug))
+  .filter((l): l is NonNullable<typeof l> => Boolean(l));
 
 const demo = challenges.find((c) => c.slug === 'first-steps') ?? challenges[0];
 const topics = new Set(challenges.map((c) => c.category)).size;
@@ -109,42 +113,52 @@ const outcomes = [
     </div>
   </section>
 
-  <!-- ── featured lessons ───────────────────────────────────────────────── -->
+  <!-- ── three lessons that show the range ──────────────────────────────── -->
   <section class="wrap section--tight">
-    <div class="section-label"><span>Featured lessons</span></div>
-    {lead && <div style="margin-bottom:1rem"><ArticleCard entry={lead} variant="hero" /></div>}
-    <div class="cards cards--2">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Start with these</p>
+        <h2>Three lessons that show what this is</h2>
+      </div>
+      <p class="section-head__meta">
+        <a href={`${base}course/`}>All {lessons.length} lessons</a>
+      </p>
+    </div>
+    <div class="cards cards--3">
       {featured.map((t) => <ArticleCard entry={t} />)}
-    </div>
-  </section>
-
-  <!-- ── latest ─────────────────────────────────────────────────────────── -->
-  <section class="wrap section--tight">
-    <div class="section-label"><span>Latest lessons</span></div>
-    <div class="posts">
-      {feed.map((t) => <PostRow entry={t} />)}
-    </div>
-    <div class="actions" style="margin-top:1.4rem">
-      <a class="btn btn--outline" href={`${base}course/`}>All {lessons.length} lessons</a>
     </div>
   </section>
 
   <!-- ── the second way in: practise ────────────────────────────────────── -->
   <section class="wrap section--tight">
     <div class="ctf-panel">
-      <h2>Learmux CTF</h2>
-      <p>
-        {challenges.length} terminal challenges across {topics} topics, worth {totalPoints} points.
-        Each one opens a sandbox with its own filesystem. Find the flag to finish it.
-      </p>
-      <div class="ctf-meta">
-        <span data-progress-chip data-total={challenges.length}>0 / {challenges.length} captured</span>
-        <span>{totalPoints} points</span>
+      <div class="ctf-panel__body">
+        <h2>Learmux CTF</h2>
+        <p>
+          {challenges.length} terminal challenges across {topics} topics, worth {totalPoints} points.
+          Each one opens a sandbox with its own filesystem. Find the flag to finish it.
+        </p>
+        <div class="ctf-meta">
+          <span data-progress-chip data-total={challenges.length}>0 / {challenges.length} captured</span>
+          <span>{totalPoints} points</span>
+        </div>
+        <div class="progress-line progress-line--onDark">
+          <span data-progress-bar data-total={challenges.length}></span>
+        </div>
+        <a class="btn btn--green" href={`${base}challenges/`}>Play CTF</a>
       </div>
-      <div class="progress-line" style="background:#2a2a33">
-        <span data-progress-bar data-total={challenges.length}></span>
+
+      <!-- What a finished challenge looks like, in the shape the reader will
+           actually type it. -->
+      <div class="ctf-panel__spec">
+        <p class="ctf-panel__spec-label">A finished challenge</p>
+        <pre class="ctf-panel__spec-code"><span class="ctf-panel__prompt">player@termux</span> <span class="ctf-panel__tilde">~</span> <span class="ctf-panel__dollar">$</span> ls
+notes.txt
+<span class="ctf-panel__prompt">player@termux</span> <span class="ctf-panel__tilde">~</span> <span class="ctf-panel__dollar">$</span> cat notes.txt
+the flag is FLAG&#123;first_steps&#125;
+<span class="ctf-panel__prompt">player@termux</span> <span class="ctf-panel__tilde">~</span> <span class="ctf-panel__dollar">$</span> submit FLAG&#123;first_steps&#125;
+<span class="ctf-panel__ok">Correct. 20 points.</span></pre>
       </div>
-      <a class="btn btn--green" href={`${base}challenges/`}>Play CTF</a>
     </div>
   </section>
 
