@@ -1,1 +1,0 @@
-The hosts file lives at etc/hosts and is checked before DNS.
