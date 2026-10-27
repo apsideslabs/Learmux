@@ -1,1 +1,0 @@
-Command substitution is written as $(command) in modern shells.
