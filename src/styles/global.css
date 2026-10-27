@@ -1816,3 +1816,172 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   margin: var(--sp-1) 0 var(--sp-3);
 }
 .ctf-panel--band p { max-width: 44ch; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Homepage furniture
+
+   Four blocks the page needed and nothing else uses: the inventory strip, the
+   three-step explainer, the feature cards, and the questions.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.band--tight { padding-block: clamp(2rem, 4vw, 3rem); }
+
+/* ── the inventory: numbers, not adjectives ────────────────────────────── */
+/* Named tally, not stats: a .stat card already exists on another page and the
+   name collision made these numbers inherit a light card on a navy band. */
+.tally {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1.25rem, 3vw, 2rem);
+  margin: 0;
+  text-align: center;
+}
+@media (min-width: 620px) {
+  .tally { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 960px) {
+  .tally { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+.tally__item { margin: 0; }
+.tally__n {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: clamp(1.6rem, 3.4vw, 2.1rem);
+  line-height: 1;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+}
+.tally__label {
+  margin: 0.4rem 0 0;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  color: #9a9aa6;
+}
+
+/* ── three steps, numbered ─────────────────────────────────────────────── */
+.steps {
+  display: grid;
+  gap: clamp(1.25rem, 3vw, 2rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+@media (min-width: 800px) {
+  .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.step {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  padding-top: var(--sp-4);
+  border-top: 2px solid var(--ink);
+}
+.step__n {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--green-dark);
+}
+.step__title {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1.06rem;
+  color: var(--ink);
+}
+.step__body { font-size: 0.9rem; line-height: 1.55; color: #4a4a54; }
+
+/* ── feature cards: three of them, with an icon and a count ────────────── */
+.feature-grid {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 800px) {
+  .feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.feature {
+  display: grid;
+  gap: 0.3rem;
+  align-content: start;
+  padding: var(--sp-4);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+.feature:hover {
+  border-color: #cfcfda;
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+.feature__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  margin-bottom: 0.4rem;
+  border-radius: 50%;
+  background: #eafcef;
+  color: var(--green-dark);
+}
+.feature__title {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ink);
+}
+.feature__meta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.feature__body { margin-top: 0.25rem; font-size: 0.88rem; line-height: 1.55; color: #4a4a54; }
+
+/* ── questions ─────────────────────────────────────────────────────────── */
+.faq {
+  max-width: 52rem;
+  border-top: 1px solid var(--line);
+}
+.faq__item { border-bottom: 1px solid var(--line); }
+.faq__q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 0.9rem 0;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+}
+.faq__q::-webkit-details-marker { display: none; }
+.faq__q::after {
+  content: '+';
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+.faq__item[open] .faq__q::after { content: '−'; }
+.faq__a { margin: 0 0 1rem; font-size: 0.9rem; line-height: 1.6; color: #4a4a54; max-width: 60ch; }
+
+/* ── the closing band ──────────────────────────────────────────────────── */
+.final-cta {
+  display: grid;
+  gap: var(--sp-5);
+  align-items: center;
+}
+@media (min-width: 860px) {
+  .final-cta { grid-template-columns: minmax(0, 1.1fr) auto; }
+}
+.final-cta h2 { margin: 0 0 var(--sp-2); }
+.final-cta p { margin: 0; max-width: 48ch; color: #9a9aa6; }
+.btn--onDark { color: #fff; border-color: rgba(255, 255, 255, 0.28); }
+.btn--onDark:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.5); color: #fff; }
