@@ -331,7 +331,7 @@ function checkLessons(tracks) {
   const trackIds = new Set(tracks.map((t) => t.id));
   const levels = new Set(['Beginner', 'Intermediate', 'Advanced']);
   const positions = new Map();
-  const required = ['title', 'description', 'excerpt', 'category', 'track', 'date', 'order', 'level'];
+  const required = ['title', 'description', 'excerpt', 'category', 'track', 'order', 'level'];
 
   for (const file of files) {
     const at = `lesson ${file}`;
@@ -354,9 +354,6 @@ function checkLessons(tracks) {
     }
     if (fm.level && !levels.has(fm.level)) {
       fail(at, `level must be Beginner, Intermediate or Advanced, got ${fm.level}`);
-    }
-    if (fm.date && !isIsoDate(fm.date)) {
-      fail(at, `date should be YYYY-MM-DD, got ${JSON.stringify(fm.date)}`);
     }
     if (fm.order !== undefined && !/^\d+$/.test(String(fm.order))) {
       fail(at, `order should be a number, got ${JSON.stringify(fm.order)}`);
