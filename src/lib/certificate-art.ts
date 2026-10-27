@@ -264,10 +264,10 @@ export function certificateArt(o: ArtOptions): string {
   // ── signature ──────────────────────────────────────────────────────────
   p.push(rule(96, 300, 588, INK, 0.9));
   p.push(
-    `<text x="96" y="612" font-family="${SERIF}" font-size="17" fill="${INK}">The Study Cipher</text>`,
+    `<text x="96" y="612" font-family="${SERIF}" font-size="17" fill="${INK}">Apsides Labs</text>`,
   );
   p.push(
-    `<text x="96" y="629" font-family="${SANS}" font-size="10" fill="${MUTED}">Apsides Labs</text>`,
+    `<text x="96" y="629" font-family="${SANS}" font-size="10" fill="${MUTED}">the studio behind Learmux</text>`,
   );
 
   // ── verification, on its own quiet zone so it scans ────────────────────
