@@ -1,9 +1,147 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import '../../styles/glossary.css';
+import { getCollection } from 'astro:content';
 import { terms, categories, countIn, initials, haystack, totalTerms } from '../../data/glossary';
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+
+/**
+ * Where each term is actually used, and what keeps turning up beside it.
+ *
+ * A list of definitions is a dictionary. What makes a glossary navigable is
+ * knowing that "Salt" sits near "KDF" and "Rainbow table", and that fact is
+ * already implicit in the course: terms that appear in the same lessons are
+ * related in the way this course means them. So the graph is derived from the
+ * lesson text rather than invented by hand, which also means it cannot drift
+ * out of date.
+ */
+const lessons = await getCollection('tutorials');
+
+/** Escape a term for use inside a regular expression. */
+const reEscape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * A pattern that matches a term as a whole word.
+ *
+ * Word boundaries only make sense next to word characters, so a term like
+ * "O(1)" or "127.0.0.1" gets a plain match instead of a \b that would never
+ * fire.
+ */
+function termPattern(text: string): RegExp {
+  const body = reEscape(text.trim());
+  const lead = /^\w/.test(text) ? '\\b' : '';
+  const tail = /\w$/.test(text) ? '\\b' : '';
+  return new RegExp(`${lead}${body}${tail}`, 'i');
+}
+
+// One lowercase blob per lesson, so each term is tested once per lesson rather
+// than once per occurrence.
+const lessonText = lessons.map((l) => ({
+  slug: l.id,
+  title: l.data.title as string,
+  text: `${l.data.title ?? ''}\n${l.body ?? ''}`,
+}));
+
+const patterns = terms.map((t) => [t, [t.term, ...(t.also ?? [])].map(termPattern)] as const);
+
+/** term -> the indices of the lessons that mention it */
+const appearsIn = new Map<string, number[]>();
+for (const [term, pats] of patterns) {
+  const hits: number[] = [];
+  for (let i = 0; i < lessonText.length; i++) {
+    if (pats.some((re) => re.test(lessonText[i].text))) hits.push(i);
+  }
+  appearsIn.set(term.term, hits);
+}
+
+/**
+ * The three closest terms.
+ *
+ * Two signals, both taken from the material rather than invented. Sharing
+ * lessons is the stronger one, because the course taught them together.
+ * Naming each other in a definition is the second, and it is what covers the
+ * terms that only appear once: "Salt" explains itself in terms of hashing even
+ * if the word salt never reaches a lesson.
+ */
+const defPatterns = terms.map((t) => ({
+  term: t.term,
+  pats: [t.term, ...(t.also ?? [])].map(termPattern),
+  text: `${t.short}\n${t.detail ?? ''}`,
+}));
+
+/** term -> the other terms whose names appear in its own definition */
+const names = new Map<string, Set<string>>();
+for (const a of defPatterns) {
+  const set = new Set<string>();
+  for (const b of defPatterns) {
+    if (b.term === a.term) continue;
+    if (b.pats.some((re) => re.test(a.text))) set.add(b.term);
+  }
+  names.set(a.term, set);
+}
+
+/**
+ * How much a mention is worth, by how rare it is.
+ *
+ * Without this, "Bit" relates to whatever definitions happen to contain the
+ * English word "bit", and "Shell" attaches itself to half the glossary. A term
+ * named in two definitions is specific; one named in forty is noise, and the
+ * weight says so.
+ */
+const namedIn = new Map<string, number>();
+for (const [, set] of names) {
+  for (const name of set) namedIn.set(name, (namedIn.get(name) ?? 0) + 1);
+}
+const weightOf = (term: string) => 1 / (1 + (namedIn.get(term) ?? 0));
+
+const related = new Map<string, string[]>();
+for (const a of terms) {
+  const mine = new Set(appearsIn.get(a.term) ?? []);
+  const mineNames = names.get(a.term) ?? new Set<string>();
+
+  const scored: { term: string; score: number }[] = [];
+  for (const b of terms) {
+    if (b.term === a.term) continue;
+
+    const theirs = appearsIn.get(b.term) ?? [];
+    let shared = 0;
+    for (const i of theirs) if (mine.has(i)) shared++;
+
+    /*
+     * Overlap alone favours the ubiquitous. "Shell" appears in most lessons, so
+     * it shares at least two with almost every term and wins every list. What
+     * is wanted is how much two terms agree relative to how much they appear at
+     * all, which is the Jaccard index: shared over the union.
+     */
+    const union = mine.size + theirs.length - shared;
+    const similarity = union > 0 ? shared / union : 0;
+    // Sharing one lesson is weak, two is a real relationship.
+    if (shared === 1) shared = 0;
+
+    // A mention is worth something only if the term being mentioned is specific.
+    let mention = 0;
+    if (mineNames.has(b.term)) mention += weightOf(b.term);
+    if (names.get(b.term)?.has(a.term)) mention += weightOf(b.term);
+
+    /*
+     * A mention has to be specific to count on its own. weightOf is 1 for a term
+     * nobody else names, 0.5 for one other definition, and falls away quickly.
+     * Below a third, the link is "both of these are security words", which is
+     * not worth a chip.
+     */
+    const strongMention = mention >= 0.34;
+    if (shared === 0 && !strongMention) continue;
+
+    scored.push({ term: b.term, score: (shared === 0 ? 0 : similarity) * 10 + mention });
+  }
+
+  scored.sort((x, y) => y.score - x.score || x.term.localeCompare(y.term));
+  related.set(a.term, scored.slice(0, 3).map((s) => s.term));
+}
+
+/** How many lessons mention a term, which is a decent proxy for how central it is. */
+const mentionCount = (term: string) => (appearsIn.get(term) ?? []).length;
 
 // Group by initial so the A to Z bar has something to jump to.
 const byLetter = new Map<string, typeof terms>();
@@ -89,10 +227,25 @@ const lessonHref = (slug: string) => `${base}learn/${slug}/`;
                 </h3>
                 <p class="term__short">{t.short}</p>
                 {t.detail && <p class="term__detail">{t.detail}</p>}
-                {t.see && (
-                  <a class="term__see" href={lessonHref(t.see)}>
-                    Read the lesson
-                  </a>
+                <div class="term__foot">
+                  {t.see && (
+                    <a class="term__see" href={lessonHref(t.see)}>
+                      Read the lesson
+                    </a>
+                  )}
+                  {mentionCount(t.term) > 0 && (
+                    <span class="term__count">
+                      in {mentionCount(t.term)} lesson{mentionCount(t.term) === 1 ? '' : 's'}
+                    </span>
+                  )}
+                </div>
+                {(related.get(t.term) ?? []).length > 0 && (
+                  <p class="term__related">
+                    <span class="term__related-label">See also</span>
+                    {(related.get(t.term) ?? []).map((r) => (
+                      <a href={`?q=${encodeURIComponent(r)}`} data-related>{r}</a>
+                    ))}
+                  </p>
                 )}
               </article>
             ))}
@@ -188,6 +341,18 @@ const lessonHref = (slug: string) => `${base}learn/${slug}/`;
         if (!target) return;
         event.preventDefault();
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    // "See also" filters in place rather than navigating, so the reader keeps
+    // their place in a long list.
+    for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-related]')) {
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        const term = new URL(link.href, location.href).searchParams.get('q') ?? '';
+        q.value = term;
+        apply();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     }
 
