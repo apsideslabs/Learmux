@@ -3,8 +3,6 @@ title: "HTTP and APIs from the shell"
 description: "Read a web response, shape a request, and pull a JSON reply apart from the Termux shell with curl."
 excerpt: "Learn to send a request and read the reply from the shell with curl and python."
 category: "Web"
-author: "The Study Cipher"
-date: "2026-02-24"
 order: 21
 track: "networking"
 level: "Intermediate"
@@ -32,7 +30,6 @@ The -i option tells curl to print the response headers before the body:
 $ curl -i https://example.com/api/people/42
 HTTP/2 200
 content-type: application/json
-date: Thu, 19 Feb 2026 10:05:00 GMT
 content-length: 45
 
 {"id": 42, "name": "ada", "created": true}
@@ -74,7 +71,6 @@ This request sends an Accept header and a form field. It writes the reply body t
 $ curl -i -H "Accept: application/json" https://example.com/api/people
 HTTP/2 201
 content-type: application/json
-date: Thu, 19 Feb 2026 10:06:12 GMT
 location: /api/people/42
 content-length: 45
 ```
