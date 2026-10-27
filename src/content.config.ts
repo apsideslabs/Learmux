@@ -18,12 +18,9 @@ const tutorials = defineCollection({
     excerpt: z.string(),
     category: z.string(),
     track: z.string(),
-    author: z.string().default('The Study Cipher'),
-    date: z.string(),
     order: z.number().default(999),
     level: z.enum(['Beginner', 'Intermediate', 'Advanced']).default('Beginner'),
     tags: z.array(z.string()).default([]),
-    updated: z.string().optional(),
   }),
 });
 
