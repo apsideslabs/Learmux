@@ -28,7 +28,7 @@
   font-size: 0.85rem;
   line-height: 1.6;
 }
-.lx-term--compact { height: min(46vh, 420px); font-size: 0.9rem; }
+.lx-term--compact { height: min(44vh, 390px); font-size: 0.9rem; }
 .lx-term--full { height: min(66vh, 620px); }
 
 /* ── chrome ────────────────────────────────────────────────────────────── */
