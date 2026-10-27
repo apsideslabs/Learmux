@@ -275,3 +275,49 @@
   .search-gloss__name { min-width: 0; }
   .search-gloss__short { white-space: normal; }
 }
+
+/* ── the foot of a term card ────────────────────────────────────────────── */
+.term__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.term__foot .term__see { margin-top: 0; }
+
+.term__count {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #9a9aa6;
+}
+
+.term__related {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin: var(--sp-2) 0 0;
+  padding-top: var(--sp-2);
+  border-top: 1px dashed var(--line);
+}
+.term__related-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.term__related a {
+  padding: 0.1rem 0.4rem;
+  font-family: var(--font-head);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--blue-dark);
+  background: #f2f7fd;
+  border: 1px solid #d6e6f7;
+  border-radius: 999px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.term__related a:hover { background: #e4effb; border-color: #b9d5f0; }
