@@ -1,1 +1,0 @@
-Loopback is 127.0.0.1 and never leaves the machine.
