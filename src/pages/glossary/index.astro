@@ -100,7 +100,7 @@ for (const a of terms) {
   const mine = new Set(appearsIn.get(a.term) ?? []);
   const mineNames = names.get(a.term) ?? new Set<string>();
 
-  const scored: { term: string; score: number }[] = [];
+  const scored: { term: string; score: number; category: string; weak: boolean }[] = [];
   for (const b of terms) {
     if (b.term === a.term) continue;
 
@@ -116,8 +116,16 @@ for (const a of terms) {
      */
     const union = mine.size + theirs.length - shared;
     const similarity = union > 0 ? shared / union : 0;
-    // Sharing one lesson is weak, two is a real relationship.
-    if (shared === 1) shared = 0;
+    // One shared lesson is a coincidence; two is a relationship.
+    const lessonSignal = shared >= 2 ? similarity * 10 : 0;
+
+    /*
+     * Both pointing at the same lesson is a real link even when the words
+     * themselves appear once, and it is what connects Active Directory to
+     * Kerberos. It is weighted below a specific mention, because "we are both
+     * taught in this lesson" is weaker than "my definition names you".
+     */
+    const sameLesson = Boolean(a.see) && a.see === b.see ? 1.5 : 0;
 
     // A mention is worth something only if the term being mentioned is specific.
     let mention = 0;
@@ -125,19 +133,47 @@ for (const a of terms) {
     if (names.get(b.term)?.has(a.term)) mention += weightOf(b.term);
 
     /*
-     * A mention has to be specific to count on its own. weightOf is 1 for a term
-     * nobody else names, 0.5 for one other definition, and falls away quickly.
-     * Below a third, the link is "both of these are security words", which is
-     * not worth a chip.
+     * A mention only counts if it is specific. weightOf is 1 for a term nobody
+     * else names, 0.5 for one other definition, and falls away fast. Below a
+     * third the link is just "both of these are security words", which is not
+     * worth a chip.
      */
-    const strongMention = mention >= 0.34;
-    if (shared === 0 && !strongMention) continue;
+    const strongMention = mention >= 0.34 ? mention : 0;
 
-    scored.push({ term: b.term, score: (shared === 0 ? 0 : similarity) * 10 + mention });
+    const score = lessonSignal + sameLesson + strongMention;
+    if (score === 0) continue;
+    // Weak means the only reason is "both taught in the same lesson".
+    const weak = lessonSignal === 0 && strongMention === 0;
+    scored.push({ term: b.term, score, category: b.category, weak });
   }
 
-  scored.sort((x, y) => y.score - x.score || x.term.localeCompare(y.term));
-  related.set(a.term, scored.slice(0, 3).map((s) => s.term));
+  /*
+   * Score first, then subject. A tie inside one subject is far more useful than
+   * a tie across two: the reader looking up Kerberos wants Active Directory,
+   * not the offensive term that happens to be alphabetically earlier.
+   */
+  scored.sort((x, y) => {
+    if (y.score !== x.score) return y.score - x.score;
+    const xc = x.category === a.category ? 0 : 1;
+    const yc = y.category === a.category ? 0 : 1;
+    if (xc !== yc) return xc - yc;
+    return x.term.localeCompare(y.term);
+  });
+  /*
+   * At most one of the three may be a weak, same-lesson link. Without this cap
+   * a term with no real relationships fills every slot with its lesson
+   * neighbours, which reads as noise. Showing two good links and one filler
+   * beats three fillers.
+   */
+  const picked: string[] = [];
+  let weakUsed = 0;
+  for (const s of scored) {
+    if (s.weak && weakUsed >= 1) continue;
+    if (s.weak) weakUsed++;
+    picked.push(s.term);
+    if (picked.length === 3) break;
+  }
+  related.set(a.term, picked);
 }
 
 /** How many lessons mention a term, which is a decent proxy for how central it is. */
