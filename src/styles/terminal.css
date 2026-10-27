@@ -6,6 +6,7 @@
 
 .lx-term {
   --lx-kb: 0px;
+  box-shadow: 0 18px 40px -18px rgba(11, 14, 18, 0.55), 0 2px 6px rgba(11, 14, 18, 0.18);
   --lx-bg: #101419;
   --lx-line: #232a33;
   --lx-text: #d6dae0;
@@ -27,7 +28,7 @@
   font-size: 0.85rem;
   line-height: 1.6;
 }
-.lx-term--compact { height: min(38vh, 340px); }
+.lx-term--compact { height: min(46vh, 420px); font-size: 0.9rem; }
 .lx-term--full { height: min(66vh, 620px); }
 
 /* ── chrome ────────────────────────────────────────────────────────────── */
@@ -38,6 +39,22 @@
   padding: 0.55rem 0.8rem;
   background: #0b0e12;
   border-bottom: 1px solid var(--lx-line);
+}
+
+/*
+ * Three dots, drawn with one box-shadow rather than three elements. It is the
+ * cheapest way to make a dark rectangle read as a window somebody could type
+ * into, which is the whole claim the hero is making.
+ */
+.lx-term__bar::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 1.9rem;
+  border-radius: 50%;
+  background: #ff5f57;
+  box-shadow: 0.8rem 0 0 #febc2e, 1.6rem 0 0 #28c840;
 }
 .lx-term__title {
   color: var(--lx-muted);
