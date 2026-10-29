@@ -4,9 +4,11 @@ import type { Challenge } from '../lib/types';
 interface Props {
   challenge: Challenge;
   compact?: boolean;
+  /** Lesson sandbox: no flag, no hint, different boot text. */
+  lesson?: boolean;
 }
 
-const { challenge, compact = false } = Astro.props;
+const { challenge, compact = false, lesson = false } = Astro.props;
 // Serialise the challenge so the island can boot without a network request.
 const data = JSON.stringify(challenge);
 ---
@@ -15,6 +17,7 @@ const data = JSON.stringify(challenge);
   class="lx-term-host"
   data-challenge={data}
   data-compact={compact ? 'true' : undefined}
+  data-lesson={lesson ? 'true' : undefined}
 ></div>
 
 <script>
@@ -26,7 +29,10 @@ const data = JSON.stringify(challenge);
       host.dataset.mounted = '1';
       const raw = host.getAttribute('data-challenge');
       if (!raw) return;
-      mountTerminal(host, JSON.parse(raw), { compact: host.dataset.compact === 'true' });
+      mountTerminal(host, JSON.parse(raw), {
+        compact: host.dataset.compact === 'true',
+        lesson: host.dataset.lesson === 'true',
+      });
     });
   }
 
