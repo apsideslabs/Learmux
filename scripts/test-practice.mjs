@@ -343,7 +343,7 @@ const SAMPLES = {
  * working directory sits inside com.termux. Running it under an ordinary
  * temporary path would test the verifier rather than the task.
  */
-function runTask(command, fixture) {
+function runTask(command, fixture, needs) {
   const root = mkdtempSync(join(tmpdir(), 'learn-practice-'));
   const termuxFiles = join(root, 'data', 'data', 'com.termux', 'files');
   const home = join(termuxFiles, 'home');
@@ -352,6 +352,13 @@ function runTask(command, fixture) {
   if (fixture) {
     const script = extractFinalScript(fixture.lesson);
     if (script !== null) writeFileSync(join(home, fixture.as), script, { mode: 0o755 });
+  }
+  // Files the learner is expected to have created by hand. The command under
+  // test grades their file, and this stands in for it.
+  for (const [name, content] of Object.entries(needs ?? {})) {
+    const target = join(home, name);
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, content);
   }
   // Termux sets PREFIX to its own usr directory, and one of the tasks reads it
   mkdirSync(join(prefix, 'bin'), { recursive: true });
@@ -440,7 +447,7 @@ for (const set of practiceSets) {
     }
 
     // No sample: run it for real.
-    const out = runTask(task.command, task.fixture);
+    const out = runTask(task.command, task.fixture, task.needs);
     if (!out.trim()) {
       fail('the command produced no output at all', task.command);
       continue;
