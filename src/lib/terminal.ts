@@ -17,6 +17,11 @@ export interface TerminalOptions {
   onSolved?: (challenge: Challenge) => void;
   /** Shorter shell, for the home-page showcase. */
   compact?: boolean;
+  /**
+   * A lesson sandbox, not a challenge. There is no flag to find, so the boot
+   * text must not tell the reader to submit one.
+   */
+  lesson?: boolean;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string): HTMLElementTagNameMap[K] {
@@ -104,12 +109,17 @@ export function mountTerminal(root: HTMLElement, challenge: Challenge, opts: Ter
 
   function boot() {
     output.innerHTML = '';
-    banner(`Learmux sandbox: ${challenge.title}`);
-    if (isSolved(challenge.slug)) {
+    banner(opts.lesson ? `Sandbox: ${challenge.title}` : `Learmux sandbox: ${challenge.title}`);
+    if (!opts.lesson && isSolved(challenge.slug)) {
       line(`✔ You have already captured this flag (${challenge.flag}).`, 'lx-term__muted');
     }
     line(challenge.objective, 'lx-term__muted');
-    line("Type `help` for the commands this one is about, `hint` if you are stuck, or `submit FLAG{...}` when you find it.", 'lx-term__muted');
+    line(
+      opts.lesson
+        ? "A shell with this lesson's files in it. Type the commands as you read. `help` lists them, `clear` empties the screen."
+        : 'Type `help` for the commands this one is about, `hint` if you are stuck, or `submit FLAG{...}` when you find it.',
+      'lx-term__muted',
+    );
     line('');
     refreshPrompt();
     scrollToBottom();
