@@ -60,6 +60,7 @@ async function loadData() {
         `export { tracks, course } from './src/lib/curriculum.ts';`,
         `export { practiceSets } from './src/data/practice/index.ts';`,
         `export { terms as glossaryTerms, categories as glossaryCategories } from './src/data/glossary/index.ts';`,
+        `export { sandboxChallenge, seedFor, seededLessons, SANDBOX_HOME } from './src/lib/lesson-sandbox.ts';`,
       ].join('\n'),
       resolveDir: ROOT,
       loader: 'ts',
@@ -430,6 +431,49 @@ function checkGlossary(terms, cats, lessonSlugs) {
   return { count: terms.length, withLesson, categories: validCats.size };
 }
 
+// ── lesson sandboxes ────────────────────────────────────────────────────────
+/**
+ * Every lesson gets a shell, so every lesson must produce a usable one.
+ *
+ * The failure this catches is quiet: a seed path typo builds a tree where the
+ * file the lesson tells you to `cat` simply is not there, and nothing throws.
+ */
+function checkSandboxes(build, seedOf, seeded, home, lessonSlugs) {
+  if (typeof build !== 'function') return fail('sandbox', 'sandboxChallenge is not exported');
+
+  const walk = (node, parts, out) => {
+    for (const [name, child] of Object.entries(node.children ?? {})) {
+      const path = [...parts, name];
+      if (child.type === 'dir') walk(child, path, out);
+      else out.push('/' + path.join('/'));
+    }
+    return out;
+  };
+
+  let withFiles = 0;
+  for (const slug of lessonSlugs) {
+    const c = build(slug);
+    const at = `sandbox for "${slug}"`;
+
+    if (c.fs?.type !== 'dir') fail(at, 'root is not a directory');
+    if (c.cwd !== home) fail(at, `starts at ${c.cwd}, not the Termux home`);
+    // An empty validation list is what stops a sandbox marking a lesson solved.
+    if ((c.validation ?? []).length !== 0) fail(at, 'has validation rules, so it could mark progress');
+    if (c.points !== 0) fail(at, 'awards points');
+
+    const files = walk(c.fs, [], []);
+    const seed = seedOf(slug);
+    const expected = Object.keys(seed).map((rel) => `${home}/${rel}`);
+    for (const path of expected) {
+      if (!files.includes(path)) fail(at, `seeded file missing from the tree: ${path}`);
+    }
+    if (expected.length) withFiles++;
+  }
+
+  if (!Array.isArray(seeded) || seeded.length === 0) fail('sandbox', 'no lesson has a seed');
+  return { count: lessonSlugs.length, withFiles };
+}
+
 // ── practice sets ───────────────────────────────────────────────────────────
 // Each set is keyed by lesson slug, and the lesson page looks its set up by
 // that key. A set whose slug matches no lesson would never be linked from
@@ -666,6 +710,10 @@ if (data) {
   const x = checkTermuxCatalogue();
   const pr = checkPractice(data.practiceSets);
   const gl = checkGlossary(data.glossaryTerms, data.glossaryCategories, lessonSlugSet());
+  const sb = checkSandboxes(
+    data.sandboxChallenge, data.seedFor, data.seededLessons, data.SANDBOX_HOME,
+    [...lessonSlugSet()],
+  );
   const base = '/Learmux/';
   const links = WANT_LINKS ? checkLinks(base) : null;
   const built = checkBuiltPractice();
@@ -678,6 +726,7 @@ if (data) {
     if (x) bits.push(`${x.count} Termux CTF challenges (${x.points} pts, tool ${x.version})`);
     if (pr) bits.push(`${pr.count} practice sets (${pr.questions} questions, ${pr.tasks} tasks)`);
     if (gl) bits.push(`${gl.count} glossary terms (${gl.withLesson} linked to lessons)`);
+    if (sb) bits.push(`${sb.count} lesson sandboxes (${sb.withFiles} files seeded)`);
     if (links && !links.skipped) bits.push(`${links.count} pages linked`);
     if (built) bits.push(`${built.pages} task pages say where to run the command`);
     console.log(`content ok: ${bits.join(', ')}`);
