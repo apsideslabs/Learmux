@@ -26,6 +26,7 @@ const thumbs = [
   { slug: 'getting-started', accent: '#20d65a', lines: ['$ pwd', '/data/data/com.termux/files/home', '$ whoami'] },
   { slug: 'navigating-the-filesystem', accent: '#2878d0', lines: ['$ ls -la', 'drwxr-xr-x  projects', '$ cd projects/android'] },
   { slug: 'reading-and-searching-text', accent: '#f3bc36', lines: ['$ grep -n "error" access.log', '42: error: vault sealed', '$ wc -l access.log'] },
+  { slug: 'editing-a-file', accent: '#35b0c4', lines: ['$ nano notes.txt', '^O Write Out   ^X Exit', '$ cat notes.txt'] },
   { slug: 'pipes-and-redirection', accent: '#e8734a', lines: ['$ cat log | grep 500 | head', '500 GET /flag', '$ ls -l > listing.txt'] },
   { slug: 'file-permissions', accent: '#35b0c4', lines: ['$ ls -l', '-rw-rw-rw- shared.ini', '$ chmod 600 id_rsa'] },
   { slug: 'managing-packages', accent: '#8b7cd8', lines: ['$ pkg update', '$ pkg install nmap', 'Setting up nmap ...'] },
