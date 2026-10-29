@@ -1,0 +1,77 @@
+---
+/**
+ * Marking a lesson finished.
+ *
+ * Until now completion could only be recorded by the five Python lessons, whose
+ * checkpoints call markSolved directly, and by the CTF terminal. The other
+ * fifty-eight lessons recorded nothing however carefully you worked through
+ * them, so the profile and the certificate were counting a number almost
+ * nobody could move.
+ *
+ * This is deliberately a button and not an automatic tick. A lesson is read,
+ * not passed, and the site has no way to know whether you did the practice. A
+ * reader saying so is more honest than a scroll listener guessing.
+ */
+interface Props {
+  slug: string;
+}
+
+const { slug } = Astro.props;
+---
+
+<div class="done" data-lesson-done data-slug={slug}>
+  <div class="done__body">
+    <p class="done__title" data-done-title>Finished this lesson?</p>
+    <p class="done__hint" data-done-hint>
+      Marking it counts towards your progress and your certificate. It stays in this browser.
+    </p>
+  </div>
+  <button class="btn btn--green done__btn" type="button" data-done-btn>
+    <span data-done-label>Mark complete</span>
+  </button>
+</div>
+
+<script>
+  import { isSolved, markSolved, clearSolved } from '../lib/progress';
+
+  function paint(root: HTMLElement, done: boolean) {
+    const title = root.querySelector<HTMLElement>('[data-done-title]');
+    const hint = root.querySelector<HTMLElement>('[data-done-hint]');
+    const label = root.querySelector<HTMLElement>('[data-done-label]');
+    const btn = root.querySelector<HTMLButtonElement>('[data-done-btn]');
+    root.dataset.done = done ? '1' : '';
+    if (title) title.textContent = done ? 'You have finished this lesson' : 'Finished this lesson?';
+    if (hint) {
+      hint.textContent = done
+        ? 'It is counted on your profile and on your certificate.'
+        : 'Marking it counts towards your progress and your certificate. It stays in this browser.';
+    }
+    if (label) label.textContent = done ? 'Completed' : 'Mark complete';
+    btn?.classList.toggle('done__btn--on', done);
+  }
+
+  function init() {
+    document.querySelectorAll<HTMLElement>('[data-lesson-done]').forEach((root) => {
+      if (root.dataset.wired === '1') return;
+      root.dataset.wired = '1';
+      const slug = root.dataset.slug ?? '';
+      paint(root, isSolved(slug));
+
+      root.querySelector<HTMLButtonElement>('[data-done-btn]')?.addEventListener('click', () => {
+        const now = !isSolved(slug);
+        if (now) markSolved(slug);
+        else clearSolved(slug);
+        paint(root, now);
+      });
+
+      // If the practice set on this page finishes, the lesson is done too.
+      window.addEventListener('Learmux:lesson-complete', (e) => {
+        const detail = (e as CustomEvent<{ slug?: string }>).detail;
+        if (detail?.slug === slug) paint(root, isSolved(slug));
+      });
+    });
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
