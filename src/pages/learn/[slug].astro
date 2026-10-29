@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import '../../styles/practice.css';
 import ArticleCard from '../../components/ArticleCard.astro';
 import LessonSandbox from '../../components/LessonSandbox.astro';
+import LessonDone from '../../components/LessonDone.astro';
 import Icon from '../../components/Icon.astro';
 import { findSet } from '../../data/practice';
 import { getCollection, render } from 'astro:content';
@@ -79,8 +80,10 @@ const related = all.filter((l) => l.data.track === entry.data.track && l.id !== 
         <Content />
       </div>
 
-      {practiceSet && (
-        <div class="practice-cta">
+        <LessonDone slug={entry.id} />
+
+        {practiceSet && (
+          <div class="practice-cta">
           <div class="practice-cta__body">
             <h2>Test yourself on this</h2>
             <p>{practiceLine}</p>
