@@ -1,0 +1,64 @@
+---
+/**
+ * A shell beside the lesson.
+ *
+ * The whole point is that the command you are reading about is the command you
+ * can type, on the same screen, against the same files. It is collapsed on a
+ * phone so it costs one bar of height, and open and sticky on a wide screen
+ * where there is room to keep it in view while you read.
+ */
+import Terminal from './Terminal.astro';
+import { sandboxChallenge, seedFor } from '../lib/lesson-sandbox';
+
+interface Props {
+  slug: string;
+  title: string;
+}
+
+const { slug, title } = Astro.props;
+const challenge = sandboxChallenge(slug, title);
+const files = Object.keys(seedFor(slug));
+---
+
+<details class="sandbox" data-sandbox>
+  <summary class="sandbox__bar">
+    <span class="sandbox__mark" aria-hidden="true">$</span>
+    <span class="sandbox__label">Try it</span>
+    <span class="sandbox__files">
+      {files.length} file{files.length === 1 ? '' : 's'} from this lesson
+    </span>
+    <span class="sandbox__chev" aria-hidden="true"></span>
+  </summary>
+  <div class="sandbox__inner">
+    <Terminal challenge={challenge} compact lesson />
+    <p class="sandbox__note">
+      A real shell, seeded with this lesson's files. Nothing you type leaves the page.
+    </p>
+  </div>
+</details>
+
+<script>
+  /**
+   * Open on a wide screen, where the panel sits beside the lesson; closed on a
+   * phone, where it would otherwise push the lesson off the first screen. Once
+   * the reader has opened or closed it themselves, leave it alone.
+   */
+  function syncSandboxes() {
+    const wide = window.matchMedia('(min-width: 1180px)').matches;
+    document.querySelectorAll<HTMLDetailsElement>('[data-sandbox]').forEach((el) => {
+      if (el.dataset.userToggled === '1') return;
+      el.open = wide;
+    });
+  }
+
+  document.querySelectorAll<HTMLDetailsElement>('[data-sandbox]').forEach((el) => {
+    el.addEventListener('toggle', () => {
+      if (el.dataset.initialising === '1') return;
+      el.dataset.userToggled = '1';
+    });
+  });
+
+  syncSandboxes();
+  window.addEventListener('resize', syncSandboxes);
+  document.addEventListener('astro:page-load', syncSandboxes);
+</script>
