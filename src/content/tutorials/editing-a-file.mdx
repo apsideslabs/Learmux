@@ -1,0 +1,171 @@
+---
+title: "Editing a file"
+description: "Create and change text files on Termux with nano and vim, save them, and edit your shell config without breaking it."
+excerpt: "Open a file, change it, and save it. The one skill every other lesson assumes you already have."
+category: "Text"
+track: "foundations"
+order: 4
+level: Beginner
+tags: [editors, nano, vim]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Every lesson after this one tells you to change something in a file. Set an alias, write a script, tighten a config. Until now you could only do that with `echo` and `>>`, which works for a single line and falls apart the moment you need to fix a line in the middle.
+
+An editor is not optional. Pick one, learn ten keystrokes, and the rest of the course opens up.
+
+## What you'll be able to do
+
+- Create a file and save it with `nano`, using only the keys it shows you.
+- Get out of `vim` without losing your work, and without panicking.
+- Search inside a file and replace every match.
+- Edit your shell config with a backup in place, and check it before you rely on it.
+
+## Step 1: The gap you are about to hit
+
+`echo` writes a line. `>>` appends one. Neither lets you open what is already there, read it, and change one word.
+
+```
+echo "alias ll='ls -l'" >> ~/.bashrc
+```
+
+That works once. Run it twice and the alias is defined twice. Try to correct a typo in it and you cannot, because there is no way to edit the line, only to add more. That is the point at which people start leaving the terminal and opening a notes app, which is exactly what you want to stop doing.
+
+## Step 2: Open nano and type
+
+`nano` is the editor to start with. It prints its own keyboard shortcuts at the bottom of the screen, so you never have to remember anything.
+
+```
+nano notes.txt
+```
+
+The screen clears and becomes the file. Type a couple of lines. The `^` symbol in the bottom two rows means the Ctrl key, so `^O` is Ctrl-O and `^X` is Ctrl-X.
+
+To save, press `Ctrl-O`, then `Enter` to confirm the filename. To leave, press `Ctrl-X`. That is the whole of it.
+
+<Callout type="tip" title="Save, then exit, in that order">
+`Ctrl-X` asks whether to save if you have unsaved changes. It is easy to hit `N` by reflex and lose the edit. Get into the habit of `Ctrl-O`, `Enter`, `Ctrl-X` as one motion.
+</Callout>
+
+## Step 3: Read the two rows at the bottom
+
+The shortcuts are the editor's entire interface, and they are context-sensitive. The most useful ones:
+
+| Keys | What it does |
+| --- | --- |
+| `Ctrl-O` | Write the file out, then confirm the name |
+| `Ctrl-X` | Exit, asking about unsaved changes |
+| `Ctrl-W` | Search for text |
+| `Ctrl-K` | Cut the current line |
+| `Ctrl-U` | Paste it back |
+| `Ctrl-G` | Show the help, which lists everything |
+| `Ctrl-C` | Show the current line and column number |
+
+`Ctrl-K` and `Ctrl-U` together are how you move a line: cut it, move the cursor, paste it.
+
+## Step 4: Search and replace
+
+Open a file you have already written and search inside it.
+
+```
+nano notes.txt
+```
+
+Press `Ctrl-W`, type a word that is in the file, and press `Enter`. The cursor jumps to it. `Ctrl-W` again then `Enter` finds the next one.
+
+To replace, press `Ctrl-\`. It asks what to search for, then what to replace it with. It then asks whether to replace each match one at a time or all of them: `A` for all, `Y` and `N` to step through them.
+
+<Callout type="warning" title="Replacing all is not undoable">
+`nano` has one level of undo, `Alt-U`, and replacing across a whole file is the easiest way to need more than that. Replace one at a time on anything you care about, and keep a copy before a bulk change.
+</Callout>
+
+## Step 5: Why you still need vim
+
+`nano` is not installed everywhere. A minimal server image, a container, a router firmware, a freshly flashed device: `vim` is far more likely to be present, and on some systems `vi` is the only editor there is.
+
+That is the whole argument. Learn five commands and you can edit a file on a machine that has nothing else, which is exactly the situation you are in when something has gone wrong and you are the one who has to fix it.
+
+```
+vim notes.txt
+```
+
+## Step 6: The trap that catches everyone
+
+`vim` opens in **normal mode**, where the keys are commands rather than text. Pressing `i` inserts, and that is how you start typing.
+
+The trap is that a beginner types, sees nothing happen, and panics. They press more keys. Every one of those keys is a command, and some of them do things.
+
+The two modes are the whole of `vim`:
+
+- **Normal mode** is where you land, and where `Esc` always returns you. Keys are commands.
+- **Insert mode** is where typing puts text in the file. `i` gets you here.
+
+Press `Esc` and you are back in normal mode. Nothing you type there goes into the file. That is the thing to remember when it feels broken: press `Esc`, look at the screen, then decide.
+
+## Step 7: The survival kit
+
+Six things cover almost all real use.
+
+| Keys | What it does |
+| --- | --- |
+| `i` | Insert before the cursor. Start typing here. |
+| `Esc` | Back to normal mode. Press it when unsure. |
+| `:w` then `Enter` | Write the file. |
+| `:q` then `Enter` | Quit, which fails if you have unsaved changes. |
+| `:wq` then `Enter` | Write and quit. The one you will use most. |
+| `:q!` then `Enter` | Quit and throw the changes away. |
+
+Everything after a `:` is a command typed at the bottom of the screen. If you press `:` and then change your mind, `Esc` cancels it.
+
+<Callout type="tip" title="Stuck in vim with no idea what happened">
+Press `Esc`, then type `:q!` and press `Enter`. That always leaves without saving. You lose the edit, not the file, and you can open it again.
+</Callout>
+
+## Step 8: Edit your shell config without breaking it
+
+Your shell reads `~/.bashrc` on every new terminal. A syntax error in it can leave you with a shell that starts badly, and the terminal you are in is the only one you have.
+
+Take a copy first, every time.
+
+```
+cp ~/.bashrc ~/.bashrc.bak
+nano ~/.bashrc
+```
+
+Add one line at the end, save, and exit. Then check the file parses before you open a new shell.
+
+```
+bash -n ~/.bashrc
+```
+
+`-n` asks bash to read the file and report syntax errors without running anything. Silence means it is fine. If it prints an error with a line number, that is where to look, and `~/.bashrc.bak` is where to go back to.
+
+```
+cp ~/.bashrc.bak ~/.bashrc
+```
+
+That restores the old file exactly. This is the sequence worth memorising: copy, edit, check, and restore if the check fails.
+
+## Step 9: Which one to use
+
+Use `nano` for anything you are writing from scratch, and for config files where you want to see the whole thing at once.
+
+Use `vim` when it is what is installed, when you are editing a file on a remote machine over `ssh`, or once you have learned enough that the mode switching stops costing you attention.
+
+There is no prize for using the harder one. The point is to be able to edit a file on whatever machine you are on, and both of these do that.
+
+## Quick reference
+
+| Task | nano | vim |
+| --- | --- | --- |
+| Start typing | Just type | `i` |
+| Save | `Ctrl-O`, `Enter` | `:w`, `Enter` |
+| Save and exit | `Ctrl-O`, `Enter`, `Ctrl-X` | `:wq`, `Enter` |
+| Exit without saving | `Ctrl-X`, then `N` | `:q!`, `Enter` |
+| Search | `Ctrl-W` | `/`, then `Enter` |
+| Cancel what you are doing | `Ctrl-C` | `Esc` |
+
+## Next
+
+You can now create and change files, which is the last thing the rest of the course assumes. [Pipes and redirection](/learn/pipes-and-redirection/) is where the shell starts doing work you would otherwise do by hand.
