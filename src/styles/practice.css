@@ -387,3 +387,15 @@
   color: var(--muted);
   margin: 0;
 }
+
+/* ── the note that appears when a set is fully passed ──────────────────── */
+.practice-done {
+  margin: var(--sp-5) 0 0;
+  padding: var(--sp-4);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: #14532d;
+  background: var(--ok-bg);
+  border: 1px solid #bde8cb;
+  border-radius: var(--r-lg);
+}
