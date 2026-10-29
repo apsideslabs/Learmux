@@ -181,16 +181,20 @@ def('cat', 'Concatenate and print files', (ctx) => {
 }, 'cat [-n] [file...]');
 
 def('head', 'Output the first part of files', (ctx) => {
-  const n = parseInt(flagValue(ctx.argv, '-n') ?? '10', 10);
-  const args = ctx.argv.filter((a) => a !== '-n' && !/^\d+$/.test(a));
+  // head -1 is standard and shorter than -n 1; without this it was treated as
+  // a filename and failed with "cat: -1: No such file".
+  const shorthand = ctx.argv.find((a) => /^-\d+$/.test(a));
+  const n = parseInt(flagValue(ctx.argv, '-n') ?? shorthand?.slice(1) ?? '10', 10);
+  const args = ctx.argv.filter((a) => a !== '-n' && !/^\d+$/.test(a) && !/^-\d+$/.test(a));
   const { text, error } = readInputs(ctx, args);
   if (error) return fail(error);
   return ok(text.split('\n').slice(0, n).join('\n'));
 }, 'head [-n N] [file...]');
 
 def('tail', 'Output the last part of files', (ctx) => {
-  const n = parseInt(flagValue(ctx.argv, '-n') ?? '10', 10);
-  const args = ctx.argv.filter((a) => a !== '-n' && !/^\d+$/.test(a));
+  const shorthand = ctx.argv.find((a) => /^-\d+$/.test(a));
+  const n = parseInt(flagValue(ctx.argv, '-n') ?? shorthand?.slice(1) ?? '10', 10);
+  const args = ctx.argv.filter((a) => a !== '-n' && !/^\d+$/.test(a) && !/^-\d+$/.test(a));
   const { text, error } = readInputs(ctx, args);
   if (error) return fail(error);
   return ok(text.split('\n').slice(-n).join('\n'));
@@ -405,7 +409,10 @@ def('wc', 'Count lines, words and bytes', (ctx) => {
   const { flags, args } = parseFlags(ctx.argv);
   const { text, error } = readInputs(ctx, args);
   if (error) return fail(error);
-  const lines = text === '' ? 0 : text.split('\n').length;
+  // Count newlines, not the empty string after the last one. A file ending in
+  // a newline was reporting one line too many, which every lesson teaching
+  // `wc -l` then contradicted.
+  const lines = text === '' ? 0 : text.split('\n').length - (text.endsWith('\n') ? 1 : 0);
   const words = text.split(/\s+/).filter(Boolean).length;
   const chars = text.length;
   const label = args[0] ?? '';
