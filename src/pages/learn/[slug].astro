@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import '../../styles/practice.css';
 import ArticleCard from '../../components/ArticleCard.astro';
+import LessonSandbox from '../../components/LessonSandbox.astro';
 import Icon from '../../components/Icon.astro';
 import { findSet } from '../../data/practice';
 import { getCollection, render } from 'astro:content';
@@ -52,8 +53,13 @@ const related = all.filter((l) => l.data.track === entry.data.track && l.id !== 
       <span>{title}</span>
     </nav>
 
-    <article>
-      <header class="article-head">
+    <div class="lesson-layout">
+      <aside class="lesson-aside">
+        <LessonSandbox slug={entry.id} title={title} />
+      </aside>
+
+      <article>
+        <header class="article-head">
         {track && (
           <p class="eyebrow">
             Track {track.number} · Lesson {pos.index} of {pos.total}
@@ -96,8 +102,9 @@ const related = all.filter((l) => l.data.track === entry.data.track && l.id !== 
               <span class="pager__title">{next.data.title} →</span>
             </a>
           : <span class="pager__empty"></span>}
-      </nav>
-    </article>
+        </nav>
+      </article>
+    </div>
 
     {related.length > 0 && (
       <section class="section--tight">
