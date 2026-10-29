@@ -46,6 +46,20 @@ export function markSolved(slug: string): void {
   }
 }
 
+/**
+ * Undo a completion.
+ *
+ * A reader who ticked a lesson by accident needs a way back, and a checkbox
+ * that cannot be unticked is a lie about what it is.
+ */
+export function clearSolved(slug: string): void {
+  const p = read();
+  if (p.solved[slug]) {
+    delete p.solved[slug];
+    write(p);
+  }
+}
+
 export function solvedSlugs(): string[] {
   return Object.keys(read().solved);
 }
