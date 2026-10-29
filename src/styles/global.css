@@ -2068,3 +2068,37 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   line-height: 1.5;
   color: var(--muted);
 }
+
+/* ── marking a lesson finished ─────────────────────────────────────────── */
+.done {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin: clamp(1.75rem, 4vw, 2.5rem) 0 var(--sp-5);
+  padding: var(--sp-4);
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+.done[data-done='1'] {
+  background: var(--ok-bg);
+  border-color: #bde8cb;
+}
+.done__body { min-width: 0; }
+.done__title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.96rem;
+  color: var(--ink);
+}
+.done__hint { margin: 0.25rem 0 0; font-size: 0.82rem; line-height: 1.5; color: var(--muted); }
+.done__btn { flex: 0 0 auto; }
+.done__btn--on {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #fff;
+}
+.done__btn--on:hover { background: #17803d; border-color: #17803d; }
