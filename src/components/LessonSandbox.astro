@@ -39,26 +39,26 @@ const files = Object.keys(seedFor(slug));
 
 <script>
   /**
+   * Decide the opening state once per panel, and then never touch it again.
+   *
    * Open on a wide screen, where the panel sits beside the lesson; closed on a
-   * phone, where it would otherwise push the lesson off the first screen. Once
-   * the reader has opened or closed it themselves, leave it alone.
+   * phone, where it would otherwise push the lesson off the first screen.
+   *
+   * The "once" is the important part. An earlier version re-applied the media
+   * query on every resize and on every navigation, which meant tapping the bar
+   * on a phone opened it and then something closed it again: a phone fires
+   * resize whenever the address bar hides, and opening a panel scrolls the
+   * page. The reader's tap is the last word, so the script gets exactly one.
    */
-  function syncSandboxes() {
+  function initSandboxes() {
     const wide = window.matchMedia('(min-width: 1180px)').matches;
     document.querySelectorAll<HTMLDetailsElement>('[data-sandbox]').forEach((el) => {
-      if (el.dataset.userToggled === '1') return;
+      if (el.dataset.initialised === '1') return;
+      el.dataset.initialised = '1';
       el.open = wide;
     });
   }
 
-  document.querySelectorAll<HTMLDetailsElement>('[data-sandbox]').forEach((el) => {
-    el.addEventListener('toggle', () => {
-      if (el.dataset.initialising === '1') return;
-      el.dataset.userToggled = '1';
-    });
-  });
-
-  syncSandboxes();
-  window.addEventListener('resize', syncSandboxes);
-  document.addEventListener('astro:page-load', syncSandboxes);
+  initSandboxes();
+  document.addEventListener('astro:page-load', initSandboxes);
 </script>
