@@ -149,6 +149,12 @@ const forClient = JSON.stringify({ id: task.id, rules: task.rules });
 
     const diag = task.querySelector<HTMLElement>('[data-diag]');
 
+    const taskRoot = feedback?.closest<HTMLElement>('[data-task]') ?? null;
+    if (taskRoot) {
+      taskRoot.dataset.passed = result.passed ? '1' : '';
+      window.dispatchEvent(new CustomEvent('Learmux:practice'));
+    }
+
     if (feedback) {
       feedback.hidden = false;
       if (result.passed) {
