@@ -59,6 +59,16 @@ export interface OutputTask {
    * actually shipped.
    */
   fixture?: { lesson: string; as: string };
+  /**
+   * Files the learner is expected to have made by hand, for the test harness.
+   *
+   * Some tasks grade a file the reader created with an editor, which cannot be
+   * scripted. Without this the harness runs the command in an empty home, finds
+   * nothing, and the task looks ungradeable when it is not. The harness writes
+   * these files first; the browser never sees them, and the learner still has
+   * to make the file themselves.
+   */
+  needs?: Record<string, string>;
   /** What a good answer looks like, shown once every rule passes. */
   expects: string;
   rules: OutputRule[];
