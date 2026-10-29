@@ -254,4 +254,69 @@ export const filesystemSets: PracticeSet[] = [
       },
     ],
   },
+  {
+    slug: 'editing-a-file',
+    title: 'Editing a file',
+    topic: 'editing-a-file',
+    summary: 'Get in and out of nano and vim, save what you wrote, and check a shell config before trusting it.',
+    intro:
+      'An editor is the one tool every later lesson assumes. This set checks that you know which mode vim opens in, what nano saves with, and how to prove a shell config is safe before you rely on it.',
+    questions: [
+      {
+        id: 'edit-1',
+        question: 'You open a file with vim and start typing, and nothing appears. Why?',
+        options: [
+          'vim opens in normal mode, where keys are commands rather than text',
+          'vim is read-only until you save the file once',
+          'The file is owned by another user, so it cannot be edited',
+          'The terminal has lost focus and needs a click',
+        ],
+        answer: 0,
+        explanation:
+          'vim starts in normal mode on purpose: that is where the editing commands live, and it is why moving around a file does not require arrow keys. Pressing i switches to insert mode and your typing goes into the file. Pressing Esc always returns to normal mode, which is the first thing to try whenever vim seems to be ignoring you.',
+      },
+      {
+        id: 'edit-2',
+        question: 'In nano, which keys write the file to disk?',
+        options: ['Ctrl-O', 'Ctrl-X', 'Ctrl-W', 'Ctrl-S'],
+        answer: 0,
+        explanation:
+          'Ctrl-O is write-out, and it asks for the filename so you can confirm it. Ctrl-X exits, and it will offer to save if you have unsaved changes. Ctrl-W searches. Ctrl-S does nothing useful in a terminal, because the terminal uses it to pause output, which is a good way to think the editor has frozen when it has not.',
+      },
+      {
+        id: 'edit-3',
+        question: 'What does bash -n ~/.bashrc do?',
+        options: [
+          'Reads the file and reports syntax errors without running any of it',
+          'Runs the file and prints the output to the screen',
+          'Opens the file in nano at the first error',
+          'Removes the file if it does not parse',
+        ],
+        answer: 0,
+        explanation:
+          'The -n flag means no execution: bash parses the file and stops. That is exactly what you want before opening a new shell, because a syntax error in .bashrc can leave you with a shell that starts badly. Silence means it parsed. An error names a line number, and the copy you made before editing is the way back.',
+      },
+    ],
+    tasks: [
+      {
+        id: 'edit-t1',
+        title: 'Write a file with an editor',
+        prompt:
+          'Open a new file called edited.txt in nano, type the two lines below, save it, exit, then print it back. The check grades the file that comes out, so any method passes, but do it in the editor: the point is the keystrokes, not the result.\n\nfirst\nsecond',
+        command: 'cat ~/edited.txt',
+        // The reader makes this file with the editor, which cannot be scripted.
+        // The harness writes a correct one so the task can be graded at all.
+        needs: { 'edited.txt': 'first\nsecond\n' },
+        hint: 'In nano: type the two lines, then Ctrl-O and Enter to save, then Ctrl-X to exit. If you are in vim instead, press i, type, then Esc and :wq.',
+        expects:
+          'Two lines, first and second, exactly as written. If the file came out empty, the save did not happen: Ctrl-O asks for the filename and waits for Enter, and skipping that Enter is the usual cause. If you saw nothing when you typed in vim, you were in normal mode and needed i first.',
+        rules: [
+          { type: 'lines', min: 2, label: 'the file has at least two lines' },
+          { type: 'contains', value: 'first', label: 'the first line is there' },
+          { type: 'contains', value: 'second', label: 'the second line is there' },
+          { type: 'absent', pattern: 'command not found|No such file', label: 'the command ran and found the file' },
+        ],
+      },
+    ],
+  },
 ];
