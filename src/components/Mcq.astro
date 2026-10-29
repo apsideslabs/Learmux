@@ -99,6 +99,10 @@ const { questions, setSlug } = Astro.props;
     const explain = field.querySelector<HTMLElement>('[data-explain]');
     if (explain) explain.hidden = false;
 
+    // Lets the practice page tell when every question is right.
+    field.dataset.passed = right ? '1' : '';
+    window.dispatchEvent(new CustomEvent('Learmux:practice'));
+
     const check = field.querySelector<HTMLButtonElement>('[data-check]');
     const retry = field.querySelector<HTMLButtonElement>('[data-retry]');
     if (check) check.hidden = true;
@@ -108,6 +112,8 @@ const { questions, setSlug } = Astro.props;
   }
 
   function resetQuestion(field: HTMLElement) {
+    field.dataset.passed = '';
+    window.dispatchEvent(new CustomEvent('Learmux:practice'));
     field.querySelectorAll('.quiz-opt').forEach((o) => o.classList.remove('is-correct', 'is-wrong'));
     field.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((r) => {
       r.disabled = false;
