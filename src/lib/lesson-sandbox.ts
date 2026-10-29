@@ -77,6 +77,12 @@ const DEFAULT_SEED: Seed = {
 };
 
 const SEEDS: Record<string, Seed> = {
+  'editing-a-file': {
+    'notes.txt': 'buy a bigger SD card\nread the next lesson\n',
+    // A copy of a shell config, so the lesson's copy-edit-check-restore
+    // sequence can be practised without risking anything real.
+    '.bashrc': 'export PS1="player@termux \\w \\$ "\nalias ll="ls -l"\n',
+  },
   'navigating-the-filesystem': {
     'todo.txt': 'finish foundations\nstart networking\n',
     'notes.txt': 'termux-setup-storage shares your phone storage\n',
