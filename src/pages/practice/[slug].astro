@@ -43,6 +43,7 @@ const lessonUrl = `${base}learn/${set.topic}/`;
       </div>
     </header>
 
+    <div data-practice data-lesson={set.topic}>
     <section>
       <h2>Questions</h2>
       <p>
@@ -63,6 +64,7 @@ const lessonUrl = `${base}learn/${set.topic}/`;
         </p>
         {set.tasks.map((task) => <OutputTask task={task} setSlug={set.slug} />)}
       </section>
+    </div>
     )}
 
     <div class="ctf-note">
@@ -92,3 +94,55 @@ const lessonUrl = `${base}learn/${set.topic}/`;
     </p>
   </div>
 </BaseLayout>
+
+<script>
+  import { markSolved, isSolved } from '../../lib/progress';
+
+  /**
+   * A finished practice set marks its lesson complete.
+   *
+   * "Finished" means every question answered right and every output task
+   * passed. Getting the questions right is the part the site can actually
+   * check, and the tasks are graded on the output you paste back, so between
+   * them they are a fair bar for saying a lesson is done.
+   */
+  function init() {
+    const root = document.querySelector<HTMLElement>('[data-practice]');
+    if (!root) return;
+    const lesson = root.dataset.lesson ?? '';
+    if (!lesson) return;
+
+    const items = () => [...root.querySelectorAll<HTMLElement>('[data-question], [data-task]')];
+
+    function check() {
+      const all = items();
+      if (all.length === 0) return;
+      const passed = all.filter((el) => el.dataset.passed === '1').length;
+      const done = passed === all.length;
+
+      let note = root.querySelector<HTMLElement>('[data-practice-done]');
+      if (done && !isSolved(lesson)) {
+        markSolved(lesson);
+        window.dispatchEvent(new CustomEvent('Learmux:lesson-complete', { detail: { slug: lesson } }));
+      }
+      if (done) {
+        if (!note) {
+          note = document.createElement('p');
+          note.dataset.practiceDone = '1';
+          note.className = 'practice-done';
+          note.textContent =
+            'Everything here is right, so this lesson is marked complete. It counts on your profile and your certificate.';
+          root.appendChild(note);
+        }
+      } else if (note) {
+        note.remove();
+      }
+    }
+
+    window.addEventListener('Learmux:practice', check);
+    check();
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
