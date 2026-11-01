@@ -585,4 +585,74 @@ export const environmentSets: PracticeSet[] = [
       },
     ],
   },
+  {
+    slug: 'regular-expressions',
+    title: 'Regular expressions',
+    topic: 'regular-expressions',
+    summary: 'Read a pattern rather than a string, and know why the same pattern behaves differently with and without -E.',
+    intro:
+      'The same pattern can match one thing or nothing at all depending on whether the command is in basic or extended mode, and the failure is silent. This set checks the parts that bite: quantifiers, character classes, and anchoring.',
+    questions: [
+      {
+        id: 're-1',
+        question: "You run grep 'a+' on a log and it finds almost nothing, but grep -E 'a+' finds plenty. Why?",
+        options: [
+          'Without -E the pattern is a basic regular expression, where + is an ordinary character',
+          'Without -E grep only searches the first line of each file',
+          'The + needs to be inside square brackets to work',
+          'grep needs the pattern quoted with double quotes rather than single',
+        ],
+        answer: 0,
+        explanation:
+          'Plain grep and sed use basic regular expressions, where +, ?, |, ( and ) are literals. So a+ searches for the two characters a-plus, which is rarely what is in the file, and it fails without any error to explain itself. Either pass -E to switch the whole pattern to extended mode, or write \\+ to escape the operator in basic mode. Reaching for -E whenever the pattern has a quantifier is the habit that avoids this.',
+      },
+      {
+        id: 're-2',
+        question: 'What does [[:digit:]] match, and why is it preferred over \\d?',
+        options: [
+          'A digit; \\d is a programming-language convention that GNU grep does not support',
+          'A literal colon; \\d only works inside double quotes',
+          'A digit; \\d is slower because it needs a lookup table',
+          'Two digits; \\d matches only one',
+        ],
+        answer: 0,
+        explanation:
+          'The bracketed names are POSIX character classes, and grep, sed and awk all understand them. \\d comes from languages like Perl and JavaScript and is not part of the grep syntax, so grep treats it as an escaped d and quietly matches the letter instead of a number. [0-9] works just as well and is easier to type, so it is the safer habit.',
+      },
+      {
+        id: 're-3',
+        question: 'What is the difference between ^ inside square brackets and ^ outside them?',
+        options: [
+          'Inside, it negates the set; outside, it anchors the pattern to the start of the line',
+          'They mean the same thing in both positions',
+          'Inside, it anchors to the start; outside, it means end of line',
+          'Inside, it is an error; outside, it is a literal caret',
+        ],
+        answer: 0,
+        explanation:
+          '[^0-9] means any character that is not a digit, because a caret immediately after the opening bracket negates the whole set. Outside brackets, ^ anchors the pattern to the beginning of the line. Two completely different jobs from the same character, which is why patterns mixing them are worth reading twice.',
+      },
+    ],
+    tasks: [
+      {
+        id: 're-t1',
+        title: 'Extract the addresses',
+        prompt:
+          'The log below has an address at the start of every line. Pull out just the addresses, with no duplicates, using a pattern rather than typing them. Run this in your Termux: copy the log into access.log first, then use grep with -o so it prints only the part that matched.\n\n10.0.0.4 GET /index.html 200\n10.0.0.7 GET /about.html 200\n10.0.0.4 POST /login 302\n10.0.0.9 GET /missing.html 404\n10.0.0.12 POST /upload 500',
+        command: "grep -oE '([0-9]{1,3}\\.){3}[0-9]{1,3}' access.log | sort -u",
+        needs: {
+          'access.log': '10.0.0.4 GET /index.html 200\n10.0.0.7 GET /about.html 200\n10.0.0.4 POST /login 302\n10.0.0.9 GET /missing.html 404\n10.0.0.12 POST /upload 500\n',
+        },
+        hint: 'Without -o, grep prints the whole line that matched. The group ([0-9]{1,3}\\.) is one to three digits followed by a literal dot, and {3} repeats it.',
+        expects:
+          'Four addresses, one per line, in sorted order: 10.0.0.12, 10.0.0.4, 10.0.0.7 and 10.0.0.9. If you got whole lines back, -o was missing. If you got nothing, check the escaping: the dot has to be written \\. or it matches any character, and the quantifier {1,3} needs -E or escaped braces.',
+        rules: [
+          { type: 'matches', pattern: '^10\\.0\\.0\\.4$', label: 'the first address is on its own line' },
+          { type: 'matches', pattern: '^10\\.0\\.0\\.12$', label: 'the two-digit last octet is not truncated' },
+          { type: 'matches', pattern: '^10\\.0\\.0\\.9$', label: 'the third address is there' },
+          { type: 'absent', pattern: 'GET|POST|index\.html', label: 'only the addresses came out, not whole lines' },
+        ],
+      },
+    ],
+  },
 ];
