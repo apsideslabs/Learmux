@@ -1,0 +1,76 @@
+name: Bug report
+description: Something on the site or in the shell does not work as it should.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this. The two things that make a bug fixable are the
+        exact page and the exact command, so please fill both in.
+
+  - type: input
+    id: page
+    attributes:
+      label: Which page
+      description: The URL, or the lesson title if you would rather not paste a link.
+      placeholder: https://apsideslabs.github.io/Learmux/learn/pipes-and-redirection/
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+      placeholder: |
+        I typed `grep -c GET access.log` in the sandbox and it printed 0.
+        I expected 6, which is what the lesson says.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the lesson
+        2. Tap "Try it"
+        3. Type the command
+        4. See the wrong output
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: What is affected
+      options:
+        - The shell or a command
+        - A lesson's content
+        - Practice questions or output tasks
+        - A challenge or the CTF
+        - The certificate or the profile page
+        - Layout, on a phone or on a desktop
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and device
+      description: Helps with layout and JavaScript problems. Skip it if the bug is in a lesson's text.
+      placeholder: Chrome 131 on Android 14, or Safari 18 on macOS 15
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I have searched the existing issues and this is not a duplicate.
+          required: true
+        - label: This is not a security vulnerability (those go to SECURITY.md).
+          required: true
