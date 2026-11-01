@@ -1,0 +1,178 @@
+---
+title: "Version control with git"
+description: "Track changes to your files with git on Termux: init a repository, stage with add, commit, read the log, and diff what you changed."
+excerpt: "Stop keeping notes-old.txt and notes-old-2.txt. Learn the four commands that remember every version for you."
+category: "Shell"
+track: "practice"
+order: 15
+level: Intermediate
+tags: [git, version-control]
+---
+
+import Callout from '../../components/Callout.astro';
+
+You already keep versions of your files. Everyone does, before they learn this: `notes.txt`, `notes-old.txt`, `notes-old-2.txt`, `notes-2026-03-04.txt`. It works until you cannot remember which one was good, and then you open all four and compare them by eye.
+
+`git` is the tool that does that for you, and does it properly. It records what every file looked like at a moment you chose, keeps the reason you wrote down, and lets you see exactly what changed since.
+
+## What you'll be able to do
+
+- Start a repository and see what state your files are in.
+- Stage a change, commit it with a message, and read the history back.
+- See precisely which lines you changed since the last commit.
+- Know which four commands you will type every day, and what the other hundred are for.
+
+## Step 1: Why a copy is not a version
+
+A copy keeps the content. It does not keep the reason, it does not tell you what changed between two copies, and the name carries no information unless you invented a scheme and stuck to it.
+
+Git records three things per save: the full contents, the message you wrote, and a hash that identifies it. Comparing any two saves is then a command rather than an afternoon.
+
+The sandbox beside this lesson is a real repository environment, so you can run every command below as you read it.
+
+## Step 2: Start a repository
+
+A repository is a `.git` directory sitting in your project folder. Everything else is ordinary files.
+
+```
+cd ~
+git init
+```
+
+That creates `~/.git`. Nothing about your files has changed yet; git is now watching.
+
+<Callout type="tip" title="One repository per project">
+Run `git init` in the folder you want tracked, not in your home directory by accident. If you have already done that, deleting the `.git` directory is enough to undo it, because the repository is only that one folder.
+</Callout>
+
+## Step 3: See where you stand
+
+```
+git status
+```
+
+You get a list of files git has noticed but is not tracking yet, under **Untracked files**. This is the command you will run more than any other, because it answers one question: what would my next commit contain?
+
+Git thinks about your files in three places, and almost every confusion comes from mixing them up.
+
+| Place | What it means |
+| --- | --- |
+| The working tree | The files as they are on disk right now |
+| The index | What you have staged for the next commit |
+| A commit | A saved snapshot in the history |
+
+`git status` shows you the difference between all three at once, in sections. Read the section headings and you always know what is where.
+
+## Step 4: Stage what you want to save
+
+```
+git add notes.txt
+```
+
+`add` moves a file from the working tree into the index. Run `git status` again and the file has moved from **Untracked** to **Changes to be committed**.
+
+This two-step dance surprises people. Why not just save everything? Because sometimes you have changed two things and only one of them belongs in this commit. Staging is how you say "this, not that".
+
+`git add .` stages everything in the current directory. It is convenient and it is how accidental commits of half-finished work happen. `git status` first, then `git add .`, is the safer habit.
+
+## Step 5: Commit it
+
+```
+git commit -m "add my first notes"
+```
+
+The `-m` is the message. Write it as an instruction to your future self: what changed and why. `"update"` tells you nothing in three months; `"add the ssh setup steps"` tells you everything.
+
+Git prints the branch, a short hash, and the message. That hash is how you refer to this exact snapshot later.
+
+<Callout type="warning" title="There is no editor in this sandbox">
+On a real machine, `git commit` with no `-m` opens an editor for the message. This sandbox has no editor, so it asks you to pass `-m` and says so. On your own Termux, `git commit` alone will open whichever editor you have configured.
+</Callout>
+
+## Step 6: Read the history back
+
+```
+git log
+```
+
+Every commit, newest first, with its hash and message. This is the answer to "what have I done to this project", and on a real repository it is the answer to "who changed this line, when, and why" as well.
+
+## Step 7: See what you changed
+
+Change a file, then ask git what is different.
+
+```
+echo "one more line" >> notes.txt
+git status
+git diff
+```
+
+`git status` says `modified: notes.txt`. `git diff` shows you the actual lines, with `-` for what was removed and `+` for what was added.
+
+`git diff` compares the working tree to the index. If you have already staged something, `git diff` will not show it, because it is no longer a difference between those two places. That is not a bug, and knowing why is the whole point of Step 3.
+
+## Step 8: The loop
+
+Everything else is this loop, repeated:
+
+```
+git status
+git add notes.txt
+git commit -m "say what changed"
+```
+
+Status, add, commit. Do it when you finish something that works, not on a timer. A commit is a point you can return to, so the useful ones are the points where the project was in a good state.
+
+## Step 9: What this sandbox does not do
+
+This sandbox has `init`, `status`, `add`, `commit`, `log` and `diff`. That is the daily loop, and it is what this lesson teaches.
+
+Real git also has branches, remotes, merging and rebasing. Each is a lesson of its own, and a half-built version here would teach you the wrong thing the first time you typed a command it did not know. It says so plainly instead.
+
+```
+git branch
+```
+
+```
+git: 'branch' is not supported in this sandbox. Try: init, status, add, commit, log, diff
+```
+
+## Step 10: Git on your own phone
+
+Termux ships git as a package, which you install the same way as anything else.
+
+```
+pkg install git
+git --version
+```
+
+Then `git init` in a project folder and the loop above works exactly as it did here. Two things differ from the sandbox and are worth knowing before you rely on it.
+
+First, `git commit` with no `-m` opens an editor. Set which one with `git config --global core.editor nano`, or the one from the editing lesson.
+
+Second, real git wants to know who you are before it will record a commit. Set it once:
+
+```
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+```
+
+<Callout type="tip" title="Never commit a secret">
+Once a key or a password is in a commit, it is in the history, and removing it from the current file does not remove it from the history. Add a `.gitignore` file listing the things that must never be tracked, before the first commit rather than after.
+</Callout>
+
+## Quick reference
+
+| Task | Command |
+| --- | --- |
+| Start a repository | `git init` |
+| See what would be committed | `git status` |
+| Stage a file | `git add notes.txt` |
+| Stage everything here | `git add .` |
+| Save a snapshot | `git commit -m "what changed"` |
+| Read the history | `git log` |
+| See unstaged changes | `git diff` |
+
+## Next
+
+You have the shell, you can edit files, and you can now keep versions of them. [Python you can run here](/course/python/) is where the course moves from the shell into writing programs.
