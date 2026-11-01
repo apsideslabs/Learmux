@@ -11,7 +11,8 @@
   --lx-line: #232a33;
   --lx-text: #d6dae0;
   --lx-muted: #7d8794;
-  --lx-dim: #5c6672;
+  /* 5.33:1 on --term; the old #5c6672 was 3.17 and failed AA. */
+  --lx-dim: #7f8b99;
   --lx-prompt: #20d65a;
   --lx-cmd: #eef1f5;
   --lx-err: #ff7b72;
