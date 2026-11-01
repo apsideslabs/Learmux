@@ -219,6 +219,18 @@ const SEEDS: Record<string, Seed> = {
   'python-addresses': {
     'ips.txt': '10.0.0.4\n10.0.0.7\n192.168.1.20\n2001:db8::1\n',
   },
+  'regular-expressions': {
+    // The format the lesson's patterns expect: address, method, path, status.
+    'access.log': [
+      '10.0.0.4 GET /index.html 200',
+      '10.0.0.7 GET /about.html 200',
+      '10.0.0.4 POST /login 302',
+      '10.0.0.9 GET /missing.html 404',
+      '10.0.0.7 GET /index.html 200',
+      '10.0.0.4 GET /index.html 200',
+      '10.0.0.12 POST /upload 500',
+    ].join('\n') + '\n',
+  },
   'version-control-with-git': {
     // A plain project with no repository yet: the lesson starts at `git init`,
     // so seeding a .git directory would skip the first thing it teaches.
