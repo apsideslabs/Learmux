@@ -52,7 +52,7 @@
 }
 .field input:focus {
   outline: none;
-  border-color: var(--green);
+  border-color: var(--green-ink);
   box-shadow: 0 0 0 3px rgba(32, 214, 90, 0.18);
 }
 .field__hint {
@@ -77,9 +77,9 @@
   border-radius: var(--r-sm);
   cursor: pointer;
 }
-.btn:hover { border-color: var(--green); }
-.btn--primary { color: #06301a; background: var(--green); border-color: var(--green); }
-.btn--primary:hover { color: #fff; background: var(--green-dark); border-color: var(--green-dark); }
+.btn:hover { border-color: var(--green-ink); }
+.btn--primary { color: #06301a; background: var(--green); border-color: var(--green-ink); }
+.btn--primary:hover { color: #fff; background: var(--green-dark); border-color: var(--green-ink); }
 
 .profile__note {
   margin: var(--sp-3) 0 0;
