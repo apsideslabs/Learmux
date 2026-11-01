@@ -32,7 +32,7 @@
   color: var(--muted);
 }
 .gloss__search:focus-within {
-  border-color: var(--green);
+  border-color: var(--green-ink);
   box-shadow: 0 0 0 3px rgba(32, 214, 90, 0.16);
 }
 .gloss__search input {
@@ -87,7 +87,7 @@
 .chip--on {
   color: #06301a;
   background: #eafcef;
-  border-color: var(--green);
+  border-color: var(--green-ink);
   font-weight: 600;
 }
 .chip__n {
@@ -95,7 +95,7 @@
   font-size: 0.7rem;
   color: var(--muted);
 }
-.chip--on .chip__n { color: var(--ok); }
+.chip--on .chip__n { color: var(--ok-ink); }
 
 .gloss__az {
   display: flex;
@@ -137,7 +137,7 @@
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.1em;
-  color: var(--green-dark);
+  color: var(--green-ink);
   background: #fff;
   border-bottom: 1px solid var(--line);
 }
@@ -289,7 +289,7 @@
 .term__count {
   font-family: var(--font-mono);
   font-size: 0.7rem;
-  color: #9a9aa6;
+  color: var(--muted);
 }
 
 .term__related {
