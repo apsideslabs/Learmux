@@ -16,7 +16,7 @@
   overflow: hidden;
 }
 .pycell--fix { border-left: 3px solid var(--yellow); }
-.pycell[data-done='1'] { border-color: var(--green); }
+.pycell[data-done='1'] { border-color: var(--green-ink); }
 
 .pycell__head {
   display: flex;
@@ -99,9 +99,9 @@
 .pycell__run {
   color: #06301a;
   background: var(--green);
-  border-color: var(--green);
+  border-color: var(--green-ink);
 }
-.pycell__run:hover:not(:disabled) { background: var(--green-dark); border-color: var(--green-dark); color: #fff; }
+.pycell__run:hover:not(:disabled) { background: var(--green-dark); border-color: var(--green-ink); color: #fff; }
 .pycell__run:disabled { opacity: 0.6; cursor: progress; }
 .pycell__reset:hover,
 .pycell__hint-btn:hover { background: #fff; border-color: #c9c9d2; }
@@ -223,7 +223,7 @@
   background: #fff;
   overflow: hidden;
 }
-.pyblanks[data-done='1'] { border-color: var(--green); }
+.pyblanks[data-done='1'] { border-color: var(--green-ink); }
 
 .pyblanks__head {
   display: flex;
@@ -282,7 +282,7 @@
 }
 .pyblanks__slot--filled {
   border-style: solid;
-  border-color: var(--green);
+  border-color: var(--green-ink);
   background: #f2fdf6;
 }
 .pyblanks__slot-empty {
@@ -318,7 +318,7 @@
   box-shadow: var(--shadow);
   white-space: pre;
 }
-.pyblanks__piece:hover { border-color: var(--green); background: #f6fdf8; }
+.pyblanks__piece:hover { border-color: var(--green-ink); background: #f6fdf8; }
 .pyblanks__piece--reject {
   border-color: var(--danger);
   background: #fdecea;
@@ -355,7 +355,7 @@
   cursor: pointer;
   padding-right: var(--sp-2);
 }
-.pyblanks__toggle input { width: 1rem; height: 1rem; accent-color: var(--green); }
+.pyblanks__toggle input { width: 1rem; height: 1rem; accent-color: var(--green-ink); }
 
 .pyblanks__run,
 .pyblanks__reset,
@@ -370,8 +370,8 @@
   background: #fff;
   color: var(--ink);
 }
-.pyblanks__run { color: #06301a; background: var(--green); border-color: var(--green); }
-.pyblanks__run:hover:not(:disabled) { background: var(--green-dark); border-color: var(--green-dark); color: #fff; }
+.pyblanks__run { color: #06301a; background: var(--green); border-color: var(--green-ink); }
+.pyblanks__run:hover:not(:disabled) { background: var(--green-dark); border-color: var(--green-ink); color: #fff; }
 .pyblanks__run:disabled { opacity: 0.55; cursor: not-allowed; }
 /* Only a run in progress swaps the label. A disabled button still says Run,
    greyed out, because an empty green pill looks like a rendering fault. */
