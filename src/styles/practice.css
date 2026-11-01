@@ -45,7 +45,7 @@
   display: grid;
   place-items: center;
   background: var(--navy);
-  color: var(--green);
+  color: var(--green-ink);
   border-radius: 50%;
   font-family: var(--font-mono);
   font-size: 0.72rem;
@@ -76,7 +76,7 @@
 .quiz-opt input {
   margin-top: 0.15rem;
   flex: none;
-  accent-color: var(--green-dark);
+  accent-color: var(--green-ink);
 }
 .quiz-opt__text {
   min-width: 0;
