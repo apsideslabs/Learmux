@@ -1,0 +1,51 @@
+name: Suggest a feature
+description: A lesson, a tool, a challenge or a piece of the site that is missing.
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The site is deliberately small: static files, no backend, no accounts.
+        Suggestions that fit inside that are much more likely to be built.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is the problem
+      description: Describe the gap, not the solution. What were you trying to do that you could not?
+      placeholder: |
+        There is no lesson on file transfer between two of my own devices,
+        and I could not work out which tool to reach for.
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you have in mind
+      description: A rough shape is enough.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where does it belong
+      options:
+        - A new lesson
+        - A new track
+        - A tool in the tools directory
+        - A challenge
+        - The shell or a command
+        - The site itself
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints
+      options:
+        - label: This can work without a backend, an account or a third-party service.
+          required: true
