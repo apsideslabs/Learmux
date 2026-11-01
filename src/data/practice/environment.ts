@@ -523,4 +523,66 @@ export const environmentSets: PracticeSet[] = [
       },
     ],
   },
+  {
+    slug: 'version-control-with-git',
+    title: 'Version control with git',
+    topic: 'version-control-with-git',
+    summary: 'Stage, commit and read back a change, and say why git keeps your files in three places rather than one.',
+    intro:
+      'Git is four commands you type every day and a hundred you look up. This set checks the four: what status tells you, what add actually does, where a committed change goes, and why diff can be silent while status is not.',
+    questions: [
+      {
+        id: 'git-1',
+        question: 'You have edited notes.txt. Which command shows what your next commit would contain?',
+        options: ['git status', 'git log', 'git diff --cached', 'git show'],
+        answer: 0,
+        explanation:
+          'git status compares the working tree, the index and the last commit all at once, and prints the answer in sections. It is the command to run before and after every other one, because it tells you which of the three places your change is currently sitting in. git log only shows what you have already committed, and git show prints a single object rather than your pending work.',
+      },
+      {
+        id: 'git-2',
+        question: 'What does git add notes.txt actually do?',
+        options: [
+          'Copies the current contents into the index, ready for the next commit',
+          'Saves a commit to the history immediately',
+          'Creates a new empty file called notes.txt',
+          'Uploads the file to a remote server',
+        ],
+        answer: 0,
+        explanation:
+          'add moves the change from the working tree into the index, which is the staging area. Nothing is saved to the history until commit runs. That gap is the useful part: it lets you change three things and commit only one of them, so a commit stays about a single idea instead of being whatever happened to be on disk.',
+      },
+      {
+        id: 'git-3',
+        question: 'git status says notes.txt is modified, but git diff prints nothing. Why?',
+        options: [
+          'The change has already been staged, so it is no longer a difference between the working tree and the index',
+          'The file is binary, so git refuses to show the difference',
+          'git diff only works after at least one commit has been made',
+          'The change was too small for git to record',
+        ],
+        answer: 0,
+        explanation:
+          'git diff compares the working tree against the index. Once you have run git add, the index already holds the new contents, so the two agree and there is nothing to show. The change has not vanished: it is sitting in Changes to be committed. This is the single most common source of confusion with git, and it comes from forgetting that there are three places, not two.',
+      },
+    ],
+    tasks: [
+      {
+        id: 'git-t1',
+        title: 'Make your first commit',
+        prompt:
+          'In your Termux home, start a repository, stage notes.txt, commit it with the message first commit, and then read the history back. Real git asks who you are before it records a commit, so the command below sets a name and address first, the same way the lesson tells you to.\n\nIf you have not made notes.txt yet, create it with nano first.',
+        command:
+          'cd ~ && git init -q && git config user.email "you@example.com" && git config user.name "You" && git add notes.txt && git commit -q -m "first commit" && git log --oneline',
+        needs: { 'notes.txt': 'the meeting is at four\n' },
+        hint: 'The order matters: init, then add, then commit. If add fails with "pathspec did not match", the file is not in the directory you are in.',
+        expects:
+          'One line, starting with a short hash and ending with first commit. The hash is the identity of that snapshot: it is derived from the contents and the message, so the same files and the same message always produce the same hash. If you see "Author identity unknown" instead, git has no name or address configured, which is what the two git config lines are for.',
+        rules: [
+          { type: 'matches', pattern: '^[0-9a-f]{7,} first commit$', label: 'the log shows a hash and your message' },
+          { type: 'absent', pattern: 'Author identity unknown|not a git repository|pathspec', label: 'the repository exists and git knew who you are' },
+        ],
+      },
+    ],
+  },
 ];
