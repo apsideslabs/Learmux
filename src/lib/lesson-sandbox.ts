@@ -219,6 +219,12 @@ const SEEDS: Record<string, Seed> = {
   'python-addresses': {
     'ips.txt': '10.0.0.4\n10.0.0.7\n192.168.1.20\n2001:db8::1\n',
   },
+  'version-control-with-git': {
+    // A plain project with no repository yet: the lesson starts at `git init`,
+    // so seeding a .git directory would skip the first thing it teaches.
+    'notes.txt': 'the meeting is at four\ncall the bank\n',
+    'projects/readme.txt': 'one directory to keep work in\n',
+  },
   'editing-a-file': {
     'notes.txt': 'buy a bigger SD card\nread the next lesson\n',
     // A copy of a shell config, so the lesson's copy-edit-check-restore
