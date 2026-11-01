@@ -87,7 +87,19 @@ const SEEDS: Record<string, Seed> = {
   'baselines': {
     'notes.txt': 'the machine at rest\n',
     'projects/readme.txt': 'work in progress\n',
-    'baseline.txt': 'notes.txt\nprojects/readme.txt\n',
+    // Exactly nine lines, because the lesson shows `wc -l ~/baseline.txt`
+    // printing 9. A shorter seed made the page argue with its own sandbox.
+    'baseline.txt': [
+      '== taken ==',
+      '2026-03-10T09:12:00Z',
+      '== packages ==',
+      'bash/stable,now 5.2.21 aarch64 [installed]',
+      'coreutils/stable,now 9.4 aarch64 [installed]',
+      'git/stable,now 2.45.2 aarch64 [installed]',
+      'nmap/stable,now 7.94 aarch64 [installed]',
+      '== ports ==',
+      'tcp 0 0 0.0.0.0:8022 0.0.0.0:* LISTEN',
+    ].join('\n') + '\n',
   },
   'reading-a-port-scan': {
     'scan.txt': [
@@ -173,6 +185,13 @@ const SEEDS: Record<string, Seed> = {
   },
   'safe-habits-and-privacy': {
     'notes.txt': 'review app permissions once a month\n',
+    // The four lines the lesson shows and then counts with wc -l.
+    '.bash_history': [
+      'pkg update',
+      'ls -la',
+      'ssh-keygen -t ed25519 -C "phone key"',
+      'cat ~/.ssh/id_ed25519.pub',
+    ].join('\n') + '\n',
   },
   'crypto-mistakes': {
     'message.txt': 'the meeting is at four\n',
