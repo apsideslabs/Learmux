@@ -77,6 +77,148 @@ const DEFAULT_SEED: Seed = {
 };
 
 const SEEDS: Record<string, Seed> = {
+  // ── lessons whose commands work on an artefact rather than a file they
+  //    name. The seed is the thing the lesson asks you to look at, so the
+  //    commands in the text have something real to act on.
+  'getting-started': {
+    'notes.txt': 'termux-setup-storage shares your phone storage\n',
+    'welcome.txt': 'you are in the Termux home directory\n',
+  },
+  'baselines': {
+    'notes.txt': 'the machine at rest\n',
+    'projects/readme.txt': 'work in progress\n',
+    'baseline.txt': 'notes.txt\nprojects/readme.txt\n',
+  },
+  'reading-a-port-scan': {
+    'scan.txt': [
+      'PORT     STATE SERVICE  VERSION',
+      '22/tcp   open  ssh      OpenSSH 9.3 (protocol 2.0)',
+      '80/tcp   open  http     nginx 1.24.0',
+      '8022/tcp open  ssh      OpenSSH 9.3 (protocol 2.0)',
+      '9090/tcp closed http-alt',
+    ].join('\n') + '\n',
+  },
+  'service-versions': {
+    'scan.txt': [
+      '22/tcp   open  ssh     OpenSSH 9.3 (protocol 2.0)',
+      '8022/tcp open  ssh     OpenSSH 9.3 (protocol 2.0)',
+      '8080/tcp open  http    Python http.server 3.11.4',
+    ].join('\n') + '\n',
+  },
+  'logs-as-a-story': {
+    'events.log': [
+      '09:01:12 service started',
+      '09:04:03 login ok  user=mira',
+      '09:06:41 login fail user=root from 198.51.100.7',
+      '09:06:44 login fail user=root from 198.51.100.7',
+      '09:06:47 login fail user=root from 198.51.100.7',
+      '09:07:02 login ok  user=mira',
+      '09:12:30 config changed by user=mira',
+    ].join('\n') + '\n',
+  },
+  'incident-response-steps': {
+    'incident.txt': [
+      'what happened: three failed root logins, then a success',
+      'when: 09:06 to 09:07',
+      'where: sshd on this device',
+      'known: nothing else yet',
+    ].join('\n') + '\n',
+  },
+  'inventory-your-devices': {
+    'devices.txt': [
+      'phone      android   this device',
+      'laptop     linux     ssh enabled',
+      'router     unknown   admin page on 192.168.1.1',
+      'printer    unknown   left on the network',
+    ].join('\n') + '\n',
+  },
+  'finding-a-vulnerability': {
+    'findings.txt': [
+      'port 8022 open to the network',
+      'ssh password login enabled',
+      'no automatic updates',
+      'old package: openssh 8.4',
+    ].join('\n') + '\n',
+  },
+  'security-assessment-phases': {
+    'plan.txt': [
+      '1 scope      what is in and what is out',
+      '2 recon      what is exposed',
+      '3 assess     what is weak',
+      '4 report     what to fix first',
+    ].join('\n') + '\n',
+  },
+  'threat-modelling': {
+    'system.md': [
+      '# what we are modelling',
+      '',
+      'A phone running Termux with ssh open on port 8022,',
+      'holding a notes file and an ssh key.',
+      '',
+      'Who can reach it, and what would they want?',
+    ].join('\n') + '\n',
+  },
+  'rules-of-engagement': {
+    'scope.txt': [
+      'in scope:    this device only',
+      'out of scope: any other host, any network',
+      'window:      practice only, no schedule',
+    ].join('\n') + '\n',
+  },
+  'certifications-and-labs': {
+    'notes.txt': 'pick one certification and finish it before starting another\n',
+  },
+  'security-mindset': {
+    'notes.txt': 'ask what the attacker gains, not what the tool does\n',
+  },
+  'safe-habits-and-privacy': {
+    'notes.txt': 'review app permissions once a month\n',
+  },
+  'crypto-mistakes': {
+    'message.txt': 'the meeting is at four\n',
+    'secret.txt': 'this file should not be world readable\n',
+  },
+  'hashing-encoding-encryption': {
+    'sample.txt': 'the quick brown fox\n',
+    'secret.txt': 'a value worth protecting\n',
+  },
+  'passwords-and-keys': {
+    'id_ed25519.pub': 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIexampleKeyForPractice player@termux\n',
+    'notes.txt': 'the public key is safe to share, the private one is not\n',
+  },
+  'symmetric-and-asymmetric': {
+    'message.txt': 'the meeting is at four\n',
+    'notes.txt': 'a key you share is symmetric, a key you publish is not\n',
+  },
+  'tls-and-certificates': {
+    'notes.txt': 'the certificate names the host, the key proves it\n',
+  },
+  'build-a-permissions-calculator': {
+    'notes.txt': 'readable and writable by you\n',
+    'run.sh': '#!/data/data/com.termux/files/usr/bin/bash\necho running\n',
+    'private.key': 'a file that should be 600\n',
+  },
+  'build-a-subnet-calculator': {
+    'hosts.txt': '10.0.0.4\n10.0.0.7\n192.168.1.20\n172.16.5.9\n',
+  },
+  'project-personal-dashboard': {
+    'data.txt': 'uptime 4d\nload 0.12\ndisk 61%\n',
+  },
+  'run-your-first-python': {
+    'greeting.py': 'name = "player"\nprint("hello,", name)\n',
+  },
+  'python-working-with-text': {
+    'words.txt': 'the quick brown fox jumps over the lazy dog\n',
+  },
+  'python-hashing-and-encoding': {
+    'sample.txt': 'the quick brown fox\n',
+  },
+  'python-secrets-and-tokens': {
+    'notes.txt': 'secrets is for values an attacker must not guess\n',
+  },
+  'python-addresses': {
+    'ips.txt': '10.0.0.4\n10.0.0.7\n192.168.1.20\n2001:db8::1\n',
+  },
   'editing-a-file': {
     'notes.txt': 'buy a bigger SD card\nread the next lesson\n',
     // A copy of a shell config, so the lesson's copy-edit-check-restore
@@ -281,7 +423,6 @@ const SEEDS: Record<string, Seed> = {
   'build-an-encoder': {
     'notes.txt': 'base64 is encoding, not encryption\n',
   },
-  'build-a-hash-tool.notes': {},
 };
 
 /** Build the Challenge-shaped object the existing shell engine expects. */
