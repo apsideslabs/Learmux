@@ -283,14 +283,80 @@ def('mv', 'Move / rename files', (ctx) => {
 
 // --- text processing --------------------------------------------------------
 
+/**
+ * Translate a basic regular expression into the extended form JS understands.
+ *
+ * Real grep is BRE unless you pass -E, and the difference bites: in BRE, `+`,
+ * `?`, `|`, `(` and `)` are ordinary characters, and the operators are written
+ * `\+`, `\?`, `\(` and `\)`. The sandbox used to ignore -E and always behave
+ * like an extended regex, which meant a learner could write `grep 'a+'` here,
+ * see it work, then watch it match nothing on their phone.
+ */
+function breToEre(pattern: string): string {
+  let out = '';
+  for (let i = 0; i < pattern.length; i++) {
+    const c = pattern[i];
+    if (c === '\\' && i + 1 < pattern.length) {
+      const next = pattern[i + 1];
+      // In BRE these are operators only when escaped (a GNU extension).
+      out += '+?|(){}'.includes(next) ? next : `\\${next}`;
+      i++;
+      continue;
+    }
+    // Unescaped, these are literals in BRE.
+    out += '+?|(){}'.includes(c) ? `\\${c}` : c;
+  }
+  return out;
+}
+
+/**
+ * POSIX character classes, which grep understands and JavaScript does not.
+ *
+ * `[[:digit:]]` is the portable way to say "a digit" in grep, sed and awk, and
+ * `\d` is not: that belongs to programming languages, and GNU grep does not
+ * accept it. Translating the classes means a pattern a learner copies out of
+ * this sandbox still works when they paste it into their own Termux.
+ */
+const POSIX_CLASSES: Array<[RegExp, string]> = [
+  [/\[\[:digit:\]\]/g, '[0-9]'],
+  [/\[\[:xdigit:\]\]/g, '[0-9A-Fa-f]'],
+  [/\[\[:alpha:\]\]/g, '[A-Za-z]'],
+  [/\[\[:alnum:\]\]/g, '[A-Za-z0-9]'],
+  [/\[\[:upper:\]\]/g, '[A-Z]'],
+  [/\[\[:lower:\]\]/g, '[a-z]'],
+  [/\[\[:space:\]\]/g, '\\s'],
+  [/\[\[:blank:\]\]/g, '[ \\t]'],
+  [/\[\[:punct:\]\]/g, '[!-/:-@\\[-`{-~]'],
+  [/\[\[:print:\]\]/g, '[ -~]'],
+];
+
+/**
+ * The escapes GNU grep does and does not have.
+ *
+ * `\w`, `\s` and `\b` are GNU extensions and work. `\d` is not: grep reads it
+ * as an escaped `d` and matches the letter. JavaScript reads it as "a digit",
+ * so without this the sandbox would accept a pattern that silently does the
+ * wrong thing on a real phone.
+ */
+function gnuEscapes(pattern: string): string {
+  return pattern.replace(/(?<!\\)\\[dD]/g, (m) => m[1]);
+}
+
+function posixClasses(pattern: string): string {
+  let out = pattern;
+  for (const [re, repl] of POSIX_CLASSES) out = out.replace(re, repl);
+  return gnuEscapes(out);
+}
+
 def('grep', 'Search text for a pattern', (ctx) => {
   const { flags, args } = parseFlags(ctx.argv);
   if (!args.length) return fail('grep: missing pattern');
   const pattern = args[0];
   const files = args.slice(1);
-  const flagsStr = (flags.has('-i') ? 'i' : '') + (flags.has('-E') ? '' : '');
+  const flagsStr = flags.has('-i') ? 'i' : '';
+  const source = posixClasses(flags.has('-E') || flags.has('-P') ? pattern : breToEre(pattern));
   let re: RegExp;
-  try { re = new RegExp(pattern, flagsStr); } catch { return fail(`grep: invalid pattern`); }
+  try { re = new RegExp(source, flagsStr); } catch { return fail('grep: invalid pattern'); }
   const invert = flags.has('-v');
   const withLine = flags.has('-n');
   const count = flags.has('-c');
@@ -331,16 +397,44 @@ def('grep', 'Search text for a pattern', (ctx) => {
 }, 'grep [-invc r] PATTERN [file...]');
 
 def('sed', 'Stream editor (s/find/replace/)', (ctx) => {
-  const expr = ctx.argv[0];
+  const { flags, args } = parseFlags(ctx.argv);
+  const expr = args[0];
   if (!expr) return fail('sed: missing script');
   const m = expr.match(/^s(.)(.*?)\1(.*?)\1([gi]*)$/);
   if (!m) return fail('sed: only s/find/replace/ is supported');
   const [, , find, repl, mods] = m;
-  const re = new RegExp(find, mods.includes('g') ? 'g' : '');
-  const { text, error } = readInputs(ctx, ctx.argv.slice(1));
+  // Real sed is a basic regular expression unless -E is given.
+  const source = posixClasses(flags.has('-E') ? find : breToEre(find));
+  let re: RegExp;
+  try {
+    re = new RegExp(source, mods.includes('g') ? 'g' : '');
+  } catch {
+    return fail('sed: invalid pattern');
+  }
+  const files = args.slice(1);
+
+  // -i rewrites each file in place, which the text-processing lesson already
+  // documents. Without this it was rejected as a missing script.
+  if (flags.has('-i')) {
+    if (!files.length) return fail('sed -i: needs a file to edit');
+    for (const f of files) {
+      const abs = ctx.fs.normalize(f, ctx.cwd);
+      if (!ctx.fs.exists(abs, '/')) return fail(`sed: ${f}: No such file or directory`);
+      if (ctx.fs.isDir(abs, '/')) return fail(`sed: ${f}: Is a directory`);
+      try {
+        const before = ctx.fs.readFile(abs, '/');
+        ctx.fs.writeFile(abs, '/', before.replace(re, repl));
+      } catch (e) {
+        return fail((e as Error).message);
+      }
+    }
+    return ok();
+  }
+
+  const { text, error } = readInputs(ctx, files);
   if (error) return fail(error);
   return ok(text.replace(re, repl));
-}, 'sed s/find/replace/[g] [file]');
+}, 'sed [-i] [-E] s/find/replace/[g] [file]');
 
 def('sort', 'Sort lines of text', (ctx) => {
   const { flags, args } = parseFlags(ctx.argv);
