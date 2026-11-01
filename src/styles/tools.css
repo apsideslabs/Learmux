@@ -143,7 +143,7 @@
   font-size: 0.98rem;
   color: var(--ink);
 }
-.tool-card:hover .tool-card__name { color: var(--blue); }
+.tool-card:hover .tool-card__name { color: var(--blue-dark); }
 .tool-card__tagline {
   font-size: 0.84rem;
   line-height: 1.45;
@@ -261,7 +261,7 @@
   border-radius: 3px;
   padding: 0.05rem 0.3rem;
 }
-.fact-list a { color: var(--blue); }
+.fact-list a { color: var(--blue-dark); }
 
 .related-tools { display: grid; gap: 0.2rem; }
 .related-tools a {
@@ -273,7 +273,7 @@
   color: var(--ink);
   font-size: 0.88rem;
 }
-.related-tools a:hover { color: var(--blue); text-decoration: none; }
+.related-tools a:hover { color: var(--blue-dark); text-decoration: none; }
 .related-tools a > svg { margin-left: auto; color: var(--muted); }
 
 /* ── command chip in the page header ───────────────────────────────────── */
@@ -355,7 +355,7 @@
   transition: color 0.14s ease, border-color 0.14s ease, background 0.14s ease;
 }
 .copy-btn:hover { color: var(--ink); border-color: var(--line-2); background: var(--soft); }
-.copy-btn.is-copied { color: var(--green); border-color: var(--green); background: #f0fdf4; }
+.copy-btn.is-copied { color: var(--green-ink); border-color: var(--green-ink); background: #f0fdf4; }
 .copy-btn .icon-check { display: none; }
 .copy-btn.is-copied .icon-copy { display: none; }
 .copy-btn.is-copied .icon-check { display: block; }
@@ -413,7 +413,7 @@
 }
 .cat-card__body { display: flex; flex-direction: column; gap: 0.05rem; min-width: 0; flex: 1; }
 .cat-card__name { font-family: var(--font-head); font-weight: 600; font-size: 0.95rem; color: var(--ink); }
-.cat-card:hover .cat-card__name { color: var(--blue); }
+.cat-card:hover .cat-card__name { color: var(--blue-dark); }
 .cat-card__blurb { font-size: 0.8rem; color: var(--muted); }
 .cat-card__count {
   flex: none;
