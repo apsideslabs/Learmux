@@ -449,6 +449,22 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
        * button copies the code element's text, not the wrapper's, so the
        * button's own label never ends up in the clipboard.
        */
+      /**
+       * A region that scrolls is unreachable by keyboard unless it can take
+       * focus, which axe flags as a serious problem on a phone where code
+       * blocks and the CTF banner scroll horizontally. Give those a tab stop.
+       */
+      function initScrollableRegions() {
+        const regions = document.querySelectorAll<HTMLElement>('pre, code, .ctf-banner, .ctf-cmd, table');
+        regions.forEach((el) => {
+          if (el.hasAttribute('tabindex')) return;
+          if (el.scrollWidth > el.clientWidth + 1) {
+            el.setAttribute('tabindex', '0');
+            if (!el.hasAttribute('role')) el.setAttribute('role', 'region');
+          }
+        });
+      }
+
       function initCodeCopy() {
         document.querySelectorAll<HTMLElement>('pre.astro-code').forEach((pre) => {
           if (pre.dataset.copyBound || pre.parentElement?.classList.contains('code-wrap')) return;
@@ -501,6 +517,8 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
         initDrawerGroups();
         initProgressBar();
         initCodeCopy();
+        initScrollableRegions();
+        window.addEventListener('resize', initScrollableRegions);
         refreshProgress();
       }
 
