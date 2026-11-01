@@ -1,0 +1,60 @@
+name: Correct a lesson
+description: A command is wrong, an explanation is misleading, or something is out of date.
+title: "[content] "
+labels: ["content"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the most useful kind of report on a teaching site. Being wrong
+        confidently is worse than being incomplete, so thank you for catching it.
+
+  - type: input
+    id: lesson
+    attributes:
+      label: Which lesson
+      placeholder: Reading and searching text, Step 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What the lesson says
+      description: Quote the sentence or paste the command and its stated output.
+      placeholder: |
+        The lesson says `wc -l access.log` prints 6 access.log.
+    validations:
+      required: true
+
+  - type: textarea
+    id: right
+    attributes:
+      label: What it should say
+      description: If you ran the command on a real device, paste what it actually printed.
+      placeholder: |
+        On Termux 0.118 with coreutils, it prints 6 access.log, so the lesson is
+        right but the sandbox was off by one.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of problem is it
+      options:
+        - A command or its output is wrong
+        - An explanation is misleading
+        - Something is out of date for a current Termux
+        - A typo or a broken link
+        - The sandbox does not match the real tool
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: verified
+    attributes:
+      label: Did you run it
+      options:
+        - label: I ran this on a real Termux or Linux machine, not only in the sandbox.
+          required: false
