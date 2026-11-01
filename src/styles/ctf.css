@@ -28,7 +28,7 @@
   font-family: var(--font-mono);
   font-size: 0.72rem;
   line-height: 1.35;
-  color: var(--green);
+  color: var(--green-ink);
   margin: 0;
   white-space: pre;
 }
@@ -70,7 +70,7 @@
 }
 .copy-btn.is-copied {
   color: var(--ok);
-  border-color: var(--green);
+  border-color: var(--green-ink);
   background: var(--ok-bg);
 }
 
@@ -103,7 +103,7 @@
 .ctf-cmd .copy-btn:hover {
   background: var(--green);
   color: var(--navy);
-  border-color: var(--green);
+  border-color: var(--green-ink);
 }
 
 /* ── the three claims ────────────────────────────────────────────────────── */
@@ -166,7 +166,7 @@
   display: grid;
   place-items: center;
   background: var(--navy);
-  color: var(--green);
+  color: var(--green-ink);
   border-radius: 50%;
   font-family: var(--font-mono);
   font-size: 0.75rem;
@@ -217,7 +217,7 @@
   text-decoration: none;
 }
 .ctf-table .ctf-name a:hover {
-  color: var(--green-dark);
+  color: var(--green-ink);
 }
 .ctf-table .ctf-pts {
   font-family: var(--font-mono);
@@ -443,7 +443,7 @@
   border-bottom: 1px solid transparent;
 }
 .ctf-pager a:hover {
-  border-bottom-color: var(--green);
+  border-bottom-color: var(--green-ink);
 }
 .ctf-pager span {
   color: var(--muted);
