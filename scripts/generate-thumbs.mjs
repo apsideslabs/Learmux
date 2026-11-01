@@ -26,6 +26,7 @@ const thumbs = [
   { slug: 'getting-started', accent: '#20d65a', lines: ['$ pwd', '/data/data/com.termux/files/home', '$ whoami'] },
   { slug: 'navigating-the-filesystem', accent: '#2878d0', lines: ['$ ls -la', 'drwxr-xr-x  projects', '$ cd projects/android'] },
   { slug: 'reading-and-searching-text', accent: '#f3bc36', lines: ['$ grep -n "error" access.log', '42: error: vault sealed', '$ wc -l access.log'] },
+  { slug: 'regular-expressions', accent: '#f3bc36', lines: ["$ grep -oE '([0-9]{1,3}\\.){3}[0-9]{1,3}'", '10.0.0.4', '$ sed -E \'s/[0-9]+/N/g\''] },
   { slug: 'version-control-with-git', accent: '#f05033', lines: ['$ git status', 'modified:  notes.txt', '$ git commit -m "first"'] },
   { slug: 'editing-a-file', accent: '#35b0c4', lines: ['$ nano notes.txt', '^O Write Out   ^X Exit', '$ cat notes.txt'] },
   { slug: 'pipes-and-redirection', accent: '#e8734a', lines: ['$ cat log | grep 500 | head', '500 GET /flag', '$ ls -l > listing.txt'] },
