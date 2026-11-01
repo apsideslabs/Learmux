@@ -9,10 +9,24 @@ import { tracks, trackById, type Track } from './curriculum';
 
 export type Tutorial = CollectionEntry<'tutorials'>;
 
-/** Every lesson, in curriculum order. */
+/**
+ * Every lesson, in curriculum order.
+ *
+ * `order` is the lesson's position **within its track**, not in the course as a
+ * whole. Sorting by track first and then by order is what makes that true, and
+ * it is the only reading that holds: the neighbours on a lesson page are its
+ * track siblings, so the position that matters is the one among them. Treating
+ * order as one global sequence meant every new lesson forced a renumber of
+ * everything after it.
+ */
 export async function allTutorials(): Promise<Tutorial[]> {
   const list = await getCollection('tutorials');
-  return list.sort((a, b) => a.data.order - b.data.order);
+  const rank = new Map(tracks.map((t) => [t.id, t.number]));
+  return list.sort(
+    (a, b) =>
+      (rank.get(a.data.track) ?? 99) - (rank.get(b.data.track) ?? 99) ||
+      a.data.order - b.data.order,
+  );
 }
 
 export interface TrackGroup {
