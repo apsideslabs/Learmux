@@ -1,175 +1,250 @@
-# Learmux
+<div align="center">
 
-> A cybersecurity tutorial publication for Termux and the Linux command line.
+<img src="docs/banner.svg" alt="Learmux: learn the Linux command line on your phone" width="100%" />
 
-Learmux is a learning site built around two things: short written lessons, and an
-**interactive capture-the-flag terminal** that runs entirely in the browser. Pick a challenge, get
-dropped into a shell with its own filesystem, and find the flag.
+<br />
 
-No backend. The whole thing builds to static files.
+**A Termux and Linux command-line course, with a real shell in the page.**
 
-**Live site:** https://apsideslabs.github.io/Learmux/
+[![Live site](https://img.shields.io/badge/live-apsideslabs.github.io%2FLearmux-20d65a?style=flat-square)](https://apsideslabs.github.io/Learmux/)
+[![Deploy](https://img.shields.io/github/actions/workflow/status/apsideslabs/Learmux/deploy.yml?style=flat-square&label=build)](https://github.com/apsideslabs/Learmux/actions/workflows/deploy.yml)
+[![License](https://img.shields.io/badge/license-MIT-1c1b27?style=flat-square)](LICENSE)
+[![Node](https://img.shields.io/badge/node-20-339933?style=flat-square)](.nvmrc)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-20d65a?style=flat-square)](CONTRIBUTING.md)
+
+[![Lessons](https://img.shields.io/badge/lessons-66-1c1b27?style=flat-square)](#the-course)
+[![Tracks](https://img.shields.io/badge/tracks-12-1c1b27?style=flat-square)](#the-course)
+[![Tools](https://img.shields.io/badge/tools-105-1c1b27?style=flat-square)](#what-is-in-it)
+[![Glossary](https://img.shields.io/badge/glossary-392-1c1b27?style=flat-square)](#what-is-in-it)
+[![Challenges](https://img.shields.io/badge/challenges-18-1c1b27?style=flat-square)](#what-is-in-it)
+
+[**Read the course**](https://apsideslabs.github.io/Learmux/course/) ·
+[**Try the sandbox**](https://apsideslabs.github.io/Learmux/learn/pipes-and-redirection/) ·
+[**Report a problem**](https://github.com/apsideslabs/Learmux/issues/new/choose) ·
+[**Contribute**](CONTRIBUTING.md)
+
+</div>
 
 ---
 
-## What's here
+Most command-line courses tell you to run something and leave you to open a
+terminal. Learmux puts the terminal beside the lesson, seeded with the files that
+lesson talks about, so the command you are reading is the command you can type.
 
-- **Editorial homepage** — featured tutorial cards with landscape thumbnails, category labels over
-  each thumbnail, a Recent Posts feed, a CTF promotional panel, a Download Termux section and social
-  links.
-- **Article template** — breadcrumb (`Home › Category › Title`), author and date byline, and a body
-  that supports headings, inline code, code blocks, callouts and responsive images.
-- **Category and search pages** — every lesson grouped by topic, plus a compact client-side search.
-- **Interactive CTF terminal** — a simulated shell with command history, pipes, redirection, hints
-  and a progress indicator. Nothing you type ever reaches a real shell.
-- **20 challenges** across 13 topics, defined as JSON.
-- **Explicit challenge validation** — completion is decided by authored rules, not by scanning
-  output for a flag string.
-- **Responsive navigation drawer** — the spec's link set, focus management, Escape to close.
+The course is written for a phone. Termux is a real Linux userland for Android,
+and everything here assumes it: the paths, the package manager, the two editors
+you actually have, and the fact that you are reading on a screen the size of a
+hand.
 
-## Course structure
+```console
+$ pwd
+/data/data/com.termux/files/home
+$ grep -c GET access.log
+6
+```
 
-Content is a course, not a list. Lessons carry a `track` and a global `order`, and the tracks are
-ordered with prerequisites:
+No backend, no account, no tracking. The site builds to static files.
 
-| # | Track | Level | Lessons | Covers |
-| --- | --- | --- | --- | --- |
-| 1 | Foundations | Beginner | 7 | the filesystem, reading and searching text, pipes, permissions, packages, shell config |
-| 2 | The shell in practice | Intermediate | 6 | scripting, processes, environment and PATH, sed and awk, archives, cron |
-| 3 | Networking and the internet | Intermediate | 5 | interfaces and scanning, DNS, HTTP and APIs, SSH, moving files |
-| 4 | Security fundamentals | Intermediate | 5 | encoding and hashes, passwords and keys, log reading, hardening, safe habits |
-| 5 | Projects | Advanced | 3 | a backup script, a log analyser, a terminal dashboard |
+## What is in it
 
-Routes:
+| | |
+| --- | --- |
+| **66 lessons** across **12 tracks**, in a prerequisite order | **66 practice sets**: 261 questions, 66 graded output tasks |
+| **A shell on every lesson page**, seeded with that lesson's files | **105 tools** documented, with flags, examples and a copy button |
+| **392 glossary terms** across six subjects, linked to lessons | **18 challenges**: 12 in-browser labs and 6 Termux CTF |
+| **6 calculators** that run offline | **A certificate** you can download as SVG or PNG |
 
-- `/course/` — the curriculum: who it is for, what you need, the path, every track and lesson
-- `/course/<track>/` — a track landing page with its lessons in order and the next track
-- `/learn/` — all lessons in reading order
-- `/learn/<lesson>/` — the article, with its position in the track and previous/next navigation
+## The course
 
-Each lesson follows the same shape: an opening paragraph, a "What you'll be able to do" list, numbered
-steps where every command is followed by its expected output, callouts, a quick-reference table and
-next steps.
+Twelve tracks, meant to be read in order. Each track assumes the ones above it.
 
-## The stack
+| # | Track | Level | Lessons |
+| --- | --- | --- | --- |
+| 1 | Foundations | Beginner | 8 |
+| 2 | The shell in practice | Intermediate | 8 |
+| 3 | Python you can run here | Beginner | 5 |
+| 4 | Networking and the internet | Intermediate | 5 |
+| 5 | Security fundamentals | Intermediate | 7 |
+| 6 | Reconnaissance and assessment | Intermediate | 5 |
+| 7 | Web and application security | Intermediate | 5 |
+| 8 | Cryptography in practice | Intermediate | 5 |
+| 9 | Defence and monitoring | Intermediate | 5 |
+| 10 | Utilities you build yourself | Intermediate | 6 |
+| 11 | Projects | Advanced | 3 |
+| 12 | Working in security | Intermediate | 4 |
 
-| Layer | Choice | Why |
-| --- | --- | --- |
-| Framework | **Astro** | Static output, file-based routing, first-class MDX |
-| Language | **TypeScript** | The CTF engine: parser, virtual filesystem, shell |
-| Styling | **Custom CSS** | No framework; total control of the interface and terminal |
-| Articles | **Markdown / MDX** | Easy to write and maintain |
-| Challenges | **JSON** | Data-driven; swappable for a database later |
-| Hosting | **GitHub Pages** | Free, static, deployed from GitHub Actions |
+## How it works
+
+Everything runs in the browser. There is no server to call, so the shell, the
+grading, the progress and the certificate all live in the page.
+
+```mermaid
+flowchart LR
+    subgraph build["at build time"]
+        MDX["lessons<br/>MDX"] --> ASTRO["Astro<br/>static output"]
+        DATA["tools, glossary,<br/>practice, challenges"] --> ASTRO
+        ASTRO --> HTML["320 static pages"]
+    end
+
+    subgraph browser["in the browser"]
+        HTML --> PAGE["lesson page"]
+        HTML --> TERM["terminal"]
+        PAGE --> SB["sandbox<br/>seeded from this lesson"]
+        TERM --> SH["shell engine"]
+        SB --> SH
+        SH --> VFS[("virtual<br/>filesystem")]
+        SH --> CMD["105 commands"]
+        PAGE --> GRADE["practice grading"]
+        PAGE --> PROG[("localStorage<br/>progress")]
+    end
+
+    HTML --> PAGES["GitHub Pages"]
+```
+
+A command goes in, the engine parses it, the command acts on the virtual
+filesystem, and the output comes back. Nothing leaves the page.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor L as Learner
+    participant T as Terminal UI
+    participant S as Shell engine
+    participant F as Virtual FS
+
+    L->>T: git status
+    T->>S: runLine("git status")
+    S->>S: parse, resolve git
+    S->>F: read .git/index.json
+    F-->>S: staged tree
+    S->>F: walk working tree
+    F-->>S: files
+    S-->>T: "On branch main ..."
+    T-->>L: output + prompt
+```
+
+## What is verified before it deploys
+
+Every push runs the same gate. It is not decoration: each step has caught a real
+defect in this repository.
+
+```mermaid
+flowchart TD
+    PUSH["push to main"] --> V["validate content<br/>rules, slugs, order, seeds"]
+    V --> E["test the shell engine"]
+    E --> U["test the calculators"]
+    U --> PR["grade every practice task<br/>runs the real command"]
+    PR --> B["build"]
+    B --> L["validate every link<br/>and every og:image"]
+    L --> TV["test the validator itself"]
+    TV --> D["deploy to Pages"]
+
+    style V fill:#1c1b27,color:#fff
+    style PR fill:#1c1b27,color:#fff
+    style L fill:#1c1b27,color:#fff
+```
+
+The practice step is the unusual one. Each of the 66 output tasks is **run for
+real** in a throwaway home directory and graded against its own rules, so a task
+that cannot be completed fails the build rather than reaching a learner.
+
+## Quick start
+
+```bash
+git clone https://github.com/apsideslabs/Learmux.git
+cd Learmux
+npm install
+npm run dev          # http://localhost:4321/Learmux/
+```
+
+Node 20 (there is a `.nvmrc`). No environment variables, no database, no
+services to start.
+
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Local dev server with hot reload |
+| `npm run build` | Build the static site to `dist/` |
+| `npm run validate` | Check content rules, links and the built output |
+| `npm test` | The shell engine: parsing, commands, filesystem, git |
+| `npm run test:practice` | Run and grade every practice task for real |
+| `npm run test:utilities` | The calculator logic |
+| `npm run test:validator` | Prove the validator still catches what it should |
+| `npm run generate:thumbs` | Redraw the lesson thumbnails |
+| `npm run generate:og` | Rasterise the social images from those thumbnails |
 
 ## Project structure
 
 ```
-Learmux/
-├── astro.config.mjs             # Astro config (MDX, sitemap, Shiki, base-path links)
-├── src/
-│   ├── content.config.ts        # tutorial collection schema
-│   ├── content/tutorials/*.mdx  # the lessons
-│   ├── data/challenges.json     # 20 challenge definitions (generated)
-│   ├── lib/
-│   │   ├── types.ts             # core types + validation rule types
-│   │   ├── fs.ts                # virtual filesystem
-│   │   ├── shell.ts             # tokeniser, pipeline executor, rule evaluation
-│   │   ├── commands.ts          # the command set
-│   │   ├── hash.ts              # pure-JS SHA-256
-│   │   ├── challenges.ts        # challenge loader
-│   │   ├── curriculum.ts        # the course: tracks, order, outcomes
-│   │   ├── tutorials.ts         # lesson helpers (ordering, tracks, categories)
-│   │   ├── site.ts              # brand, nav and social config
-│   │   ├── progress.ts          # localStorage progress
-│   │   ├── md.ts                # small markdown renderer for briefings
-│   │   └── terminal.ts          # the terminal DOM island
-│   ├── components/              # Icon, ArticleCard, PostRow, Callout, Terminal, ChallengeRow
-│   ├── layouts/BaseLayout.astro # header, drawer, footer
-│   ├── pages/                   # home, learn, article, categories, category, search,
-│   │                            # challenges, challenge, about, contact, privacy, 404
-│   └── styles/                  # global.css, terminal.css
-├── scripts/
-│   ├── generate-challenges.mjs  # authors src/data/challenges.json (incl. validation rules)
-│   ├── generate-thumbs.mjs      # draws the original SVG thumbnails
-│   ├── test-engine.ts           # engine smoke tests
-│   └── run-tests.mjs
-└── public/thumbs/*.svg          # generated, locally-stored artwork
+src/
+├── content/tutorials/     66 lessons, one MDX file each; the filename is the URL
+├── data/
+│   ├── tools/             105 documented commands, grouped by subject
+│   ├── glossary/          392 terms across six subjects
+│   ├── practice/          66 practice sets: questions and output tasks
+│   └── challenges.json    12 in-browser challenges
+├── lib/
+│   ├── shell.ts           parse and dispatch
+│   ├── commands.ts        105 commands
+│   ├── fs.ts              the virtual filesystem
+│   ├── git.ts             a small, real git
+│   ├── lesson-sandbox.ts  per-lesson seeds
+│   ├── practice-grade.ts  output grading rules
+│   └── progress.ts        localStorage progress
+├── pages/                 routes: course, learn, practice, tools, glossary,
+│                          ctf, challenges, utilities, tags, profile, search
+├── components/            terminal, sandbox, practice widgets, certificate
+└── styles/                the palette and the layout
+scripts/
+├── validate-content.mjs   the content gate
+├── test-practice.mjs      runs and grades every task
+├── test-engine.mjs        the shell tests
+└── generate-*.mjs         thumbnails, og images, challenges
+docs/
+├── banner.svg             the image at the top of this file
+└── challenge-format.md    how a challenge is defined
 ```
 
-## Getting started
+## Contributing
 
-```bash
-npm install
-npm run dev              # http://localhost:4321
-npm run build            # static output in dist/
-npm run preview          # preview the production build
-npm test                 # check every challenge is solvable
-npm run validate         # check challenges, tools and lessons
-npm run validate:links   # check internal links (needs a build first)
-npm run test:validator   # check the validator still catches faults
-npm run generate         # rebuild src/data/challenges.json
-npm run generate:thumbs  # redraw the SVG thumbnails
-```
+Corrections to lesson content are the most useful thing you can send, and they
+are the easiest to review. **Read [CONTRIBUTING.md](CONTRIBUTING.md) first**: it
+lists the rules the build actually enforces, so you do not have to guess.
 
-## How the sandbox works
+- [**Report a bug**](https://github.com/apsideslabs/Learmux/issues/new?template=bug_report.yml)
+- [**Correct a lesson**](https://github.com/apsideslabs/Learmux/issues/new?template=content_correction.yml)
+- [**Suggest a feature**](https://github.com/apsideslabs/Learmux/issues/new?template=feature_request.yml)
+- [**Report a security issue**](SECURITY.md) (privately, please)
 
-A challenge declares a virtual filesystem as JSON. Opening it deep-clones that tree into a
-`VirtualFS`, seeds a `Shell` with the challenge's working directory, user, host, hints and rules, and
-you are in.
+Everything is checked by `npm run validate` and `npm test`, so you can be sure a
+pull request passes before you open it.
 
-Your keystrokes are tokenised explicitly (quotes, `|`, `>`, `>>`, `;`), split into statements, split
-into pipeline stages, and each stage is dispatched to a command. Commands are pure functions of
-`(filesystem, argv, stdin)`. Commands that would touch a network or the device — `nmap`, `curl`,
-`pkg`, `ps` — return **authored output** from the challenge's `overrides` map, so nothing depends on
-the host.
+## What this is not
 
-### Challenge validation
+Being clear about the edges is more useful than overselling them.
 
-Completion is decided by **explicit, authored rules** stored with each challenge, evaluated against a
-log of what the player actually did:
+- **The shell is not a real shell.** It is 105 commands over a virtual
+  filesystem. `apt install` will not work, and nothing touches your device.
+  Where it cannot match the real tool it says so, and the commands that matter
+  (`grep`, `sed`, `git`) match the real ones closely.
+- **The sandbox git has no branches or remotes.** It has the daily loop. The
+  lesson says so in the text.
+- **There are no publication dates**, because there is no honest source for them.
+  The feed carries none for the same reason.
+- **Progress is per browser.** It lives in `localStorage`; the certificate is a
+  record of what you marked done, not a proctored credential.
 
-```jsonc
-"validation": [
-  { "type": "command", "pattern": "\\bgrep\\b" },
-  { "type": "output",  "pattern": "TERMUX\\{logs_never_lie\\}" }
-]
-```
+## License
 
-Rule types: `read` (a path was read), `command` (a command line matched a regex), `output`
-(accumulated output matched a regex) and `cwd` (the player moved into a directory). A challenge is
-solved when every rule matches. Submitting the correct flag with `submit FLAG{...}` also completes it.
+MIT. See [LICENSE](LICENSE).
 
-So in the logs challenge, `cat access.log` does **not** complete it — the rule requires that `grep`
-was used. That is the difference between an explicit rule and "the output contained the flag".
-
-## Authoring
-
-The challenge format is specified in [`docs/challenge-format.md`](docs/challenge-format.md), and
-`npm run validate` enforces every rule in it. Edit `scripts/generate-challenges.mjs`, then
-`npm run generate`. New challenges appear in the index, the routes and the progress totals
-automatically. Lessons are MDX files in `src/content/tutorials/`; the frontmatter schema is in
-`src/content.config.ts`, and `track` must match an id in `src/lib/curriculum.ts`.
-
-## Deployment
-
-Deployed to **GitHub Pages** by `.github/workflows/deploy.yml`: on every push to `main` it installs
-dependencies, validates the content, runs the engine tests, builds, checks internal links, tests the
-validator itself, and only then publishes `dist/`. A content error stops the deploy rather than
-shipping a broken page. Because the site is served from `/Learmux/`,
-`astro.config.mjs` sets `site` and `base`, and root-absolute links in Markdown are rewritten by a
-small remark plugin.
-
-Any static host works: `npm run build`, then serve `dist/`.
-
-## Notes
-
-- This is an original implementation with its own branding and assets. The visual language follows a
-  tutorial-publication layout; the site's own stack is documented above and nothing here claims to
-  describe any other site's internals.
-- Flags live in the client-side data, so a determined reader could find them early. That is fine for
-  teaching; the next step would be moving challenge checks behind an API.
-
-## Licence
-
-MIT — see [LICENSE](./LICENSE).
+<div align="center">
+<br />
+<a href="https://apsideslabs.github.io/grapheme/">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/brand/apsides-labs-light.svg" />
+    <img src="public/brand/apsides-labs.svg" alt="Apsides Labs" height="30" />
+  </picture>
+</a>
+<br /><br />
+Designed and built by <a href="https://apsideslabs.github.io/grapheme/">Apsides Labs</a>.
+</div>
