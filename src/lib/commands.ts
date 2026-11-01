@@ -11,6 +11,7 @@
 import type { Command, CmdContext, CmdResult } from './types';
 import { FsError } from './fs';
 import { sha256Hex } from './hash';
+import { gitRun } from './git';
 
 const ok = (stdout = ''): CmdResult => ({ stdout });
 const fail = (stderr: string, code = 1): CmdResult => ({ stderr, code });
@@ -691,6 +692,10 @@ def('nano', 'A simple text editor', () => fail('nano: terminal too small (this s
 def('vim', 'Vi IMproved', () => fail('vim: no editors in this sandbox. Write files with echo > file'));
 def('less', 'View file contents page by page', (ctx) => commands.find((c) => c.name === 'cat')!.run(ctx));
 def('more', 'View file contents page by page', (ctx) => commands.find((c) => c.name === 'cat')!.run(ctx));
+
+// --- version control --------------------------------------------------------
+
+def('git', 'Track changes to your files', (ctx) => gitRun(ctx), 'git <init|status|add|commit|log|diff>');
 
 // --- submission -------------------------------------------------------------
 
