@@ -1,0 +1,140 @@
+---
+/**
+ * Every tag, and the lessons under it.
+ *
+ * Lessons have carried tags since the beginning and nothing used them: 86
+ * distinct tags across 66 lessons, invisible to the reader. This is the page
+ * that makes them earn their place. It is one page rather than one per tag,
+ * because the useful question is "what else is about this", not "give me a
+ * page for the word networking".
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { allTutorials } from '../../lib/tutorials';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const lessons = await allTutorials();
+
+const byTag = new Map<string, { title: string; id: string; category: string }[]>();
+for (const l of lessons) {
+  for (const raw of l.data.tags ?? []) {
+    const tag = String(raw).trim().toLowerCase();
+    if (!tag) continue;
+    const list = byTag.get(tag) ?? [];
+    list.push({ title: l.data.title, id: l.id, category: l.data.category });
+    byTag.set(tag, list);
+  }
+}
+
+// Busiest first, then alphabetical, so the substantial clusters lead.
+const tags = [...byTag.entries()]
+  .map(([tag, items]) => ({ tag, items }))
+  .sort((a, b) => b.items.length - a.items.length || a.tag.localeCompare(b.tag));
+
+const lessonCount = lessons.length;
+---
+
+<BaseLayout
+  title="Tags"
+  description={`Every tag used across the ${lessonCount} lessons, and what is filed under each.`}
+>
+  <div class="wrap">
+    <header class="section--tight">
+      <h1>Tags</h1>
+      <p class="lede">
+        Every lesson carries a few tags. This is all of them, busiest first. For the reading order use the
+        <a href={`${base}course/`}>course page</a>, and for subject groupings use
+        <a href={`${base}categories/`}>topics</a>.
+      </p>
+    </header>
+
+    <div class="tagcloud" aria-label="Jump to a tag">
+      {tags.map((t) => (
+        <a class="chip chip--mono" href={`#tag-${t.tag}`}>
+          {t.tag} <span class="tagcloud__n">{t.items.length}</span>
+        </a>
+      ))}
+    </div>
+
+    <div class="taglist">
+      {tags.map((t) => (
+        <section class="taggroup" id={`tag-${t.tag}`}>
+          <h2 class="taggroup__head">
+            {t.tag}
+            <span class="taggroup__n">
+              {t.items.length} lesson{t.items.length === 1 ? '' : 's'}
+            </span>
+          </h2>
+          <ul class="taggroup__items">
+            {t.items.map((item) => (
+              <li>
+                <a href={`${base}learn/${item.id}/`}>{item.title}</a>
+                <span class="taggroup__cat">{item.category}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .tagcloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin: 0 0 clamp(2rem, 4vw, 3rem);
+  }
+  .tagcloud__n {
+    color: var(--muted);
+    font-size: 0.72em;
+  }
+  .taglist {
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 2.25rem);
+    grid-template-columns: minmax(0, 1fr);
+  }
+  @media (min-width: 760px) {
+    .taglist { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  .taggroup { min-width: 0; scroll-margin-top: 5rem; }
+  .taggroup__head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin: 0 0 0.6rem;
+    padding-bottom: 0.4rem;
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--line);
+  }
+  .taggroup__n {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--muted);
+  }
+  .taggroup__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.35rem;
+  }
+  .taggroup__items li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+  }
+  .taggroup__items a { color: var(--ink); text-decoration: none; }
+  .taggroup__items a:hover { color: var(--green-dark); text-decoration: underline; }
+  .taggroup__cat {
+    flex: 0 0 auto;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+</style>
