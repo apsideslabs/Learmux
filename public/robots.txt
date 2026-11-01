@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# The sitemap is generated at build time by the sitemap integration.
+Sitemap: https://apsideslabs.github.io/Learmux/sitemap-index.xml
