@@ -64,11 +64,30 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
     <meta name="theme-color" content="#1c1b27" />
     <meta name="color-scheme" content="light" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    {/* Typefaces are served from this site: no third-party request, and they
+        work offline. The two preloads are the weights the first screen needs,
+        so the text is set correctly before anything else arrives. */}
     <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Poppins:wght@500;600;700&display=swap"
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href={`${base}fonts/inter-400.woff2`}
+      crossorigin
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href={`${base}fonts/poppins-600.woff2`}
+      crossorigin
+    />
+    <link rel="stylesheet" href={`${base}fonts/fonts.css`} />
+    {/* Feed autodiscovery, so a reader can subscribe from the address bar. */}
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`${site.name} lessons`}
+      href={`${base}rss.xml`}
     />
 
     <title>{fullTitle}</title>
@@ -277,8 +296,10 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
             <h4>Tutorials</h4>
             <a href={`${base}course/`}>The course</a>
             <a href={`${base}categories/`}>Categories</a>
+            <a href={`${base}tags/`}>Tags</a>
             <a href={`${base}learn/getting-started/`}>Getting started</a>
             <a href={`${base}search/`}>Search</a>
+            <a href={`${base}rss.xml`}>RSS feed</a>
           </div>
 
           <div class="footer-col">
