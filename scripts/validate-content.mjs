@@ -471,6 +471,15 @@ function checkSandboxes(build, seedOf, seeded, home, lessonSlugs) {
   }
 
   if (!Array.isArray(seeded) || seeded.length === 0) fail('sandbox', 'no lesson has a seed');
+
+  // A seed keyed to a lesson that does not exist is dead weight, and an empty
+  // seed means a lesson advertises a sandbox with nothing in it. Both have
+  // happened: a typo left `build-a-hash-tool.notes` in the table for weeks.
+  const known = new Set(lessonSlugs);
+  for (const slug of seeded ?? []) {
+    if (!known.has(slug)) fail(`sandbox seed "${slug}"`, 'there is no lesson with that slug');
+    if (Object.keys(seedOf(slug)).length === 0) fail(`sandbox seed "${slug}"`, 'is empty');
+  }
   return { count: lessonSlugs.length, withFiles };
 }
 
