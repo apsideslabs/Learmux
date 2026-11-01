@@ -76,7 +76,7 @@
 .util-input:focus,
 .util-textarea:focus,
 .util-select:focus {
-  border-color: var(--green);
+  border-color: var(--green-ink);
   box-shadow: 0 0 0 3px rgba(32, 214, 90, 0.14);
 }
 .util-textarea { min-height: 6.5rem; resize: vertical; line-height: 1.55; }
@@ -100,7 +100,7 @@
 .util-toggle:hover { border-color: #c9c9d2; }
 .util-toggle[aria-pressed='true'] {
   color: var(--ink);
-  border-color: var(--green);
+  border-color: var(--green-ink);
   background: var(--ok-bg);
 }
 .util-toggle__mark {
@@ -117,7 +117,7 @@
 }
 .util-toggle[aria-pressed='true'] .util-toggle__mark {
   background: var(--green);
-  border-color: var(--green);
+  border-color: var(--green-ink);
   color: #06301a;
 }
 
@@ -141,9 +141,9 @@
 .util-btn--primary {
   color: #06301a;
   background: var(--green);
-  border-color: var(--green);
+  border-color: var(--green-ink);
 }
-.util-btn--primary:hover { background: var(--green-dark); border-color: var(--green-dark); color: #fff; }
+.util-btn--primary:hover { background: var(--green-dark); border-color: var(--green-ink); color: #fff; }
 
 /* ── output ────────────────────────────────────────────────────────────── */
 .util-out {
@@ -274,7 +274,7 @@
   place-items: center;
   border-radius: var(--r-sm);
   background: var(--soft);
-  color: var(--green);
+  color: var(--green-ink);
 }
 .util-card h2 { margin: 0; font-size: 1.02rem; }
 .util-card__desc { margin: var(--sp-2) 0 var(--sp-3); font-size: 0.88rem; color: #4d4d55; }
@@ -289,7 +289,7 @@
 }
 .util-card__links a { display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: none; }
 .util-card__links a:hover { text-decoration: underline; }
-.util-card__links .is-tool { color: var(--blue); }
+.util-card__links .is-tool { color: var(--blue-dark); }
 .util-card__links .is-lesson { color: var(--muted); }
 
 /* ── the build-it-yourself banner on each tool page ────────────────────── */
