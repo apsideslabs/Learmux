@@ -14,6 +14,9 @@
   --term: #101419;
   --green: #20d65a;
   --green-dark: #17ab48;
+  /* For green TEXT on white or --soft. The brand green is 1.94:1 on white
+     and --green-dark is 3.02, so neither can carry a label. This is 5.46. */
+  --green-ink: #0b7a33;
   --blue: #2878d0;
   --blue-dark: #1f63ad;
   --white: #ffffff;
@@ -25,8 +28,10 @@
 
   /* status */
   --ok: #1d9d4c;
+  /* For text on --ok-bg: --ok itself is only 3.20:1 there. */
+  --ok-ink: #147a3a;
   --ok-bg: #e9f8ee;
-  --warn: #9a6a00;
+  --warn: #8a5f00;
   --warn-bg: #fdf5e3;
   --danger: #c0392b;
 
@@ -104,7 +109,9 @@ p { margin: 0 0 1.1rem; }
 code, pre, kbd, samp { font-family: var(--font-mono); font-size: 0.875em; }
 
 a {
-  color: var(--blue);
+  /* --blue is 4.48:1 on white, which fails WCAG AA for body text by a hair.
+     --blue-dark is the same hue at 6.09:1. */
+  color: var(--blue-dark);
   text-decoration: none;
 }
 a:hover { text-decoration: underline; }
@@ -218,7 +225,7 @@ a:hover { text-decoration: underline; }
 }
 .brand:hover { text-decoration: none; color: #fff; }
 .brand .mark { width: 26px; height: 26px; flex: none; }
-.brand .accent { color: var(--green); }
+.brand .accent { color: var(--green-ink); }
 
 .header-actions {
   display: flex;
@@ -378,7 +385,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 }
 .code-copy:hover { background: #fff; border-color: #c9c9d2; }
 .code-copy__done { display: none; }
-.code-copy[data-copied='true'] { color: var(--ok); border-color: var(--green); background: var(--ok-bg); }
+.code-copy[data-copied='true'] { color: var(--ok); border-color: var(--green-ink); background: var(--ok-bg); }
 .code-copy[data-copied='true'] .code-copy__idle { display: none; }
 .code-copy[data-copied='true'] .code-copy__done { display: inline; }
 
@@ -455,7 +462,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   color: rgba(255, 255, 255, 0.66);
 }
 .drawer__cat:hover { background: var(--navy-2); color: #fff; }
-.drawer__cat[aria-expanded='true'] { color: var(--green); }
+.drawer__cat[aria-expanded='true'] { color: var(--green-ink); }
 
 /* the chevron turns as a section opens, so the state is readable at a glance */
 .drawer__chev {
@@ -496,7 +503,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 .drawer__link:hover { background: var(--navy-2); color: #fff; text-decoration: none; }
 
 /* the page you are on */
-.drawer__link[aria-current='page'] { background: var(--navy-2); color: var(--green); }
+.drawer__link[aria-current='page'] { background: var(--navy-2); color: var(--green-ink); }
 .drawer__link[aria-current='page']::before {
   content: '';
   position: absolute;
@@ -521,7 +528,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   color: rgba(255, 255, 255, 0.5);
 }
 .drawer__toggle:hover { background: var(--navy-2); color: #fff; }
-.drawer__toggle[aria-expanded='true'] { color: var(--green); }
+.drawer__toggle[aria-expanded='true'] { color: var(--green-ink); }
 
 /* level three: the sub-pages, indented behind a hairline spine */
 .drawer__panel--sub { position: relative; }
@@ -542,7 +549,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.8);
 }
-.drawer__link--sub[aria-current='page'] { color: var(--green); }
+.drawer__link--sub[aria-current='page'] { color: var(--green-ink); }
 
 .drawer__link .tag {
   flex: none;
@@ -568,6 +575,19 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 }
 
 /* ── buttons ───────────────────────────────────────────────────────────── */
+.band--navy .btn:not(.btn--green):not(.btn--navy),
+.ctf-hero .btn:not(.btn--green):not(.btn--navy),
+.final-cta .btn:not(.btn--green):not(.btn--navy) {
+  color: #eef1f5;
+  border-color: rgba(255, 255, 255, 0.34);
+}
+.band--navy .btn:not(.btn--green):not(.btn--navy):hover,
+.ctf-hero .btn:not(.btn--green):not(.btn--navy):hover,
+.final-cta .btn:not(.btn--green):not(.btn--navy):hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -584,8 +604,8 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }
 .btn:hover { text-decoration: none; }
-.btn--green { background: var(--green); color: #06280f; border-color: var(--green); }
-.btn--green:hover { background: var(--green-dark); border-color: var(--green-dark); color: #06280f; }
+.btn--green { background: var(--green); color: #06280f; border-color: var(--green-ink); }
+.btn--green:hover { background: var(--green-dark); border-color: var(--green-ink); color: #06280f; }
 .btn--navy { background: var(--navy); color: #fff; border-color: var(--navy); }
 .btn--navy:hover { background: var(--navy-2); color: #fff; }
 .btn--outline { background: #fff; color: var(--ink); border-color: var(--line); }
@@ -612,7 +632,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   border: 1px solid var(--line);
   white-space: nowrap;
 }
-.chip--easy { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
+.chip--easy { background: var(--ok-bg); color: var(--ok-ink); border-color: transparent; }
 .chip--medium { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
 .chip--hard { background: #fdecea; color: var(--danger); border-color: transparent; }
 .chip--solved { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
@@ -685,7 +705,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.card:hover .card__title { color: var(--blue); }
+.card:hover .card__title { color: var(--blue-dark); }
 .card__meta { display: block; font-size: 0.78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card__excerpt {
   display: -webkit-box;
@@ -706,7 +726,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   background: linear-gradient(to top, rgba(16, 20, 25, 0.92), rgba(16, 20, 25, 0.55) 55%, transparent);
 }
 .card--hero .card__overlay .card__title { color: #fff; font-size: 1.22rem; -webkit-line-clamp: 3; }
-.card--hero:hover .card__overlay .card__title { color: var(--green); }
+.card--hero:hover .card__overlay .card__title { color: var(--green-ink); }
 .card--hero .card__body { padding-top: 0.85rem; }
 @media (min-width: 900px) {
   .card--hero .card__media { aspect-ratio: 21 / 9; }
@@ -726,7 +746,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   align-items: start;
 }
 .post:hover { text-decoration: none; }
-.post:hover .post__title { color: var(--blue); }
+.post:hover .post__title { color: var(--blue-dark); }
 .post__thumb {
   aspect-ratio: 4 / 3;
   border-radius: var(--r-sm);
@@ -869,7 +889,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   font-size: 0.92rem;
   text-decoration: none;
 }
-.footer-col a:hover { color: var(--green); text-decoration: none; }
+.footer-col a:hover { color: var(--green-ink); text-decoration: none; }
 .footer-base {
   margin-top: 2.2rem;
   padding-top: 1.2rem;
@@ -894,7 +914,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   margin: 1.2rem 0 1rem;
 }
 .crumbs a { color: var(--muted); }
-.crumbs a:hover { color: var(--blue); }
+.crumbs a:hover { color: var(--blue-dark); }
 .crumbs .sep { color: #c9c9cf; }
 
 /* ── article ───────────────────────────────────────────────────────────── */
@@ -917,6 +937,16 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   color: #2b2b33;
   max-width: 74ch;
 }
+.lede a {
+  /* Underlined, not just coloured: axe flags a link whose only distinction
+     from the surrounding text is its colour. */
+  color: var(--blue-dark);
+  text-decoration: underline;
+  text-decoration-color: rgba(31, 99, 173, 0.45);
+  text-underline-offset: 2px;
+}
+.lede a:hover { text-decoration-color: currentColor; }
+
 .prose h2 {
   margin-top: 2.2rem;
   padding-top: 0;
@@ -925,7 +955,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 .prose h3 { margin-top: 1.7rem; font-size: 1.12rem; }
 .prose ul, .prose ol { padding-left: 1.3rem; }
 .prose li { margin: 0.35rem 0; }
-.prose a { color: var(--blue); text-decoration: underline; text-decoration-color: rgba(40, 120, 208, 0.4); }
+.prose a { color: var(--blue-dark); text-decoration: underline; text-decoration-color: rgba(31, 99, 173, 0.4); }
 .prose a:hover { text-decoration-color: currentColor; }
 .prose strong { color: var(--ink); font-weight: 600; }
 .prose code {
@@ -1003,7 +1033,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 .callout--warning { background: var(--warn-bg); border-color: #f0e0b6; }
 .callout--warning .callout__title { color: var(--warn); }
 .callout--tip { background: var(--ok-bg); border-color: #cdebd8; }
-.callout--tip .callout__title { color: var(--ok); }
+.callout--tip .callout__title { color: var(--ok-ink); }
 
 /* related */
 .related { margin-top: 2.5rem; }
@@ -1088,7 +1118,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   color: inherit;
 }
 .row:hover { text-decoration: none; }
-.row:hover .row__title { color: var(--blue); }
+.row:hover .row__title { color: var(--blue-dark); }
 .row__title { font-family: var(--font-head); font-weight: 600; font-size: 1rem; color: var(--ink); }
 .row__meta { display: block; margin-top: 0.15rem; font-size: 0.8rem; color: var(--muted); }
 .row__side { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); }
@@ -1155,7 +1185,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 .pager__link--next { text-align: right; }
 .pager__dir { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
 .pager__title { font-family: var(--font-head); font-weight: 600; font-size: 0.94rem; color: var(--ink); }
-.pager__link:hover .pager__title { color: var(--blue); }
+.pager__link:hover .pager__title { color: var(--blue-dark); }
 .pager__empty { display: none; }
 @media (min-width: 700px) {
   .pager { grid-template-columns: 1fr 1fr; }
@@ -1214,6 +1244,11 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   font-size: 0.8rem;
   color: var(--muted);
 }
+.hero__demo-note a {
+  color: var(--blue-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .hero h1 { margin: 0 0 var(--sp-3); }
 .hero__facts {
   margin: var(--sp-4) 0 0;
@@ -1264,7 +1299,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   font-family: var(--font-head);
   font-weight: 700;
   font-size: 1.1rem;
-  color: var(--green);
+  color: var(--green-ink);
   background: #0e1a12;
   border: 1px solid #1d3324;
   border-radius: var(--r);
@@ -1276,7 +1311,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 }
 .track__head h2 { font-size: 1.28rem; }
 .track__head h2 a { color: var(--ink); text-decoration: none; }
-.track__head h2 a:hover { color: var(--green); text-decoration: none; }
+.track__head h2 a:hover { color: var(--green-ink); text-decoration: none; }
 .track__head .chip { margin-left: auto; }
 .track__tag { margin: 0.1rem 0 0; font-size: 0.88rem; color: var(--muted); }
 .track__desc { margin: var(--sp-3) 0 var(--sp-3); color: #4d4d55; max-width: 78ch; }
@@ -1288,7 +1323,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   font-family: var(--font-head);
   font-weight: 600;
   font-size: 0.86rem;
-  color: var(--blue);
+  color: var(--blue-dark);
   text-decoration: none;
 }
 .track__link:hover { text-decoration: underline; }
@@ -1305,7 +1340,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   font-weight: 600;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: var(--green);
+  color: var(--green-ink);
 }
 .course-hero h1 { margin: 0 0 var(--sp-3); }
 .course-hero .lede { max-width: 62ch; }
@@ -1356,7 +1391,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   font-size: 1.08rem;
   color: var(--ink);
 }
-.track__toggle[aria-expanded='true'] .track__name { color: var(--green); }
+.track__toggle[aria-expanded='true'] .track__name { color: var(--green-ink); }
 .track__toggle .track__tag { margin-top: 0.1rem; }
 .track__meta { display: flex; align-items: center; gap: var(--sp-2); flex: none; }
 .track__chev { display: inline-flex; color: var(--muted); transition: transform 0.18s ease; }
@@ -1413,7 +1448,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 }
 .topic-card__head h2 { margin: 0; font-size: 1.05rem; }
 .topic-card__head h2 a { color: var(--ink); text-decoration: none; }
-.topic-card__head h2 a:hover { color: var(--green); text-decoration: none; }
+.topic-card__head h2 a:hover { color: var(--green-ink); text-decoration: none; }
 .topic-card__desc {
   margin: var(--sp-2) 0 var(--sp-3);
   font-size: 0.86rem;
@@ -1433,7 +1468,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   color: #4d4d55;
   text-decoration: none;
 }
-.topic-card__list a:hover { color: var(--blue); text-decoration: underline; }
+.topic-card__list a:hover { color: var(--blue-dark); text-decoration: underline; }
 .topic-card__link {
   display: inline-flex;
   align-items: center;
@@ -1442,7 +1477,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   font-family: var(--font-head);
   font-weight: 600;
   font-size: 0.82rem;
-  color: var(--blue);
+  color: var(--blue-dark);
   text-decoration: none;
 }
 .topic-card__link:hover { text-decoration: underline; }
@@ -1480,7 +1515,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 }
 .lesson-item__body { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; }
 .lesson-item__title { font-family: var(--font-head); font-weight: 600; font-size: 1rem; color: var(--ink); }
-.lesson-item:hover .lesson-item__title { color: var(--blue); }
+.lesson-item:hover .lesson-item__title { color: var(--blue-dark); }
 .lesson-item__excerpt { font-size: 0.875rem; color: #5a5a63; }
 .lesson-item__meta { font-size: 0.74rem; color: var(--muted); }
 .lesson-item > svg { color: var(--muted); flex: none; }
@@ -1500,7 +1535,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   text-decoration: none;
   color: inherit;
 }
-.next-track a:hover .next-track__title { color: var(--blue); }
+.next-track a:hover .next-track__title { color: var(--blue-dark); }
 .next-track__title { display: block; font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; color: var(--ink); }
 .next-track__tag { display: block; font-size: 0.86rem; color: var(--muted); }
 .next-track a > svg { margin-left: auto; color: var(--muted); }
@@ -1526,10 +1561,10 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 .path-card__num {
   font-family: var(--font-mono);
   font-size: 0.76rem;
-  color: var(--green);
+  color: var(--green-ink);
 }
 .path-card__title { font-family: var(--font-head); font-weight: 600; font-size: 1.06rem; color: var(--ink); }
-.path-card:hover .path-card__title { color: var(--blue); }
+.path-card:hover .path-card__title { color: var(--blue-dark); }
 .path-card__tag { font-size: 0.875rem; color: #5a5a63; }
 .path-card__meta { font-size: 0.74rem; color: var(--muted); }
 .path-card__go {
@@ -1541,7 +1576,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   font-family: var(--font-head);
   font-weight: 600;
   font-size: 0.82rem;
-  color: var(--blue);
+  color: var(--blue-dark);
 }
 
 /* ── download strip ────────────────────────────────────────────────────── */
@@ -1631,7 +1666,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   padding-top: var(--sp-2);
   border-top: 1px solid var(--line);
 }
-.path-card__first::before { content: "→ "; color: var(--green); }
+.path-card__first::before { content: "→ "; color: var(--green-ink); }
 
 /* ── footer repository link ────────────────────────────────────────────── */
 .footer-repo {
@@ -1794,7 +1829,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
 .outcomes__list--two li { font-size: 0.97rem; color: var(--ink); }
 
 /* ── small pieces the homepage needs ───────────────────────────────────── */
-.eyebrow--onDark { color: var(--green); }
+.eyebrow--onDark { color: var(--green-ink); }
 .actions--end { justify-content: flex-start; margin-top: clamp(1.25rem, 3vw, 2rem); }
 
 /* The CTF panel is a rounded card on six other pages. In a navy band it is
@@ -1848,7 +1883,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   font-weight: 700;
   font-size: clamp(1.6rem, 3.4vw, 2.1rem);
   line-height: 1;
-  color: var(--green);
+  color: var(--green-ink);
   font-variant-numeric: tabular-nums;
 }
 .tally__label {
@@ -1881,7 +1916,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   font-family: var(--font-mono);
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--green-dark);
+  color: var(--green-ink);
 }
 .step__title {
   font-family: var(--font-head);
@@ -1927,7 +1962,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   margin-bottom: 0.4rem;
   border-radius: 50%;
   background: #eafcef;
-  color: var(--green-dark);
+  color: var(--green-ink);
 }
 .feature__title {
   font-family: var(--font-head);
@@ -2036,7 +2071,7 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   font-family: var(--font-mono);
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--green-dark);
+  color: var(--green-ink);
 }
 .sandbox__label {
   font-family: var(--font-head);
@@ -2102,3 +2137,98 @@ body.menu-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   color: #fff;
 }
 .done__btn--on:hover { background: #17803d; border-color: #17803d; }
+
+
+/* ── links on dark sections ────────────────────────────────────────────────
+   --blue-dark is right on white and unreadable on navy. These sections get a
+   light blue and an underline, so a link is not distinguished by colour alone. */
+.band--navy a:not(.btn):not(.brand),
+.ctf-hero a:not(.btn),
+.ctf-band a:not(.btn) {
+  color: #8fc3f5;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.band--navy a:not(.btn):not(.brand):hover,
+.ctf-hero a:not(.btn):hover,
+.ctf-band a:not(.btn):hover {
+  color: #b9d9fb;
+}
+
+
+/* ── buttons and links on dark surfaces ───────────────────────────────────
+   An outline button carries a white background, which turns white text into a
+   blank rectangle on a dark band. And a plain .btn inherits the link colour,
+   which is a dark blue that disappears against navy. Both are fixed here. */
+.btn--outline.btn--onDark,
+.btn--outline.btn--onDark:hover {
+  background: transparent;
+  color: #f4f5f7;
+}
+.band--navy .btn:not(.btn--green):not(.btn--navy):not(.btn--onDark),
+.ctf-hero .btn:not(.btn--green):not(.btn--navy),
+.final-cta .btn:not(.btn--green):not(.btn--navy),
+.drawer .btn:not(.btn--green):not(.btn--navy) {
+  color: #f4f5f7;
+  border-color: rgba(255, 255, 255, 0.34);
+}
+.band--navy .btn:not(.btn--green):not(.btn--navy):not(.btn--onDark):hover,
+.ctf-hero .btn:not(.btn--green):not(.btn--navy):hover,
+.final-cta .btn:not(.btn--green):not(.btn--navy):hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+/* The drawer's current-page link is a green pill, so it needs dark text. */
+.drawer .cta,
+.drawer a.cta {
+  color: var(--navy);
+  background: var(--green);
+}
+
+
+/* The wordmark's second half sits on navy, where the bright green is right.
+   The sweep that darkened green text for light backgrounds caught this too. */
+.accent,
+.brand .accent,
+.brand:hover .accent {
+  color: var(--green);
+}
+
+/* A link inside running text should not be told apart by colour alone. Cards,
+   nav items and buttons are links too, but they are not inside a paragraph. */
+p a:not(.btn):not(.chip):not(.brand),
+li a:not(.btn):not(.chip):not(.brand) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+
+/* A collapsed track row is on white; the open one has a dark header. Same
+   element, two backgrounds, so the green has to change with the state. */
+.track--fold .track__num,
+.track--fold .track__name {
+  color: var(--green-ink);
+}
+/* Measured: every track row has a white background whether it is open or not,
+   so the readable green is the same in both states. */
+
+/* The header CTA carries aria-current on its own page, and the current-page
+   rule (0,2,1) was beating the CTA rule (0,2,0), leaving white on green. */
+.header-nav a.cta,
+.header-nav a.cta[aria-current='page'],
+.header-nav a.cta:hover {
+  color: var(--navy);
+}
+
+/* Buttons inside the dark CTF panel need light text, not the dark link blue. */
+.ctf-panel .btn:not(.btn--green):not(.btn--navy) {
+  color: #f4f5f7;
+  border-color: rgba(255, 255, 255, 0.34);
+}
+.ctf-panel .btn:not(.btn--green):not(.btn--navy):hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.track--fold .track__num { color: var(--green); }
+.track--fold .track__name { color: var(--green-ink); }
