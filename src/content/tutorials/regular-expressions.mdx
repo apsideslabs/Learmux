@@ -1,0 +1,207 @@
+---
+title: "Regular expressions"
+description: "Match patterns rather than fixed text with grep and sed on Termux: anchors, character classes, quantifiers, alternation, and the basic-versus-extended trap."
+excerpt: "Stop searching for exact words. Learn the pattern language that grep, sed and awk all speak."
+category: "Text"
+track: "practice"
+order: 16
+level: Intermediate
+tags: [regex, text]
+---
+
+import Callout from '../../components/Callout.astro';
+
+You have used `grep` to find a word. That works until the thing you want is not a word: an address that could be any of a thousand values, a line that starts with a timestamp, every number over 400. Searching for fixed text cannot express any of those.
+
+A regular expression is a pattern instead of a string. It is the same idea in `grep`, `sed`, `awk`, and most editors, so learning it once pays off in all of them.
+
+## What you'll be able to do
+
+- Write a pattern that matches a shape rather than an exact string.
+- Anchor a pattern to the start or end of a line.
+- Match a digit, a letter or a space with a character class.
+- Say when `+` is an operator and when it is a literal plus sign, because that difference silently breaks real commands.
+- Pull the addresses out of a log with one pattern.
+
+## Step 1: A pattern is not a filename glob
+
+The shell already uses `*` and `?` to match filenames. They mean something different there, and mixing the two up is the first thing that goes wrong.
+
+In a filename glob, `*` means "any number of any characters". In a regular expression, `*` means "the previous thing, repeated zero or more times". So `*.txt` as a glob matches every text file, and as a regex it means "zero or more of the character `.`, then `txt`", which is not what anyone wanted.
+
+Keep them apart: globs are for filenames, regexes are for text inside files.
+
+## Step 2: Match a shape
+
+Start with a fixed string, so you can see the machinery before adding to it.
+
+```
+cd ~
+grep 'GET' access.log
+```
+
+Now replace part of it with something that matches a class of characters. A dot matches any single character.
+
+```
+grep 'GET /index.htm.' access.log
+```
+
+That matches `/index.html` and `/index.htmx` alike. The dot is not a full stop, it is a wildcard for one character. This is worth remembering, because a pattern like `10.0.0.4` will also match `10x0y0z4`.
+
+## Step 3: Anchor it
+
+Without anchors, a pattern matches anywhere in the line. `^` pins it to the start, `$` to the end.
+
+```
+grep '^10\.' access.log
+grep '404$' access.log
+```
+
+The first finds lines that start with `10.`, the second lines that end with `404`. Note the backslash before the dots in the first one: to match a literal dot you escape it, because an unescaped dot is the wildcard from Step 2.
+
+<Callout type="tip" title="Anchors are cheap, and they cut false matches">
+A search for `404` finds a line containing `4040` and a path called `/404-page.html`. A search for ` 404$` finds the status code. When a pattern returns too much, anchoring is usually the first fix to try.
+</Callout>
+
+## Step 4: Character classes
+
+Square brackets match one character from a set.
+
+```
+grep '[0-9]' access.log
+grep '[A-Z][A-Z]' access.log
+```
+
+`[0-9]` is any single digit, `[A-Z]` any capital letter. A `^` immediately inside the brackets negates the set, so `[^0-9]` is any character that is not a digit.
+
+There is also a portable shorthand, and this is the part that matters on a real system:
+
+| Class | Means | Works in |
+| --- | --- | --- |
+| `[[:digit:]]` | a digit | grep, sed, awk |
+| `[[:alpha:]]` | a letter | grep, sed, awk |
+| `[[:alnum:]]` | a letter or digit | grep, sed, awk |
+| `[[:space:]]` | a space, tab or newline | grep, sed, awk |
+| `[[:upper:]]` | a capital letter | grep, sed, awk |
+
+<Callout type="warning" title="\d is not grep">
+You will see `\d` for "a digit" in programming languages, and it is tempting to try it in grep. GNU grep does not support it, so `grep '\d'` quietly matches the letter `d` instead of a number, and you get nonsense with no error to explain it.
+
+Use `[0-9]` or `[[:digit:]]`. Both work everywhere, including in the sandbox beside this lesson.
+</Callout>
+
+## Step 5: Quantifiers, and the trap
+
+A quantifier says how many times the previous thing repeats.
+
+| Quantifier | Means |
+| --- | --- |
+| `*` | zero or more |
+| `+` | one or more |
+| `?` | zero or one |
+| `{2,4}` | between two and four |
+
+Now the trap. In **basic** regular expressions, which is what plain `grep` and `sed` use, the characters `+`, `?`, `|`, `(` and `)` are ordinary. The operators are written with a backslash, or you switch the whole command to extended mode with `-E`.
+
+```
+grep 'a+' access.log
+grep -E 'a+' access.log
+```
+
+The first searches for a literal `a+` and finds almost nothing. The second means "one or more a" and works as you expect. The same applies to `sed`: `sed 's/x\+/y/'` and `sed -E 's/x+/y/'` are the same instruction, and `sed 's/x+/y/'` is looking for a literal `x+`.
+
+<Callout type="tip" title="One habit that avoids all of this">
+Reach for `-E` on both `grep` and `sed` when your pattern contains `+`, `?`, `|`, `(` or `{`. It costs one character and removes an entire class of silent failures.
+</Callout>
+
+## Step 6: Groups and alternation
+
+`|` means "or", and parentheses group things so a quantifier applies to the whole group rather than the last character.
+
+```
+grep -E 'GET|POST' access.log
+grep -E '^(GET|POST) ' access.log
+grep -E '[0-9]{3}$' access.log
+```
+
+The second one anchors the group, so it matches lines that begin with either method. Without the parentheses, `^GET|POST` would mean "starts with GET, or contains POST anywhere", which is a different question.
+
+## Step 7: Greedy matching
+
+A quantifier takes as much as it can. `.*` matches the longest run of characters it can, not the shortest.
+
+```
+echo 'name: ada, role: engineer' | grep -oE 'name: .*role'
+```
+
+That prints `name: ada, role`, because `.*` ran to the last possible place. When you need the shortest match, make the quantifier non-greedy by putting a `?` after it, or narrow the pattern to something that cannot run past the thing you want.
+
+Non-greedy is a Perl-style feature, so it is not in POSIX grep. Narrowing the pattern is the portable answer, and it is usually clearer anyway.
+
+## Step 8: Pull the addresses out of a log
+
+Here is the pattern that earns its keep. An address is four numbers separated by dots.
+
+```
+grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' access.log
+```
+
+`-o` prints only the part that matched, not the whole line, which is what you want when you are extracting rather than searching. The group `([0-9]{1,3}\.)` is "one to three digits followed by a literal dot", and `{3}` repeats that three times before the final number.
+
+Run it, then pipe the result into `sort` and `uniq -c` to count each address:
+
+```
+grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' access.log | sort | uniq -c | sort -rn
+```
+
+That pipeline, extract then sort then count then order, is one you will use constantly once you know it.
+
+## Step 9: The same pattern in sed
+
+Because `sed` speaks the same language, the pattern carries over.
+
+```
+sed -E 's/[0-9]{1,3}$/REDACTED/' access.log
+```
+
+That replaces a trailing number with the word REDACTED. Add `-i` to write the change back into the file, and copy the file first when you do, because there is no undo.
+
+## Step 10: Test a pattern before you trust it
+
+Two habits make regular expressions much less painful.
+
+Feed it one line you know the answer for:
+
+```
+echo '10.0.0.4 GET /index.html 200' | grep -E '^[0-9.]+'
+```
+
+And when a pattern finds nothing, check whether it is wrong or whether the data does not contain what you expected:
+
+```
+grep -c 'GET' access.log
+```
+
+A count of zero is a different problem from a pattern that matches the wrong thing, and telling those two apart saves a lot of guessing.
+
+## Quick reference
+
+| Pattern | Matches |
+| --- | --- |
+| `.` | any single character |
+| `^` `$` | start and end of line |
+| `[abc]` | one of a, b or c |
+| `[^abc]` | any character except a, b, c |
+| `[0-9]` or `[[:digit:]]` | a digit |
+| `*` `+` `?` | zero or more, one or more, zero or one |
+| `{2,4}` | between two and four |
+| `a\|b` or `a\|b` with -E | a or b |
+| `(...)` | group, so a quantifier applies to all of it |
+| `\.` | a literal dot |
+| `-o` on grep | print only the match |
+
+Remember the mode: with `-E`, `+`, `?`, `|`, `(` and `)` are operators. Without it they are ordinary characters, and your pattern silently looks for them literally.
+
+## Next
+
+Patterns make the text tools worth using. [Archives and compression](/learn/archives-and-compression/) is the next piece of working with files at scale.
