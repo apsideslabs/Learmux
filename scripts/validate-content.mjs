@@ -431,6 +431,35 @@ function checkGlossary(terms, cats, lessonSlugs) {
   return { count: terms.length, withLesson, categories: validCats.size };
 }
 
+// ── lesson order ────────────────────────────────────────────────────────────
+/**
+ * `order` is one sequence across the whole course, and the site sorts by it.
+ * Two lessons sharing a number is a silent defect: nothing throws, the two just
+ * swap places depending on filesystem order.
+ */
+function checkLessonOrder() {
+  const dir = join(ROOT, 'src/content/tutorials');
+  if (!existsSync(dir)) return null;
+  const seen = new Map();
+  for (const file of readdirSync(dir).filter((f) => /\.mdx?$/.test(f))) {
+    const src = readFileSync(join(dir, file), 'utf8');
+    const m = src.match(/^order:\s*(\d+)\s*$/m);
+    if (!m) {
+      fail(`lesson ${file.replace(/\.mdx?$/, '')}`, 'has no order');
+      continue;
+    }
+    const order = Number(m[1]);
+    const id = file.replace(/\.mdx?$/, '');
+    // Position is within the track, so that is where it has to be unique.
+    const track = (src.match(/^track:\s*"?([^"\n]+)"?\s*$/m) ?? [, ''])[1].trim();
+    const key = `${track}#${order}`;
+    const other = seen.get(key);
+    if (other) fail(`lesson order ${order} in track "${track}"`, `claimed by both "${other}" and "${id}"`);
+    else seen.set(key, id);
+  }
+  return { count: seen.size };
+}
+
 // ── lesson sandboxes ────────────────────────────────────────────────────────
 /**
  * Every lesson gets a shell, so every lesson must produce a usable one.
@@ -716,6 +745,7 @@ if (data) {
   const c = checkChallenges();
   const t = checkTools(data.tools, data.toolCategories);
   const l = checkLessons(data.tracks);
+  checkLessonOrder();
   const x = checkTermuxCatalogue();
   const pr = checkPractice(data.practiceSets);
   const gl = checkGlossary(data.glossaryTerms, data.glossaryCategories, lessonSlugSet());
