@@ -1,0 +1,13 @@
+# Blank issues are off so every report arrives with the context needed to act
+# on it. Each template asks for the one thing that is usually missing.
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security issue
+    url: https://github.com/apsideslabs/Learmux/blob/main/SECURITY.md
+    about: Please report vulnerabilities privately rather than in a public issue.
+  - name: How to contribute
+    url: https://github.com/apsideslabs/Learmux/blob/main/CONTRIBUTING.md
+    about: The rules the build enforces, and how to add a lesson.
+  - name: Read the course
+    url: https://apsideslabs.github.io/Learmux/course/
+    about: The live site, if you are here to learn rather than to report something.
