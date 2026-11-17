@@ -51,6 +51,34 @@ const { practiceSets, gradeOutput } = await import(pathToFileURL(outfile).href);
  * without -sV, a different port, different spacing.
  */
 const SAMPLES = {
+  // The battery command only exists on a phone with the Termux:API app, so it
+  // can never run on the machine that builds the site.
+  'tx-t1': {
+    tool: 'termux-battery-status',
+    reason: 'termux-battery-status needs the Termux:API app, which only exists on a phone',
+    pass: [
+      {
+        name: 'a phone on charge',
+        text: JSON.stringify(
+          { health: 'GOOD', percentage: 87, plugged: 'PLUGGED_AC', status: 'CHARGING', temperature: 31.2 },
+          null,
+          2,
+        ),
+      },
+      {
+        name: 'a phone running on battery',
+        text: JSON.stringify(
+          { health: 'GOOD', percentage: 42, plugged: 'UNPLUGGED', status: 'DISCHARGING', temperature: 28.5 },
+          null,
+          2,
+        ),
+      },
+    ],
+    fail: [
+      { name: 'the API app is missing', why: 'the command did not run', text: 'bash: termux-battery-status: command not found' },
+      { name: 'an empty paste', why: 'nothing at all', text: '   ' },
+    ],
+  },
   'scan-t1': {
     tool: 'nmap',
     reason: 'nmap is not installed on this machine',
