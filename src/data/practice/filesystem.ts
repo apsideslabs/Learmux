@@ -319,4 +319,135 @@ export const filesystemSets: PracticeSet[] = [
       },
     ],
   },
+  {
+    slug: 'typing-on-a-phone',
+    title: 'Typing on a phone',
+    topic: 'typing-on-a-phone',
+    summary: 'Reach Ctrl, Tab and Esc on a phone keyboard, stop a runaway command, and let completion do the typing.',
+    intro:
+      'The extra-keys row is the difference between fighting a phone keyboard and using it. This set checks the four keys that carry almost everything, and what each one is actually for.',
+    questions: [
+      {
+        id: 'kb-1',
+        question: 'A command is printing output and will not stop. What gets your prompt back?',
+        options: [
+          'Tap CTRL on the extra-keys row, then press C',
+          'Close the Termux app and reopen it',
+          'Press TAB twice',
+          'Type exit and press Enter',
+        ],
+        answer: 0,
+        explanation:
+          'Ctrl-C sends an interrupt to the running program, which is the signal every well-behaved command expects. Closing the app also stops it, but it takes the whole session with it, including anything else you had running. Ctrl-C costs you only the one command.',
+      },
+      {
+        id: 'kb-2',
+        question: 'You have typed cd ~/proj and pressed TAB. What happens?',
+        options: [
+          'The shell completes the name if there is one match, and lists the options if there are several',
+          'The shell runs the command immediately without waiting for Enter',
+          'A literal tab character is inserted into the command',
+          'Nothing, because TAB does not exist on a phone keyboard',
+        ],
+        answer: 0,
+        explanation:
+          'Completion is a feature of the shell prompt, not of the keyboard. One match fills itself in; several matches complete as far as they agree and a second TAB lists them. This is why long paths typed on a phone are rarely a source of mistakes: Tab cannot invent a character that is not there.',
+      },
+      {
+        id: 'kb-3',
+        question: 'What is the difference between Ctrl-C and Ctrl-D?',
+        options: [
+          'Ctrl-C cancels the running command; Ctrl-D means end of input, and at a prompt it closes the shell',
+          'They are the same thing on Termux',
+          'Ctrl-C closes the shell; Ctrl-D cancels the running command',
+          'Ctrl-C pauses the command; Ctrl-D resumes it',
+        ],
+        answer: 0,
+        explanation:
+          'Ctrl-C interrupts, which stops whatever is running and returns you to a prompt. Ctrl-D is not a signal at all: it tells the program reading the keyboard that there is no more input. At an empty prompt that means the shell exits. Inside a program waiting for input, it means finish. Pausing is a third thing, Ctrl-Z, and fg brings the job back.',
+      },
+    ],
+    tasks: [
+      {
+        id: 'kb-t1',
+        title: 'Type a pipe on your phone keyboard',
+        prompt:
+          'The pipe symbol turns one command output into another command input, and it is used in most lessons after this one. Find it on your phone keyboard rather than copying it from here, then run the command below in Termux.\n\nThe result is a single number: how many entries are in your home directory.',
+        command: 'ls | wc -l',
+        hint: 'On most phone keyboards the pipe lives on the symbols page, often a page past the digits. On the Termux extra-keys row you can also long press some keys to reach it.',
+        expects:
+          'One number, and nothing else. If you got a wall of filenames, the pipe was not read as a pipe: check you did not type a capital i or a lowercase L. If you got a syntax error, the character came out as something else, which is worth finding now rather than mid-exercise.',
+        rules: [
+          { type: 'matches', pattern: '^\\s*[0-9]+\\s*$', label: 'the output is a single number' },
+          { type: 'absent', pattern: 'command not found|syntax error|not found', label: 'the pipe was read as a pipe' },
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'termux-beyond-the-basics',
+    title: 'Termux beyond the basics',
+    topic: 'termux-beyond-the-basics',
+    summary: 'Keep a job alive, run a distribution Termux does not have, and reach the phone from the shell.',
+    intro:
+      'Three add-ons turn Termux from a small Linux box into something that fits a phone: a wake lock so Android stops killing your jobs, proot for software Termux has no package for, and the API for the clipboard and notifications.',
+    questions: [
+      {
+        id: 'tx-1',
+        question: 'You start a long rsync, switch to another app, and come back to find it stopped. What fixes this?',
+        options: [
+          'Run termux-wake-lock before starting the job',
+          'Run the command with sudo',
+          'Close every other app first',
+          'Run it in the background with &',
+        ],
+        answer: 0,
+        explanation:
+          'Android freezes or kills backgrounded apps to save battery, and a frozen process stops working. A wake lock asks the system to leave Termux alone until you release it. Backgrounding with & does not help, because the process is still inside an app Android is free to suspend. sudo is unrelated, and is not available on a stock phone anyway.',
+      },
+      {
+        id: 'tx-2',
+        question: 'A tool you need has no Termux package. What is the intended answer?',
+        options: [
+          'Install a full distribution with proot-distro and use it there',
+          'Download a random binary and run it',
+          'Enable developer mode and install it system-wide',
+          'It cannot be done on a phone',
+        ],
+        answer: 0,
+        explanation:
+          'proot-distro runs Debian, Ubuntu or another distribution inside Termux, with its own package manager and its own libraries. That is the supported route when a package genuinely does not exist for Termux, and it is also what you need when something expects glibc. It costs a few hundred megabytes, so use pkg install when that works.',
+      },
+      {
+        id: 'tx-3',
+        question: 'What does Termux:API give you that the plain terminal does not?',
+        options: [
+          'Access to the phone itself: clipboard, notifications, battery, camera and sensors',
+          'Root access to the Android system',
+          'A graphical desktop environment',
+          'Faster package downloads',
+        ],
+        answer: 0,
+        explanation:
+          'The termux-api package plus the Termux:API app expose the device hardware as commands, so a script can read the battery, post a notification, or read the clipboard. It does not grant root, and it is not a display server: X11 is a separate app. That access to the device is what makes Termux more than a Linux shell on a phone.',
+      },
+    ],
+    tasks: [
+      {
+        id: 'tx-t1',
+        title: 'Ask the phone about its battery',
+        prompt:
+          'Install the API package in Termux with pkg install termux-api, and make sure the Termux:API app is installed from F-Droid as well. Then run the command below in Termux. It prints JSON describing the battery right now.',
+        command: 'termux-battery-status',
+        hint: 'If the command prints nothing at all, the app is usually missing rather than the package. Both are needed: the package provides the command, the app provides the access.',
+        expects:
+          'A JSON object with a percentage and a status such as CHARGING or DISCHARGING, plus temperature and health. The numbers will not match anyone else figures, which is the point: this is your phone being read by a script. If you got an empty line, check the app is installed and open it once so Android grants the permission.',
+        rules: [
+          { type: 'contains', value: 'percentage', label: 'the output includes a percentage' },
+          { type: 'contains', value: 'health', label: 'the output includes battery health' },
+          { type: 'absent', pattern: 'command not found', label: 'the termux-api package is installed' },
+        ],
+      },
+    ],
+  },
 ];
