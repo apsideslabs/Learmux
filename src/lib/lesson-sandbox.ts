@@ -80,6 +80,19 @@ const SEEDS: Record<string, Seed> = {
   // ── lessons whose commands work on an artefact rather than a file they
   //    name. The seed is the thing the lesson asks you to look at, so the
   //    commands in the text have something real to act on.
+  'termux-beyond-the-basics': {
+    // A backup script to hang a notification off, and the boot directory the
+    // lesson tells you to create.
+    'backup.sh': '#!/data/data/com.termux/files/usr/bin/bash\ncp -r projects backup/\n',
+    'projects/readme.txt': 'work in progress\n',
+  },
+  'typing-on-a-phone': {
+    // Enough files that Tab completion has something to complete and
+    // something to disambiguate.
+    'notes.txt': 'buy a bigger SD card\n',
+    'notepad.txt': 'a second file starting with not, so Tab shows a choice\n',
+    'projects/readme.txt': 'one directory to keep work in\n',
+  },
   'getting-started': {
     'notes.txt': 'termux-setup-storage shares your phone storage\n',
     'welcome.txt': 'you are in the Termux home directory\n',
