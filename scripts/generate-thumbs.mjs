@@ -24,6 +24,8 @@ const BG = '#101419';
 /** slug, category, accent, and up to three terminal lines */
 const thumbs = [
   { slug: 'getting-started', accent: '#20d65a', lines: ['$ pwd', '/data/data/com.termux/files/home', '$ whoami'] },
+  { slug: 'termux-beyond-the-basics', accent: '#8b7cd8', lines: ['$ termux-wake-lock', '$ proot-distro login debian', '$ termux-battery-status'] },
+  { slug: 'typing-on-a-phone', accent: '#35b0c4', lines: ['ESC  /  -  HOME  TAB  CTRL', '$ cd ~/proj[TAB]', '$ ping -c 100 ^C'] },
   { slug: 'navigating-the-filesystem', accent: '#2878d0', lines: ['$ ls -la', 'drwxr-xr-x  projects', '$ cd projects/android'] },
   { slug: 'reading-and-searching-text', accent: '#f3bc36', lines: ['$ grep -n "error" access.log', '42: error: vault sealed', '$ wc -l access.log'] },
   { slug: 'regular-expressions', accent: '#f3bc36', lines: ["$ grep -oE '([0-9]{1,3}\\.){3}[0-9]{1,3}'", '10.0.0.4', '$ sed -E \'s/[0-9]+/N/g\''] },
