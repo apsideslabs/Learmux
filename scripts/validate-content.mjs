@@ -56,7 +56,7 @@ async function loadData() {
   await build({
     stdin: {
       contents: [
-        `export { tools, toolCategories } from './src/data/tools/index.ts';`,
+        `export { tools, toolCategories, toolLessons } from './src/data/tools/index.ts';`,
         `export { tracks, course } from './src/lib/curriculum.ts';`,
         `export { practiceSets } from './src/data/practice/index.ts';`,
         `export { terms as glossaryTerms, categories as glossaryCategories } from './src/data/glossary/index.ts';`,
@@ -431,6 +431,25 @@ function checkGlossary(terms, cats, lessonSlugs) {
   return { count: terms.length, withLesson, categories: validCats.size };
 }
 
+// ── tool to lesson links ────────────────────────────────────────────────────
+/**
+ * Every tool that claims a lesson must name one that exists, and every tool in
+ * that map must be a real tool. A rename in either place would otherwise leave
+ * a dead link that only shows up when a reader clicks it.
+ */
+function checkToolLessons(map, tools, lessonSlugs) {
+  if (!map || typeof map !== 'object') return null;
+  const known = new Set(lessonSlugs);
+  const toolSlugs = new Set(tools.map((t) => t.slug));
+  let linked = 0;
+  for (const [tool, lesson] of Object.entries(map)) {
+    if (!toolSlugs.has(tool)) fail(`tool lesson link "${tool}"`, 'there is no tool with that slug');
+    if (!known.has(lesson)) fail(`tool "${tool}" points at lesson "${lesson}"`, 'there is no lesson with that slug');
+    else linked++;
+  }
+  return { linked };
+}
+
 // ── lesson order ────────────────────────────────────────────────────────────
 /**
  * `order` is one sequence across the whole course, and the site sorts by it.
@@ -746,6 +765,7 @@ if (data) {
   const t = checkTools(data.tools, data.toolCategories);
   const l = checkLessons(data.tracks);
   checkLessonOrder();
+  const tl = checkToolLessons(data.toolLessons, data.tools, [...lessonSlugSet()]);
   const x = checkTermuxCatalogue();
   const pr = checkPractice(data.practiceSets);
   const gl = checkGlossary(data.glossaryTerms, data.glossaryCategories, lessonSlugSet());
@@ -766,6 +786,7 @@ if (data) {
     if (pr) bits.push(`${pr.count} practice sets (${pr.questions} questions, ${pr.tasks} tasks)`);
     if (gl) bits.push(`${gl.count} glossary terms (${gl.withLesson} linked to lessons)`);
     if (sb) bits.push(`${sb.count} lesson sandboxes (${sb.withFiles} files seeded)`);
+    if (tl) bits.push(`${tl.linked} tools linked to their lesson`);
     if (links && !links.skipped) bits.push(`${links.count} pages linked`);
     if (built) bits.push(`${built.pages} task pages say where to run the command`);
     console.log(`content ok: ${bits.join(', ')}`);
