@@ -11,12 +11,14 @@ import { textTools } from './text';
 import { shellProcessTools } from './shell-process';
 import { networkTransferSecurityTools } from './network-transfer-security';
 import { miscTools } from './misc';
+import { coreTools } from './core';
 
 export type { Tool, ToolCommand, ToolExample, ToolCategory, CategoryId } from './types';
 export { toolCategories } from './types';
 
 /** Every tool, grouped in category order then alphabetical within a category. */
 export const tools: Tool[] = [
+  ...coreTools,
   ...fileTools,
   ...textTools,
   ...shellProcessTools,
