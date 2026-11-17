@@ -1,0 +1,184 @@
+---
+title: "Termux beyond the basics"
+description: "Keep jobs alive with a wake lock, run a real Linux distribution with proot-distro, and reach the phone's clipboard, battery and notifications through Termux:API."
+excerpt: "Termux is not just a terminal emulator. It can talk to your phone, and it can run a full distribution when the Termux package is not there."
+category: "Termux"
+track: "foundations"
+order: 9
+level: Intermediate
+tags: [termux, proot, api]
+---
+
+import Callout from '../../components/Callout.astro';
+
+Everything so far has treated Termux as a small Linux box. It is more than that in two directions: it can reach the phone itself, and it can run a distribution that Termux's own repository does not have.
+
+Both are the answer to problems you will hit. A long job dies when you switch apps. A tool you need has no Termux build. This lesson is those two answers, plus the add-ons that make them work.
+
+## What you'll be able to do
+
+- Stop Android killing a long job when you switch away.
+- Run Ubuntu or Debian inside Termux, and know when that is the right call.
+- Read and write the phone clipboard, post a notification, and check the battery from the shell.
+- Run a command automatically when the phone boots.
+
+## Step 1: Why your job dies when you switch apps
+
+Android treats a background app as expendable. Switch to a browser for a minute and the system may freeze Termux, or kill it outright. A `rsync` that was copying files simply stops.
+
+Termux can ask the system to leave it alone for a while:
+
+```
+termux-wake-lock
+```
+
+That takes a wake lock. Now run your long job. When it finishes, release it:
+
+```
+termux-wake-lock --off
+```
+
+Or run the job under the lock so you cannot forget:
+
+```
+termux-wake-lock
+./backup.sh
+termux-wake-lock --off
+```
+
+<Callout type="warning" title="A wake lock costs battery">
+It keeps the CPU and the app alive, which is exactly what a long copy needs and exactly what you do not want left on for a day. Release it when the job ends. Termux also shows a notification while a lock is held, so you can see when you have forgotten.
+</Callout>
+
+## Step 2: Keep a session alive with tmux
+
+A wake lock stops Android killing the app. `tmux` covers a different problem: you close the app, the shell exits, and whatever was running in it goes with it.
+
+`tmux` runs your shell inside a session that survives the terminal closing.
+
+```
+pkg install tmux
+tmux new -s work
+```
+
+You are now inside a session called `work`. Start something long. Detach with `Ctrl-B` then `d`. The job keeps running. Close Termux entirely, come back tomorrow, and reattach:
+
+```
+tmux attach -t work
+```
+
+| Keys | What it does |
+| --- | --- |
+| `Ctrl-B` then `d` | Detach, leaving the session running |
+| `Ctrl-B` then `c` | New window inside the session |
+| `Ctrl-B` then `n` | Next window |
+| `tmux ls` | List sessions that are still alive |
+
+This is the pair that matters: the wake lock stops the app being frozen, and tmux stops the session being lost when it is.
+
+## Step 3: When the package does not exist
+
+Termux has its own repository, and it is smaller than Debian's. Plenty of software has no Termux build. `proot-distro` runs a full distribution inside Termux to fill that gap.
+
+```
+pkg install proot-distro
+proot-distro install debian
+proot-distro login debian
+```
+
+You are now in Debian, with `apt` and everything in its repository. `exit` returns you to Termux.
+
+| Command | What it does |
+| --- | --- |
+| `proot-distro list` | What is available, and what is already installed |
+| `proot-distro install ubuntu` | Install a distribution |
+| `proot-distro login debian` | Enter it |
+| `proot-distro remove debian` | Delete it and its files |
+
+<Callout type="tip" title="Use proot only when you need it">
+A distribution inside Termux costs a few hundred megabytes and does not share your Termux home by default. If `pkg install` has the tool, use that. Reach for proot when the package genuinely is not there, or when something needs a full `glibc` environment that Termux's own libraries cannot provide.
+</Callout>
+
+## Step 4: Talk to the phone with Termux:API
+
+The `termux-api` package and the Termux:API app together expose the phone's hardware to the shell. This is the part that makes Termux different from a Linux box: your scripts can read the battery, speak, vibrate and post notifications.
+
+Install both. The app comes from F-Droid, the same place as Termux itself, and the package from the repository:
+
+```
+pkg install termux-api
+```
+
+Now the phone is available as commands.
+
+```
+termux-battery-status
+termux-notification --title "Backup" --content "Finished"
+termux-clipboard-get
+termux-clipboard-set "copied from the shell"
+termux-vibrate -d 200
+termux-toast "hello"
+```
+
+A backup script that tells you it finished, without you watching it:
+
+```
+./backup.sh && termux-notification --title "Backup" --content "Done"
+```
+
+| Command | What it does |
+| --- | --- |
+| `termux-battery-status` | Charge level, temperature and health as JSON |
+| `termux-notification` | Post a notification, optionally with buttons that run a command |
+| `termux-clipboard-get` / `-set` | Read or write the phone clipboard |
+| `termux-toast` | A brief message on screen |
+| `termux-vibrate` | Vibrate, for a silent alert |
+| `termux-sms-list` | Read messages, with permission |
+| `termux-camera-photo out.jpg` | Take a photo |
+| `termux-sensor -s ACCELEROMETER -n 1` | Read a sensor once |
+
+<Callout type="warning" title="Permissions are asked for the first time you use it">
+Android will prompt when a command needs something sensitive, such as the camera or messages. If a command returns nothing, check that the Termux:API app is installed and that the permission was granted. The app is separate from Termux and has to be installed alongside it.
+</Callout>
+
+## Step 5: Run something at boot
+
+The Termux:Boot app runs a script when the phone starts. It is how a scheduled job or a small server comes back by itself after a restart.
+
+Install Termux:Boot from F-Droid, open it once so Android registers it, then put a script in the boot directory:
+
+```
+mkdir -p ~/.termux/boot
+nano ~/.termux/boot/start-sshd.sh
+```
+
+The script is ordinary shell. Make it executable and it runs at boot:
+
+```
+chmod +x ~/.termux/boot/start-sshd.sh
+```
+
+<Callout type="tip" title="Open the app once after installing">
+Termux:Boot does nothing until its app has been opened at least once after install, because that is when Android registers it to receive the boot signal. If nothing runs, this is almost always why.
+</Callout>
+
+## Step 6: A graphical app, if you need one
+
+Termux is a terminal, but it can host a display. Termux:X11 is an app that gives a real X server, and packages like `xfce4` or a single app such as `firefox` can draw into it.
+
+This is the most involved of these add-ons and the one most people do not need. Mentioned so you know it exists rather than as something to set up now: if a tool has no terminal interface and you cannot do without it, that is when to look at X11.
+
+## Quick reference
+
+| Need | Tool |
+| --- | --- |
+| Stop Android freezing a long job | `termux-wake-lock`, then `--off` |
+| Keep a session after closing the app | `tmux new -s work`, `Ctrl-B d`, `tmux attach -t work` |
+| A package Termux does not have | `proot-distro install debian` |
+| Tell me when it finished | `termux-notification` |
+| Move text to or from the phone | `termux-clipboard-get` / `-set` |
+| Run something at startup | a script in `~/.termux/boot/` |
+
+## Next
+
+You now have the whole Termux toolbox. [Shell config and aliases](/learn/shell-config-and-aliases/) is the last piece of setup: making the shell yours before the course moves on to real work.
