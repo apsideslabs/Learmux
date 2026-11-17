@@ -2,7 +2,8 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Icon from '../../components/Icon.astro';
 import '../../styles/tools.css';
-import { tools, categoryById, displayCommand } from '../../data/tools';
+import { tools, categoryById, displayCommand, lessonForTool } from '../../data/tools';
+import { allTutorials } from '../../lib/tutorials';
 
 export function getStaticPaths() {
   return tools.map((tool) => ({ params: { slug: tool.slug }, props: { tool } }));
@@ -14,6 +15,12 @@ const category = categoryById(tool.category);
 const related = tools.filter((t) => t.category === tool.category && t.slug !== tool.slug).slice(0, 5);
 const projectName = tool.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 const exampleCmd = tool.example ? displayCommand(tool, tool.example.args) : '';
+// The glossary has always linked a term to the lesson that teaches it. The
+// reference should do the same, or a reader has no route from here into the course.
+const lessonSlug = lessonForTool(tool.slug);
+const lesson = lessonSlug
+  ? (await allTutorials()).find((l) => l.id === lessonSlug)
+  : undefined;
 ---
 
 <BaseLayout title={tool.name} description={`${tool.name}. ${tool.tagline}`}>
@@ -133,6 +140,9 @@ const exampleCmd = tool.example ? displayCommand(tool, tool.example.args) : '';
             {tool.license && <div><dt>Licence</dt><dd>{tool.license}</dd></div>}
             {tool.install && <div><dt>Install</dt><dd><code>{tool.install}</code></dd></div>}
             <div><dt>Project</dt><dd><a href={tool.url} target="_blank" rel="noopener">{projectName}</a></dd></div>
+            {lesson && (
+              <div><dt>Taught in</dt><dd><a href={`${base}learn/${lesson.id}/`}>{lesson.data.title}</a></dd></div>
+            )}
           </dl>
         </div>
 
