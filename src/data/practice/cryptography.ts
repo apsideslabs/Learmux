@@ -247,8 +247,8 @@ export const cryptographySets: PracticeSet[] = [
         expects:
           'Five lines from openssl x509. The first is the subject, the name the certificate is for, and it should read CN = termux.local. The second is the issuer, and because this certificate is self-signed it is the same name, which is the sign that no outside authority vouched for it. Then two date lines giving the valid window, and a sha256 Fingerprint line, a colon-separated hash of the whole certificate. If subject and issuer differ, you read someone else certificate.',
         rules: [
-          { type: 'matches', pattern: '^\\s*subject=CN = termux\\.local\\s*$', label: 'the certificate is for the name you set' },
-          { type: 'matches', pattern: '^\\s*issuer=CN = termux\\.local\\s*$', label: 'a self-signed certificate is its own issuer' },
+          { type: 'matches', pattern: '^\\s*subject=CN\\s*=\\s*termux\\.local\\s*$', label: 'the certificate is for the name you set' },
+          { type: 'matches', pattern: '^\\s*issuer=CN\\s*=\\s*termux\\.local\\s*$', label: 'a self-signed certificate is its own issuer' },
           { type: 'matches', pattern: '^\\s*sha256 Fingerprint=([0-9A-F]{2}:){31}[0-9A-F]{2}\\s*$', label: 'the certificate carries a SHA-256 fingerprint' },
           { type: 'absent', pattern: 'command not found|No such file or directory|not installed', label: 'the commands actually ran' },
         ],
