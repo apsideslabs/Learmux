@@ -1,0 +1,160 @@
+---
+title: "Typing on a phone"
+description: "Use the Termux extra-keys row to reach Ctrl, Tab and Esc on a phone keyboard, then let Tab completion and history do most of the typing for you."
+excerpt: "A phone keyboard has no Ctrl, Tab or Esc. Termux adds them, and they are the difference between fighting the terminal and using it."
+category: "Termux"
+track: "foundations"
+order: 2
+level: Beginner
+tags: [termux, keyboard, shortcuts]
+---
+
+import Callout from '../../components/Callout.astro';
+
+A laptop keyboard has a `Ctrl` key, a `Tab` key, an `Esc` key and arrow keys. A phone keyboard has none of them. That is not a small inconvenience: `Ctrl-C` stops a runaway command, `Tab` completes a path, and `Esc` is the only way out of `vim`.
+
+Termux solves this with a row of extra keys above the keyboard. Learning it is the single most useful five minutes in this course.
+
+## What you'll be able to do
+
+- Reach `Ctrl`, `Tab`, `Esc`, the arrows and the pipe symbol on a phone.
+- Stop a command that will not stop, and get your prompt back.
+- Complete file and command names with `Tab` instead of typing them.
+- Re-run a command from history without retyping it.
+
+## Step 1: Find the extra-keys row
+
+Open Termux and tap the screen to bring up the keyboard. Above it, Termux draws its own row of keys:
+
+```
+ESC  /  -  HOME  ↑  ↓  ←  →  TAB  CTRL  ALT
+```
+
+Tap `CTRL` once and it lights up. The next key you press is sent with Ctrl held. So `CTRL` then `C` is `Ctrl-C`. Tap `CTRL` again to turn it off.
+
+<Callout type="tip" title="If the row is not there">
+Some keyboards hide it. Pull the Termux drawer open from the left edge and check the settings, or press and hold a key on the row to see the alternative symbols. If your phone's keyboard has its own toolbar, it can cover the row: swipe it down or switch to another keyboard.
+</Callout>
+
+## Step 2: The four keys that matter
+
+You do not need all of them. Four carry almost everything.
+
+| Keys | What it does |
+| --- | --- |
+| `CTRL` then `C` | Cancel whatever is running. The universal escape. |
+| `TAB` | Complete a filename or command. |
+| `ESC` | Leave the current mode, or cancel what you are typing. |
+| `↑` | Bring back the last command. |
+
+`Ctrl-C` is the one to remember first. If a command is printing forever, or a program has stopped responding, `Ctrl-C` returns you to a prompt. It is not rude and it does not break anything: it sends the program a signal asking it to stop, which is what the program expects.
+
+## Step 3: Let Tab do the typing
+
+Type the first few letters of a file and press `TAB`. The shell fills in the rest.
+
+```
+cd ~/proj[TAB]
+```
+
+If there is only one match, it completes. If there are several, it completes as far as they agree and then shows you the options on a second press.
+
+```
+cat not[TAB]
+```
+
+This is not a convenience. Long paths typed by hand on a phone are where most beginner mistakes come from, and `Tab` cannot produce a typo because it does not invent characters.
+
+<Callout type="warning" title="Tab is also a real character">
+Inside a text editor, `TAB` inserts an actual tab rather than completing anything. Completion is a feature of the shell prompt, not of every program.
+</Callout>
+
+## Step 4: Stop a command that will not stop
+
+Some commands keep running: a `ping` that never ends, a `tail -f` following a log, a program stuck in a loop. Two ways out, and they are different.
+
+```
+ping -c 100 example.com
+```
+
+Press `CTRL` then `C`. The command stops and you get your prompt back.
+
+The other one is `Ctrl-D`, which means "end of input". At an empty prompt it closes the shell session. Inside a program reading from the keyboard, it says "no more input", which some programs treat as "finish".
+
+| You want | Press |
+| --- | --- |
+| Stop this command now | `CTRL` `C` |
+| End input, or leave the shell | `CTRL` `D` |
+| Pause it and get the prompt back | `CTRL` `Z`, then `fg` to resume |
+
+## Step 5: Use history instead of retyping
+
+Every command you run is remembered. The up arrow walks back through them.
+
+```
+[TAB] [TAB] [TAB]
+```
+
+Press `↑` once for the last command, twice for the one before. Press `Enter` to run it again, or edit it first. On a phone this is often faster than typing a path again, even with `Tab`.
+
+`history` prints the whole numbered list:
+
+```
+history
+```
+
+You can then re-run an entry by its number, or search the list when you half remember a command:
+
+```
+history | grep ssh
+```
+
+## Step 6: Type the symbols that are buried
+
+Some characters are not on the first page of a phone keyboard: the pipe `|`, the tilde `~`, the backslash `\`, the dollar `$`.
+
+Three ways to get them, in order of usefulness:
+
+- **The extra-keys row.** It has `/` and `-` directly, and a long press on some keys reveals more.
+- **Your keyboard's symbol page.** The pipe is usually one tap away under `?123`, and the tilde under a second symbols page.
+- **Copy it.** For a symbol you use once, copying from a lesson is legitimate. For one you use constantly, learn where it lives.
+
+<Callout type="tip" title="The pipe is the one worth finding">
+`|` turns one command's output into another's input, and it is used in half the lessons after this one. Find it on your keyboard now rather than in the middle of an exercise.
+</Callout>
+
+## Step 7: A short session that uses all of it
+
+Try this, in order. It uses the row, Tab, history and Ctrl-C together.
+
+```
+cd ~
+ls
+cat not[TAB]
+```
+
+That completes to `notes.txt` if you have one. Now start something that will not stop, and stop it:
+
+```
+ping -c 100 example.com
+```
+
+Press `CTRL` `C`. Then press `↑` twice to bring back the `cat` line, and press `Enter`.
+
+## Quick reference
+
+| Keys | What it does |
+| --- | --- |
+| `CTRL` `C` | Cancel the running command |
+| `CTRL` `D` | End input, or close the shell |
+| `CTRL` `Z` | Suspend, then `fg` to resume |
+| `TAB` | Complete a name |
+| `TAB` `TAB` | Show every possible match |
+| `↑` / `↓` | Walk through history |
+| `ESC` | Cancel what you are typing, or leave a mode |
+| `CTRL` `L` | Clear the screen |
+| `CTRL` `A` / `CTRL` `E` | Jump to the start or end of the line |
+
+## Next
+
+You can now drive the terminal. [Navigating the filesystem](/learn/navigating-the-filesystem/) is where you start using that speed on real paths.
